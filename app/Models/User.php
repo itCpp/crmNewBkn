@@ -2,25 +2,28 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Model;
 
-class User extends Authenticatable
+class User extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory;
 
     /**
-     * The attributes that are mass assignable.
+     * Атрибуты, которые назначаются массово
      *
      * @var array
      */
     protected $fillable = [
+        'pin',
+        'login',
+        'callcenter_id',
+        'callcenter_sector_id',
+        'surname',
         'name',
-        'email',
+        'patronymic',
         'password',
+        'telegram_id',
     ];
 
     /**
@@ -30,15 +33,24 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
     /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
+     * Роли пользователя
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    public function roles() {
+
+        return $this->hasMany("App\Models\UsersRole", "user");
+
+    }
+
+    /**
+     * Личные права пользователя
+     */
+    public function permissions() {
+
+        return $this->hasMany("App\Models\UsersPermission", "user");
+
+    }
+
 }

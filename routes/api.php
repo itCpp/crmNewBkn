@@ -14,6 +14,19 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
+
+/** Првоерка типа авторизации */
+Route::post('loginStart', 'Users\Auth@loginStart');
+/** Завершение авторизации */
+Route::post('login', 'Users\Auth@login');
+
+/** Группа маршрутов авторизованного пользователя */
+Route::group(['middleware' => 'user.token'], function () {
+
+    /** Первоначальная загрузка страницы со всеми данными */
+    Route::post('check', 'Users\Users@check');
+
 });
