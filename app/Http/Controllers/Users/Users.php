@@ -54,12 +54,29 @@ class Users extends Controller
 
         $response = [
             'user' => $request->__user,
+            'permits' => self::getPermitsForMainPage($request),
         ];
 
         if ($request->getResponseArray)
             return $response;
 
         return response()->json($response);
+
+    }
+
+    /**
+     * Вывод прав пользователя для формирования главной страницы
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function getPermitsForMainPage(Request $request) {
+
+        $permits = [
+            'admin_access',
+        ];
+
+        return $request->__user->getListPermits($permits);
 
     }
 

@@ -11,6 +11,13 @@ class UserData extends Controller
 {
 
     /**
+     * Настройка проверки супер-админа
+     * 
+     * @var bool
+     */
+    protected $superadmin = false;
+
+    /**
      * Роль пользователя, дающая полный доступ
      * 
      * @var string
@@ -30,6 +37,8 @@ class UserData extends Controller
      * @param \App\Models\User $user Экземпляр модели пользователя
      */
     public function __construct($user) {
+
+        $this->superadmin = (bool) env('USER_SUPER_ADMIN_ACCESS_FOR_ROLE', false);
 
         $this->__user = $user;
 
@@ -80,9 +89,7 @@ class UserData extends Controller
      */
     public function can(...$permits) {
 
-        $superadmin = (bool) env('USER_SUPER_ADMIN_ACCESS_FOR_ROLE', false);
-
-        if (in_array($this->role, $this->roles) AND $superadmin)
+        if (in_array($this->role, $this->roles) AND $this->superadmin)
             return true;
 
         $roles = Role::find($this->roles);
@@ -103,6 +110,61 @@ class UserData extends Controller
 
         return false;
 
+    }
+
+    /**
+     * Вывод списка разрешений пользователя
+     * 
+     * @param array     $permits Список разрешений к проверке
+     * @return array
+     */
+    public function getListPermits($permits = []) {
+
+        if (!count($permits))
+            return [];
+
+        if (in_array($this->role, $this->roles) AND $this->superadmin)
+            return $this->superAdminPermitsList($permits);
+
+        $access = [];
+
+        $roles = Role::find($this->roles);
+
+        foreach ($roles as $role) {
+
+            $permissions = $role->permissions()->whereIn('permission', $permits)->get();
+
+            foreach ($permissions as $permit)
+                $access[] = $permit->permission;
+
+        }
+
+        $permissions = $this->__user->permissions()->whereIn('permission', $permits)->get();
+
+        foreach ($permissions as $permit)
+            $access[] = $permit->permission;
+
+        foreach ($permits as $permit)
+            $list[$permit] = in_array($permit, $access);
+
+        return $list ?? [];
+
+    }
+
+    /**
+     * Формирование списка разрешений для супер-админа
+     * 
+     * @param array     $permits Список заправшиваемых разрешений
+     * @return array
+     */
+    protected function superAdminPermitsList($permits) {
+
+        foreach ($permits as $permit) {
+            $list[$permit] = true;
+        }
+
+        return $list ?? [];
+        
     }
 
 }
