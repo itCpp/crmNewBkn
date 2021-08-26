@@ -5,8 +5,24 @@ namespace App\Http\Controllers\Users;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+use App\Models\Role;
+
 class UserData extends Controller
 {
+
+    /**
+     * Роль пользователя, дающая полный доступ
+     * 
+     * @var string
+     */
+    protected $role = "developer";
+
+    /**
+     * Экземпляр модели пользователя
+     * 
+     * @var \App\Models\User
+     */
+    protected $__user;
     
     /**
      * Создание объекта
@@ -14,6 +30,8 @@ class UserData extends Controller
      * @param \App\Models\User $user Экземпляр модели пользователя
      */
     public function __construct($user) {
+
+        $this->__user = $user;
 
         $data = $user->toArray();
 
@@ -32,7 +50,10 @@ class UserData extends Controller
 
         $this->name_fio = preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', $this->name_full);
 
-        $this->roles = $user->roles;
+        $this->roles = [];
+        
+        foreach ($user->roles as $role)
+            $this->roles[] = $role->role;
 
     }
     
@@ -49,6 +70,39 @@ class UserData extends Controller
 
         return null;
         
+    }
+
+    /**
+     * Проверка разрешения у пользователя
+     * 
+     * @param array     $permits Список разрешений к проверке
+     * @return bool
+     */
+    public function can(...$permits) {
+
+        $superadmin = (bool) env('USER_SUPER_ADMIN_ACCESS_FOR_ROLE', false);
+
+        if (in_array($this->role, $this->roles) AND $superadmin)
+            return true;
+
+        $roles = Role::find($this->roles);
+
+        foreach ($roles as $role) {
+
+            $permissions = $role->permissions()->whereIn('permission', $permits)->get();
+
+            if (count($permissions))
+                return true;
+
+        }
+
+        $permissions = $this->__user->permissions()->whereIn('permission', $permits)->get();
+
+        if (count($permissions))
+            return true;
+
+        return false;
+
     }
 
 }

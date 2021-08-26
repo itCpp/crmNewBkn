@@ -14,8 +14,13 @@ class UserCan
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next, ...$permits)
     {
+
+        if (!$request->__user->can(...$permits))
+            return response()->json(['message' => "Доступ ограничен", 'permits' => $permits], 403);
+        
         return $next($request);
+
     }
 }
