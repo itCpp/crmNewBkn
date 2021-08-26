@@ -24,9 +24,27 @@ Route::post('loginStart', 'Users\Auth@loginStart');
 Route::post('login', 'Users\Auth@login');
 
 /** Группа маршрутов авторизованного пользователя */
-Route::group(['middleware' => 'user.token'], function () {
+Route::group(['middleware' => 'user.token'], function() {
 
     /** Первоначальная загрузка страницы со всеми данными */
     Route::post('check', 'Users\Users@check');
+
+    /** Маршрутизация админпанели */
+    Route::group(['prefix' => "admin", 'middleware' => "user.can:admin_access"], function() {
+
+        /** Первоначальная загрузка страницы со всеми данными */
+        Route::post('start', 'Users\Users@adminCheck');
+
+    });
+
+    /** Маршрутизация админпанели разработчика */
+    Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function() {
+
+        /** Первоначальная загрузка страницы со всеми данными */
+        Route::post('getAllPermits', 'Dev\Permissions@getAllPermits')->middleware('user.can:dev_permits');
+        /** Создание нового или изменение старого правила */
+        Route::post('savePermit', 'Dev\Permissions@savePermit')->middleware('user.can:dev_permits');
+
+    });
 
 });

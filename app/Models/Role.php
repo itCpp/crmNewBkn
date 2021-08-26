@@ -32,6 +32,13 @@ class Role extends Model
     public $incrementing = false;
 
     /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
+    /**
      * Разрешения для роли
      */
     public function permissions() {

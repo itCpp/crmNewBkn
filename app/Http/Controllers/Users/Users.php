@@ -80,4 +80,24 @@ class Users extends Controller
 
     }
 
+    /**
+     * Формирование данных для администратора
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function adminCheck(Request $request) {
+
+        $response = [
+            'permits' => $request->__user->getListPermits([
+                'block_dev', // Блок разработчика
+                'dev_roles', // Настройка и создание ролей
+                'dev_permits', // Создание и изменение прав
+            ]),
+        ];
+
+        return response()->json($response);
+
+    }
+
 }
