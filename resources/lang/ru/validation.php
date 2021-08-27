@@ -160,5 +160,8 @@ return [
         'title'                 => 'Наименование',
         'username'              => 'Никнейм',
         'year'                  => 'Год',
+        'surname'               => 'Фамилия',
+        'patronymic'            => 'Отчество',
+        'pin'                   => 'PIN',
     ],
 ];

@@ -93,6 +93,7 @@ class Users extends Controller
                 'block_dev', // Блок разработчика
                 'dev_roles', // Настройка и создание ролей
                 'dev_permits', // Создание и изменение прав
+                'admin_users', // Доступ к сотрудникам
             ]),
         ];
 

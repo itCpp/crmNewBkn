@@ -24,6 +24,7 @@ class User extends Model
         'patronymic',
         'password',
         'telegram_id',
+        'auth_type',
     ];
 
     /**
