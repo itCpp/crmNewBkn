@@ -59,6 +59,8 @@ class UserData extends Controller
 
         $this->name_fio = preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', $this->name_full);
 
+        $this->date = date("d.m.Y H:i:s", strtotime($this->created_at));
+
         $this->roles = [];
         
         foreach ($user->roles as $role)

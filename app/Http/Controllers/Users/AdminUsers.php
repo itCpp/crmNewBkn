@@ -10,7 +10,50 @@ use App\Models\Callcenter;
 
 class AdminUsers extends Controller
 {
-    
+
+    /**
+     * Вывод списка сотрудников по запросу
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function getUsers(Request $request) {
+
+        $data = new User;
+
+        if ($request->search) {
+
+        }
+        else {
+            $data = $data->orderBy('id', "DESC")->limit(30);
+        }
+
+        foreach ($data->get() as $row)
+            $users[] = new UserData($row);
+
+        return response()->json([
+            'users' => $users ?? []
+        ]);
+
+    }
+
+    /**
+     * Вывод данных сотрудника
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function getUser(Request $request) {
+
+        if (!$user = User::find($request->id))
+            return response()->json(['message' => "Данные сотрудника не найдены"], 400);
+
+        return response()->json([
+            'user' => $user
+        ]);
+
+    }
+
     /**
      * Данные для вывода окна создания сотрудника
      * 
@@ -32,11 +75,15 @@ class AdminUsers extends Controller
 
         }
 
+        $user = User::find($request->id);
+        $pin = $user->pin ?? self::getNextPinCallcenter($request->__user->callcenter_id);
+
         return response()->json([
-            'callcenter' => $request->__user->callcenter_id,
-            'sector' => $request->__user->callcenter_sector_id,
+            'callcenter' => $request->__user->callcenter_id, // Колл-центр администратора
+            'sector' => $request->__user->callcenter_sector_id, // Сектор администратора
             'callcenters' => $callcenters ?? [],
-            'pin' => self::getNextPinCallcenter($request->__user->callcenter_id),
+            'pin' => $pin,
+            'user' => $user, // Данные сотрудника для редактирования
         ]);
 
     }
@@ -84,12 +131,14 @@ class AdminUsers extends Controller
      */
     public static function getCallCenterData(Request $request) {
 
-        if (!$row = Callcenter::find($request->id))
-            return response()->json(['message' => "Колл-центр не найден"], 400);
+        if ($request->id !== null) {
+            if (!$row = Callcenter::find($request->id))
+                return response()->json(['message' => "Колл-центр не найден"], 400);
+        }
 
         return response()->json([
-            'pin' => self::getNextPinCallcenter($row->id),
-            'sectors' => $row->sectors 
+            'pin' => self::getNextPinCallcenter($row->id ?? null),
+            'sectors' => $row->sectors ?? [],
         ]);
 
     }
@@ -115,7 +164,7 @@ class AdminUsers extends Controller
 
         if ($request->login) {
             if (!$user || ($user AND ($user->login != $request->login)))
-                $rules['login'] .= "unique:App\Models\User,login";
+                $rules['login'] = "unique:App\Models\User,login";
         }
 
         $validate = $request->validate($rules);
@@ -129,10 +178,11 @@ class AdminUsers extends Controller
             ], 400);
         }
 
-        $request->password = Auth::getHashPass($request->password);
-
         if (!$user)
             $user = new User;
+
+        if (!$user OR ($user AND $request->password))
+            $user->password = Auth::getHashPass($request->password);
 
         $user->pin = $request->pin;
         $user->login = $request->login;
@@ -141,7 +191,6 @@ class AdminUsers extends Controller
         $user->surname = $request->surname;
         $user->name = $request->name;
         $user->patronymic = $request->patronymic;
-        $user->password = $request->password;
         $user->telegram_id = $request->telegram_id;
         $user->auth_type = $request->auth_type;
         $user->deleted_at = $request->block ? date("Y-m-d H:i:s") : null;

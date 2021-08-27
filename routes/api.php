@@ -35,6 +35,8 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Первоначальная загрузка страницы со всеми данными */
         Route::post('start', 'Users\Users@adminCheck');
 
+        /** Вывод сотрудников для админки */
+        Route::post('getUsers', 'Users\AdminUsers@getUsers');
         /** Данные для вывода окна создания сотрудника */
         Route::post('getAddUserData', 'Users\AdminUsers@getAddUserData');
         /** Данные для смены колл-центра сотрудника */
