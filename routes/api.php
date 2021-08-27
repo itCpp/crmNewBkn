@@ -40,10 +40,16 @@ Route::group(['middleware' => 'user.token'], function() {
     /** Маршрутизация админпанели разработчика */
     Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function() {
 
-        /** Первоначальная загрузка страницы со всеми данными */
-        Route::post('getAllPermits', 'Dev\Permissions@getAllPermits')->middleware('user.can:dev_permits');
-        /** Создание нового или изменение старого правила */
-        Route::post('savePermit', 'Dev\Permissions@savePermit')->middleware('user.can:dev_permits');
+        Route::group(['middleware' => "user.can:dev_permits"], function() {
+
+            /** Первоначальная загрузка страницы со всеми данными */
+            Route::post('getAllPermits', 'Dev\Permissions@getAllPermits');
+            /** Создание нового или изменение старого правила */
+            Route::post('savePermit', 'Dev\Permissions@savePermit');
+            /** Вывод данных одного правила */
+            Route::post('getPermit', 'Dev\Permissions@getPermit');
+
+        });
 
     });
 

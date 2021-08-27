@@ -27,6 +27,23 @@ class Permissions extends Controller
     }
 
     /**
+     * Вывод данных одного правила
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function getPermit(Request $request) {
+
+        if (!$permit = Permission::find($request->permission))
+            return response()->json(['message' => "Данное правило не найдено"], 400);
+
+        return response()->json([
+            'permit' => $permit,
+        ]);
+
+    }
+
+    /**
      * Создание нового или изменение старого правила
      * 
      * @param \Illuminate\Http\Request $request
