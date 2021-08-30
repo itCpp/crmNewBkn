@@ -45,7 +45,11 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('saveUser', 'Users\AdminUsers@saveUser');
         /** Блокировка пользователя */
         Route::post('blockUser', 'Users\AdminUsers@blockUser');
-
+        /** Вывод ролей и разрешений для сотрудника */
+        Route::post('getRolesAndPermits', 'Users\AdminUsers@getRolesAndPermits');
+        /** Установка роли пользователю */
+        Route::post('setUserRole', 'Users\AdminUsers@setUserRole')->middleware('user.can:admin_set_user_role');
+        
     });
 
     /** Маршрутизация админпанели разработчика */

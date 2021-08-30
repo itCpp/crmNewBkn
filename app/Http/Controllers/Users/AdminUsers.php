@@ -9,6 +9,10 @@ use App\Models\User;
 use App\Models\Callcenter;
 use App\Models\CallcenterSector;
 
+use App\Models\Role;
+use App\Models\Permission;
+use App\Models\UsersRole;
+
 class AdminUsers extends Controller
 {
 
@@ -29,13 +33,23 @@ class AdminUsers extends Controller
         ->leftjoin('callcenter_sectors', 'callcenter_sectors.id', '=', 'users.callcenter_sector_id');
 
         if ($request->search) {
-
+            $data = $data->orderBy('users.deleted_at')
+            ->orderBy('users.surname')
+            ->orderBy('users.name')
+            ->orderBy('users.patronymic')
+            ->where(function($query) use ($request) {
+                $query->where('users.surname', 'LIKE', "%{$request->search}%")
+                ->orWhere('users.name', 'LIKE', "%{$request->search}%")
+                ->orWhere('users.patronymic', 'LIKE', "%{$request->search}%")
+                ->orWhere('users.pin', 'LIKE', "%{$request->search}%")
+                ->orWhere('users.login', 'LIKE', "%{$request->search}%");
+            });
         }
         else {
-            $data = $data->orderBy('users.id', "DESC")->limit(30);
+            $data = $data->orderBy('users.id', "DESC");
         }
 
-        foreach ($data->get() as $row)
+        foreach ($data->limit(30)->get() as $row)
             $users[] = new UserData($row);
 
         return response()->json([
@@ -91,6 +105,9 @@ class AdminUsers extends Controller
             'callcenters' => $callcenters ?? [],
             'pin' => $pin,
             'user' => $user, // Данные сотрудника для редактирования
+            'auth_types' => [
+                ['text' => "По паролю", 'value' => "secret"],
+            ],
         ]);
 
     }
@@ -238,6 +255,97 @@ class AdminUsers extends Controller
         return response()->json([
             'id' => $user->id,
             'deleted_at' => $user->deleted_at,
+        ]);
+
+    }
+
+    /**
+     * Вывод ролей и разрешений для сотрудника
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function getRolesAndPermits(Request $request) {
+
+        if (!$user = User::find($request->id))
+            return response()->json(['message' => "Пользователь не найден"], 400);
+
+        // Все роли
+        $roles = new Role;
+
+        // Роли с учетом своих ролей
+        if ($request->__user->roles AND !$request->__user->superadmin) {
+            $roles = $roles->whereIn('role', $request->__user->roles);
+        }
+
+        $roles = $roles->orderBy('lvl', "DESC")->get();
+
+        $permits_all = []; // Все права
+        $permits_list = []; // Список всех прав
+
+        foreach (Permission::all() as $permit) {
+            $permits_all[] = $permit;
+            $permits_list[] = $permit->permission;
+        }
+
+        // Разрешенные права
+        $rights = $request->__user->getListPermits($permits_list);
+
+        // Список разрешений, с учетом своих разрешений
+        foreach ($permits_all as $permit) {
+            if ($rights[$permit->permission])
+                $permits[] = $permit;
+        }
+
+        // Роли сотрудника
+        foreach ($user->roles as $role) {
+            $user_roles[] = $role->role;
+        }
+
+        // Разрешения сотрудника
+        foreach ($user->permissions as $permission) {
+            $user_permits[] = $permission->permission;
+        }
+
+        return response()->json([
+            'roles' => $roles ?? [],
+            'permits' => $permits ?? [],
+            'user_roles' => $user_roles ?? [],
+            'user_permits' => $user_permits ?? [],
+        ]);
+
+    }
+
+    /**
+     * Установка роли пользователю
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function setUserRole(Request $request) {
+
+        if (!$user = User::find($request->id))
+            return response()->json(['message' => "Пользователь не найден"], 400);
+
+        if (!$role = Role::find($request->role))
+            return response()->json(['message' => "Роль с указанным идентификатором не найдена"], 400);
+
+        if ($request->__user->getRoleLevel() < $role->lvl)
+            return response()->json(['message' => "Недостаточно прав для настройки этой роли"], 403);
+
+        foreach ($user->roles as $role)
+            $roles[] = $role->role;
+
+        $search = in_array($request->role, $roles ?? []);
+
+        if ($search)
+            $user->roles()->detach($request->role);
+        else
+            $user->roles()->attach($request->role);
+
+        return response()->json([
+            'role' => $request->role,
+            'checked' => !$search,
         ]);
 
     }

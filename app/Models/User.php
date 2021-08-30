@@ -41,7 +41,7 @@ class User extends Model
      */
     public function roles() {
 
-        return $this->hasMany("App\Models\UsersRole", "user");
+        return $this->belongsToMany("App\Models\Role", "users_roles", "user", "role");
 
     }
 

@@ -15,7 +15,7 @@ class UserData extends Controller
      * 
      * @var bool
      */
-    protected $superadmin = false;
+    public $superadmin = false;
 
     /**
      * Роль пользователя, дающая полный доступ
@@ -30,6 +30,13 @@ class UserData extends Controller
      * @var \App\Models\User
      */
     protected $__user;
+
+    /**
+     * Уровень роли
+     * 
+     * @var int|null
+     */
+    protected $level = null;
     
     /**
      * Создание объекта
@@ -167,6 +174,37 @@ class UserData extends Controller
 
         return $list ?? [];
         
+    }
+
+    /**
+     * Определение максимального уровня роли пользователя
+     * 
+     * @return int
+     */
+    public function getRoleLevel() {
+
+        if ($this->level)
+            return $this->level;
+
+        $this->level = 0;
+
+        foreach (Role::whereIn('role', $this->roles)->get() as $role) {
+            $this->level = $role->lvl > $this->level ? $role->lvl : $this->level;
+        }
+
+        return $this->level;
+
+    }
+
+    /**
+     * Возвращает экземпляр модели пользователя
+     * 
+     * @return \App\Models\User
+     */
+    public function getModel() {
+
+        return $this->__user;
+
     }
 
 }
