@@ -11,7 +11,6 @@ use App\Models\CallcenterSector;
 
 use App\Models\Role;
 use App\Models\Permission;
-use App\Models\UsersRole;
 
 class AdminUsers extends Controller
 {
@@ -346,6 +345,38 @@ class AdminUsers extends Controller
         return response()->json([
             'role' => $request->role,
             'checked' => !$search,
+        ]);
+
+    }
+
+    /**
+     * Установка разрешения пользователю
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function setUserPermission(Request $request) {
+
+        if (!$user = User::find($request->id))
+            return response()->json(['message' => "Пользователь не найден"], 400);
+
+        if (!$permission = Permission::find($request->permission))
+            return response()->json(['message' => "Разрешение с указанным идентификатором не найдено"], 400);
+
+        if (!$request->__user->can($request->permission))
+            return response()->json(['message' => "Вы не можете сменить разрешение не имея на него права"], 403);
+
+        $permission = $user->permissions()->where('permission_id', $request->permission)->get();
+        $permissions = count($permission);
+
+        if ( $permissions)
+            $user->permissions()->detach($request->permission);
+        else
+            $user->permissions()->attach($request->permission);
+
+        return response()->json([
+            'permission' => $request->permission,
+            'checked' =>  $permissions ? false : true,
         ]);
 
     }

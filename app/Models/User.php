@@ -50,7 +50,7 @@ class User extends Model
      */
     public function permissions() {
 
-        return $this->hasMany("App\Models\UsersPermission", "user");
+        return $this->belongsToMany("App\Models\Permission", "users_permissions", "user_id", "permission_id");
 
     }
 

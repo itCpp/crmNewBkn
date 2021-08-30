@@ -48,7 +48,9 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Вывод ролей и разрешений для сотрудника */
         Route::post('getRolesAndPermits', 'Users\AdminUsers@getRolesAndPermits');
         /** Установка роли пользователю */
-        Route::post('setUserRole', 'Users\AdminUsers@setUserRole')->middleware('user.can:admin_set_user_role');
+        Route::post('setUserRole', 'Users\AdminUsers@setUserRole')->middleware('user.can:admin_user_set_role');
+        /** Установка разрешения пользователю */
+        Route::post('setUserPermission', 'Users\AdminUsers@setUserPermission')->middleware('user.can:admin_user_set_permission');
         
     });
 
