@@ -68,6 +68,17 @@ Route::group(['middleware' => 'user.token'], function() {
 
         });
 
+        Route::group(['middleware' => "user.can:dev_roles"], function() {
+
+            /** Первоначальная загрузка страницы со всеми данными */
+            Route::post('getAllRoles', 'Dev\Roles@getAllRoles');
+            /** Вывод разрешений роли */
+            Route::post('getPermits', 'Dev\Roles@getPermits');
+            /** Установка права роли */
+            Route::post('setRolePermit', 'Dev\Roles@setRolePermit');
+
+        });
+
     });
 
 });
