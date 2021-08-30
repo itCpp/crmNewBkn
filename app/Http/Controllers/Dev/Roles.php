@@ -10,7 +10,7 @@ use App\Models\Permission;
 
 class Roles extends Controller
 {
-    
+
     /**
      * Загрузка страницы редактирования ролей
      * 
@@ -23,6 +23,23 @@ class Roles extends Controller
 
         return response()->json([
             'roles' => $roles,
+        ]);
+
+    }
+
+    /**
+     * Вывод данных одной роли
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function getRole(Request $request) {
+
+        if (!$role = Role::find($request->role))
+            return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
+
+        return response()->json([
+            'role' => $role,
         ]);
 
     }
@@ -73,6 +90,43 @@ class Roles extends Controller
             'role' => $request->role,
             'permission' => $request->permission,
             'set' => $permissions ? false : true,
+        ]);
+
+    }
+
+    /**
+     * Сохранение данных роли
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function saveRole(Request $request) {
+
+        $role = Role::withTrashed()->find($request->edit);
+
+        $rules = [
+            'role' => "required|regex:/^[a-zA-Z0-9_]+$/i",
+        ];
+
+        if (!$role || $role->deleted_at) {
+            $rules['role'] .= "|unique:App\Models\Role,role";
+        }
+
+        $validate = $request->validate($rules);
+        
+        if (!$role)
+            $role = new Role;
+
+        $role->role = $request->role;
+        $role->name = $request->name;
+        $role->comment = $request->comment;
+
+        $role->save();
+
+        \App\Models\Log::log($request, $role);
+
+        return response()->json([
+            'role' => $role,
         ]);
 
     }

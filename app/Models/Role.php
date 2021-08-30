@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Role extends Model
 {
 
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The primary key of the table.
@@ -32,11 +33,16 @@ class Role extends Model
     public $incrementing = false;
 
     /**
-     * Indicates if the model should be timestamped.
+     * Атрибуты, которые назначаются массово
      *
-     * @var bool
+     * @var array
      */
-    public $timestamps = false;
+    protected $fillable = [
+        'role',
+        'name',
+        'lvl',
+        'comment',
+    ];
 
     /**
      * Разрешения для роли

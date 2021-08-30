@@ -77,6 +77,11 @@ Route::group(['middleware' => 'user.token'], function() {
             /** Установка права роли */
             Route::post('setRolePermit', 'Dev\Roles@setRolePermit');
 
+            /** Вывод данных одной роли */
+            Route::post('getRole', 'Dev\Roles@getRole');
+            /** Сохранение данных роли */
+            Route::post('saveRole', 'Dev\Roles@saveRole');
+
         });
 
     });
