@@ -53,4 +53,13 @@ class Role extends Model
 
     }
 
+    /**
+     * Пользователи, относящиеся к роли
+     */
+    public function users() {
+
+        return $this->belongsToMany("App\Models\User", "users_roles", "role", "user");
+
+    }
+
 }

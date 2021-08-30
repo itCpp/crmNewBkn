@@ -21,6 +21,10 @@ class Roles extends Controller
 
         $roles = Role::orderBy('lvl', "DESC")->get();
 
+        foreach ($roles as &$role) {
+            $role->users_count = $role->users()->count();
+        }
+
         return response()->json([
             'roles' => $roles,
         ]);
