@@ -43,6 +43,8 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('getCallCenterData', 'Users\AdminUsers@getCallCenterData');
         /** Создание или обновление данных сотрудника */
         Route::post('saveUser', 'Users\AdminUsers@saveUser');
+        /** Блокировка пользователя */
+        Route::post('blockUser', 'Users\AdminUsers@blockUser');
 
     });
 

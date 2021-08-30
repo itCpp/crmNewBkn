@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Models\User;
 use App\Models\Callcenter;
+use App\Models\CallcenterSector;
 
 class AdminUsers extends Controller
 {
@@ -19,13 +20,19 @@ class AdminUsers extends Controller
      */
     public static function getUsers(Request $request) {
 
-        $data = new User;
+        $data = User::select(
+            'users.*',
+            'callcenters.name as callcenter',
+            'callcenter_sectors.name as sector'
+        )
+        ->leftjoin('callcenters', 'callcenters.id', '=', 'users.callcenter_id')
+        ->leftjoin('callcenter_sectors', 'callcenter_sectors.id', '=', 'users.callcenter_sector_id');
 
         if ($request->search) {
 
         }
         else {
-            $data = $data->orderBy('id', "DESC")->limit(30);
+            $data = $data->orderBy('users.id', "DESC")->limit(30);
         }
 
         foreach ($data->get() as $row)
@@ -193,14 +200,44 @@ class AdminUsers extends Controller
         $user->patronymic = $request->patronymic;
         $user->telegram_id = $request->telegram_id;
         $user->auth_type = $request->auth_type;
-        $user->deleted_at = $request->block ? date("Y-m-d H:i:s") : null;
 
         $user->save();
 
         \App\Models\Log::log($request, $user);
 
+        $user = new UserData($user);
+        
+        $user->callcenter = Callcenter::find($user->callcenter_id)->name ?? $user->callcenter_id;
+        $user->sector = CallcenterSector::find($user->callcenter_sector_id)->name ?? $user->callcenter_sector_id;
+
         return response()->json([
             'user' => $user,
+        ]);
+
+    }
+
+    /**
+     * Блокировка сотрудника
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function blockUser(Request $request) {
+
+        if (!$user = User::find($request->id))
+            return response()->json(['message' => "Сотрудник не найден"], 400);
+
+        if ($user->id === $request->__user->id)
+            return response()->json(['message' => "Нельзя заблокировать самого себя"], 400);
+
+        $user->deleted_at = $user->deleted_at ? null : date("Y-m-d H:i:s");
+        $user->save();
+
+        \App\Models\Log::log($request, $user);
+
+        return response()->json([
+            'id' => $user->id,
+            'deleted_at' => $user->deleted_at,
         ]);
 
     }

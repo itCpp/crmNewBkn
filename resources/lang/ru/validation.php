@@ -163,5 +163,6 @@ return [
         'surname'               => 'Фамилия',
         'patronymic'            => 'Отчество',
         'pin'                   => 'PIN',
+        'login'                 => 'Логин',
     ],
 ];
