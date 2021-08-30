@@ -332,19 +332,21 @@ class AdminUsers extends Controller
         if ($request->__user->getRoleLevel() < $role->lvl)
             return response()->json(['message' => "Недостаточно прав для настройки этой роли"], 403);
 
-        foreach ($user->roles as $role)
-            $roles[] = $role->role;
-
-        $search = in_array($request->role, $roles ?? []);
+        $role = $user->roles()->where('users_roles.role', $request->role)->get();
+        $search = count($role);
 
         if ($search)
             $user->roles()->detach($request->role);
         else
             $user->roles()->attach($request->role);
 
+        foreach ($user->roles as $role)
+            $roles[] = $role->role;
+
         return response()->json([
             'role' => $request->role,
-            'checked' => !$search,
+            'roles' => $roles ?? [],
+            'checked' => $search ? false : true,
         ]);
 
     }
