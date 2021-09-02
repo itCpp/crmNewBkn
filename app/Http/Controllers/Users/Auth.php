@@ -32,10 +32,10 @@ class Auth extends Controller
         if (count($users) > 1)
             return response()->json(['message' => "Найдены задвоенные данные, авторизация невозможна, сообщите об этом руководству"], 400);
 
+        $user = new UserData($users[0]);
+
         if ($user->deleted_at)
             return response()->json(['message' => "Ваша учетная запись заблокирована"], 400);
-
-        $user = new UserData($users[0]);
 
         return response()->json([
             'id' => $user->id,

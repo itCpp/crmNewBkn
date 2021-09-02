@@ -51,6 +51,12 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('setUserRole', 'Users\AdminUsers@setUserRole')->middleware('user.can:admin_user_set_role');
         /** Установка разрешения пользователю */
         Route::post('setUserPermission', 'Users\AdminUsers@setUserPermission')->middleware('user.can:admin_user_set_permission');
+
+        /** Вывод списка колл-центорв */
+        Route::post('getCallcenters', 'Callcenter\Callcenters@getCallcenters')->middleware('user.can:admin_callcenters');
+        /** Вывод списка секторов */
+        Route::post('getCallcenterSectors', 'Callcenter\Callcenters@getCallcenterSectors')->middleware('user.can:admin_callcenters');
+        
         
     });
 

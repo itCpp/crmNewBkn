@@ -94,6 +94,8 @@ class Users extends Controller
                 'dev_roles', // Настройка и создание ролей
                 'dev_permits', // Создание и изменение прав
                 'admin_users', // Доступ к сотрудникам
+                'admin_callcenters', // Доступ к настройкам колл-центров
+                'admin_sources', // Доступ к настройкам источников
             ]),
         ];
 
