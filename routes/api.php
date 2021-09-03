@@ -56,6 +56,10 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('getCallcenters', 'Callcenter\Callcenters@getCallcenters')->middleware('user.can:admin_callcenters');
         /** Вывод списка секторов */
         Route::post('getCallcenterSectors', 'Callcenter\Callcenters@getCallcenterSectors')->middleware('user.can:admin_callcenters');
+        /** Данные одного колл-центра */
+        Route::post('getCallcenter', 'Callcenter\Callcenters@getCallcenter')->middleware('user.can:admin_callcenters');
+        /** Сохранение данных колл-центра */
+        Route::post('saveCallcenter', 'Callcenter\Callcenters@saveCallcenter')->middleware('user.can:admin_callcenters');
         
         
     });
