@@ -94,6 +94,16 @@ Route::group(['middleware' => 'user.token'], function() {
 
         });
 
+        /** Настройка источников и ресурсов */
+        Route::group(['middleware' => "user.can:dev_sources"], function() {
+
+            /** Список источников с ресурсами */
+            Route::post('getSources', 'Dev\Sources@getSources');
+            /** Создание нового источника */
+            Route::post('createSource', 'Dev\Sources@createSource');
+
+        });
+
     });
 
 });
