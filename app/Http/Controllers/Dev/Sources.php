@@ -61,11 +61,31 @@ class Sources extends Controller
     public static function getResources(Request $request)
     {
 
-        $resources = RequestsSourcesResource::all();
+        foreach (RequestsSourcesResource::orderBy('id', "DESC")->get() as $resource)
+            $resources[] = self::getResourceRow($resource);
 
         return \Response::json([
-            'resources' => $resources,
+            'resources' => $resources ?? [],
         ]);
+
+    }
+
+    /**
+     * Метод вывод данных одной строки ресурса
+     * 
+     * @param \App\Models\RequestsSourcesResource $resource
+     * @return object
+     */
+    public static function getResourceRow(RequestsSourcesResource $resource) {
+
+        $data = (object) $resource->toArray();
+
+        $data->source = $resource->source();
+
+        $data->icon = $resource->type == "site" ? "world" : "phone";
+        $data->date = date("d.m.Y H:i:s", strtotime($resource->created_at));
+
+        return $data;
 
     }
 
@@ -104,7 +124,7 @@ class Sources extends Controller
 
             $request->site = $request->resource;
 
-            return self::createResourceSite($request);
+            return Sources::createResourceSite($request);
 
         }
 
@@ -137,7 +157,7 @@ class Sources extends Controller
         \App\Models\Log::log($request, $resource);
 
         return \Response::json([
-            'resource' => $resource,
+            'resource' => Sources::getResourceRow($resource),
         ]);
 
     }
@@ -170,7 +190,7 @@ class Sources extends Controller
         \App\Models\Log::log($request, $resource);
 
         return \Response::json([
-            'resource' => $resource,
+            'resource' => Sources::getResourceRow($resource),
         ]);
 
     }

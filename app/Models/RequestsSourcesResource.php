@@ -19,5 +19,15 @@ class RequestsSourcesResource extends Model
         'type',
         'val',
     ];
+
+    /**
+     * Получить источник, относящийся к ресурсу
+     * 
+     * @return \App\Models\RequestsSource
+     */
+    public function source()
+    {
+        return RequestsSource::find($this->sourse_id);
+    }
     
 }
