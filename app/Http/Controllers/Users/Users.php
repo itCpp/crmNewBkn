@@ -96,6 +96,7 @@ class Users extends Controller
                 'admin_users', // Доступ к сотрудникам
                 'admin_callcenters', // Доступ к настройкам колл-центров
                 'admin_sources', // Доступ к настройкам источников
+                'dev_statuses', // Доступ к настройки статусов и вкладок
             ]),
         ];
 

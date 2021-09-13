@@ -120,6 +120,16 @@ Route::group(['middleware' => 'user.token'], function() {
 
         });
 
+        /** Настройка вкладок и статусов */
+        Route::group(['middleware' => "user.can:dev_statuses"], function() {
+
+            /** Список всех статусов */
+            Route::post('getStatuses', 'Dev\Statuses@getStatuses');
+            /** Создание нового статуса */
+            Route::post('createStatus', 'Dev\Statuses@createStatus');
+
+        });
+
     });
 
 });
