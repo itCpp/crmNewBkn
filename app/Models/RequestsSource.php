@@ -17,7 +17,7 @@ class RequestsSource extends Model
      */
     public function resources() {
 
-        return $this->hasMany(RequestsSourcesResource::class, "sourse_id");
+        return $this->hasMany(RequestsSourcesResource::class, "source_id");
 
     }
 

@@ -102,10 +102,18 @@ Route::group(['middleware' => 'user.token'], function() {
             /** Создание нового источника */
             Route::post('createSource', 'Dev\Sources@createSource');
 
+            /** Настройка источника */
+            Route::post('getSourceData', 'Dev\Sources@getSourceData');
+            /** Изменение настроек источника */
+            Route::post('saveSourceData', 'Dev\Sources@saveSourceData');
+
             /** Список ресурсов для источников */
             Route::post('getResources', 'Dev\Sources@getResources');
             /** Создание нового ресурса для источников */
             Route::post('createResource', 'Dev\Sources@createResource');
+
+            /** Применение ресурса к источнику */
+            Route::post('setResourceToSource', 'Dev\Sources@setResourceToSource');
 
         });
 
