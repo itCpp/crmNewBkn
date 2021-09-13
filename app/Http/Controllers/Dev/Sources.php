@@ -250,13 +250,14 @@ class Sources extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Response
      */
-    public static function setResourceToSource(Request $request) {
+    public static function setResourceToSource(Request $request)
+    {
 
         if (!$source = RequestsSource::find($request->sourceId))
             return \Response::json(['message' => "Источник не найден"], 400);
 
         if (!$resource = RequestsSourcesResource::find($request->resourceId))
-            return \Response::json(['message' => "Источник не найден"], 400);
+            return \Response::json(['message' => "Ресурс не найден"], 400);
 
         $resource->source_id = $request->set ? $source->id : null;
         $resource->save();
@@ -268,6 +269,27 @@ class Sources extends Controller
         return \Response::json([
             'source' => $source,
             'checked' => $request->set,
+        ]);
+
+    }
+
+    /**
+     * Вывод свободных и активных ресурсов по источнику
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Response
+     */
+    public static function getFreeResources(Request $request)
+    {
+
+        if (!$source = RequestsSource::find($request->id))
+            return \Response::json(['message' => "Источник не найден"], 400);
+
+        $free = RequestsSourcesResource::where('source_id', null)->get();
+
+        return \Response::json([
+            'resources' => $source->resources()->get(),
+            'freeResources' => $free,
         ]);
 
     }

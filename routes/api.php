@@ -115,6 +115,9 @@ Route::group(['middleware' => 'user.token'], function() {
             /** Применение ресурса к источнику */
             Route::post('setResourceToSource', 'Dev\Sources@setResourceToSource');
 
+            /** Вывод свободных и активных ресурсов по источнику */
+            Route::post('getFreeResources', 'Dev\Sources@getFreeResources');
+
         });
 
     });
