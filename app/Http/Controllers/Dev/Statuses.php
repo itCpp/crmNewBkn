@@ -19,7 +19,7 @@ class Statuses extends Controller
     public static function getStatuses(Request $request)
     {
 
-        $statuses = Status::all();
+        $statuses = Status::orderBy('id', "DESC")->get();
 
         return \Response::json([
             'statuses' => $statuses ?? [],
@@ -62,6 +62,9 @@ class Statuses extends Controller
                 $errors['time'][] = "Необходимо выбрать время учета";
 
         }
+
+        if (Status::where('name', $request->name)->count())
+            $errors['name'][] = "Это наименование уже используется";
 
         if (count($errors)) {
             return \Response::json([
