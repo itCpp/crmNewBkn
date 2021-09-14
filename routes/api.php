@@ -120,7 +120,7 @@ Route::group(['middleware' => 'user.token'], function() {
 
         });
 
-        /** Настройка вкладок и статусов */
+        /** Настройка статусов */
         Route::group(['middleware' => "user.can:dev_statuses"], function() {
 
             /** Список всех статусов */
@@ -130,8 +130,18 @@ Route::group(['middleware' => 'user.token'], function() {
 
             /** Вывод данных одного статуса */
             Route::post('getStatusData', 'Dev\Statuses@getStatusData');
-            /** Созранение данных статуса */
+            /** Изменение данных статуса */
             Route::post('saveStatus', 'Dev\Statuses@saveStatus');
+
+        });
+
+        /** Настройка вкладок */
+        Route::group(['middleware' => "user.can:dev_tabs"], function() {
+
+            /** Список всех статусов */
+            Route::post('getTabs', 'Dev\Tabs@getTabs');
+            /** Создание новой вкладки */
+            Route::post('createTab', 'Dev\Tabs@createTab');
 
         });
 
