@@ -128,6 +128,11 @@ Route::group(['middleware' => 'user.token'], function() {
             /** Создание нового статуса */
             Route::post('createStatus', 'Dev\Statuses@createStatus');
 
+            /** Вывод данных одного статуса */
+            Route::post('getStatusData', 'Dev\Statuses@getStatusData');
+            /** Созранение данных статуса */
+            Route::post('saveStatus', 'Dev\Statuses@saveStatus');
+
         });
 
     });
