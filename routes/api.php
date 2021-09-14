@@ -145,6 +145,8 @@ Route::group(['middleware' => 'user.token'], function() {
 
             /** Вывод данных одной вкладки */
             Route::post('getTab', 'Dev\Tabs@getTab');
+            /** Изменение данных вкладки */
+            Route::post('saveTab', 'Dev\Tabs@saveTab');
 
         });
 

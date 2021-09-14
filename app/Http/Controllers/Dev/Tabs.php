@@ -60,6 +60,8 @@ class Tabs extends Controller
             'name_title' => $request->name_title,
         ]);
 
+        parent::logData($request, $tab);
+
         return \Response::json([
             'tab' => $tab,
         ]);
@@ -86,6 +88,31 @@ class Tabs extends Controller
         return \Response::json([
             'tab' => $tab,
             'columns' => $columns ?? null,
+        ]);
+
+    }
+
+    /**
+     * Изменение данных вкладки
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Response
+     */
+    public static function saveTab(Request $request)
+    {
+
+        if (!$tab = Tab::find($request->id))
+            return \Response::json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
+
+        $tab->name = $request->name;
+        $tab->name_title = $request->name_title;
+
+        $tab->save();
+
+        parent::logData($request, $tab);
+
+        return \Response::json([
+            'tab' => $tab,
         ]);
 
     }

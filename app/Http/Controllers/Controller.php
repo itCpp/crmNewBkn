@@ -12,6 +12,19 @@ class Controller extends BaseController
 
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+	/**
+	 * Логирование изменения данных
+	 * 
+	 * @param \Illuminate\Http\Request $request
+	 * @param $model Экземпляр затрагиваемой модели
+	 * @return \App\Models\Log
+	 */
+	public static function logData($request, $model) {
+
+		return \App\Models\Log::log($request, $model);
+
+	}
+
     /**
 	 * Метод проверки и преобразования номера телефона
 	 *
