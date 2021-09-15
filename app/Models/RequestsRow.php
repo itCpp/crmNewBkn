@@ -30,4 +30,56 @@ class RequestsRow extends Model
 
     }
 
+    /**
+     * Формирование запроса для вывода вкладки
+     * 
+     * @param array         Данные для конструктора запроса
+     * @return RequestRow   Модель с примененным условием запроса
+     */
+    public static function setWhere($wheres = [])
+    {
+
+        $model = with(new static);
+
+        foreach ($wheres as $query) {
+
+            $method = $query['where'];
+            
+            if ($method != "whereFunction") {
+
+                $attrts = $query['attr'] ?? [];
+                $where = [];
+
+                foreach ($attrts as $attr) {
+
+                    $column = $attr['column'] ?? null;
+                    $operator = $attr['operator'] ?? null;
+                    $value = $attr['value'] ?? null;
+                    $value0 = $attr['value0'] ?? null;
+                    $value1 = $attr['value1'] ?? null;
+
+                    if ($value0 AND $value1) {
+                        $row = [$column, [$value0, $value1]];
+                    }
+                    else {
+                        $row = [$column, $operator ?? $value, $operator ? $value : null];
+                    }
+
+                    $where[] = $row;
+
+                }
+
+                if (count($where) == 1)
+                    $model = $model->$method(...$where[0]);
+                else
+                    $model = $model->$method($where);
+
+            }
+
+        }
+
+        return $model;
+
+    }
+
 }

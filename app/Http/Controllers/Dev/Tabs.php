@@ -93,6 +93,28 @@ class Tabs extends Controller
     }
 
     /**
+     * Список разрешенных выражений для запроса
+     * 
+     * @var array
+     */
+    protected static $whereList = [
+        "where",
+        "orWhere",
+        "whereNotBetween",
+        "whereBetween",
+        "whereIn",
+        "whereNotIn",
+        "whereNull",
+        "whereNotNull",
+        "whereDate",
+        "whereMonth",
+        "whereDay",
+        "whereYear",
+        "whereTime",
+        "whereColumn",
+    ];
+
+    /**
      * Изменение данных вкладки
      * 
      * @param \Illuminate\Http\Request $request
@@ -104,8 +126,28 @@ class Tabs extends Controller
         if (!$tab = Tab::find($request->id))
             return \Response::json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
 
+        // Проверка допустимых выражений
+        if ($request->where_settings) {
+
+            foreach ($request->where_settings as $key => $query) {
+                if ($query['where'] != "whereFunction") {
+                    if (!in_array($query['where'], self::$whereList))
+                        $errors['where_settings'][$key]['where'][] = "Недопустимое выражение {$query['where']}";
+                }
+            }
+
+        }
+
+        if ($errors ?? null) {
+            return response()->json([
+                'message' => "Имеются ошибки",
+                'errors' => $errors,
+            ], 422);
+        }
+
         $tab->name = $request->name;
         $tab->name_title = $request->name_title;
+        $tab->where_settings = $request->where_settings;
 
         $tab->save();
 
@@ -113,6 +155,35 @@ class Tabs extends Controller
 
         return \Response::json([
             'tab' => $tab,
+        ]);
+
+    }
+
+    /**
+     * Вывод сформированного запроса по динамическому конструктору
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function getSql(Request $request)
+    {
+
+        if (!$tab = Tab::find($request->id))
+            return response()->json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
+
+        $tab->where_settings = json_decode($tab->where_settings, true);
+
+        // \DB::enableQueryLog();
+        
+        $model = RequestsRow::setWhere($tab->where_settings);
+        $query = $model->toSql();
+
+        // $model->limit(1)->get();
+
+        return response()->json([
+            'message' => $query,
+            'where_settings' => $tab->where_settings,
+            // 'log' => \DB::getQueryLog()[0] ?? null,
         ]);
 
     }
