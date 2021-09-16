@@ -294,4 +294,50 @@ class Sources extends Controller
 
     }
 
+    /**
+     * Вывод источников для списка выбора
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function getListSources(Request $request)
+    {
+
+        $rows = RequestsSource::orderBy('name');
+
+        foreach ($rows->get() as $source) {
+            $sources[] = [
+                'key' => $source->id,
+                'value' => $source->id,
+                'text' => $source->name ?? $source->id,
+            ];
+        }
+
+        return $sources ?? [];
+
+    }
+
+    /**
+     * Вывод ресурсов для списка выбора
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function getListResources(Request $request)
+    {
+
+        $rows = RequestsSourcesResource::orderBy('val');
+
+        foreach ($rows->get() as $resource) {
+            $resources[] = [
+                'key' => $resource->id,
+                'value' => $resource->id,
+                'text' => $resource->val,
+            ];
+        }
+
+        return $resources ?? [];
+
+    }
+
 }

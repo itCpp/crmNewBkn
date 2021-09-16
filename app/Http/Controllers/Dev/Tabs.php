@@ -175,15 +175,37 @@ class Tabs extends Controller
 
         // \DB::enableQueryLog();
         
-        $model = RequestsRow::setWhere($tab->where_settings);
+        $model = RequestsRow::setWhere($request->where ?? []);
         $query = $model->toSql();
 
         // $model->limit(1)->get();
 
         return response()->json([
             'message' => $query,
-            'where_settings' => $tab->where_settings,
+            // 'where_settings' => $tab->where_settings,
             // 'log' => \DB::getQueryLog()[0] ?? null,
+        ]);
+
+    }
+
+    /**
+     * Вывод списка значений для конструктора запросов
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function getListWhereIn(Request $request) {
+
+        if ($request->preset == "status")
+            $list = Statuses::getListStatuses($request);
+        elseif ($request->preset == "sources")
+            $list = Sources::getListSources($request);
+        elseif ($request->preset == "resources")
+            $list = Sources::getListResources($request);
+
+        return response()->json([
+            'list' => $list ?? [],
+            'preset' => $request->preset,
         ]);
 
     }

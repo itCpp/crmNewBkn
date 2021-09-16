@@ -150,6 +150,9 @@ Route::group(['middleware' => 'user.token'], function() {
             /** Вывод сформированного запроса */
             Route::post('getSql', 'Dev\Tabs@getSql');
 
+            /** Вывод списка значений для конструктора запросов */
+            Route::post('getListWhereIn', 'Dev\Tabs@getListWhereIn');
+
         });
 
     });

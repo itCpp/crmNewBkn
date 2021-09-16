@@ -39,40 +39,92 @@ class RequestsRow extends Model
     public static function setWhere($wheres = [])
     {
 
+        /**
+         * Определение типов переменных для конструктора запросов
+         * 
+         * @var array
+         */
+        $typeWhereValue = [
+            'whereIn' => "list",
+            'whereNotIn' => "list",
+            'whereBetween' => "between",
+            'whereNotBetween' => "between",
+        ];
+
+        /**
+         * Методы конструктора, принимающице в качестве первого аргумента
+         * массив с массивами аргументов и занчений
+         * 
+         * @var array
+         */
+        $whereArgumentsArray = [
+            'where',
+            'orWhere'
+        ];
+
         $model = with(new static);
 
         foreach ($wheres as $query) {
 
-            $method = $query['where'];
+            $method = $query['where']; // Методы выражения
             
+            // Методы для формирования простых условий
             if ($method != "whereFunction") {
 
-                $attrts = $query['attr'] ?? [];
-                $where = [];
+                $attrts = $query['attr'] ?? []; // Список атрибутов
 
+                // Метод может принимать первым аргументом массив из множества условий
+                $toArray = in_array($method, $whereArgumentsArray);
+
+                $where = []; // Массив условий
+
+                // Обход аргументов
                 foreach ($attrts as $attr) {
 
-                    $column = $attr['column'] ?? null;
-                    $operator = $attr['operator'] ?? null;
-                    $value = $attr['value'] ?? null;
-                    $value0 = $attr['value0'] ?? null;
-                    $value1 = $attr['value1'] ?? null;
+                    $column = $attr['column'] ?? null; // Наименование колонки
+                    $operator = $attr['operator'] ?? null; // Оператор условия
 
-                    if ($value0 AND $value1) {
-                        $row = [$column, [$value0, $value1]];
-                    }
-                    else {
-                        $row = [$column, $operator ?? $value, $operator ? $value : null];
+                    $value = $attr['value'] ?? null; // Строчное значение
+                    $between = $attr['between'] ?? null; // Период значений от и до
+                    $list = $attr['list'] ?? null; // Список значений
+
+                    // Определение типа значений для различных условий
+                    $type = $typeWhereValue[$method] ?? "value";
+
+                    // Необходимо наименование колонки
+                    if ($column) {
+
+                        $row = null;
+
+                        // Разделение на типы аргументов
+                        if ($value)
+                            $row = [$column, $operator ?? $value, $operator ? $value : null];
+                        elseif (is_array($between) AND count($between) == 2)
+                            $row = [$column, $between];
+                        elseif (is_array($list))
+                            $row = [$column, $list];
+
+                        if ($row)
+                            $where[] = $row;
+
                     }
 
-                    $where[] = $row;
+                    // Остановка цикла для методов, принимающих определенное количество аргументов
+                    if (!$toArray)
+                        break;
 
                 }
 
-                if (count($where) == 1)
-                    $model = $model->$method(...$where[0]);
-                else
-                    $model = $model->$method($where);
+                // Проверка наличия аргументов для применения конструктора запроса
+                $arguments = count($where);
+
+                if ($arguments > 0) {
+
+                    $model = $arguments == 1
+                        ? $model->$method(...$where[0] ?? [])
+                        : $model = $model->$method($where);
+
+                }
 
             }
 

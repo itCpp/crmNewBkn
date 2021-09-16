@@ -32,6 +32,29 @@ class Statuses extends Controller
     }
 
     /**
+     * Список статусов для списка выбора
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function getListStatuses(Request $request)
+    {
+
+        $rows = Status::orderBy('name');
+
+        foreach ($rows->get() as $status) {
+            $statuses[] = [
+                'key' => $status->id,
+                'value' => $status->id,
+                'text' => $status->name,
+            ];
+        }
+
+        return $statuses ?? [];
+
+    }
+
+    /**
      * Создание нового статуса
      * 
      * @param \Illuminate\Http\Request $request
