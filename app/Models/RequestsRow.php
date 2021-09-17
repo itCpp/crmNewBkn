@@ -4,11 +4,60 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 // use Illuminate\Support\Facades\Schema;
 
 class RequestsRow extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    /**
+     * Атрибуты, которые назначаются массово
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'query_type',
+        'callcenter_sector',
+        'pin',
+        'last_phone',
+        'source_id',
+        'sourse_resource',
+        'client_name',
+        'theme',
+        'region',
+        'check_moscow',
+        'status',
+        'status_icon',
+        'address',
+        'event_at',
+        'uplift',
+        'uplift_at',
+    ];
+
+    /**
+     * Поля типа Carbon
+     * 
+     * @var array
+     */
+    protected $dates = [
+        'event_at',
+        'created_at',
+        'deleted_at',
+        'uplift_at',
+    ];
+
+    /**
+     * Клиенты, относящиеся к заявке
+     * 
+     * @return \App\Models\RequestRow
+     */
+    public function clients()
+    {
+
+        return $this->belongsToMany(RequestsClient::class, 'requests_rows_requests_clients', 'id_request', 'id_requests_clients');
+
+    }
 
     /**
      * Вывод информации по колонкам

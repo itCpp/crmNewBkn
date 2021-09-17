@@ -129,7 +129,7 @@ class Sources extends Controller
 
         $data = (object) $resource->toArray();
 
-        $data->source = $resource->source();
+        $data->source = $resource->source;
 
         $data->icon = $resource->type == "site" ? "world" : "phone";
         $data->date = date("d.m.Y H:i:s", strtotime($resource->created_at));

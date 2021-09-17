@@ -23,6 +23,8 @@ Route::post('loginStart', 'Users\Auth@loginStart');
 /** Завершение авторизации */
 Route::post('login', 'Users\Auth@login');
 
+Route::post('addRequest', 'Requests\AddRequest@add');
+
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function() {
 

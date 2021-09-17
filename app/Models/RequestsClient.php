@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RequestsSourcesResource extends Model
+class RequestsClient extends Model
 {
     use HasFactory;
 
@@ -15,19 +15,20 @@ class RequestsSourcesResource extends Model
      * @var array
      */
     protected $fillable = [
-        'sourse_id',
-        'type',
-        'val',
+        'phone',
+        'hash',
     ];
 
     /**
-     * Получить источник, относящийся к ресурсу
+     * Заявки, относящиеся к клиенту
      * 
-     * @return \App\Models\RequestsSource
+     * @return \App\Models\RequestsRow
      */
-    public function source()
+    public function requests()
     {
-        return $this->belongsTo(RequestsSource::class, 'source_id');
+
+        return $this->belongsToMany(RequestsRow::class, 'requests_rows_requests_clients', 'id_requests_clients', 'id_request');
+
     }
-    
+
 }
