@@ -62,6 +62,16 @@ class RequestsRow extends Model
             'orWhere'
         ];
 
+        /**
+         * Методы конструктора, принимающице только один аргумент
+         * 
+         * @var array
+         */
+        $whereOneArguments = [
+            'whereNull',
+            'whereNotNull'
+        ];
+
         $model = with(new static);
 
         foreach ($wheres as $query) {
@@ -97,6 +107,8 @@ class RequestsRow extends Model
                         $row = null;
 
                         // Разделение на типы аргументов
+                        if (in_array($method, $whereOneArguments))
+                            $row = [$column];
                         if ($value)
                             $row = [$column, $operator ?? $value, $operator ? $value : null];
                         elseif (is_array($between) AND count($between) == 2)
