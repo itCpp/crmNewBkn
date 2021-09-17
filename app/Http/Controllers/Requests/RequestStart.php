@@ -18,7 +18,7 @@ class RequestStart extends Controller
     {
 
         return response()->json([
-            'tabs' => $request->__user->getModel()->tabs,
+            'tabs' => $request->__user->getAllTabs(),
         ]);
 
     }

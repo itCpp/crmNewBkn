@@ -207,4 +207,34 @@ class UserData extends Controller
 
     }
 
+    /**
+     * Вывод всех вкладок, доступных сотруднику
+     * 
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAllTabs()
+    {
+
+        if ($this->superadmin)
+            return \App\Models\Tab::all();
+
+        $tabs = [];
+        $id = [];
+
+        foreach ($this->__user->tabs as $tab) {
+            $tabs[] = $tab;
+            $id[] = $tab->id;
+        }
+
+        foreach ($this->__user->roles as $role) {
+            foreach ($role->tabs()->whereNotIn('id', array_unique($id))->get() as $tab) {
+                $tabs[] = $tab;
+                $id[] = $tab->id;
+            }
+        }
+
+        return collect($tabs);
+
+    }
+
 }
