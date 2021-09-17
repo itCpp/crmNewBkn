@@ -62,4 +62,14 @@ class Role extends Model
 
     }
 
+    /**
+     * Доступные вкладки для роли
+     */
+    public function tabs()
+    {
+
+        return $this->belongsToMany(Tab::class, 'tab_role', 'role_id');
+
+    }
+
 }

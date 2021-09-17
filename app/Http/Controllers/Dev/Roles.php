@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Tab;
 
 class Roles extends Controller
 {
@@ -42,9 +43,20 @@ class Roles extends Controller
         if (!$role = Role::find($request->role))
             return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
 
-        return response()->json([
-            'role' => $role,
-        ]);
+        $role->users_count = $role->users()->count();
+
+        $role->tabs = $role->tabs;
+        $role->tabsId = $role->tabs->map(function($row) {
+            return $row->id;
+        });
+
+        if ($request->tabsInfo) {
+            $response['tabs'] = Tab::orderBy('name')->get();
+        }
+
+        $response['role'] = $role;
+
+        return response()->json($response);
 
     }
 
@@ -129,9 +141,36 @@ class Roles extends Controller
 
         \App\Models\Log::log($request, $role);
 
+        $role->users_count = $role->users()->count();
+
         return response()->json([
             'role' => $role,
         ]);
+
+    }
+
+    /**
+     * Присвоение роли доступа к вкладке
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function setTabForRole(Request $request)
+    {
+
+        if (!$role = Role::find($request->role))
+            return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
+
+        $presence = $role->tabs()->where('id', $request->tabId)->count();
+
+        if (!$presence AND $request->checked)
+            $role->tabs()->attach($request->tabId);
+        else if ($presence AND !$request->checked)
+            $role->tabs()->detach($request->tabId);
+
+        $request->tabsInfo = true;
+
+        return Roles::getRole($request);
 
     }
 

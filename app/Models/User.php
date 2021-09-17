@@ -54,4 +54,14 @@ class User extends Model
 
     }
 
+    /**
+     * Доступные вкладки для пользователя
+     */
+    public function tabs()
+    {
+
+        return $this->belongsToMany(Tab::class, 'tab_user');
+
+    }
+
 }

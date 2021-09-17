@@ -29,6 +29,17 @@ Route::group(['middleware' => 'user.token'], function() {
     /** Первоначальная загрузка страницы со всеми данными */
     Route::post('check', 'Users\Users@check');
 
+    /** Маршрутизация по заявкам */
+    Route::group([
+        'prefix' => "requests",
+        'middleware' => "user.can:requests_access",
+    ], function() {
+
+        /** Запуск заявок */
+        Route::post('start', 'Requests\RequestStart@start');
+
+    });
+
     /** Маршрутизация админпанели */
     Route::group(['prefix' => "admin", 'middleware' => "user.can:admin_access"], function() {
 
@@ -91,6 +102,9 @@ Route::group(['middleware' => 'user.token'], function() {
             Route::post('getRole', 'Dev\Roles@getRole');
             /** Сохранение данных роли */
             Route::post('saveRole', 'Dev\Roles@saveRole');
+
+            /** Присвоение роли доступа к вкладке */
+            Route::post('setTabForRole', 'Dev\Roles@setTabForRole');
 
         });
 
