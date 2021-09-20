@@ -9,6 +9,17 @@ use App\Models\Status;
 
 class Statuses extends Controller
 {
+
+    /**
+     * Алгоритным обнуления заявок
+     * 
+     * @var array
+     */
+    public static $algorithms = [
+        ['name' => "xHour", "option" => true],
+        ['name' => "nextDay", "option" => false],
+        ['name' => "xDays", "option" => true],
+    ];
     
     /**
      * Список всех статусов
@@ -161,6 +172,24 @@ class Statuses extends Controller
         $request->__status = $status;
 
         return Statuses::createStatus($request);
+
+    }
+
+    /**
+     * Вывод данных по алгоритму обнуления
+     * 
+     * @var string $name
+     * @return null|array
+     */
+    public static function findAlgorithm($name = "")
+    {
+
+        foreach (self::$algorithms as $algorithm) {
+            if ($algorithm['name'] == $name)
+                return $algorithm;
+        }
+
+        return null;
 
     }
 

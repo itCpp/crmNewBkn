@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use App\Http\Controllers\Dev\Statuses;
 use App\Models\RequestsRow;
 use App\Models\RequestsClient;
 use App\Models\IncomingQuery;
 use App\Models\RequestsSource;
 use App\Models\RequestsSourcesResource;
 use App\Models\Status;
+use App\Models\User;
 
 /**
  * Оаработка входящих запросов для создания новой заявки
@@ -108,13 +110,12 @@ class AddRequest extends Controller
             ->requestAnalise()
             ->requestSave();
 
-        $this->query = $this->writeQuery();
-
-        $response = [
+        $this->response = [
             'done' => "success",
             'message' => "Запрос обработан",
             'id' => $this->data->id ?? null, // Идентификатор заявки
             'zeroing' => $this->zeroing, // Информация об обнулении
+            'client' => $this->client->id ?? null, // Идентификатор клиента
             // 'client' => $this->client,
             // 'resource' => $this->resource,
             // 'source' => $this->source,
@@ -124,11 +125,13 @@ class AddRequest extends Controller
         ];
 
         if ($this->errors) {
-            $response['done'] = "fail";
-            $response['errors'] = $this->errors;
+            $this->response['done'] = "fail";
+            $this->response['errors'] = $this->errors;
         }
 
-        return response()->json($response);
+        $this->query = $this->writeQuery();
+
+        return response()->json($this->response);
 
     }
 
@@ -246,9 +249,51 @@ class AddRequest extends Controller
         if (!$this->status->zeroing)
             return false;
 
-        $this->status->zeroing_data = json_decode($this->status->zeroing_data);
+        if (!$data = json_decode($this->status->zeroing_data))
+            return false;
 
-        return false;
+        // Информация об алгоритме
+        if (!$algorithm = Statuses::findAlgorithm($data->algorithm ?? null))
+            return false;
+
+        // Проверка дополнительного параметра
+        if ($algorithm['option'] AND ($data->algorithm_option ?? null) === null)
+            return false;
+
+        $time_created = $data->time_created ?? false; // Время создания
+        $time_event = $data->time_event ?? false; // Время события
+        $time_updated = $data->time_updated ?? false; // Время обновления
+
+        $time = time();
+        $last = null;
+
+        $created = $time_created ? date("Y-m-d H:i:s", strtotime($this->data->created_at)) : null;
+        $event = $time_event ? date("Y-m-d H:i:s", strtotime($this->data->event_at)) : null;
+        $updated = $time_updated ? date("Y-m-d H:i:s", strtotime($this->data->updated_at)) : null;
+
+        if ($time_created AND $created AND $last < $created)
+            $last = $created;
+
+        if ($time_event AND $event AND $last < $event)
+            $last = $event;
+
+        if ($time_updated AND $updated AND $last < $updated)
+            $last = $updated;
+
+        if ($algorithm['name'] == "xHour")
+            $date = date("Y-m-d H:i:s", $time - ($algorithm['option'] * 60 * 60));
+        elseif ($algorithm['name'] == "xDays")
+            $date = date("Y-m-d H:i:s", $time - ($algorithm['option'] * 24 * 60 * 60));
+        elseif ($algorithm['name'] == "nextDay")
+            $date = date("Y-m-d 00:00:00", $time - (24 * 60 * 60));
+
+        if (!isset($date))
+            return false;
+
+        if ($last >= $date)
+            return false;
+        
+        return true;
 
     }
 
@@ -271,6 +316,7 @@ class AddRequest extends Controller
 
     /**
      * Заполнение поступивших данных и сохранение заявки
+     * Добавление комментариев и прочего
      * 
      * @return $this
      */
@@ -278,9 +324,38 @@ class AddRequest extends Controller
     {
 
         if (!$this->data)
-            return $this->createNewRequest();
+            $this->createNewRequest();
+
+        // Время подъема
+        $this->data->uplift = 1;
+        $this->data->uplift_at = date("Y-m-d H:i:s");
+
+        $this->data->pin = $this->checkPin();
+
+        $this->data->save();
 
         return $this;
+
+    }
+
+    /**
+     * Проверка сотрудника на момент подъема заявки
+     * 
+     * @return null|string
+     */
+    public function checkPin()
+    {
+
+        if (!$this->data->pin)
+            return null;
+
+        if (!$user = User::where('pin', $this->data->pin)->first())
+            return null;
+
+        if ($user->deleted_at)
+            return null;
+        
+        return $user->pin;
 
     }
 
@@ -327,6 +402,7 @@ class AddRequest extends Controller
             'client_id' => $this->client->id ?? null,
             'request_id' => $this->data->id ?? null,
             'request_data' => $data,
+            'response_data' => json_encode($this->response, JSON_UNESCAPED_UNICODE),
             'ip' => $this->request->ip(),
             'user_agent' => $this->request->header('User-Agent'),
         ]);

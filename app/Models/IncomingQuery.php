@@ -19,6 +19,7 @@ class IncomingQuery extends Model
         'client_id',
         'request_id',
         'request_data',
+        'response_data',
         'ip',
         'user_agent',
     ];
