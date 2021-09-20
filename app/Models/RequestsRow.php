@@ -27,7 +27,10 @@ class RequestsRow extends Model
         'theme',
         'region',
         'check_moscow',
-        'status',
+        'comment',
+        'comment_urist',
+        'comment_first',
+        'status_id',
         'status_icon',
         'address',
         'event_at',
@@ -56,6 +59,30 @@ class RequestsRow extends Model
     {
 
         return $this->belongsToMany(RequestsClient::class, 'requests_rows_requests_clients', 'id_request', 'id_requests_clients');
+
+    }
+
+    /**
+     * Источник заявки
+     * 
+     * @return 
+     */
+    public function source()
+    {
+
+        return $this->belongsTo(RequestsSource::class, 'source_id');
+
+    }
+
+    /**
+     * Источник заявки
+     * 
+     * @return 
+     */
+    public function status()
+    {
+
+        return $this->belongsTo(Status::class, 'status_id');
 
     }
 

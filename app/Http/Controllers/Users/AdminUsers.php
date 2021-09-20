@@ -292,7 +292,7 @@ class AdminUsers extends Controller
 
         // Список разрешений, с учетом своих разрешений
         foreach ($permits_all as $permit) {
-            if ($rights[$permit->permission])
+            if ($rights->{$permit->permission})
                 $permits[] = $permit;
         }
 

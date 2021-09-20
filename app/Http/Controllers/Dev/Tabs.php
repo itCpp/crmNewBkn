@@ -22,7 +22,7 @@ class Tabs extends Controller
 
         foreach (Tab::all() as $tab) {
 
-            $tab->where_settings = json_decode($tab->where_settings);
+            // $tab->where_settings = json_decode($tab->where_settings);
 
             $tabs[] = $tab;
 
@@ -80,7 +80,7 @@ class Tabs extends Controller
         if (!$tab = Tab::find($request->id))
             return \Response::json(['message' => "Данные по вкладке не найдены"], 400);
 
-        $tab->where_settings = json_decode($tab->where_settings);
+        // $tab->where_settings = json_decode($tab->where_settings);
 
         if ($request->getColumns)
             $columns = RequestsRow::getColumnsList();
@@ -171,7 +171,7 @@ class Tabs extends Controller
         if (!$tab = Tab::find($request->id))
             return response()->json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
 
-        $tab->where_settings = json_decode($tab->where_settings, true);
+        // $tab->where_settings = json_decode($tab->where_settings, true);
 
         // \DB::enableQueryLog();
         

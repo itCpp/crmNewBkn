@@ -40,6 +40,11 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Запуск заявок */
         Route::post('start', 'Requests\RequestStart@start');
 
+        /** Вывод заявок */
+        Route::post('get', 'Requests\Requests@get');
+        /** Вывод одной строки */
+        Route::post('getRow', 'Requests\Requests@getRow');
+
     });
 
     /** Маршрутизация админпанели */

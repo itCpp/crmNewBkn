@@ -17,8 +17,12 @@ class RequestStart extends Controller
     public static function start(Request $request)
     {
 
+        // Формирование кнопок в верхушке сайта
+        $menu = [];
+
         return response()->json([
             'tabs' => $request->__user->getAllTabs(),
+            'topMenu' => $menu,
         ]);
 
     }

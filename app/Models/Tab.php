@@ -10,6 +10,15 @@ class Tab extends Model
     use HasFactory;
 
     /**
+     * Атрибуты, которые преобразовываются в json
+     *
+     * @var array
+     */
+    protected $casts = [
+        'where_settings' => 'array',
+    ];
+
+    /**
      * Атрибуты, которые назначаются массово
      *
      * @var array

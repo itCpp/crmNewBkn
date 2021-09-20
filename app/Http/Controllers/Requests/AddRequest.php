@@ -253,7 +253,7 @@ class AddRequest extends Controller
         if (!$this->data)
             return $this;
 
-        $this->status = Status::find($this->data->status);
+        $this->status = Status::find($this->data->status_id);
 
         if ($this->checkZeroing())
             return $this->requestZeroing();

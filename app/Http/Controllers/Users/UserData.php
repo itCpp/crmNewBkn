@@ -125,7 +125,7 @@ class UserData extends Controller
      * Вывод списка разрешений пользователя
      * 
      * @param array     $permits Список разрешений к проверке
-     * @return array
+     * @return Permissions
      */
     public function getListPermits($permits = []) {
 
@@ -156,7 +156,7 @@ class UserData extends Controller
         foreach ($permits as $permit)
             $list[$permit] = in_array($permit, $access);
 
-        return $list ?? [];
+        return new Permissions($list ?? []);
 
     }
 
@@ -164,7 +164,7 @@ class UserData extends Controller
      * Формирование списка разрешений для супер-админа
      * 
      * @param array     $permits Список заправшиваемых разрешений
-     * @return array
+     * @return Permissions
      */
     protected function superAdminPermitsList($permits) {
 
@@ -172,7 +172,7 @@ class UserData extends Controller
             $list[$permit] = true;
         }
 
-        return $list ?? [];
+        return new Permissions($list ?? []);
         
     }
 
@@ -234,6 +234,30 @@ class UserData extends Controller
         }
 
         return collect($tabs);
+
+    }
+
+    /**
+     * Проверка разрешения на вывод данных по вкладке
+     * 
+     * @param int $id Идентификатор вкладки
+     * @return bool
+     */
+    public function canTab($id = null)
+    {
+
+        if ($this->superadmin)
+            return true;
+
+        if ($this->__user->tabs()->where('id', $id)->count())
+            return true;
+
+        foreach ($this->__user->roles as $role) {
+            if ($role->tabs()->where('id', $id)->count())
+                return true;
+        }
+
+        return false;
 
     }
 
