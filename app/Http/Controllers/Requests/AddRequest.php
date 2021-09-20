@@ -15,7 +15,22 @@ use App\Models\Status;
 use App\Models\User;
 
 /**
- * Оаработка входящих запросов для создания новой заявки
+ * Оаработка входящих запросов для создания новой, обнуления и обновления заявки
+ * 
+ * Основной метод обработки
+ * @method add()
+ * 
+ * @method findClient()
+ * @method findSource()
+ * @method findRequest()
+ * @method requestAnalise()
+ * @method checkZeroing()
+ * @method requestZeroing()
+ * @method requestSave()
+ * @method checkPin()
+ * @method createNewRequest()
+ * 
+ * @method writeQuery()
  */
 class AddRequest extends Controller
 {
@@ -88,7 +103,7 @@ class AddRequest extends Controller
         // Адрес сайта источника
         $this->site = $this->request->site;
 
-        // Тип входящего обращения
+        // Тип обращения по входящим данным
         if ($this->myPhone)
             $this->query_type = "call";
         elseif ($this->site)
@@ -104,22 +119,22 @@ class AddRequest extends Controller
     public function add()
     {
 
-        $this->findClient()
-            ->findSource()
-            ->findRequest()
-            ->requestAnalise()
-            ->requestSave();
+        $this->findClient() // Поиск клиента
+            ->findSource() // Поиск источника
+            ->findRequest() // Поиск заявки клиента по источнику
+            ->requestAnalise() // Анализ существующей заявки
+            ->requestSave(); // Сохранение заявки
 
         $this->response = [
             'done' => "success",
             'message' => "Запрос обработан",
-            'id' => $this->data->id ?? null, // Идентификатор заявки
+            // 'request' => $this->data,
+            'requestId' => $this->data->id ?? null, // Идентификатор заявки
             'zeroing' => $this->zeroing, // Информация об обнулении
-            'client' => $this->client->id ?? null, // Идентификатор клиента
             // 'client' => $this->client,
-            // 'resource' => $this->resource,
+            'clientId' => $this->client->id ?? null, // Идентификатор клиента
             // 'source' => $this->source,
-            'request' => $this->data,
+            // 'resource' => $this->resource,
             'status' => $this->status,
             // 'query' => $this->query,
         ];
@@ -143,6 +158,7 @@ class AddRequest extends Controller
     public function findClient()
     {
 
+        // Отмена запроса
         if (!$this->phone) {
             $this->errors['phone'][] = "Номер телефона клиента не определен";
             return $this;
@@ -150,6 +166,7 @@ class AddRequest extends Controller
 
         $hash = md5($this->phone . env('APP_KEY'));
 
+        // Поиск или создание нового клиента
         if (!$this->client = RequestsClient::where('hash', $hash)->first()) {
             $this->client = RequestsClient::create([
                 'phone' => Crypt::encryptString($this->phone),
@@ -192,6 +209,16 @@ class AddRequest extends Controller
 
         if ($this->resource AND !$this->source) {
             $this->errors['source'][] = "Источник по ресурсу не определен";
+        }
+
+        // Обновлние типа обращения по ресурсу источника
+        if ($this->resource) {
+
+            if ($this->resource->type == "phone")
+                $this->query_type = "call";
+            elseif ($this->resource->type == "site")
+                $this->query_type = "text";
+
         }
 
         return $this;
@@ -346,12 +373,15 @@ class AddRequest extends Controller
     public function checkPin()
     {
 
+        // Отмена проверки
         if (!$this->data->pin)
             return null;
 
+        // Поиск сотрудника по пину
         if (!$user = User::where('pin', $this->data->pin)->first())
             return null;
 
+        // Сотрудник заблокирован или уволен
         if ($user->deleted_at)
             return null;
         
