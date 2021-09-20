@@ -115,6 +115,8 @@ Route::group(['middleware' => 'user.token'], function() {
 
             /** Присвоение роли доступа к вкладке */
             Route::post('setTabForRole', 'Dev\Roles@setTabForRole');
+            /** Присвоение роли доступа к вкладке */
+            Route::post('setStatusForRole', 'Dev\Roles@setStatusForRole');
 
         });
 

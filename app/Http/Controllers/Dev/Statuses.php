@@ -115,6 +115,7 @@ class Statuses extends Controller
 
             $request->__status->name = $request->name;
             $request->__status->zeroing = $request->zeroing ? 1 : 0;
+            $request->__status->event_time = $request->event_time ? 1 : 0;
             $request->__status->zeroing_data = $request->zeroing_data;
 
             $request->__status->save();
@@ -125,6 +126,7 @@ class Statuses extends Controller
             $status = Status::create([
                 'name' => $request->name,
                 'zeroing' => $request->zeroing ? 1 : 0,
+                'event_time' => $request->event_time ? 1 : 0,
                 'zeroing_data' => $request->zeroing_data,
             ]);
         }

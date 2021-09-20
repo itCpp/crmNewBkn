@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Role;
 use App\Models\Permission;
 use App\Models\Tab;
+use App\Models\Status;
 
 class Roles extends Controller
 {
@@ -46,12 +47,17 @@ class Roles extends Controller
         $role->users_count = $role->users()->count();
 
         $role->tabs = $role->tabs;
-        $role->tabsId = $role->tabs->map(function($row) {
+        $role->tabsId = $role->tabs->map(function ($row) {
+            return $row->id;
+        });
+
+        $role->statusesId = $role->statuses->map(function ($row) {
             return $row->id;
         });
 
         if ($request->tabsInfo) {
             $response['tabs'] = Tab::orderBy('name')->get();
+            $response['statuses'] = Status::orderBy('name')->get();
         }
 
         $response['role'] = $role;
@@ -167,6 +173,31 @@ class Roles extends Controller
             $role->tabs()->attach($request->tabId);
         else if ($presence AND !$request->checked)
             $role->tabs()->detach($request->tabId);
+
+        $request->tabsInfo = true;
+
+        return Roles::getRole($request);
+
+    }
+
+    /**
+     * Присвоение роли доступа к кстатусу
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function setStatusForRole(Request $request)
+    {
+
+        if (!$role = Role::find($request->role))
+            return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
+
+        $presence = $role->statuses()->where('id', $request->statusId)->count();
+
+        if (!$presence AND $request->checked)
+            $role->statuses()->attach($request->statusId);
+        else if ($presence AND !$request->checked)
+            $role->statuses()->detach($request->statusId);
 
         $request->tabsInfo = true;
 

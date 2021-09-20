@@ -72,4 +72,14 @@ class Role extends Model
 
     }
 
+    /**
+     * Доступные вкладки для роли
+     */
+    public function statuses()
+    {
+
+        return $this->belongsToMany(Status::class, 'status_role', 'role');
+
+    }
+
 }
