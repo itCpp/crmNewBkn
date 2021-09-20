@@ -45,6 +45,9 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Вывод одной строки */
         Route::post('getRow', 'Requests\Requests@getRow');
 
+        /** Изменение данных заявки */
+        Route::post('save', 'Requests\RequestChange@save');
+
     });
 
     /** Маршрутизация админпанели */

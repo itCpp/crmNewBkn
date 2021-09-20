@@ -85,7 +85,7 @@ class Requests extends Controller
         });
 
         return response()->json([
-            'request' => $row,
+            'request' => Requests::getRequestRow($row),
             'permits' => Requests::$permits,
             'statuses' => $statuses,
             'cities' => \App\Http\Controllers\Infos\Cities::$data,
@@ -136,6 +136,10 @@ class Requests extends Controller
         $row->date_create = date("d.m.Y H:i", strtotime($row->created_at));
         $row->date_uplift = $row->uplift_at ? date("d.m.Y H:i", strtotime($row->uplift_at)) : null;
         $row->date_event = $row->event_at ? date("d.m.Y H:i", strtotime($row->event_at)) : null;
+
+        $row->event_date = $row->event_at ? date("Y-m-d", strtotime($row->event_at)) : null;
+        $row->event_time = $row->event_at ? date("H:i", strtotime($row->event_at)) : null;
+        $row->event_time = $row->event_time !== "00:00" ? $row->event_time : null;
 
         // Данные по номерам телефона
         $row->clients = $row->clients()->get()->map(function ($client) {
