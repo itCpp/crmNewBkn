@@ -26,8 +26,9 @@ class Requests extends Controller
      * @var array
      */
     public static $permitsList = [
-        'requests_add',
-        'requests_edit',
+        'requests_add', // Может добавлять новую заявку
+        'requests_edit', // Может редактировать заявку
+        'request_set_null_status', // Может устанавливать статус необработано
     ];
     
     /**
@@ -76,20 +77,44 @@ class Requests extends Controller
         // Поиск разрешений для заявок
         Requests::$permits = $request->__user->getListPermits(Requests::$permitsList);
 
-        $statuses = Status::all()->map(function ($status) {
+        $row = Requests::getRequestRow($row);
+
+        $addstatus = true; // Добавить в список недоступный статус
+        $statusList = $request->__user->getStatusesList(); // Список доступных статусов
+
+        // Преобразование списка для вывода
+        $statuses = $statusList->map(function ($status) use ($addstatus, $row) {
+
+            if ($status->id == $row->status_id)
+                $addstatus = false;
+
             return [
                 'id' => $status->id,
                 'text' => $status->name,
                 'value' => $status->id,
             ];
+
         });
 
+        // Добавление недоступного для пользователя статуса
+        if ($addstatus) {
+
+            $blockstatus = Status::find($row->status_id);
+
+            $statuses[] = [
+                'id' => $blockstatus->id ?? $row->status_id,
+                'text' => $blockstatus->name ?? "Неизвестный статус",
+                'value' => $blockstatus->id ?? $row->status_id,
+                'disabled' => true,
+            ];
+        }
+
         return response()->json([
-            'request' => Requests::getRequestRow($row),
+            'request' => $row,
             'permits' => Requests::$permits,
             'statuses' => $statuses,
-            'cities' => \App\Http\Controllers\Infos\Cities::$data,
-            'themes' => \App\Http\Controllers\Infos\Themes::$data,
+            'cities' => \App\Http\Controllers\Infos\Cities::$data, // Список городов
+            'themes' => \App\Http\Controllers\Infos\Themes::$data, // Список тем
         ]);
 
     }

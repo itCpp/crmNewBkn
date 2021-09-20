@@ -261,4 +261,29 @@ class UserData extends Controller
 
     }
 
+    /**
+     * Список статусов заявки, доступных для выбора сотруднику
+     * 
+     * @return collect
+     */
+    public function getStatusesList()
+    {
+
+        if ($this->superadmin)
+            return \App\Models\Status::all();
+
+        $statuses = [];
+        $id = [];
+    
+        foreach ($this->__user->roles as $role) {
+            foreach ($role->statuses()->whereNotIn('id', array_unique($id))->get() as $row) {
+                $statuses[] = $row;
+                $id[] = $row->id;
+            }
+        }
+
+        return collect($statuses ?? []);
+
+    }
+
 }
