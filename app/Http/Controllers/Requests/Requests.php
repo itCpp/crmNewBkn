@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Crypt;
 use App\Models\Tab;
 use App\Models\RequestsRow;
 use App\Models\Status;
+use App\Models\Office;
 
 class Requests extends Controller
 {
@@ -77,13 +78,13 @@ class Requests extends Controller
         // Поиск разрешений для заявок
         Requests::$permits = $request->__user->getListPermits(Requests::$permitsList);
 
-        $row = Requests::getRequestRow($row);
+        $row = Requests::getRequestRow($row); // Полные данные по заявке
 
         $addstatus = true; // Добавить в список недоступный статус
         $statusList = $request->__user->getStatusesList(); // Список доступных статусов
 
         // Преобразование списка для вывода
-        $statuses = $statusList->map(function ($status) use ($addstatus, $row) {
+        $statuses = $statusList->map(function ($status) use (&$addstatus, $row) {
 
             if ($status->id == $row->status_id)
                 $addstatus = false;
@@ -97,7 +98,7 @@ class Requests extends Controller
         });
 
         // Добавление недоступного для пользователя статуса
-        if ($addstatus) {
+        if ($addstatus AND $row->status_id) {
 
             $blockstatus = Status::find($row->status_id);
 
@@ -113,6 +114,7 @@ class Requests extends Controller
             'request' => $row,
             'permits' => Requests::$permits,
             'statuses' => $statuses,
+            'offices' => Office::all(),
             'cities' => \App\Http\Controllers\Infos\Cities::$data, // Список городов
             'themes' => \App\Http\Controllers\Infos\Themes::$data, // Список тем
         ]);
@@ -158,6 +160,8 @@ class Requests extends Controller
     public static function getRequestRow(RequestsRow $row)
     {
 
+        $row->permits = Requests::$permits; // Разрешения пользователя
+
         $row->date_create = date("d.m.Y H:i", strtotime($row->created_at));
         $row->date_uplift = $row->uplift_at ? date("d.m.Y H:i", strtotime($row->uplift_at)) : null;
         $row->date_event = $row->event_at ? date("d.m.Y H:i", strtotime($row->event_at)) : null;
@@ -165,6 +169,8 @@ class Requests extends Controller
         $row->event_date = $row->event_at ? date("Y-m-d", strtotime($row->event_at)) : null;
         $row->event_time = $row->event_at ? date("H:i", strtotime($row->event_at)) : null;
         $row->event_time = $row->event_time !== "00:00" ? $row->event_time : null;
+        $row->event_datetime = $row->event_date && $row->event_time
+            ? "{$row->event_date}T{$row->event_time}" : null;
 
         // Данные по номерам телефона
         $row->clients = $row->clients()->get()->map(function ($client) {
@@ -176,8 +182,7 @@ class Requests extends Controller
 
         $row->source; // Источник заявки
         $row->status; // Статус заявки
-
-        $row->permits = Requests::$permits;
+        $row->office; // Офис записи
 
         return (object) $row->toArray();
 

@@ -47,6 +47,8 @@ Route::group(['middleware' => 'user.token'], function() {
 
         /** Изменение данных заявки */
         Route::post('save', 'Requests\RequestChange@save');
+        /** Изменение данных заявки отдельно в ячейке */
+        Route::post('saveCell', 'Requests\RequestChange@saveCell');
 
     });
 

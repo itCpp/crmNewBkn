@@ -87,6 +87,18 @@ class RequestsRow extends Model
     }
 
     /**
+     * Адрес записи
+     * 
+     * @return 
+     */
+    public function office()
+    {
+
+        return $this->belongsTo(Office::class, 'address');
+
+    }
+
+    /**
      * Вывод информации по колонкам
      * 
      * @return array
