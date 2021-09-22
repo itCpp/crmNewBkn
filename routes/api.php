@@ -55,6 +55,11 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Выдача заявки оператору */
         Route::post('setPin', 'Requests\RequestPins@setPin');
 
+        /** Вывод списка секторов для выдачи заявки в нужный сектор */
+        Route::post('changeSectorShow', 'Requests\RequestSectors@changeSectorShow');
+        /** Передача заявки сектору */
+        Route::post('setSector', 'Requests\RequestSectors@setSector');
+
     });
 
     /** Маршрутизация админпанели */

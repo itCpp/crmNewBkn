@@ -99,6 +99,16 @@ class RequestsRow extends Model
     }
 
     /**
+     * Отношение сктора к заявке
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function sector()
+    {
+        return $this->belongsTo(CallcenterSector::class, 'callcenter_sector');
+    }
+
+    /**
      * Вывод информации по колонкам
      * 
      * @return array

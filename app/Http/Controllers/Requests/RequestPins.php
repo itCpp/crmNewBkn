@@ -31,8 +31,8 @@ class RequestPins extends Controller
             'requests_pin_set', # Может назначать оператора на заявку
             'requests_pin_change', # Может менять оператора в заявке
             'requests_pin_set_offline', # Может назначать оператора, находящегося в офлайне
-            'requests_pin_set_all_sectors', # Видит список операторов всех секторов своего колл-центра
-            'requests_pin_set_all_callcenters', # Видит список операторов всех колл-центров
+            'requests_all_sectors', # Видит заявки и операторов всех секторов своего колл-центра
+            'requests_all_callcenters', # Видит заявки и операторов всех колл-центров
             'requests_pin_clear', # Удаление оператора из заявки
         ]);
 
@@ -87,6 +87,9 @@ class RequestPins extends Controller
                         'pin' => $user->pin,
                         'callcenter' => $user->callcenter_id,
                         'sector' => $user->callcenter_sector_id,
+                        'disabled' => $row->pin == $user->pin,
+                        'color' => $row->pin == $user->pin ? "blue" : null,
+                        'title' => $row->pin == $user->pin ? "Оператор назначен в заявке" : null,
                     ];
     
                 }
@@ -95,9 +98,25 @@ class RequestPins extends Controller
 
         }
 
+        // Добавление текущего оператора в заявке
+        if (!in_array($row->pin, $pins_searched) AND $row->pin) {
+
+            $user = User::where('pin', $row->pin)->first();
+
+            $pins[] = [
+                'id' => $user->id ?? 0,
+                'pin' => $user->pin ?? $row->pin,
+                'callcenter' => $user->callcenter_id ?? null,
+                'sector' => $user->callcenter_sector_id ?? $row->callcenter_sector,
+                'disabled' => true,
+                'color' => "blue",
+                'title' => "Оператор назначен в заявке"
+            ];
+        }
+
         return response()->json([
             'offline' => $permits->requests_pin_set_offline,
-            'pins' => $pins ?? [],
+            'pins' => self::getWorkTimeAndStatusUsers($pins ?? []),
             'clear' => $permits->requests_pin_clear,
         ]);
 
@@ -115,17 +134,34 @@ class RequestPins extends Controller
     {
 
         // Список всех операторов своего колл-центра
-        if (!$permits->requests_pin_set_all_callcenters)
+        if (!$permits->requests_all_callcenters)
             $rows = $rows->where('callcenter_id', $permits->__callcenter_id);
 
         // Список операторов своего сектора
-        if (!$permits->requests_pin_set_all_sectors)
+        if (!$permits->requests_all_sectors)
             $rows = $rows->where('callcenter_sector_id', $permits->__callcenter_sector_id);
 
         if (count($pins))
             $rows = $rows->whereNotIn('pin', $pins);
 
         return $rows->get();
+
+    }
+
+    /**
+     * Метод поиска статуса пользователя, и сортировка массива
+     * 
+     * @param array
+     * @return array
+     */
+    public static function getWorkTimeAndStatusUsers($pins = [])
+    {
+
+        usort($pins, function($a, $b) {
+            return $a['pin'] - $b['pin'];
+        });
+
+        return $pins;
 
     }
 
@@ -142,22 +178,25 @@ class RequestPins extends Controller
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
+        // Разрешения по заявке для пользователя
+        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
+
         // Право на удаление оператора из заявки
         $clear_pin = $request->__user->can('requests_pin_clear');
 
+        // Данные выбранного оператора
         $user = User::find($request->user);
 
         if (!$clear_pin AND !$user)
             return response()->json(['message' => "Оператор не найден"], 400);
 
         $row->pin = $user->pin ?? null;
+        $row->callcenter_sector = $user->callcenter_sector_id ?? null;
+
         $row->save();
 
         // Логирование изменений заявки
         RequestsStory::write($request, $row);
-
-        // Разрешения для пользователя
-        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
 
         return response()->json([
             'request' => Requests::getRequestRow($row),

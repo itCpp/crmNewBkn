@@ -165,9 +165,10 @@ class Requests extends Controller
             ];
         });
 
-        $row->source; // Источник заявки
-        $row->status; // Статус заявки
-        $row->office; // Офис записи
+        $row->source; # Источник заявки
+        $row->status; # Вывод данных о статусе
+        $row->office; # Вывод данных по офису
+        $row->sector; # Вывод данных по сектору
 
         return (object) $row->toArray();
 

@@ -19,6 +19,8 @@ class RequestStart extends Controller
         'requests_pin_set', # Может устанавливать оператора на заявку
         'requests_pin_change', # Может менять оператора на заявке
         'requests_set_null_status', # Может устанавливать заявке статус "Не обработано"
+        'requests_sector_set', # Может назначать заявку для сектора
+        'requests_sector_change', # Может менять сектор в заявке
     ];
 
     /**
