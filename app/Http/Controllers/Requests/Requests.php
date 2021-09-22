@@ -15,24 +15,6 @@ class Requests extends Controller
 {
 
     /**
-     * Список разрешений
-     * 
-     * @var array
-     */
-    public static $permits = [];
-
-    /**
-     * Список проверки разрешений для заявки
-     * 
-     * @var array
-     */
-    public static $permitsList = [
-        'requests_add', // Может добавлять новую заявку
-        'requests_edit', // Может редактировать заявку
-        'request_set_null_status', // Может устанавливать статус необработано
-    ];
-    
-    /**
      * Вывод заявок
      * 
      * @param \Illuminate\Http\Request $request
@@ -49,7 +31,7 @@ class Requests extends Controller
             return response()->json(['message' => "Доступ к вкладке ограничен"], 403);
 
         // Разрешения для пользователя
-        Requests::$permits = $request->__user->getListPermits(Requests::$permitsList);
+        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
 
         $where = RequestsRow::setWhere($request->tab->where_settings ?? []);
         $data = Requests::setQuery($request, $where)->paginate(25);
@@ -58,7 +40,7 @@ class Requests extends Controller
 
         return response()->json([
             'requests' => $requests,
-            'permits' => Requests::$permits,
+            'permits' => RequestStart::$permits,
         ]);
 
     }
@@ -76,7 +58,7 @@ class Requests extends Controller
             return response()->json(['message' => "Заявка не найдена"], 400);
 
         // Поиск разрешений для заявок
-        Requests::$permits = $request->__user->getListPermits(Requests::$permitsList);
+        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
 
         $row = Requests::getRequestRow($row); // Полные данные по заявке
 
@@ -112,7 +94,7 @@ class Requests extends Controller
 
         return response()->json([
             'request' => $row,
-            'permits' => Requests::$permits,
+            'permits' => RequestStart::$permits,
             'statuses' => $statuses,
             'offices' => Office::all(),
             'cities' => \App\Http\Controllers\Infos\Cities::$data, // Список городов
@@ -160,11 +142,14 @@ class Requests extends Controller
     public static function getRequestRow(RequestsRow $row)
     {
 
-        $row->permits = Requests::$permits; // Разрешения пользователя
+        $row->permits = RequestStart::$permits; // Разрешения пользователя
 
         $row->date_create = date("d.m.Y H:i", strtotime($row->created_at));
         $row->date_uplift = $row->uplift_at ? date("d.m.Y H:i", strtotime($row->uplift_at)) : null;
         $row->date_event = $row->event_at ? date("d.m.Y H:i", strtotime($row->event_at)) : null;
+
+        if ($row->date_uplift === $row->date_create)
+            $row->date_uplift = null;
 
         $row->event_date = $row->event_at ? date("Y-m-d", strtotime($row->event_at)) : null;
         $row->event_time = $row->event_at ? date("H:i", strtotime($row->event_at)) : null;

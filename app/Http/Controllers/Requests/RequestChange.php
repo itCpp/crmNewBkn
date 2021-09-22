@@ -49,7 +49,7 @@ class RequestChange extends Controller
         }
 
         // Поиск разрешений для заявок
-        Requests::$permits = $request->__user->getListPermits(Requests::$permitsList);
+        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
 
         $row->client_name = $request->client_name; // ФИО клиента
 
@@ -118,7 +118,7 @@ class RequestChange extends Controller
             return response()->json(['message' => "Невозможно сохранить изменения"], 400);
 
         // Поиск разрешений для заявок
-        Requests::$permits = $request->__user->getListPermits(Requests::$permitsList);
+        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
 
         $method = "saveCell" . ucfirst($request->__cell);
 

@@ -50,6 +50,11 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Изменение данных заявки отдельно в ячейке */
         Route::post('saveCell', 'Requests\RequestChange@saveCell');
 
+        /** Вывод списка доступных операторов для назначения на заявку */
+        Route::post('changePinShow', 'Requests\RequestPins@changePinShow');
+        /** Выдача заявки оператору */
+        Route::post('setPin', 'Requests\RequestPins@setPin');
+
     });
 
     /** Маршрутизация админпанели */

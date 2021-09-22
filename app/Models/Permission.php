@@ -38,4 +38,25 @@ class Permission extends Model
      */
     public $timestamps = false;
 
+    /**
+     * Роли, имеющие разрешение
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'roles_permissions', 'permission', 'role');
+    }
+
+    /**
+     * Сотрудникик, имеющие разрешение
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'users_permissions', 'permission_id', 'user_id');
+    }
+
+
 }
