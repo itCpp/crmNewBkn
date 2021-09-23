@@ -9,6 +9,7 @@ use App\Http\Controllers\Requests\Requests;
 use App\Models\Permission;
 use App\Models\RequestsRow;
 use App\Models\RequestsStory;
+use App\Models\RequestsStoryPin;
 use App\Models\User;
 
 class RequestPins extends Controller
@@ -190,13 +191,16 @@ class RequestPins extends Controller
         if (!$clear_pin AND !$user)
             return response()->json(['message' => "Оператор не найден"], 400);
 
+        $old = $row->pin;
+
         $row->pin = $user->pin ?? null;
         $row->callcenter_sector = $user->callcenter_sector_id ?? null;
 
         $row->save();
 
         // Логирование изменений заявки
-        RequestsStory::write($request, $row);
+        $story = RequestsStory::write($request, $row);
+        RequestsStoryPin::write($story, $old);
 
         return response()->json([
             'request' => Requests::getRequestRow($row),
