@@ -12,10 +12,12 @@ class Callcenter extends Model
 
     /**
      * Сектора колл-центра
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\hasMany
      */
     public function sectors() {
 
-        return $this->hasMany("App\Models\CallcenterSector");
+        return $this->hasMany(CallcenterSector::class);
 
     }
 

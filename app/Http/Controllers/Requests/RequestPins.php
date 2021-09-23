@@ -194,7 +194,9 @@ class RequestPins extends Controller
         $old = $row->pin;
 
         $row->pin = $user->pin ?? null;
-        $row->callcenter_sector = $user->callcenter_sector_id ?? null;
+
+        if ($user)
+            $row->callcenter_sector = $user->callcenter_sector_id ?? null;
 
         $row->save();
 

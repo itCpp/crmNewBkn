@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RequestsStoryPin extends Model
+class RequestsStorySector extends Model
 {
     use HasFactory;
 
@@ -23,8 +23,8 @@ class RequestsStoryPin extends Model
      */
     protected $fillable = [
         'request_id',
-        'old_pin',
-        'new_pin',
+        'old_sector',
+        'new_sector',
         'story_id',
         'created_at',
     ];
@@ -43,15 +43,15 @@ class RequestsStoryPin extends Model
      * 
      * @param \App\Models\RequestsStory $story Экземпляр модели заявки
      * @param string|int $old Идентификатор предыдущего оператора
-     * @return \App\Models\RequestsStoryPin
+     * @return \App\Models\RequestsStorySector
      */
     public static function write($story, $old)
     {
 
         return static::create([
             'request_id' => $story->request_data['id'] ?? null,
-            'old_pin' => $old,
-            'new_pin' => $story->request_data['pin'],
+            'old_sector' => $old,
+            'new_sector' => $story->request_data['callcenter_sector'],
             'story_id' => $story->id,
             'created_at' => date("Y-m-d H:i:s"),
         ]);
