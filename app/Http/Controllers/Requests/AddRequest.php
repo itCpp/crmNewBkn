@@ -418,9 +418,7 @@ class AddRequest extends Controller
     public function writeQuery()
     {
 
-        foreach ($this->request->all() as $key => $row)
-            $query_data[$key] = Crypt::encryptString($row);
-
+        $query_data = $this->encrypt($this->request->all());
         $query_data = json_encode($query_data ?? [], JSON_UNESCAPED_UNICODE);
 
         $data = $this->data

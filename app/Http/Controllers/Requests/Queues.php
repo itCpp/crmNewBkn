@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Settings;
 use App\Models\Incomings\IncomingTextRequest;
@@ -55,13 +56,15 @@ class Queues extends Controller
                     'gets' => $row->event->request_data->__GETS ?? [],
                 ]);
 
-            }
+                return true;
 
-            return null;
+            }
 
         }
 
-        return null;
+        $this->autoAddRequest($row);
+
+        return false;
 
     }
 
@@ -82,6 +85,30 @@ class Queues extends Controller
 
         return true;
         
+    }
+
+    /**
+     * Автоматическое добавление заявки
+     * 
+     * @param \App\Models\Incomings\IncomingTextRequest $row
+     * @return $this
+     */
+    public function autoAddRequest(IncomingTextRequest $row)
+    {
+
+        $request = new Request(
+            query: (array) $row->event->request_data,
+            server: [
+                'REMOTE_ADDR' => $row->event->ip,
+                'HTTP_USER_AGENT' => $row->event->user_agent,
+            ]
+        );
+
+        $addRequest = new AddRequest($request);
+        $addRequest->add($request);
+
+        return $this;
+
     }
     
 }
