@@ -22,7 +22,14 @@ class UserData extends Controller
      * 
      * @var string
      */
-    protected $role = "developer";
+    protected $role;
+
+    /**
+     * Все роли, принадлежащие пользователю
+     * 
+     * @var array
+     */
+    public $roles = [];
 
     /**
      * Экземпляр модели пользователя
@@ -45,33 +52,42 @@ class UserData extends Controller
      */
     public function __construct($user) {
 
-        $this->superadmin = (bool) env('USER_SUPER_ADMIN_ACCESS_FOR_ROLE', false);
+        // Настройка проверки суперадмина
+        $superadmin = (bool) env('USER_SUPER_ADMIN_ACCESS_FOR_ROLE', false);
 
-        $this->__user = $user;
+        // Роль, принадлежащая суперадмину
+        $this->role = env('USER_SUPER_ADMIN_ROLE');
 
-        $data = $user->toArray();
+        $this->__user = $user; # Экземпляр модели пользователя
+        $data = $user->toArray(); # Данные пользователя
 
         foreach ($data as $name => $value) {
             $this->$name = $value;
         }
 
+        // Определение имени и отчества
         $this->name_io = $this->name ?? "";
         $this->name_io .= " ";
         $this->name_io .= $this->patronymic ?? "";
         $this->name_io = trim($this->name_io);
 
+        // Определение полного ФИО
         $this->name_full = $this->surname ?? "";
         $this->name_full .= " " . $this->name_io;
         $this->name_full = trim($this->name_full);
 
+        // ФИО
         $this->name_fio = preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', $this->name_full);
 
+        // Дата регистрации
         $this->date = date("d.m.Y H:i:s", strtotime($this->created_at));
 
-        $this->roles = [];
-        
+        // Список ролей, пренаджежащих пользователю  
         foreach ($user->roles as $role)
             $this->roles[] = $role->role;
+
+        // Права суперадмина
+        $this->superadmin = in_array($this->role, $this->roles) AND $superadmin;
 
     }
     
@@ -98,14 +114,14 @@ class UserData extends Controller
      */
     public function can(...$permits) {
 
-        if (in_array($this->role, $this->roles) AND $this->superadmin)
+        if ($this->superadmin)
             return true;
 
         $roles = Role::find($this->roles);
 
         foreach ($roles as $role) {
 
-            $permissions = $role->permissions()->whereIn('permission', $permits)->get();
+            $permissions = $role->permissions()->whereIn('roles_permissions.permission', $permits)->get();
 
             if (count($permissions))
                 return true;
@@ -132,7 +148,7 @@ class UserData extends Controller
         if (!count($permits))
             return [];
 
-        if (in_array($this->role, $this->roles) AND $this->superadmin)
+        if ($this->superadmin)
             return $this->superAdminPermitsList($permits);
 
         $access = [];
@@ -141,7 +157,7 @@ class UserData extends Controller
 
         foreach ($roles as $role) {
 
-            $permissions = $role->permissions()->whereIn('permission', $permits)->get();
+            $permissions = $role->permissions()->whereIn('roles_permissions.permission', $permits)->get();
 
             foreach ($permissions as $permit)
                 $access[] = $permit->permission;

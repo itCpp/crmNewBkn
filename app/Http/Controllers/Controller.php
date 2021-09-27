@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Crypt;
 
 class Controller extends BaseController
 {
@@ -90,5 +91,61 @@ class Controller extends BaseController
 		return $num;
 
 	}
+
+	/**
+     * Шифрование всех ключей массива
+     * 
+     * @param array|object $data
+     * @return array
+     */
+    public static function encrypt($data)
+    {
+
+        if (!is_array($data) AND !is_object($data))
+            return $data;
+
+        $response = [];
+
+        foreach ($data as $key => $row) {
+
+            $response[$key] = (is_array($row) OR is_object($row))
+                ? Controller::encrypt($row)
+                : Crypt::encryptString($row);
+
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * Расшифровка всех ключей массива
+     * 
+     * @param array|object $data
+	 * @param \Illuminate\Encryption\Encrypter|null $crypt
+     * @return array
+     */
+    public static function decrypt($data, $crypt = null)
+    {
+
+        if (!is_array($data) AND !is_object($data))
+            return $data;
+
+        $response = [];
+
+        foreach ($data as $key => $row) {
+
+            $response[$key] = (is_array($row) OR is_object($row))
+                ? Controller::decrypt($row, $crypt)
+                : ($crypt !== null
+					? $crypt->decryptString($row)
+					: Crypt::decryptString($row)
+				);
+                
+        }
+
+        return $response;
+
+    }
 
 }

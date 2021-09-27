@@ -25,6 +25,9 @@ Route::post('login', 'Users\Auth@login');
 
 Route::post('addRequest', 'Requests\AddRequest@add');
 
+/** Обработка входящего события */
+Route::post('events', 'Requests\Events@incoming');
+
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function() {
 
