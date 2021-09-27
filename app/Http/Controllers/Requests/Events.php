@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
-use App\Models\Incomings\IncomingEvent;
+use App\Models\RequestsQueue;
 use App\Models\Incomings\IncomingTextRequest;
 use App\Jobs\IncomingRequestTextJob;
 use Illuminate\Encryption\Encrypter;
@@ -65,11 +65,23 @@ class Events extends Controller
         $crypt = new Encrypter($this->key, config('app.cipher'));
         $data = $this->decrypt($row->event->request_data ?? null, $crypt);
 
-        dd($data, $row);
+        $recrypt = $this->encrypt($data); // Перешифровка данных
 
-        // $event->request_data = $this->encrypt($data);
-        $event->recrypt = $date;
-        $event->save();
+        // Добавление очереди
+        $queue = RequestsQueue::create([
+            'phone' => $recrypt['phone'] ?? null,
+            'name' => $recrypt['name'] ?? null,
+            'comment' => $data['comment'] ?? null,
+            'ip' => $row->event->ip ?? null,
+            'site' => $data['site'] ?? null,
+            'gets' => $data['__GETS'] ?? [],
+        ]);
+
+        $data['queue_id'] = $queue->id;
+
+        $row->event->request_data = $recrypt;
+        $row->event->recrypt = $date;
+        $row->event->save();
 
         // Обновление данных по обработке текстового события
         $row->processed_at = $date;

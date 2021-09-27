@@ -135,12 +135,17 @@ class Controller extends BaseController
 
         foreach ($data as $key => $row) {
 
-            $response[$key] = (is_array($row) OR is_object($row))
-                ? Controller::decrypt($row, $crypt)
-                : ($crypt !== null
-					? $crypt->decryptString($row)
-					: Crypt::decryptString($row)
-				);
+			try {
+				$response[$key] = (is_array($row) OR is_object($row))
+					? Controller::decrypt($row, $crypt)
+					: ($crypt !== null
+						? $crypt->decryptString($row)
+						: Crypt::decryptString($row)
+					);
+			}
+			catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+				$response[$key] = $e->getMessage();
+			}
                 
         }
 
