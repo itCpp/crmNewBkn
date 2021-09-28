@@ -102,7 +102,7 @@ class Controller extends BaseController
     {
 
         if (!is_array($data) AND !is_object($data))
-            return $data;
+            return Crypt::encryptString($data);
 
         $response = [];
 
@@ -129,7 +129,10 @@ class Controller extends BaseController
     {
 
         if (!is_array($data) AND !is_object($data))
-            return $data;
+            return ($crypt !== null
+				? $crypt->decryptString($data)
+				: Crypt::decryptString($data)
+			);
 
         $response = [];
 
@@ -143,8 +146,8 @@ class Controller extends BaseController
 						: Crypt::decryptString($row)
 					);
 			}
-			catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-				$response[$key] = $e->getMessage();
+			catch (\Illuminate\Contracts\Encryption\DecryptException) {
+				$response[$key] = $row;
 			}
                 
         }

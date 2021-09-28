@@ -24,4 +24,15 @@ class IncomingQuery extends Model
         'user_agent',
     ];
 
+    /**
+     * Атрибуты, которые будут преобразованы
+     *
+     * @var array
+     */
+    protected $casts = [
+        'query_data' => 'object',
+        'request_data' => 'object',
+        'response_data' => 'object',
+    ];
+
 }

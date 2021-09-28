@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Crypt;
 use App\Http\Controllers\Dev\Statuses;
 use App\Models\RequestsRow;
 use App\Models\RequestsClient;
+use App\Models\RequestsStory;
 use App\Models\IncomingQuery;
 use App\Models\RequestsSource;
 use App\Models\RequestsSourcesResource;
@@ -144,6 +145,10 @@ class AddRequest extends Controller
             $this->response['errors'] = $this->errors;
         }
 
+        // Логирование изменений заявки
+        RequestsStory::write($this->request, $this->data);
+
+        // Логирование обращений
         $this->query = $this->writeQuery();
 
         return response()->json($this->response);
@@ -418,19 +423,17 @@ class AddRequest extends Controller
     public function writeQuery()
     {
 
-        $query_data = $this->encrypt($this->request->all());
-        $query_data = json_encode($query_data ?? [], JSON_UNESCAPED_UNICODE);
+        $data = $this->request->all();
 
-        $data = $this->data
-            ? json_encode($this->data, JSON_UNESCAPED_UNICODE)
-            : null;
+        if (isset($data['phone']))
+            $data['phone'] = $this->encrypt($data['phone']);
 
         return IncomingQuery::create([
-            'query_data' => $query_data,
+            'query_data' => $data,
             'client_id' => $this->client->id ?? null,
             'request_id' => $this->data->id ?? null,
-            'request_data' => $data,
-            'response_data' => json_encode($this->response, JSON_UNESCAPED_UNICODE),
+            'request_data' => $this->data ?? [],
+            'response_data' => $this->response,
             'ip' => $this->request->ip(),
             'user_agent' => $this->request->header('User-Agent'),
         ]);

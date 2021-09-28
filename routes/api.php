@@ -14,19 +14,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
+/** Обработка входящего события */
+Route::post('events', 'Requests\Events@incoming');
+
+/** Добавление заявки */
+// Route::post('addRequest', 'Requests\AddRequest@add');
 
 /** Првоерка типа авторизации */
 Route::post('loginStart', 'Users\Auth@loginStart');
 /** Завершение авторизации */
 Route::post('login', 'Users\Auth@login');
-
-Route::post('addRequest', 'Requests\AddRequest@add');
-
-/** Обработка входящего события */
-Route::post('events', 'Requests\Events@incoming');
 
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function() {
