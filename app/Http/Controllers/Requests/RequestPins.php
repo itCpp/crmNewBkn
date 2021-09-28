@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\Requests;
+use App\Models\Office;
 use App\Models\Permission;
 use App\Models\RequestsRow;
 use App\Models\RequestsStory;
@@ -119,6 +120,8 @@ class RequestPins extends Controller
             'offline' => $permits->requests_pin_set_offline,
             'pins' => self::getWorkTimeAndStatusUsers($pins ?? []),
             'clear' => $permits->requests_pin_clear,
+            'offices' => Office::all(),
+            'address' => $row->address,
         ]);
 
     }
@@ -179,6 +182,15 @@ class RequestPins extends Controller
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
+        if (!$request->addr) {
+            return response()->json([
+                'message' => "Укажите адрес офиса",
+                'errors' => [
+                    'addr' => true,
+                ]
+            ], 400);
+        }
+
         // Разрешения по заявке для пользователя
         RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
 
@@ -197,6 +209,8 @@ class RequestPins extends Controller
 
         if ($user)
             $row->callcenter_sector = $user->callcenter_sector_id ?? null;
+
+        $row->address = $request->addr;
 
         $row->save();
 
