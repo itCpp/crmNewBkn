@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Requests;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Users\Worktime;
 use App\Models\Callcenter;
 use App\Models\RequestsRow;
 use App\Models\RequestsStory;
 use App\Models\RequestsStorySector;
+use App\Models\User;
+use App\Models\UsersSession;
 
 class RequestSectors extends Controller
 {
-    
+
     /**
      * Вывод списка секторов для выдачи заявки в нужный сектор
      * 
@@ -36,7 +39,7 @@ class RequestSectors extends Controller
         ]);
 
         // Проверка прав
-        if (!$permits->requests_sector_set OR ($row->callcenter_sector AND !$permits->requests_sector_change))
+        if (!$permits->requests_sector_set or ($row->callcenter_sector and !$permits->requests_sector_change))
             return response()->json(['message' => "Доступ ограничен"], 403);
 
         // Поиск секторов
@@ -50,19 +53,89 @@ class RequestSectors extends Controller
         $sectors = [];
 
         foreach ($callcenters as &$callcenter) {
-            
+
             foreach ($callcenter->sectors as $sector)
                 $sectors[] = $sector;
+        }
 
+        $stats = self::getStatsForSectors(collect($sectors));
+
+        foreach ($callcenters as &$callcenter) {
+            foreach ($callcenter->sectors as &$sector) {
+                $sector->requests = $stats[$sector->id]['requests'] ?? 0;
+                $sector->online = $stats[$sector->id]['online'] ?? 0;
+                $sector->free = $stats[$sector->id]['free'] ?? 0;
+            }
         }
 
         return response()->json([
             'callcenters' => $callcenters,
             'selected' => $row->callcenter_sector,
             'permits' => $permits,
-            'sectors' => $sectors,
+            'stats' => $stats
         ]);
+    }
 
+    /**
+     * Статистистика по секторам
+     * 
+     * @param \Illuminate\Support\Collection $sectors
+     * @return array
+     */
+    public static function getStatsForSectors($sectors)
+    {
+
+        $ids = $sectors->map(function ($row) {
+            return $row->id;
+        });
+
+        $data = [];
+
+        foreach ($ids as $id) {
+            $data[$id] = [
+                'requests' => 0,
+                'online' => 0,
+                'free' => 0,
+            ];
+        }
+
+        // Количество заявок
+        $requests = RequestsRow::selectRaw('COUNT(*) as count, callcenter_sector')
+            ->whereIn('callcenter_sector', $ids)
+            ->whereDate('created_at', now())
+            ->groupBy('callcenter_sector')
+            ->get();
+
+        foreach ($requests as $row) {
+            $data[$row->callcenter_sector]['requests'] = $row->count;
+        }
+
+        // Колчество онлайн пользователей
+        $users = UsersSession::whereDate('active_at', now())
+            ->get()
+            ->map(function ($row) {
+                return $row->user_pin;
+            });
+
+        // Сектора сотрудников онлайн
+        $users_sectors = User::select('pin', 'callcenter_sector_id')
+            ->whereIn('pin', $users)
+            ->get();
+
+        foreach ($users_sectors as $row) {
+
+            $data[$row->callcenter_sector_id]['online']++;
+
+            if ($worktime = $row->worktime()->orderBy('id', 'DESC')->first()) {
+
+                if (in_array($worktime->event_type, Worktime::$free))
+                    $data[$row->callcenter_sector_id]['free']++;
+
+                $data['worktimes'][$worktime->user_pin] = $worktime->event_type;
+            }
+        }
+
+        return $data;
     }
 
     /**
@@ -93,7 +166,5 @@ class RequestSectors extends Controller
         return response()->json([
             'request' => Requests::getRequestRow($row),
         ]);
-
     }
-
 }

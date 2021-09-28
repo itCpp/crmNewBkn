@@ -39,19 +39,17 @@ class User extends Model
     /**
      * Роли пользователя
      */
-    public function roles() {
-
+    public function roles()
+    {
         return $this->belongsToMany("App\Models\Role", "users_roles", "user", "role");
-
     }
 
     /**
      * Личные права пользователя
      */
-    public function permissions() {
-
+    public function permissions()
+    {
         return $this->belongsToMany("App\Models\Permission", "users_permissions", "user_id", "permission_id");
-
     }
 
     /**
@@ -59,9 +57,16 @@ class User extends Model
      */
     public function tabs()
     {
-
         return $this->belongsToMany(Tab::class, 'tab_user');
-
     }
 
+    /**
+     * Рабочее время сотрудника
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function worktime()
+    {
+        return $this->belongsTo(UserWorkTime::class, 'pin', 'user_pin');
+    }
 }

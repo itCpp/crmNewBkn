@@ -25,6 +25,17 @@ class Worktime extends Controller
     ];
 
     /**
+     * Список статусов, при котором сотрудник считается готовым к работе
+     * 
+     * @var array
+     */
+    public static $free = [
+        null,
+        'login',
+        'free',
+    ];
+
+    /**
      * Запись события
      * 
      * @param int $pin

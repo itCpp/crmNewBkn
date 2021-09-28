@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
 use App\Http\Controllers\Users\UserData;
-
 use App\Models\User;
 use App\Models\UsersSession;
+use App\Models\UserWorkTime;
+use Illuminate\Http\Request;
 
 class Users extends Controller
 {
@@ -52,9 +51,12 @@ class Users extends Controller
      */
     public static function check(Request $request) {
 
+        $worktime = UserWorkTime::where('user_pin', $request->__user->pin)->orderBy('id', 'DESC')->first();
+
         $response = [
             'user' => $request->__user,
             'permits' => self::getPermitsForMainPage($request),
+            'worktime' => $worktime,
         ];
 
         if ($request->getResponseArray)
