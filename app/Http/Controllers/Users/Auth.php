@@ -100,6 +100,8 @@ class Auth extends Controller
             'user_agent' => $request->header("User-Agent"),
         ]);
 
+        $request->__user->writeWorkTime('login');
+
         return response()->json($response);
 
     }
@@ -143,6 +145,8 @@ class Auth extends Controller
      * @return response
      */
     public static function logout(Request $request) {
+
+        $request->__user->writeWorkTime('logout');
 
         return response()->json();
 

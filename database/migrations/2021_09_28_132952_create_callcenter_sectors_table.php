@@ -18,7 +18,7 @@ class CreateCallcenterSectorsTable extends Migration
             $table->integer('callcenter_id')->comment("Идентификатор колл-центра");
             $table->string('name', 50)->nullable()->comment("Наименование сектора");
             $table->string('comment', 250)->nullable()->comment("Краткое описание");
-            $table->tinyInteger('active', 1)->default(0)->comment("0 - Деактивирован, 1 - Включен");
+            $table->tinyInteger('active')->default(0)->comment("0 - Деактивирован, 1 - Включен");
             $table->timestamps();
         });
     }

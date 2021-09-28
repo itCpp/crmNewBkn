@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
 use App\Models\Role;
+use App\Models\UserWorkTime;
+use Illuminate\Http\Request;
 
 class UserData extends Controller
 {
@@ -44,13 +44,14 @@ class UserData extends Controller
      * @var int|null
      */
     protected $level = null;
-    
+
     /**
      * Создание объекта
      * 
      * @param \App\Models\User $user Экземпляр модели пользователя
      */
-    public function __construct($user) {
+    public function __construct($user)
+    {
 
         // Настройка проверки суперадмина
         $superadmin = (bool) env('USER_SUPER_ADMIN_ACCESS_FOR_ROLE', false);
@@ -87,23 +88,33 @@ class UserData extends Controller
             $this->roles[] = $role->role;
 
         // Права суперадмина
-        $this->superadmin = in_array($this->role, $this->roles) AND $superadmin;
-
+        $this->superadmin = in_array($this->role, $this->roles) and $superadmin;
     }
-    
+
+    /**
+     * Метод записи события рабочего веремни сотрудника
+     * 
+     * @param string $type
+     * @return \App\Models\UserWorkTime
+     */
+    public function writeWorkTime($type)
+    {
+        return Worktime::writeEvent($this->pin, $type);
+    }
+
     /**
      * Магический метод для вывода несуществующего значения
      * 
      * @param string $name
      * @return mixed
      */
-    public function __get($name) {
+    public function __get($name)
+    {
 
         if (isset($this->$name) === true)
             return $this->$name;
 
         return null;
-        
     }
 
     /**
@@ -112,7 +123,8 @@ class UserData extends Controller
      * @param array     $permits Список разрешений к проверке
      * @return bool
      */
-    public function can(...$permits) {
+    public function can(...$permits)
+    {
 
         if ($this->superadmin)
             return true;
@@ -125,7 +137,6 @@ class UserData extends Controller
 
             if (count($permissions))
                 return true;
-
         }
 
         $permissions = $this->__user->permissions()->whereIn('permission', $permits)->get();
@@ -134,7 +145,6 @@ class UserData extends Controller
             return true;
 
         return false;
-
     }
 
     /**
@@ -143,7 +153,8 @@ class UserData extends Controller
      * @param array     $permits Список разрешений к проверке
      * @return Permissions
      */
-    public function getListPermits($permits = []) {
+    public function getListPermits($permits = [])
+    {
 
         if (!count($permits))
             return [];
@@ -161,7 +172,6 @@ class UserData extends Controller
 
             foreach ($permissions as $permit)
                 $access[] = $permit->permission;
-
         }
 
         $permissions = $this->__user->permissions()->whereIn('permission', $permits)->get();
@@ -173,7 +183,6 @@ class UserData extends Controller
             $list[$permit] = in_array($permit, $access);
 
         return new Permissions($list ?? []);
-
     }
 
     /**
@@ -182,14 +191,14 @@ class UserData extends Controller
      * @param array     $permits Список заправшиваемых разрешений
      * @return Permissions
      */
-    protected function superAdminPermitsList($permits) {
+    protected function superAdminPermitsList($permits)
+    {
 
         foreach ($permits as $permit) {
             $list[$permit] = true;
         }
 
         return new Permissions($list ?? []);
-        
     }
 
     /**
@@ -197,7 +206,8 @@ class UserData extends Controller
      * 
      * @return int
      */
-    public function getRoleLevel() {
+    public function getRoleLevel()
+    {
 
         if ($this->level)
             return $this->level;
@@ -209,7 +219,6 @@ class UserData extends Controller
         }
 
         return $this->level;
-
     }
 
     /**
@@ -217,10 +226,10 @@ class UserData extends Controller
      * 
      * @return \App\Models\User
      */
-    public function getModel() {
+    public function getModel()
+    {
 
         return $this->__user;
-
     }
 
     /**
@@ -250,7 +259,6 @@ class UserData extends Controller
         }
 
         return collect($tabs);
-
     }
 
     /**
@@ -274,7 +282,6 @@ class UserData extends Controller
         }
 
         return false;
-
     }
 
     /**
@@ -290,7 +297,7 @@ class UserData extends Controller
 
         $statuses = [];
         $id = [];
-    
+
         foreach ($this->__user->roles as $role) {
             foreach ($role->statuses()->whereNotIn('id', array_unique($id))->get() as $row) {
                 $statuses[] = $row;
@@ -299,7 +306,9 @@ class UserData extends Controller
         }
 
         return collect($statuses ?? []);
-
     }
 
+    /**
+     * 
+     */
 }

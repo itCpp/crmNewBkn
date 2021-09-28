@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\Requests;
+use App\Http\Controllers\Users\Worktime;
 use App\Models\Office;
 use App\Models\Permission;
 use App\Models\RequestsRow;
@@ -217,6 +218,10 @@ class RequestPins extends Controller
         // Логирование изменений заявки
         $story = RequestsStory::write($request, $row);
         RequestsStoryPin::write($story, $old);
+
+        // Установка статуса рбочего времени операторам
+        Worktime::checkAndWriteWork($old);
+        Worktime::checkAndWriteWork($row->pin);
 
         return response()->json([
             'request' => Requests::getRequestRow($row),
