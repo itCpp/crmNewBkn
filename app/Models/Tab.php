@@ -25,6 +25,7 @@ class Tab extends Model
      */
     protected $fillable = [
         'name',
+        'position',
         'name_title',
         'where_settings',
     ];

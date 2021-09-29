@@ -56,6 +56,7 @@ class Tabs extends Controller
         $tab = Tab::create([
             'name' => $request->name,
             'name_title' => $request->name_title,
+            'position' => Tab::count(),
         ]);
 
         parent::logData($request, $tab);
