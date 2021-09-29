@@ -10,7 +10,7 @@ use App\Models\RequestsRow;
 
 class Tabs extends Controller
 {
-    
+
     /**
      * Вывод всех вкладок
      * 
@@ -20,18 +20,16 @@ class Tabs extends Controller
     public static function getTabs(Request $request)
     {
 
-        foreach (Tab::all() as $tab) {
+        foreach (Tab::orderBy('position')->get() as $tab) {
 
             // $tab->where_settings = json_decode($tab->where_settings);
 
             $tabs[] = $tab;
-
         }
 
-        return \Response::json([
+        return response()->json([
             'tabs' => $tabs ?? [],
         ]);
-        
     }
 
     /**
@@ -49,7 +47,7 @@ class Tabs extends Controller
             $errors['name'][] = "Необходимо указать наименование вкладки";
 
         if (count($errors)) {
-            return \Response::json([
+            return response()->json([
                 'message' => "Имеются ошибки данных",
                 'errors' => $errors,
             ], 422);
@@ -62,10 +60,9 @@ class Tabs extends Controller
 
         parent::logData($request, $tab);
 
-        return \Response::json([
+        return response()->json([
             'tab' => $tab,
         ]);
-
     }
 
     /**
@@ -78,18 +75,17 @@ class Tabs extends Controller
     {
 
         if (!$tab = Tab::find($request->id))
-            return \Response::json(['message' => "Данные по вкладке не найдены"], 400);
+            return response()->json(['message' => "Данные по вкладке не найдены"], 400);
 
         // $tab->where_settings = json_decode($tab->where_settings);
 
         if ($request->getColumns)
             $columns = RequestsRow::getColumnsList();
 
-        return \Response::json([
+        return response()->json([
             'tab' => $tab,
             'columns' => $columns ?? null,
         ]);
-
     }
 
     /**
@@ -124,7 +120,7 @@ class Tabs extends Controller
     {
 
         if (!$tab = Tab::find($request->id))
-            return \Response::json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
+            return response()->json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
 
         // Проверка допустимых выражений
         if ($request->where_settings) {
@@ -135,7 +131,6 @@ class Tabs extends Controller
                         $errors['where_settings'][$key]['where'][] = "Недопустимое выражение {$query['where']}";
                 }
             }
-
         }
 
         if ($errors ?? null) {
@@ -153,10 +148,9 @@ class Tabs extends Controller
 
         parent::logData($request, $tab);
 
-        return \Response::json([
+        return response()->json([
             'tab' => $tab,
         ]);
-
     }
 
     /**
@@ -174,7 +168,7 @@ class Tabs extends Controller
         // $tab->where_settings = json_decode($tab->where_settings, true);
 
         // \DB::enableQueryLog();
-        
+
         $model = RequestsRow::setWhere($request->where ?? []);
         $query = $model->toSql();
 
@@ -185,7 +179,6 @@ class Tabs extends Controller
             // 'where_settings' => $tab->where_settings,
             // 'log' => \DB::getQueryLog()[0] ?? null,
         ]);
-
     }
 
     /**
@@ -194,7 +187,8 @@ class Tabs extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getListWhereIn(Request $request) {
+    public static function getListWhereIn(Request $request)
+    {
 
         if ($request->preset == "status")
             $list = Statuses::getListStatuses($request);
@@ -207,7 +201,24 @@ class Tabs extends Controller
             'list' => $list ?? [],
             'preset' => $request->preset,
         ]);
-
     }
 
+    /**
+     * Установка порядка вывода вкладок
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function tabsPosition(Request $request)
+    {
+
+        foreach ($request->all() as $tab) {
+            Tab::where('id', $tab['id'])->limit(1)
+                ->update(['position' => (int) $tab['position']]);
+        }
+
+        return response()->json([
+            'message' => "Порядок расположения обновлен",
+        ]);
+    }
 }

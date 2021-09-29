@@ -196,6 +196,9 @@ Route::group(['middleware' => 'user.token'], function() {
             /** Вывод списка значений для конструктора запросов */
             Route::post('getListWhereIn', 'Dev\Tabs@getListWhereIn');
 
+            /** Установка порядка вывода вкладок */
+            Route::post('tabsPosition', 'Dev\Tabs@tabsPosition');
+
         });
 
     });

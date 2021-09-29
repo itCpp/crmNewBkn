@@ -241,7 +241,7 @@ class UserData extends Controller
     {
 
         if ($this->superadmin)
-            return \App\Models\Tab::all();
+            return \App\Models\Tab::orderBy('position')->get();
 
         $tabs = [];
         $id = [];
@@ -257,6 +257,10 @@ class UserData extends Controller
                 $id[] = $tab->id;
             }
         }
+
+        usort($tabs, function ($a, $b) {
+            return (int) $a->position - (int) $b->position;
+        });
 
         return collect($tabs);
     }
