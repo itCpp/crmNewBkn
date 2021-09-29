@@ -21,6 +21,7 @@ class RequestStart extends Controller
         'requests_set_null_status', # Может устанавливать заявке статус "Не обработано"
         'requests_sector_set', # Может назначать заявку для сектора
         'requests_sector_change', # Может менять сектор в заявке
+        'requests_comment_first', # Может оставлять первичный комментарий
     ];
 
     /**

@@ -60,6 +60,11 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Передача заявки сектору */
         Route::post('setSector', 'Requests\RequestSectors@setSector');
 
+        /** Вывод данных для создания нвой заявки вручную */
+        Route::post('addShow', 'Requests\RequestAddManual@addShow')->middleware('user.can:request_add');
+        /** Создание новой заявки вручную */
+        Route::post('create', 'Requests\RequestAddManual@create')->middleware('user.can:request_add');
+
     });
 
     /** Маршрутизация админпанели */

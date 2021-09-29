@@ -3,17 +3,18 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use App\Http\Controllers\Dev\Statuses;
-use App\Models\RequestsRow;
-use App\Models\RequestsClient;
-use App\Models\RequestsStory;
 use App\Models\IncomingQuery;
+use App\Models\RequestsClient;
+use App\Models\RequestsComment;
+use App\Models\RequestsRow;
 use App\Models\RequestsSource;
 use App\Models\RequestsSourcesResource;
+use App\Models\RequestsStory;
 use App\Models\Status;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 
 /**
  * Оаработка входящих запросов для создания новой, обнуления и обновления заявки
@@ -84,7 +85,14 @@ class AddRequest extends Controller
      * @var array
      */
     protected $errors = [];
-    
+
+    /**
+     * Созданные комментарии
+     * 
+     * @var array
+     */
+    protected $comments = [];
+
     /**
      * Инициализация объекта
      * 
@@ -105,11 +113,12 @@ class AddRequest extends Controller
         $this->site = $this->request->site;
 
         // Тип обращения по входящим данным
-        if ($this->myPhone)
+        if ($request->query_type)
+            $this->query_type = $request->query_type;
+        elseif ($this->myPhone)
             $this->query_type = "call";
         elseif ($this->site)
             $this->query_type = "text";
-
     }
 
     /**
@@ -138,6 +147,7 @@ class AddRequest extends Controller
             // 'resource' => $this->resource,
             'status' => $this->status,
             // 'query' => $this->query,
+            'comments' => count($this->comments),
         ];
 
         if ($this->errors) {
@@ -151,8 +161,11 @@ class AddRequest extends Controller
         // Логирование обращений
         $this->query = $this->writeQuery();
 
-        return response()->json($this->response);
+        // Вывод массива данных
+        if ($this->request->responseData || $this->request->manual)
+            return $this->response;
 
+        return response()->json($this->response);
     }
 
     /**
@@ -180,7 +193,6 @@ class AddRequest extends Controller
         }
 
         return $this;
-
     }
 
     /**
@@ -191,10 +203,18 @@ class AddRequest extends Controller
     public function findSource()
     {
 
+        // Вывод источника при ручном создании заявки
+        if ($this->request->manual and $this->request->source) {
+            $this->source = (object) [
+                'id' => $this->request->source
+            ];
+            return $this;
+        }
+
         if (!$this->client)
             return $this;
 
-        if (!$this->myPhone AND !$this->site) {
+        if (!$this->myPhone and !$this->site) {
             $this->errors['source'][] = "Источник не определен";
             return $this;
         }
@@ -212,7 +232,7 @@ class AddRequest extends Controller
         $this->resource = $query->first();
         $this->source = $this->resource->source ?? null;
 
-        if ($this->resource AND !$this->source) {
+        if ($this->resource and !$this->source) {
             $this->errors['source'][] = "Источник по ресурсу не определен";
         }
 
@@ -223,11 +243,9 @@ class AddRequest extends Controller
                 $this->query_type = "call";
             elseif ($this->resource->type == "site")
                 $this->query_type = "text";
-
         }
 
         return $this;
-
     }
 
     /**
@@ -244,7 +262,6 @@ class AddRequest extends Controller
         $this->data = $this->client->requests()->where('source_id', $this->source->id ?? null)->first();
 
         return $this;
-
     }
 
     /**
@@ -260,11 +277,11 @@ class AddRequest extends Controller
 
         $this->status = Status::find($this->data->status_id);
 
+        // Проверка для обнуления заявки
         if ($this->checkZeroing())
             return $this->requestZeroing();
 
         return $this;
-
     }
 
     /**
@@ -274,7 +291,7 @@ class AddRequest extends Controller
      */
     public function checkZeroing()
     {
-        
+
         if (!$this->status)
             return false;
 
@@ -289,7 +306,7 @@ class AddRequest extends Controller
             return false;
 
         // Проверка дополнительного параметра
-        if ($algorithm['option'] AND ($data->algorithm_option ?? null) === null)
+        if ($algorithm['option'] and ($data->algorithm_option ?? null) === null)
             return false;
 
         $time_created = $data->time_created ?? false; // Время создания
@@ -303,13 +320,13 @@ class AddRequest extends Controller
         $event = $time_event ? date("Y-m-d H:i:s", strtotime($this->data->event_at)) : null;
         $updated = $time_updated ? date("Y-m-d H:i:s", strtotime($this->data->updated_at)) : null;
 
-        if ($time_created AND $created AND $last < $created)
+        if ($time_created and $created and $last < $created)
             $last = $created;
 
-        if ($time_event AND $event AND $last < $event)
+        if ($time_event and $event and $last < $event)
             $last = $event;
 
-        if ($time_updated AND $updated AND $last < $updated)
+        if ($time_updated and $updated and $last < $updated)
             $last = $updated;
 
         if ($algorithm['name'] == "xHour")
@@ -324,9 +341,8 @@ class AddRequest extends Controller
 
         if ($last >= $date)
             return false;
-        
-        return true;
 
+        return true;
     }
 
     /**
@@ -343,7 +359,6 @@ class AddRequest extends Controller
         $this->createNewRequest();
 
         return $this;
-
     }
 
     /**
@@ -358,16 +373,21 @@ class AddRequest extends Controller
         if (!$this->data)
             $this->createNewRequest();
 
+        $this->data->query_type = $this->query_type; # Тип обращения
+
         // Время подъема
         $this->data->uplift = 1;
         $this->data->uplift_at = date("Y-m-d H:i:s");
 
+        // Проверка и/или обновлние оператора
         $this->data->pin = $this->checkPin();
+
+        // Обновление и дополнение данными
+        $this->addData();
 
         $this->data->save();
 
         return $this;
-
     }
 
     /**
@@ -389,9 +409,8 @@ class AddRequest extends Controller
         // Сотрудник заблокирован или уволен
         if ($user->deleted_at)
             return null;
-        
-        return $user->pin;
 
+        return $user->pin;
     }
 
     /**
@@ -403,7 +422,6 @@ class AddRequest extends Controller
     {
 
         $this->data = RequestsRow::create([
-            'query_type' => $this->query_type,
             'source_id' => $this->source->id ?? null,
             'sourse_resource' => $this->resource->id ?? null,
         ]);
@@ -412,7 +430,6 @@ class AddRequest extends Controller
         $this->client->requests()->attach($this->data->id);
 
         return $this;
-
     }
 
     /**
@@ -437,7 +454,6 @@ class AddRequest extends Controller
             'ip' => $this->request->ip(),
             'user_agent' => $this->request->header('User-Agent'),
         ]);
-
     }
 
     /**
@@ -446,13 +462,100 @@ class AddRequest extends Controller
      * @param string $name
      * @return mixed
      */
-    public function __get($name) {
+    public function __get($name)
+    {
 
         if (isset($this->$name) === true)
             return $this->$name;
 
         return null;
-        
     }
 
+    /**
+     * Проверка и добавление данных в заявку
+     * 
+     * @return $this
+     */
+    public function addData()
+    {
+
+        // Проверка имени клиента
+        if ($this->request->client_name) {
+
+            if (!$this->data->client_name)
+                $this->data->client_name = $this->request->client_name;
+            else
+                $this->addComment("Клиент представился: {$this->request->client_name}");
+        }
+
+        // Комментарий клиента
+        if ($this->request->comment) {
+
+            if (!$this->data->comment)
+                $this->data->comment = $this->request->comment;
+            else
+                $this->addComment("Клиент написал: {$this->request->comment}");
+        }
+
+        // Главный комментарий
+        if ($this->request->comment_main) {
+
+            if (!$this->data->comment)
+                $this->data->comment = $this->request->comment_main;
+            else
+                $this->addComment("Суть обращения: {$this->request->comment_main}");
+        }
+
+        // Первичный комментарий
+        if ($this->request->comment_first) {
+
+            if (!$this->data->comment_first)
+                $this->data->comment_first = $this->request->comment_first;
+            else
+                $this->data->comment_first .= date(" d.m.Y H:i ") . $this->request->comment_first;
+        }
+
+        // Смена города
+        if ($this->request->city) {
+
+            if ($this->data->region and $this->request->city != $this->data->region)
+                $this->addComment("Смена города с \"{$this->data->region}\" на \"{$this->request->city}\"");
+
+            $this->data->region = $this->request->city;
+            $this->data->check_moscow = RequestChange::checkRegion($this->data->region);
+        }
+
+        // Смена тематики обращения
+        if ($this->request->theme) {
+
+            if ($this->data->theme and $this->request->theme != $this->data->theme)
+                $this->addComment("Смена тематики с \"{$this->data->theme}\" на \"{$this->request->theme}\"");
+
+            $this->data->theme = $this->request->theme;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Добавление комментария по заявке
+     * 
+     * @param string|null $comment Текст комментария
+     * @param string $type Тип комментария
+     * @return $this
+     */
+    public function addComment($comment = null, $type = "comment")
+    {
+
+        if (!$comment)
+            return $this;
+
+        $this->comments[] = RequestsComment::create([
+            'request_id' => $this->data->id,
+            'type_comment' => $type,
+            'comment' => $comment,
+        ]);
+
+        return $this;
+    }
 }
