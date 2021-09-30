@@ -55,6 +55,19 @@ class UsersMerge extends Controller
     ];
 
     /**
+     * Список ролей для сотрудника сектора
+     * 
+     * @var array
+     */
+    protected $roles = [
+        3 => ['caller'],
+        4 => ['caller'],
+        5 => ['caller'],
+        6 => ['caller'],
+        7 => ['caller', 'caller_che'],
+    ];
+
+    /**
      * Начало процесса
      * 
      * @return null
@@ -71,7 +84,7 @@ class UsersMerge extends Controller
         echo "Разработчики, руководители и тд...\n\033[0m";
 
         foreach ($users as $user) {
-            $new = $this->createUser($user);
+            $new = $this->createUser($user, "secret");
         }
 
         // Формирование админов секторов
@@ -83,7 +96,7 @@ class UsersMerge extends Controller
         echo "Админы\n\033[0m";
 
         foreach ($users as $user) {
-            $new = $this->createUser($user);
+            $new = $this->createUser($user, "secret");
         }
 
         // Формирование кольщиков
@@ -103,8 +116,11 @@ class UsersMerge extends Controller
 
     /**
      * Создание строки пользователя
+     * 
+     * @param \App\Models\CrmMka\CrmUser $user
+     * @param string $auth
      */
-    public function createUser($user)
+    public function createUser($user, $auth = "admin")
     {
 
         // Определение пина
@@ -121,6 +137,12 @@ class UsersMerge extends Controller
         else
             $pin = $user->pin;
 
+        if (in_array($user->pin, [890, 866, 813]))
+            $pin = $user->pin;
+
+        if ($user->pin == 813)
+            $user->username = "abrik";
+
         // ФИО
         $user->fullName = preg_replace('/\s/', ' ', $user->fullName);
         $fio = explode(" ", $user->fullName);
@@ -132,7 +154,7 @@ class UsersMerge extends Controller
             'name' =>  $fio[1] ?? null,
             'patronymic' =>  $fio[2] ?? null,
             'created_at' => $user->reg_date,
-            'auth_type' => "admin",
+            'auth_type' => $auth,
             'password' => "old|" . $user->password,
             'login' => $user->username,
             'callcenter_id' => $this->oldSectors[$user->{'call-center'}][0] ?? null,
@@ -140,8 +162,20 @@ class UsersMerge extends Controller
         ];
 
         try {
+
             $new = User::create($create);
             echo "\033[32m";
+
+            // Роли сотрудника
+            if (isset($new) AND $roles = $this->roles[$user->{'call-center'}] ?? null) {
+
+                foreach ($roles as $role) {
+                    $new->roles()->attach($role);
+                    echo "\t\tAdd role {$role}\n";
+                }
+
+            }
+
         } catch (\Illuminate\Database\QueryException) {
             echo "\033[31m";
         }
