@@ -18,12 +18,13 @@ class Users extends Controller
      * @param string $token
      * @return bool|object
      */
-    public static function checkToken($token) {
+    public static function checkToken($token)
+    {
 
         $sessions = UsersSession::where([
             ['token', $token]
         ])
-        ->get();
+            ->get();
 
         if (count($sessions) != 1)
             return false;
@@ -40,16 +41,16 @@ class Users extends Controller
             return false;
 
         return new UserData($user);
-
     }
-    
+
     /**
      * Первоначальная загрузка страницы со всеми данными
      * 
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function check(Request $request) {
+    public static function check(Request $request)
+    {
 
         $worktime = UserWorkTime::where('user_pin', $request->__user->pin)->orderBy('id', 'DESC')->first();
 
@@ -63,7 +64,6 @@ class Users extends Controller
             return $response;
 
         return response()->json($response);
-
     }
 
     /**
@@ -72,14 +72,14 @@ class Users extends Controller
      * @param \Illuminate\Http\Request $request
      * @return array
      */
-    public static function getPermitsForMainPage(Request $request) {
+    public static function getPermitsForMainPage(Request $request)
+    {
 
         $permits = [
             'admin_access',
         ];
 
         return $request->__user->getListPermits($permits);
-
     }
 
     /**
@@ -88,7 +88,8 @@ class Users extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function adminCheck(Request $request) {
+    public static function adminCheck(Request $request)
+    {
 
         $response = [
             'permits' => $request->__user->getListPermits([
@@ -100,11 +101,29 @@ class Users extends Controller
                 'admin_sources', // Доступ к настройкам источников
                 'dev_statuses', // Доступ к настройки статусов
                 'dev_tabs', // Настройки вкладок
+                'god_mode', # Может использовать ЦРМ от другого пользователя
             ]),
         ];
 
         return response()->json($response);
-
     }
 
+    /**
+     * Подмена пользователя для имитации ЦРМ
+     * 
+     * @param UserData $user
+     * @param int $id Идентификатор пользователя
+     * @return UserData
+     */
+    public static function checkGodMode(UserData $user, $id)
+    {
+
+        if (!$user->can('god_mode'))
+            return $user;
+
+        if ($subject = User::find($id))
+            return new UserData($subject);
+
+        return $user;
+    }
 }
