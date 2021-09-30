@@ -106,6 +106,7 @@ class AdminUsers extends Controller
             'user' => $user, // Данные сотрудника для редактирования
             'auth_types' => [
                 ['text' => "По паролю", 'value' => "secret"],
+                ['text' => "Через руководителя", 'value' => "admin"],
             ],
         ]);
 
