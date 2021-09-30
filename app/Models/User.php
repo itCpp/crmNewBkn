@@ -16,6 +16,7 @@ class User extends Model
      */
     protected $fillable = [
         'pin',
+        'old_pin',
         'login',
         'callcenter_id',
         'callcenter_sector_id',
@@ -25,6 +26,7 @@ class User extends Model
         'password',
         'telegram_id',
         'auth_type',
+        'created_at',
     ];
 
     /**
