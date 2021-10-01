@@ -30,6 +30,10 @@ Route::post('loginCancel', 'Users\Auth@loginCancel');
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function() {
 
+    Route::any('api/echo/auth', function (Request $request) {
+        return response()->json($request->__user);
+    });
+
     /** Первоначальная загрузка страницы со всеми данными */
     Route::post('check', 'Users\Users@check');
 

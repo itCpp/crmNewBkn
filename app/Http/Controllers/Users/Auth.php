@@ -62,6 +62,7 @@ class Auth extends Controller
             'name' => $user->name_io,
             'auth_type' => $auth_type,
             'query_id' => $query->id ?? null,
+            'ip' => $request->ip(),
         ]);
     }
 
