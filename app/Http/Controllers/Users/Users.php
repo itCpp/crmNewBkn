@@ -54,10 +54,16 @@ class Users extends Controller
 
         $worktime = UserWorkTime::where('user_pin', $request->__user->pin)->orderBy('id', 'DESC')->first();
 
+        $permits = self::getPermitsForMainPage($request);
+
+        // Количество запросов на авторизацию
+        $authQueries = $permits->user_auth_query ? Auth::coutAuthQueries($request) : 0;
+
         $response = [
             'user' => $request->__user,
-            'permits' => self::getPermitsForMainPage($request),
+            'permits' => $permits,
             'worktime' => $worktime,
+            'authQueries' => $authQueries,
         ];
 
         if ($request->getResponseArray)
@@ -70,13 +76,14 @@ class Users extends Controller
      * Вывод прав пользователя для формирования главной страницы
      * 
      * @param \Illuminate\Http\Request $request
-     * @return array
+     * @return Permissions
      */
     public static function getPermitsForMainPage(Request $request)
     {
 
         $permits = [
-            'admin_access',
+            'admin_access', # Доступ к админ-панели
+            'user_auth_query', # Может обработать запрос авторизации пользователя
         ];
 
         return $request->__user->getListPermits($permits);

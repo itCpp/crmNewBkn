@@ -30,8 +30,8 @@ Route::post('loginCancel', 'Users\Auth@loginCancel');
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function() {
 
-    Route::any('api/echo/auth', function (Request $request) {
-        return response()->json($request->__user);
+    Route::any('echo/auth', function (Request $request) {
+        return \Illuminate\Support\Facades\Broadcast::auth($request);
     });
 
     /** Первоначальная загрузка страницы со всеми данными */
@@ -70,6 +70,16 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('addShow', 'Requests\RequestAddManual@addShow')->middleware('user.can:request_add');
         /** Создание новой заявки вручную */
         Route::post('create', 'Requests\RequestAddManual@create')->middleware('user.can:request_add');
+
+    });
+
+    /** Маршрутизация для работы с учетными записями */
+    Route::group(['prefix' => 'users'], function() {
+
+        /** Вывод списка запросов авторизации */
+        Route::post('authQueries', 'Users\Auth@authQueries')->middleware('user.can:user_auth_query');
+        /** Завершение запроса авторизации */
+        Route::post('authComplete', 'Users\Auth@complete')->middleware('user.can:user_auth_query');
 
     });
 

@@ -30,6 +30,10 @@ class UserToken
 
         $request->__user = $user;
 
+        $request->setUserResolver(function () use ($request) {
+            return $request->__user;
+        });
+
         return $next($request);
 
     }

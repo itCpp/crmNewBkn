@@ -48,6 +48,7 @@ class Auth extends Controller
 
         // Создание запроса на авторизацию
         if ($auth_type == "admin") {
+
             $query = UserAuthQuery::create([
                 'user_id' => $user->id,
                 'callcenter_id' => $user->callcenter_id,
@@ -55,6 +56,8 @@ class Auth extends Controller
                 'ip' => $request->ip(),
                 'user_agent' => $request->header('User-Agent'),
             ]);
+
+            broadcast(new \App\Events\AuthQuery($query, $user));
         }
 
         return response()->json([
@@ -88,6 +91,8 @@ class Auth extends Controller
 
         if ($user->auth_type == "secret")
             return self::loginFromPassword($request);
+        else if ($user->auth_type == "admin")
+            return self::loginFromAdmin($request);
 
         return response()->json(['message' => "Ошибка авторизации, попробуйте еще раз, обновив страницу"], 400);
     }
@@ -109,6 +114,40 @@ class Auth extends Controller
 
         if ($password != $request->password_user and $oldpass != $request->password_user)
             return response()->json(['message' => "Введен неверный пароль"], 400);
+
+        return self::createSession($request);
+    }
+
+    /**
+     * Авторизация через руководителя
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function loginFromAdmin(Request $request)
+    {
+
+        if (!$query = UserAuthQuery::find($request->query_id))
+            return response()->json(['message' => "Запрос авторизации не найден"], 400);
+
+        if ($request->password != $query->auth_hash)
+            return response()->json(['message' => "Ошибка идентификации запроса"], 400);
+
+        $query->auth_hash = null;
+        $query->done_at = now();
+        $query->save();
+
+        return self::createSession($request);
+    }
+
+    /**
+     * Создание сесии
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function createSession(Request $request)
+    {
 
         $request->getResponseArray = true;
 
@@ -194,6 +233,125 @@ class Auth extends Controller
 
         $query->delete();
 
+        $user = new UserData(User::find($query->user_id));
+
+        broadcast(new \App\Events\AuthQuery($query, $user));
+
         return response()->json(['message' => "Запрос отменен"]);
+    }
+
+    /**
+     * Количество активных запросов авторизации
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return int
+     */
+    public static function coutAuthQueries($request)
+    {
+
+        $permits = $request->user()->getListPermits([
+            'user_auth_query_all',
+            'user_auth_query_all_sectors'
+        ]);
+
+        $query = UserAuthQuery::whereDate('created_at', now());
+
+        if (!$permits->user_auth_query_all and !$permits->user_auth_query_all_sectors)
+            $query = $query->where('sector_id', $request->user()->callcenter_sector_id);
+
+        if (!$permits->user_auth_query_all)
+            $query = $query->where('callcenter_id', $request->user()->callcenter_id);
+
+        return $query->count();
+    }
+
+    /**
+     * Вывод списка запросов на авторизацию
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function authQueries(Request $request)
+    {
+
+        $data = UserAuthQuery::whereDate('created_at', now());
+
+        $permits = $request->user()->getListPermits([
+            'user_auth_query_all',
+            'user_auth_query_all_sectors'
+        ]);
+
+        if (!$permits->user_auth_query_all and !$permits->user_auth_query_all_sectors)
+            $data = $data->where('sector_id', $request->user()->callcenter_sector_id);
+
+        if (!$permits->user_auth_query_all)
+            $data = $data->where('callcenter_id', $request->user()->callcenter_id);
+
+        $data = $data->paginate(20);
+
+        foreach ($data as $row) {
+
+            $row->user = new UserData(User::find($row->user_id));
+            $row->date = date("d.m.Y H:i:s", strtotime($row->created_at));
+
+            $rows[] = $row->toArray();
+        }
+
+        return response()->json([
+            'rows' => $rows ?? [],
+            'count' => $data->total(),
+            'pages' => $data->lastPage(),
+            'next' => $data->currentPage() + 1,
+        ]);
+    }
+
+    /**
+     * Завершение запроса авторизации
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function complete(Request $request)
+    {
+
+        $id = $request->done ?: $request->drop;
+
+        if (!$query = UserAuthQuery::find($id))
+            return response()->json(['message' => "Запрос авторизации не найден", $id], 400);
+
+        $permits = $request->user()->getListPermits([
+            'user_auth_query_all',
+            'user_auth_query_all_sectors'
+        ]);
+
+        if (!$permits->user_auth_query_all and $query->callcenter_id != $request->user()->callcenter_id)
+            return response()->json(['message' => "Доступ к запросу ограничен"], 403);
+
+        if (!$permits->user_auth_query_all_sectors and $query->sector_id != $request->user()->callcenter_sector_id)
+            return response()->json(['message' => "Доступ к запросу ограничен"], 403);
+
+        $query->done_pin = $request->user()->pin;
+
+        $data = (object) ['id' => $query->user_id,];
+
+        if ($request->drop) {
+
+            $query->done_at = now();
+
+            broadcast(new \App\Events\AuthDone($data));
+
+        }
+
+        if ($request->done) {
+
+            $data->password = md5($query->user_id . microtime());
+            $query->auth_hash = $data->password;
+
+            broadcast(new \App\Events\AuthDone($data, true));
+        }
+
+        $query->save();
+
+        return response()->json(['message' => "Запрос завершен"]);
     }
 }

@@ -14,16 +14,31 @@ class AuthDone implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $user;
+    /**
+     * Данные авторизации
+     * 
+     * @var object
+     */
+    public $data;
+
+    /**
+     * Флаг полодительного решения
+     * 
+     * @var bool
+     */
+    public $done;
 
     /**
      * Create a new event instance.
      *
+     * @param object $data
+     * @param bool $done
      * @return void
      */
-    public function __construct($user)
+    public function __construct($data, $done = false)
     {
-        $this->user = $user;
+        $this->data = $data;
+        $this->done = $done;
     }
 
     /**
@@ -33,6 +48,6 @@ class AuthDone implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new Channel("App.Auth.{$this->user->id}");
+        return new Channel("App.Auth.{$this->data->id}");
     }
 }

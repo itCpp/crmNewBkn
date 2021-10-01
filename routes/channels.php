@@ -1,5 +1,6 @@
 <?php
 
+use App\Broadcasting\AuthQueries;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -18,6 +19,10 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
+/** Запрос авторизации */
+Broadcast::channel('App.Admin.AuthQueries.{callcenter}.{sector}', AuthQueries::class);
+
+/** Одобрение или отклонение авторизации пользователей */
 Broadcast::channel('App.Auth.{id}', function () {
     return true;
 });

@@ -311,8 +311,4 @@ class UserData extends Controller
 
         return collect($statuses ?? []);
     }
-
-    /**
-     * 
-     */
 }
