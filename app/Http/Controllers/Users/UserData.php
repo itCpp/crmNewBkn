@@ -228,7 +228,6 @@ class UserData extends Controller
      */
     public function getModel()
     {
-
         return $this->__user;
     }
 
@@ -310,5 +309,32 @@ class UserData extends Controller
         }
 
         return collect($statuses ?? []);
+    }
+
+    /**
+     * Выдача идентификтаор пользователя
+     * 
+     * @return true
+     */
+    public function getAuthIdentifier()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Данные для канала присутствия
+     * 
+     * @return array
+     */
+    public function toPresenceData()
+    {
+        return [
+            'id' => $this->id,
+            'pin' => $this->pin,
+            'name' => $this->name_full,
+            'fio' => $this->name_fio,
+            'callcenter' => $this->callcenter_id,
+            'sector' => $this->callcenter_sector_id,
+        ];
     }
 }
