@@ -124,6 +124,9 @@ class RequestSectors extends Controller
 
         foreach ($users_sectors as $row) {
 
+            if (!$row->callcenter_sector_id)
+                continue;
+
             $data[$row->callcenter_sector_id]['online']++;
 
             if ($worktime = $row->worktime()->orderBy('id', 'DESC')->first()) {

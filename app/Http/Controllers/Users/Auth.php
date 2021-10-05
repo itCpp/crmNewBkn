@@ -57,6 +57,9 @@ class Auth extends Controller
                 'user_agent' => $request->header('User-Agent'),
             ]);
 
+            $query->user = $user;
+            $query->date = date("d.m.Y H:i:s", strtotime($query->created_at));
+
             broadcast(new \App\Events\AuthQuery($query, $user));
         }
 
@@ -175,7 +178,6 @@ class Auth extends Controller
      */
     public static function getHashPass($pass)
     {
-
         return md5($pass . env('USER_PASS_SALT'));
     }
 
@@ -317,7 +319,7 @@ class Auth extends Controller
         $id = $request->done ?: $request->drop;
 
         if (!$query = UserAuthQuery::find($id))
-            return response()->json(['message' => "Запрос авторизации не найден", $id], 400);
+            return response()->json(['message' => "Запрос авторизации не найден, либо уже был завершен", $id], 400);
 
         $permits = $request->user()->getListPermits([
             'user_auth_query_all',
@@ -332,7 +334,7 @@ class Auth extends Controller
 
         $query->done_pin = $request->user()->pin;
 
-        $data = (object) ['id' => $query->user_id,];
+        $data = (object) ['id' => $query->user_id];
 
         if ($request->drop) {
 
@@ -352,6 +354,12 @@ class Auth extends Controller
 
         $query->save();
 
-        return response()->json(['message' => "Запрос завершен"]);
+        $user = new UserData(User::find($query->user_id));
+        broadcast(new \App\Events\AuthQuery($query, $user))->toOthers();
+
+        return response()->json([
+            'message' => "Запрос завершен",
+            'id' => $query->id,
+        ]);
     }
 }

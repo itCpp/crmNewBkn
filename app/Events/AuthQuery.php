@@ -15,6 +15,11 @@ class AuthQuery implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
+     * @var bool
+     */
+    public $afterCommit = true;
+
+    /**
      * Идентификатор коллцентра
      * 
      * @var int|null
@@ -31,7 +36,7 @@ class AuthQuery implements ShouldBroadcast
     /**
      * Данные запроса на авторизацию
      * 
-     * @var array
+     * @var \App\Models\UserAuthQuery $query
      */
     public $query;
 
@@ -41,6 +46,13 @@ class AuthQuery implements ShouldBroadcast
      * @var \App\Http\Controllers\Users\UserData
      */
     public $user;
+
+    /**
+     * Время запроса
+     * 
+     * @var string
+     */
+    public $date;
 
     /**
      * Флаг отмены запроса
@@ -58,8 +70,6 @@ class AuthQuery implements ShouldBroadcast
      */
     public function __construct($query, $user)
     {
-
-        $query->date = date("d.m.Y H:i:s", strtotime($query->created_at));
         $this->query = $query;
 
         $this->callcenter = $query->callcenter_id;
@@ -69,6 +79,24 @@ class AuthQuery implements ShouldBroadcast
         $this->query->user = $user;
 
         $this->cancel = $this->query->done_at ? true : false;
+    }
+
+    /**
+     * Данные для трансляции
+     *
+     * @return array
+     */
+    public function broadcastWith()
+    {
+        $data = $this->query->toArray();
+
+        $data['user'] = $this->user;
+        $data['date'] = date("d.m.Y H:i:s", strtotime($this->query->created_at));
+
+        return [
+            'query' => $data,
+            'cancel' => $this->cancel,
+        ];
     }
 
     /**
