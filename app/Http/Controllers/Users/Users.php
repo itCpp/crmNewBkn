@@ -24,6 +24,7 @@ class Users extends Controller
         $sessions = UsersSession::where([
             ['token', $token]
         ])
+            ->whereDate('created_at', now())
             ->get();
 
         if (count($sessions) != 1)
@@ -57,7 +58,7 @@ class Users extends Controller
         $permits = self::getPermitsForMainPage($request);
 
         // Количество запросов на авторизацию
-        $authQueries = $permits->user_auth_query ? Auth::coutAuthQueries($request) : 0;
+        $authQueries = $permits->user_auth_query ? Auth::countAuthQueries($request) : 0;
 
         $response = [
             'user' => $request->__user,

@@ -30,6 +30,9 @@ Route::post('loginCancel', 'Users\Auth@loginCancel');
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function() {
 
+    /** Выход из системы */
+    Route::post('logout', 'Users\Auth@logout');
+
     Route::any('echo/auth', function (Request $request) {
         return \Illuminate\Support\Facades\Broadcast::auth($request);
     });

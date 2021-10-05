@@ -92,6 +92,10 @@ class Auth extends Controller
         $request->password_user = $user->password;
         $request->__user = new UserData($user);
 
+        $request->setUserResolver(function () use ($request) {
+            return $request->__user;
+        });
+
         if ($user->auth_type == "secret")
             return self::loginFromPassword($request);
         else if ($user->auth_type == "admin")
@@ -210,9 +214,24 @@ class Auth extends Controller
     public static function logout(Request $request)
     {
 
-        $request->__user->writeWorkTime('logout');
+        $token = $request->header('Authorization');
 
-        return response()->json();
+        // Обнуление сессии
+        if ($session = UsersSession::where('token', $token)->first())
+            $session->delete();
+
+        // Поиск активных сессиий
+        $active = UsersSession::where('user_id', $request->user()->id)
+            ->whereDate('created_at', now())
+            ->count();
+
+        // Запись рабочего времени
+        if (!$active)
+            $request->user()->writeWorkTime('logout');
+
+        return response()->json([
+            'message' => "Goodbye",
+        ]);
     }
 
     /**
@@ -248,7 +267,7 @@ class Auth extends Controller
      * @param \Illuminate\Http\Request $request
      * @return int
      */
-    public static function coutAuthQueries($request)
+    public static function countAuthQueries($request)
     {
 
         $permits = $request->user()->getListPermits([
@@ -341,7 +360,6 @@ class Auth extends Controller
             $query->done_at = now();
 
             broadcast(new \App\Events\AuthDone($data));
-
         }
 
         if ($request->done) {
