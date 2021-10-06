@@ -16,6 +16,7 @@ class Tab extends Model
      */
     protected $casts = [
         'where_settings' => 'array',
+        'order_by_settings' => 'array',
     ];
 
     /**
@@ -28,6 +29,7 @@ class Tab extends Model
         'position',
         'name_title',
         'where_settings',
+        'order_by_settings',
     ];
 
 }

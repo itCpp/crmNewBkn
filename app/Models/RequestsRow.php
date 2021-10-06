@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 // use Illuminate\Support\Facades\Schema;
 
 class RequestsRow extends Model
@@ -117,7 +118,7 @@ class RequestsRow extends Model
 
         $model = with(new static);
     
-        return \DB::table('INFORMATION_SCHEMA.COLUMNS')
+        return DB::table('INFORMATION_SCHEMA.COLUMNS')
         ->select(
             'COLUMN_NAME as name',
             'COLUMN_TYPE as type',
@@ -176,8 +177,25 @@ class RequestsRow extends Model
 
             $method = $query['where']; // Методы выражения
             
+            // Условия сортировки
+            if ($method == "orderBy") {
+
+                $column = $query['column'] ?? null;
+                $by = $query['by'] ?? null;
+                $order_by = [];
+
+                if ($column)
+                    $order_by[] = $column;
+
+                if ($column && in_array($by, ["ASC", "DESC"]))
+                    $order_by[] = $by;
+                    
+                if (count($order_by))
+                    $model = $model->orderBy(...$order_by);
+
+            }
             // Методы для формирования простых условий
-            if ($method != "whereFunction") {
+            elseif ($method != "whereFunction") {
 
                 $attrts = $query['attr'] ?? []; // Список атрибутов
 
@@ -243,5 +261,11 @@ class RequestsRow extends Model
         return $model;
 
     }
+
+    /**
+     * Добавоение условий сортировки к запросу
+     * 
+     * "
+     */
 
 }

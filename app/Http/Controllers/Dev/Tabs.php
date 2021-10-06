@@ -144,6 +144,7 @@ class Tabs extends Controller
         $tab->name = $request->name;
         $tab->name_title = $request->name_title;
         $tab->where_settings = $request->where_settings;
+        $tab->order_by_settings = $request->order_by_settings;
 
         $tab->save();
 
@@ -170,7 +171,15 @@ class Tabs extends Controller
 
         // \DB::enableQueryLog();
 
-        $model = RequestsRow::setWhere($request->where ?? []);
+        $request->where = $request->where ?? $tab->where_settings;
+        $request->orderBy = $request->orderBy ?? $tab->order_by_settings;
+
+        $params = array_merge(
+            $request->where ?? [],
+            $request->orderBy ?? []
+        );
+
+        $model = RequestsRow::setWhere($params);
         $query = $model->toSql();
 
         // $model->limit(1)->get();
@@ -179,6 +188,7 @@ class Tabs extends Controller
             'message' => $query,
             // 'where_settings' => $tab->where_settings,
             // 'log' => \DB::getQueryLog()[0] ?? null,
+            'tab' => $tab,
         ]);
     }
 
