@@ -33,7 +33,12 @@ class Requests extends Controller
         // Разрешения для пользователя
         RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
 
-        $where = RequestsRow::setWhere($request->tab->where_settings ?? []);
+        $query = array_merge(
+            $request->tab->where_settings ?? [],
+            $request->tab->order_by_settings ?? []
+        );
+
+        $where = RequestsRow::setWhere($query);
         $data = Requests::setQuery($request, $where)->paginate(25);
 
         $requests = Requests::getRequests($data);
