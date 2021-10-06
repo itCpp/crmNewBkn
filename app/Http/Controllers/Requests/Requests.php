@@ -46,6 +46,9 @@ class Requests extends Controller
         return response()->json([
             'requests' => $requests,
             'permits' => RequestStart::$permits,
+            'next' => $data->currentPage() + 1,
+            'pages' => $data->lastPage(),
+            'page' => $request->page ?? 1,
         ]);
 
     }

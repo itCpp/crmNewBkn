@@ -103,6 +103,8 @@ class Tabs extends Controller
         "whereNotIn",
         "whereNull",
         "whereNotNull",
+        "orWhereNull",
+        "orWhereNotNull",
         "whereDate",
         "whereMonth",
         "whereDay",

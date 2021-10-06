@@ -168,7 +168,9 @@ class RequestsRow extends Model
          */
         $whereOneArguments = [
             'whereNull',
-            'whereNotNull'
+            'whereNotNull',
+            'orWhereNull',
+            'orWhereNotNull'
         ];
 
         $model = with(new static);
@@ -189,7 +191,7 @@ class RequestsRow extends Model
 
                 if ($column && in_array($by, ["ASC", "DESC"]))
                     $order_by[] = $by;
-                    
+
                 if (count($order_by))
                     $model = $model->orderBy(...$order_by);
 
@@ -225,7 +227,7 @@ class RequestsRow extends Model
                         // Разделение на типы аргументов
                         if (in_array($method, $whereOneArguments))
                             $row = [$column];
-                        if ($value)
+                        elseif ($value)
                             $row = [$column, $operator ?? $value, $operator ? $value : null];
                         elseif (is_array($between) AND count($between) == 2)
                             $row = [$column, $between];
