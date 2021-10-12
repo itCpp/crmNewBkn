@@ -74,6 +74,9 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Создание новой заявки вручную */
         Route::post('create', 'Requests\RequestAddManual@create')->middleware('user.can:request_add');
 
+        /** Создание комментария для заявки */
+        Route::post('sendComment', 'Requests\Comments@sendComment');
+
     });
 
     /** Маршрутизация для работы с учетными записями */

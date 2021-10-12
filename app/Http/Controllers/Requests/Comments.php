@@ -33,7 +33,6 @@ class Comments extends Controller
      */
     public static function getComments(Request $request)
     {
-
         $comments = collect([]);
         $pins = [];
 
@@ -60,5 +59,27 @@ class Comments extends Controller
         }
 
         return $comments;
+    }
+
+    /**
+     * Создание комментария для заявки
+     * 
+     * @param \Illuminate\Http\Request
+     * @return response
+     */
+    public static function sendComment(Request $request)
+    {
+        $comment = RequestsComment::create([
+            'request_id' => $request->id,
+            'type_comment' => $request->typeComment ?? "comment",
+            'created_pin' => $request->user()->pin,
+            'comment' => $request->comment,
+        ]);
+
+        $comment->created_fio = $request->user()->name_full;
+
+        return response()->json([
+            'comment' => $comment,
+        ]);
     }
 }

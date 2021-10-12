@@ -503,7 +503,7 @@ class AddRequest extends Controller
             if (!$this->data->comment)
                 $this->data->comment = $this->request->comment_main;
             else
-                $this->addComment("Суть обращения: {$this->request->comment_main}");
+                $this->addComment("Суть обращения: {$this->request->comment_main}", "client");
         }
 
         // Первичный комментарий
@@ -544,7 +544,7 @@ class AddRequest extends Controller
      * @param string $type Тип комментария
      * @return $this
      */
-    public function addComment($comment = null, $type = "system")
+    public function addComment($comment = null, $type = "comment")
     {
 
         if (!$comment)
