@@ -27,11 +27,11 @@ class Requests extends Controller
             return response()->json(['message' => "Выбрана несуществующая вкладка"], 400);
 
         // Проверка разрешения на просмотр вкладки
-        if (!$request->__user->canTab($request->tab->id))
+        if (!$request->user()->canTab($request->tab->id))
             return response()->json(['message' => "Доступ к вкладке ограничен"], 403);
 
         // Разрешения для пользователя
-        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
 
         $query = array_merge(
             $request->tab->where_settings ?? [],
@@ -39,16 +39,20 @@ class Requests extends Controller
         );
 
         $where = RequestsRow::setWhere($query);
-        $data = Requests::setQuery($request, $where)->paginate(25);
+        $data = Requests::setQuery($request, $where)->paginate($request->limit ?? 25);
 
         $requests = Requests::getRequests($data);
+
+        $next = $data->currentPage() + 1; // Следующая страница
+        $pages = $data->lastPage(); // Общее количество страниц
 
         return response()->json([
             'requests' => $requests,
             'permits' => RequestStart::$permits,
-            'next' => $data->currentPage() + 1,
-            'pages' => $data->lastPage(),
-            'page' => $request->page ?? 1,
+            'total' => $data->total(), // Количество найденных строк
+            'next' => $next > $pages ? null : $next, 
+            'pages' => $pages,
+            'page' => $request->page,
         ]);
 
     }

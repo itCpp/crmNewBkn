@@ -58,9 +58,7 @@ class RequestsRow extends Model
      */
     public function clients()
     {
-
         return $this->belongsToMany(RequestsClient::class, 'requests_rows_requests_clients', 'id_request', 'id_requests_clients');
-
     }
 
     /**
@@ -70,9 +68,7 @@ class RequestsRow extends Model
      */
     public function source()
     {
-
         return $this->belongsTo(RequestsSource::class, 'source_id');
-
     }
 
     /**
@@ -82,9 +78,7 @@ class RequestsRow extends Model
      */
     public function status()
     {
-
         return $this->belongsTo(Status::class, 'status_id');
-
     }
 
     /**
@@ -94,9 +88,7 @@ class RequestsRow extends Model
      */
     public function office()
     {
-
         return $this->belongsTo(Office::class, 'address');
-
     }
 
     /**
@@ -114,19 +106,19 @@ class RequestsRow extends Model
      * 
      * @return array
      */
-    public static function getColumnsList() {
+    static function getColumnsList()
+    {
 
-        $model = with(new static);
-    
+        $model = new static;
+
         return DB::table('INFORMATION_SCHEMA.COLUMNS')
-        ->select(
-            'COLUMN_NAME as name',
-            'COLUMN_TYPE as type',
-            'COLUMN_COMMENT as comment'
-        )
-        ->where('table_name', $model->getTable())
-        ->get();
-
+            ->select(
+                'COLUMN_NAME as name',
+                'COLUMN_TYPE as type',
+                'COLUMN_COMMENT as comment'
+            )
+            ->where('table_name', $model->getTable())
+            ->get();
     }
 
     /**
@@ -178,7 +170,7 @@ class RequestsRow extends Model
         foreach ($wheres as $query) {
 
             $method = $query['where']; // Методы выражения
-            
+
             // Условия сортировки
             if ($method == "orderBy") {
 
@@ -194,7 +186,6 @@ class RequestsRow extends Model
 
                 if (count($order_by))
                     $model = $model->orderBy(...$order_by);
-
             }
             // Методы для формирования простых условий
             elseif ($method != "whereFunction") {
@@ -229,20 +220,18 @@ class RequestsRow extends Model
                             $row = [$column];
                         elseif ($value)
                             $row = [$column, $operator ?? $value, $operator ? $value : null];
-                        elseif (is_array($between) AND count($between) == 2)
+                        elseif (is_array($between) and count($between) == 2)
                             $row = [$column, $between];
                         elseif (is_array($list))
                             $row = [$column, $list];
 
                         if ($row)
                             $where[] = $row;
-
                     }
 
                     // Остановка цикла для методов, принимающих определенное количество аргументов
                     if (!$toArray)
                         break;
-
                 }
 
                 // Проверка наличия аргументов для применения конструктора запроса
@@ -253,21 +242,10 @@ class RequestsRow extends Model
                     $model = $arguments == 1
                         ? $model->$method(...$where[0] ?? [])
                         : $model = $model->$method($where);
-
                 }
-
             }
-
         }
 
         return $model;
-
     }
-
-    /**
-     * Добавоение условий сортировки к запросу
-     * 
-     * "
-     */
-
 }
