@@ -124,6 +124,7 @@ Route::group(['middleware' => 'user.token'], function() {
     /** Маршрутизация админпанели разработчика */
     Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function() {
 
+        /** Настройка разрешений */
         Route::group(['middleware' => "user.can:dev_permits"], function() {
 
             /** Первоначальная загрузка страницы со всеми данными */
@@ -135,6 +136,7 @@ Route::group(['middleware' => 'user.token'], function() {
 
         });
 
+        /** Настройка ролей */
         Route::group(['middleware' => "user.can:dev_roles"], function() {
 
             /** Первоначальная загрузка страницы со всеми данными */
@@ -194,6 +196,8 @@ Route::group(['middleware' => 'user.token'], function() {
             Route::post('getStatusData', 'Dev\Statuses@getStatusData');
             /** Изменение данных статуса */
             Route::post('saveStatus', 'Dev\Statuses@saveStatus');
+            /** Изменение темы оформления вкладки */
+            Route::post('setStatuseTheme', 'Dev\Statuses@setStatuseTheme');
 
         });
 
@@ -217,6 +221,14 @@ Route::group(['middleware' => 'user.token'], function() {
 
             /** Установка порядка вывода вкладок */
             Route::post('tabsPosition', 'Dev\Tabs@tabsPosition');
+
+        });
+
+        /** Журнал вызовов и настройка источников */
+        Route::group(['middleware' => "user.can:dev_calls"], function() {
+
+            /** Загрузка страницы журнала звонков */
+            Route::post('getCalls', 'Admin\Calls@start');
 
         });
 

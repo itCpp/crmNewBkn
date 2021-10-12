@@ -20,12 +20,12 @@ class Statuses extends Controller
         ['name' => "nextDay", "option" => false],
         ['name' => "xDays", "option" => true],
     ];
-    
+
     /**
      * Список всех статусов
      * 
      * @param \Illuminate\Http\Request $request
-     * @return \Response
+     * @return response
      */
     public static function getStatuses(Request $request)
     {
@@ -36,10 +36,9 @@ class Statuses extends Controller
             $status->zeroing_data = json_decode($status->zeroing_data);
         }
 
-        return \Response::json([
+        return response()->json([
             'statuses' => $statuses ?? [],
         ]);
-
     }
 
     /**
@@ -62,14 +61,13 @@ class Statuses extends Controller
         }
 
         return $statuses ?? [];
-
     }
 
     /**
      * Создание нового статуса
      * 
      * @param \Illuminate\Http\Request $request
-     * @return \Response
+     * @return response
      */
     public static function createStatus(Request $request)
     {
@@ -93,19 +91,18 @@ class Statuses extends Controller
             if (!$algorithm)
                 $errors['algorithm'][] = "Необходимо выбрать лагоритм обнуления";
 
-            if (in_array($algorithm, ["xHour", "xDays"]) AND !$algorithm_option)
+            if (in_array($algorithm, ["xHour", "xDays"]) and !$algorithm_option)
                 $errors['algorithm_option'][] = "Нужно указать значение к алгоритму";
 
-            if (!$time_created AND !$time_event AND !$time_updated)
+            if (!$time_created and !$time_event and !$time_updated)
                 $errors['time'][] = "Необходимо выбрать время учета";
-
         }
 
-        if (!$request->id AND Status::where('name', $request->name)->count())
+        if (!$request->id and Status::where('name', $request->name)->count())
             $errors['name'][] = "Это наименование уже используется";
 
         if (count($errors)) {
-            return \Response::json([
+            return response()->json([
                 'message' => "Имеются ошибки при заполнении данных",
                 'errors' => $errors,
             ], 422);
@@ -120,9 +117,7 @@ class Statuses extends Controller
 
             $request->__status->save();
             $status = $request->__status;
-
-        }
-        else {
+        } else {
             $status = Status::create([
                 'name' => $request->name,
                 'zeroing' => $request->zeroing ? 1 : 0,
@@ -133,48 +128,45 @@ class Statuses extends Controller
 
         \App\Models\Log::log($request, $status);
 
-        return \Response::json([
+        return response()->json([
             'status' => $status,
         ]);
-
     }
 
     /**
      * Вывод данных одного статуса
      * 
      * @param \Illuminate\Http\Request
-     * @return \Response
+     * @return response
      */
     public static function getStatusData(Request $request)
     {
 
         if (!$status = Status::find($request->id))
-            return \Response::json(['message' => "Данные о статусе не найдены"], 400);
+            return response()->json(['message' => "Данные о статусе не найдены"], 400);
 
         $status->zeroing_data = json_decode($status->zeroing_data);
 
-        return \Response::json([
+        return response()->json([
             'status' => $status,
         ]);
-
     }
 
     /**
      * Изменение данных статуса
      * 
      * @param \Illuminate\Http\Request
-     * @return \Response
+     * @return response
      */
     public static function saveStatus(Request $request)
     {
 
         if (!$status = Status::find($request->id))
-            return \Response::json(['message' => "Данные о статусе не найдены"], 400);
+            return response()->json(['message' => "Данные о статусе не найдены"], 400);
 
         $request->__status = $status;
 
-        return Statuses::createStatus($request);
-
+        return self::createStatus($request);
     }
 
     /**
@@ -192,7 +184,29 @@ class Statuses extends Controller
         }
 
         return null;
-
     }
 
+    /**
+     * Смена темы оформления строки заявки
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function setStatuseTheme(Request $request)
+    {
+
+        if (!$status = Status::find($request->id))
+            return response()->json(['message' => "Данные о статусе не найдены"], 400);
+
+        $status->theme = $request->theme;
+        $status->save();
+        
+        $status->zeroing_data = json_decode($status->zeroing_data);
+
+        \App\Models\Log::log($request, $status);
+
+        return response()->json([
+            'status' => $status,
+        ]);
+    }
 }

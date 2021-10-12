@@ -100,16 +100,17 @@ class Users extends Controller
     {
 
         $response = [
-            'permits' => $request->__user->getListPermits([
-                'block_dev', // Блок разработчика
-                'dev_roles', // Настройка и создание ролей
-                'dev_permits', // Создание и изменение прав
-                'admin_users', // Доступ к сотрудникам
-                'admin_callcenters', // Доступ к настройкам колл-центров
-                'admin_sources', // Доступ к настройкам источников
-                'dev_statuses', // Доступ к настройки статусов
-                'dev_tabs', // Настройки вкладок
+            'permits' => $request->user()->getListPermits([
+                'block_dev', # Блок разработчика
+                'dev_roles', # Настройка и создание ролей
+                'dev_permits', # Создание и изменение прав
+                'admin_users', # Доступ к сотрудникам
+                'admin_callcenters', # Доступ к настройкам колл-центров
+                'admin_sources', # Доступ к настройкам источников
+                'dev_statuses', # Доступ к настройки статусов
+                'dev_tabs', # Настройки вкладок
                 'god_mode', # Может использовать ЦРМ от другого пользователя
+                'dev_calls', # Доступ к журналу звонков и настройки их источников
             ]),
         ];
 
