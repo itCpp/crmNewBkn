@@ -23,8 +23,14 @@ Broadcast::channel('App.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
+
 /** Запрос авторизации */
 Broadcast::channel('App.Admin.AuthQueries.{callcenter}.{sector}', AuthQueries::class);
+
+/** Просмотр потока входящих звоков */
+Broadcast::channel('App.Admin.Calls', function ($user) {
+    return $user->can('dev_calls');
+});
 
 /** Одобрение или отклонение авторизации пользователей */
 Broadcast::channel('App.Auth.{id}', function () {

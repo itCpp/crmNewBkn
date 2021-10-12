@@ -22,4 +22,12 @@ class IncomingCall extends Model
         'failed',
     ];
 
+    /**
+     * Атрибуты, которые должны быть типизированы.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+    ];
 }

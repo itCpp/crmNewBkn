@@ -27,11 +27,9 @@ class Events extends Controller
      */
     public function __construct()
     {
-
         $this->key = base64_decode(str_replace("base64:", "", env('APP_KEY_IN')));
-
     }
-    
+
     /**
      * Обработка входящего события
      * 
@@ -40,21 +38,18 @@ class Events extends Controller
      */
     public function incoming(Request $request)
     {
-
         $response = $request->all();
         $response['message'] = "Событие обработано";
 
-        if ($request->text AND $text = IncomingTextRequest::find($request->text)) {
+        if ($request->text and $text = IncomingTextRequest::find($request->text)) {
             $response['job'] = now();
             IncomingRequestTextJob::dispatch($text);
-        }
-        elseif ($request->call AND $call = IncomingCallRequest::find($request->call)) {
+        } elseif ($request->call and $call = IncomingCallRequest::find($request->call)) {
             $response['job'] = now();
             IncomingRequestCallJob::dispatch($call);
         }
 
         return response()->json($response);
-
     }
 
     /**
@@ -65,7 +60,6 @@ class Events extends Controller
      */
     public function textEvent(IncomingTextRequest $row)
     {
-
         $date = now();
 
         // Расшифровка события
@@ -88,7 +82,6 @@ class Events extends Controller
         $row->save();
 
         return $row;
-
     }
 
     /**
@@ -98,7 +91,6 @@ class Events extends Controller
      */
     public function callEvent(IncomingCallRequest $row)
     {
-
         $date = now();
 
         // Расшифровка события
@@ -119,7 +111,6 @@ class Events extends Controller
         $row->save();
 
         return $row;
-
     }
 
     /**
@@ -130,7 +121,6 @@ class Events extends Controller
      */
     public function addRequestFromCall($row)
     {
-
         // Запись входящего звонка
         $incoming = IncomingCall::create([
             'phone' => $this->encrypt($row->event->request_data->phone),
@@ -142,15 +132,19 @@ class Events extends Controller
             ['extension', $row->event->request_data->sip],
             ['on_work', 1]
         ])
-        ->first();
+            ->first();
+
+        $eventData = $incoming->toArray();
+        $eventData['phone'] = $this->decript($eventData['phone']);
+
+        broadcast(new \App\Events\IncomingCalls($eventData));
 
         if (!$sip) {
-            
+
             $incoming->failed = now();
             $incoming->save();
 
             return null;
-
         }
 
         // Добавление заявки
@@ -175,7 +169,5 @@ class Events extends Controller
         $sip->save();
 
         return null;
-
     }
-
 }
