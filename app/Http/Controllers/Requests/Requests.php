@@ -22,7 +22,6 @@ class Requests extends Controller
      */
     public static function get(Request $request)
     {
-
         if (!$request->tab = Tab::find($request->tabId))
             return response()->json(['message' => "Выбрана несуществующая вкладка"], 400);
 
@@ -50,11 +49,10 @@ class Requests extends Controller
             'requests' => $requests,
             'permits' => RequestStart::$permits,
             'total' => $data->total(), // Количество найденных строк
-            'next' => $next > $pages ? null : $next, 
+            'next' => $next > $pages ? null : $next,
             'pages' => $pages,
             'page' => $request->page,
         ]);
-
     }
 
     /**
@@ -65,7 +63,6 @@ class Requests extends Controller
      */
     public static function getRow(Request $request)
     {
-
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
@@ -88,11 +85,10 @@ class Requests extends Controller
                 'text' => $status->name,
                 'value' => $status->id,
             ];
-
         });
 
         // Добавление недоступного для пользователя статуса
-        if ($addstatus AND $row->status_id) {
+        if ($addstatus and $row->status_id) {
 
             $blockstatus = Status::find($row->status_id);
 
@@ -104,15 +100,19 @@ class Requests extends Controller
             ];
         }
 
-        return response()->json([
+        $response = [
             'request' => $row,
             'permits' => RequestStart::$permits,
             'statuses' => $statuses,
             'offices' => Office::all(),
             'cities' => \App\Http\Controllers\Infos\Cities::$data, // Список городов
             'themes' => \App\Http\Controllers\Infos\Themes::$data, // Список тем
-        ]);
+        ];
 
+        if ($request->getComments)
+            $response['comments'] = Comments::getComments($request);
+
+        return response()->json($response);
     }
 
     /**
@@ -124,9 +124,7 @@ class Requests extends Controller
      */
     public static function setQuery(Request $request, $data)
     {
-
         return $data;
-
     }
 
     /**
@@ -137,12 +135,10 @@ class Requests extends Controller
      */
     public static function getRequests($data)
     {
-
         foreach ($data as $row)
             $requests[] = Requests::getRequestRow($row);
 
         return $requests ?? [];
-
     }
 
     /**
@@ -153,7 +149,6 @@ class Requests extends Controller
      */
     public static function getRequestRow(RequestsRow $row)
     {
-
         $row->permits = RequestStart::$permits; // Разрешения пользователя
 
         $row->date_create = date("d.m.Y H:i", strtotime($row->created_at));
@@ -183,7 +178,5 @@ class Requests extends Controller
         $row->sector; # Вывод данных по сектору
 
         return (object) $row->toArray();
-
     }
-
 }

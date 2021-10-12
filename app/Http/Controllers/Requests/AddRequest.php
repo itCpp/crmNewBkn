@@ -485,7 +485,7 @@ class AddRequest extends Controller
             if (!$this->data->client_name)
                 $this->data->client_name = $this->request->client_name;
             else
-                $this->addComment("Клиент представился: {$this->request->client_name}");
+                $this->addComment("Клиент представился: {$this->request->client_name}", "client");
         }
 
         // Комментарий клиента
@@ -494,7 +494,7 @@ class AddRequest extends Controller
             if (!$this->data->comment)
                 $this->data->comment = $this->request->comment;
             else
-                $this->addComment("Клиент написал: {$this->request->comment}");
+                $this->addComment("Клиент написал: {$this->request->comment}", "client");
         }
 
         // Главный комментарий
@@ -544,7 +544,7 @@ class AddRequest extends Controller
      * @param string $type Тип комментария
      * @return $this
      */
-    public function addComment($comment = null, $type = "comment")
+    public function addComment($comment = null, $type = "system")
     {
 
         if (!$comment)

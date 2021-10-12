@@ -52,7 +52,6 @@ class UserData extends Controller
      */
     public function __construct($user)
     {
-
         // Настройка проверки суперадмина
         $superadmin = (bool) env('USER_SUPER_ADMIN_ACCESS_FOR_ROLE', false);
 
@@ -67,18 +66,13 @@ class UserData extends Controller
         }
 
         // Определение имени и отчества
-        $this->name_io = $this->name ?? "";
-        $this->name_io .= " ";
-        $this->name_io .= $this->patronymic ?? "";
-        $this->name_io = trim($this->name_io);
+        $this->name_io = $this->createNameIo($this->name, $this->patronymic);
 
         // Определение полного ФИО
-        $this->name_full = $this->surname ?? "";
-        $this->name_full .= " " . $this->name_io;
-        $this->name_full = trim($this->name_full);
+        $this->name_full = $this->createNameFull($this->surname, $this->name, $this->patronymic);
 
         // ФИО
-        $this->name_fio = preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', $this->name_full);
+        $this->name_fio = $this->createNameFio($this->surname, $this->name, $this->patronymic);
 
         // Дата регистрации
         $this->date = date("d.m.Y H:i:s", strtotime($this->created_at));
@@ -89,6 +83,53 @@ class UserData extends Controller
 
         // Права суперадмина
         $this->superadmin = in_array($this->role, $this->roles) and $superadmin;
+    }
+
+    /**
+     * Формирование имени и отчества
+     * 
+     * @param string $name Имя
+     * @param string $patronymic Отчество
+     * @return string
+     */
+    public function createNameIo($name, $patronymic)
+    {
+        $name_io = $name ?? "";
+        $name_io .= " ";
+        $name_io .= $patronymic ?? "";
+
+        return trim($name_io);
+    }
+
+    /**
+     * Формирование полного фио
+     * 
+     * @param string $surname Фаимлия
+     * @param string $name Имя
+     * @param string $patronymic Отчество
+     * @return string
+     */
+    public function createNameFull($surname, $name, $patronymic)
+    {
+        $name_full = $surname ?? "";
+        $name_full .= " " . $this->createNameIo($name, $patronymic);
+
+        return trim($name_full);
+    }
+
+    /**
+     * Формирование сокращенного фио
+     * 
+     * @param string $surname Фаимлия
+     * @param string $name Имя
+     * @param string $patronymic Отчество
+     * @return string
+     */
+    public function createNameFio($surname, $name, $patronymic)
+    {
+        $name = $this->createNameFull($surname, $name, $patronymic);
+
+        return preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', $name);
     }
 
     /**
@@ -110,7 +151,6 @@ class UserData extends Controller
      */
     public function __get($name)
     {
-
         if (isset($this->$name) === true)
             return $this->$name;
 
@@ -125,7 +165,6 @@ class UserData extends Controller
      */
     public function can(...$permits)
     {
-
         if ($this->superadmin)
             return true;
 
@@ -155,7 +194,6 @@ class UserData extends Controller
      */
     public function getListPermits($permits = [])
     {
-
         if (!count($permits))
             return [];
 
@@ -193,7 +231,6 @@ class UserData extends Controller
      */
     protected function superAdminPermitsList($permits)
     {
-
         foreach ($permits as $permit) {
             $list[$permit] = true;
         }
@@ -208,7 +245,6 @@ class UserData extends Controller
      */
     public function getRoleLevel()
     {
-
         if ($this->level)
             return $this->level;
 
@@ -238,7 +274,6 @@ class UserData extends Controller
      */
     public function getAllTabs()
     {
-
         if ($this->superadmin)
             return \App\Models\Tab::orderBy('position')->get();
 
@@ -272,7 +307,6 @@ class UserData extends Controller
      */
     public function canTab($id = null)
     {
-
         if ($this->superadmin)
             return true;
 
@@ -294,7 +328,6 @@ class UserData extends Controller
      */
     public function getStatusesList()
     {
-
         if ($this->superadmin)
             return \App\Models\Status::all();
 
