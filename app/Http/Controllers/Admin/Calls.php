@@ -148,6 +148,7 @@ class Calls extends Controller
         $extension->phone = $phone;
         $extension->on_work = (int) $request->on_work;
         $extension->comment = $request->comment;
+        $extension->ad_place = $request->ad_place;
 
         $extension->save();
 
