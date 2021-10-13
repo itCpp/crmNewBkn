@@ -2,6 +2,9 @@
 
 namespace App\Events;
 
+use App\Http\Controllers\Controller;
+use App\Models\IncomingCall;
+use App\Models\IncomingCallsToSource;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -22,13 +25,23 @@ class IncomingCalls implements ShouldBroadcast
     public $data;
 
     /**
+     * Флаг необходимости сменить наименования события
+     * 
+     * @var null|string
+     */
+    public $update;
+
+    /**
      * Create a new event instance.
      *
+     * @param \App\Models\IncomingCall $data
+     * @param bool $update
      * @return void
      */
-    public function __construct($data)
+    public function __construct(IncomingCall $data, $update = false)
     {
         $this->data = $data;
+        $this->update = $update;
     }
 
     /**
@@ -39,11 +52,15 @@ class IncomingCalls implements ShouldBroadcast
     public function broadcastWith()
     {
         $data = $this->data->toArray();
-        $data['phone'] = \App\Http\Controllers\Controller::decrypt($data['phone']);
-        $data['phone'] = \App\Http\Controllers\Controller::checkPhone($data['phone'], 2);
+        
+        $data['phone'] = Controller::decrypt($data['phone']);
+        $data['phone'] = Controller::checkPhone($data['phone'], 2);
+
+        $data['source'] = IncomingCallsToSource::where('extension', $data['sip'])->first();
 
         return [
             'data' => $data,
+            'update' => $this->update,
         ];
     }
 

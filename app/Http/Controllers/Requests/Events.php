@@ -169,4 +169,62 @@ class Events extends Controller
 
         return null;
     }
+
+    /**
+     * Повтрная обработка входящего звонка
+     * 
+     * @param \App\Models\IncomingCall $incoming
+     * @param null|int $pin
+     * @param null|string $ip
+     * @param null|string $user_agent
+     * @return null
+     */
+    public static function retryAddRequestFromCall(IncomingCall $incoming, $pin, $ip, $user_agent)
+    {
+
+        // Слушатель сип номеров
+        $sip = IncomingCallsToSource::where([
+            ['extension', $incoming->sip],
+            ['on_work', 1]
+        ])->first();
+
+        if (!$sip) {
+
+            $incoming->failed = now();
+            $incoming->added = null;
+            $incoming->save();
+
+            broadcast(new \App\Events\IncomingCalls($incoming, true));
+
+            return null;
+        }
+
+        // Добавление заявки
+        $request = new Request(
+            query: (array) [
+                'phone' => parent::decrypt($incoming->phone),
+                'myPhone' => $sip->phone,
+                'retry' => true,
+                'pin' => $pin
+            ],
+            server: [
+                'REMOTE_ADDR' => $ip,
+                'HTTP_USER_AGENT' => $user_agent,
+            ]
+        );
+
+        $addRequest = new AddRequest($request);
+        $addRequest->add($request);
+
+        $incoming->added = now();
+        $incoming->failed = null;
+        $incoming->save();
+
+        $sip->added++;
+        $sip->save();
+
+        broadcast(new \App\Events\IncomingCalls($incoming, true));
+
+        return null;
+    }
 }

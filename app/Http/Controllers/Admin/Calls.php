@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\IncomingRequestCallRetryJob;
 use App\Models\IncomingCall;
 use App\Models\IncomingCallsToSource;
 use App\Models\RequestsSourcesResource;
@@ -19,17 +20,34 @@ class Calls extends Controller
     public static function start(Request $request)
     {
         $data = IncomingCall::orderBy('id', "DESC")
-            ->limit(40)
+            ->limit(50)
             ->get();
+
+        $sips = [];
 
         foreach ($data as $call) {
             $call->phone = parent::decrypt($call->phone);
             $call->phone = parent::checkPhone($call->phone, 2);
+
+            if (!in_array($call->sip, $sips))
+                $sips[] = $call->sip;
+
             $calls[] = $call->toArray();
+        }
+
+        $sources = [];
+
+        foreach (IncomingCallsToSource::whereIn('extension', $sips)->get() as $source) {
+            $sources[$source->extension] = $source;
+        }
+
+        foreach ($calls as &$call) {
+            $call['source'] = $sources[$call['sip']] ?? null;
         }
 
         return response()->json([
             'calls' => $calls ?? [],
+            'sources' => $sources,
         ]);
     }
 
@@ -151,5 +169,21 @@ class Calls extends Controller
             'resource' => $resource,
             'alert' => $alert ?? null,
         ]);
+    }
+
+    /**
+     * Повторный запрос на обрбаотку входящего звонка
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function retryIncomingCall(Request $request)
+    {
+        if (!$call = IncomingCall::find($request->id))
+            return response()->json(['message' => "Информация о входящем звонке не найдена"], 400);
+
+        IncomingRequestCallRetryJob::dispatch($call, $request->user()->pin, $request->ip(), $request->header('user_agent'));
+
+        return response()->json(['message' => "Запрос принят"]);
     }
 }

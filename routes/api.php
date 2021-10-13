@@ -236,8 +236,11 @@ Route::group(['middleware' => 'user.token'], function() {
             Route::post('getIncomingCallExtensions', 'Admin\Calls@getIncomingCallExtensions');
             /** Вывод данных одного слушателя */
             Route::post('getIncomingCallExtension', 'Admin\Calls@getIncomingCallExtension');
-            /** Сохранение данных слушателя */
+            /** Сохранение данных или создание нового слушателя */
             Route::post('saveIncpmingExtension', 'Admin\Calls@saveIncpmingExtension');
+
+            /** Повторный запрос обработки входящего звонка */
+            Route::post('retryIncomingCall', 'Admin\Calls@retryIncomingCall');
 
         });
 
