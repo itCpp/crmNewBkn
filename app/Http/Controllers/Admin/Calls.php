@@ -96,7 +96,7 @@ class Calls extends Controller
             });
 
         return response()->json([
-            'extension' => $extension ?? [],
+            'extension' => $extension ?? null,
             'resources' => $resources,
         ]);
     }
