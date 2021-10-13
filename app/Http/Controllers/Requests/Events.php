@@ -201,11 +201,12 @@ class Events extends Controller
 
         // Добавление заявки
         $request = new Request(
-            query: (array) [
+            query: [
                 'phone' => parent::decrypt($incoming->phone),
                 'myPhone' => $sip->phone,
                 'retry' => true,
-                'pin' => $pin
+                'pin' => $pin,
+                'manual' => true,
             ],
             server: [
                 'REMOTE_ADDR' => $ip,
@@ -214,7 +215,18 @@ class Events extends Controller
         );
 
         $addRequest = new AddRequest($request);
-        $addRequest->add($request);
+        $response = $addRequest->add($request);
+
+        if ($response['done'] == "fail") {
+
+            $incoming->added = null;
+            $incoming->failed = now();
+            $incoming->save();
+
+            broadcast(new \App\Events\IncomingCalls($incoming, true));
+
+            return null;
+        }
 
         $incoming->added = now();
         $incoming->failed = null;
@@ -222,8 +234,6 @@ class Events extends Controller
 
         $sip->added++;
         $sip->save();
-
-        broadcast(new \App\Events\IncomingCalls($incoming, true));
 
         return null;
     }

@@ -36,7 +36,6 @@ use Illuminate\Support\Facades\Crypt;
  */
 class AddRequest extends Controller
 {
-
     /**
      * Данные запроса
      * 
@@ -101,7 +100,6 @@ class AddRequest extends Controller
      */
     public function __construct(Request $request)
     {
-
         $this->request = $request;
 
         // Номер телефона клиента
@@ -119,6 +117,25 @@ class AddRequest extends Controller
             $this->query_type = "call";
         elseif ($this->site)
             $this->query_type = "text";
+
+        $this->response = [];
+    }
+
+    /**
+     * Вывод плохого запроса
+     * 
+     * @return array|response
+     */
+    public function badRequest()
+    {
+        $this->response['done'] = "fail";
+        $this->response['message'] = "Запрос не обработан";
+
+        // Вывод массива данных
+        if ($this->request->responseData || $this->request->manual)
+            return $this->response;
+
+        return response()->json($this->response);
     }
 
     /**
@@ -128,9 +145,12 @@ class AddRequest extends Controller
      */
     public function add()
     {
+        $this->findClient(); // Поиск клиента
 
-        $this->findClient() // Поиск клиента
-            ->findSource() // Поиск источника
+        if (!$this->phone)
+            return $this->badRequest();
+
+        $this->findSource() // Поиск источника
             ->findRequest() // Поиск заявки клиента по источнику
             ->requestAnalise() // Анализ существующей заявки
             ->requestSave(); // Сохранение заявки
@@ -175,7 +195,6 @@ class AddRequest extends Controller
      */
     public function findClient()
     {
-
         // Отмена запроса
         if (!$this->phone) {
             $this->errors['phone'][] = "Номер телефона клиента не определен";
@@ -202,7 +221,6 @@ class AddRequest extends Controller
      */
     public function findSource()
     {
-
         // Вывод источника при ручном создании заявки
         if ($this->request->manual and $this->request->source) {
             $this->source = (object) [
@@ -255,7 +273,6 @@ class AddRequest extends Controller
      */
     public function findRequest()
     {
-
         if (!$this->client)
             return $this;
 
@@ -271,7 +288,6 @@ class AddRequest extends Controller
      */
     public function requestAnalise()
     {
-
         if (!$this->data)
             return $this;
 
@@ -291,7 +307,6 @@ class AddRequest extends Controller
      */
     public function checkZeroing()
     {
-
         if (!$this->status)
             return false;
 
@@ -352,7 +367,6 @@ class AddRequest extends Controller
      */
     public function requestZeroing()
     {
-
         $this->zeroing = true;
 
         $this->data->delete();
@@ -369,7 +383,6 @@ class AddRequest extends Controller
      */
     public function requestSave()
     {
-
         if (!$this->data)
             $this->createNewRequest();
 
@@ -397,7 +410,6 @@ class AddRequest extends Controller
      */
     public function checkPin()
     {
-
         // Отмена проверки
         if (!$this->data->pin)
             return null;
