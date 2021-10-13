@@ -7,10 +7,10 @@ use App\Models\User;
 use App\Models\UserAuthQuery;
 use App\Models\UsersSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class Auth extends Controller
 {
-
     /**
      * Проверка типа авторизации пользователя
      * 
@@ -19,7 +19,6 @@ class Auth extends Controller
      */
     public static function loginStart(Request $request)
     {
-
         if (!$request->login)
             return response()->json(['message' => "Введите логин или pin"], 400);
 
@@ -80,7 +79,6 @@ class Auth extends Controller
      */
     public static function login(Request $request)
     {
-
         if (!$user = User::find($request->id))
             return response()->json(['message' => "Ошибка авторизации, попробуйте еще раз, обновив страницу"], 400);
 
@@ -112,7 +110,6 @@ class Auth extends Controller
      */
     public static function loginFromPassword(Request $request)
     {
-
         $password = self::getHashPass($request->password);
         $oldpass = "old|" . md5($request->password);
 
@@ -133,7 +130,6 @@ class Auth extends Controller
      */
     public static function loginFromAdmin(Request $request)
     {
-
         if (!$query = UserAuthQuery::find($request->query_id))
             return response()->json(['message' => "Запрос авторизации не найден"], 400);
 
@@ -155,7 +151,6 @@ class Auth extends Controller
      */
     public static function createSession(Request $request)
     {
-
         $request->getResponseArray = true;
 
         $response = Users::check($request);
@@ -193,7 +188,6 @@ class Auth extends Controller
      */
     public static function createToken($user)
     {
-
         $salt = "";
         foreach ($user as $key => $value) {
             if (is_string($value))
@@ -202,7 +196,7 @@ class Auth extends Controller
 
         $token = md5($salt . microtime());
 
-        return $token;
+        return Str::random(60) . $token;
     }
 
     /**
@@ -213,7 +207,6 @@ class Auth extends Controller
      */
     public static function logout(Request $request)
     {
-
         $token = $request->header('Authorization');
 
         // Обнуление сессии
@@ -242,7 +235,6 @@ class Auth extends Controller
      */
     public static function loginCancel(Request $request)
     {
-
         $query = UserAuthQuery::where([
             ['ip', $request->ip()],
             ['id', $request->query_id],
@@ -269,7 +261,6 @@ class Auth extends Controller
      */
     public static function countAuthQueries($request)
     {
-
         $permits = $request->user()->getListPermits([
             'user_auth_query_all',
             'user_auth_query_all_sectors'
@@ -294,7 +285,6 @@ class Auth extends Controller
      */
     public static function authQueries(Request $request)
     {
-
         $data = UserAuthQuery::whereDate('created_at', now());
 
         $permits = $request->user()->getListPermits([
@@ -334,7 +324,6 @@ class Auth extends Controller
      */
     public static function complete(Request $request)
     {
-
         $id = $request->done ?: $request->drop;
 
         if (!$query = UserAuthQuery::find($id))
