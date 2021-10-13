@@ -134,15 +134,12 @@ class Events extends Controller
         ])
             ->first();
 
-        $eventData = $incoming->toArray();
-        $eventData['phone'] = $this->decript($eventData['phone']);
-
-        broadcast(new \App\Events\IncomingCalls($eventData));
-
         if (!$sip) {
 
             $incoming->failed = now();
             $incoming->save();
+
+            broadcast(new \App\Events\IncomingCalls($incoming));
 
             return null;
         }
@@ -167,6 +164,8 @@ class Events extends Controller
 
         $sip->added++;
         $sip->save();
+
+        broadcast(new \App\Events\IncomingCalls($incoming));
 
         return null;
     }

@@ -232,6 +232,12 @@ Route::group(['middleware' => 'user.token'], function() {
 
             /** Загрузка страницы журнала звонков */
             Route::post('getCalls', 'Admin\Calls@start');
+            /** Вывод списка слушателей входящих звонков */
+            Route::post('getIncomingCallExtensions', 'Admin\Calls@getIncomingCallExtensions');
+            /** Вывод данных одного слушателя */
+            Route::post('getIncomingCallExtension', 'Admin\Calls@getIncomingCallExtension');
+            /** Сохранение данных слушателя */
+            Route::post('saveIncpmingExtension', 'Admin\Calls@saveIncpmingExtension');
 
         });
 

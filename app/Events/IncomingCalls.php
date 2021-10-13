@@ -32,6 +32,22 @@ class IncomingCalls implements ShouldBroadcast
     }
 
     /**
+     * Данные для трансляции
+     *
+     * @return array
+     */
+    public function broadcastWith()
+    {
+        $data = $this->data->toArray();
+        $data['phone'] = \App\Http\Controllers\Controller::decrypt($data['phone']);
+        $data['phone'] = \App\Http\Controllers\Controller::checkPhone($data['phone'], 2);
+
+        return [
+            'data' => $data,
+        ];
+    }
+
+    /**
      * Get the channels the event should broadcast on.
      *
      * @return \Illuminate\Broadcasting\Channel|array
