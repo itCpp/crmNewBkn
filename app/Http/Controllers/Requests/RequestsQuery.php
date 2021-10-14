@@ -360,16 +360,13 @@ class RequestsQuery extends Controller
                 ])
                     ->orWhere('pin', $this->user->pin);
             });
-        }
-
-        // только свои заявки
-        if ($my) {
-            $this->model = $this->model->where('pin', $request->user->pin);
 
             return $this;
         }
 
-        throw new CreateRequestsSqlQuery("Ошибка формирования запроса на вывод данных");
+        $this->model = $this->model->where('pin', $this->user->pin);
+
+        return $this;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Events\UpdateRequestRow;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -12,7 +13,6 @@ use App\Models\MoscowCity;
 
 class RequestChange extends Controller
 {
-    
     /**
      * Изменение данных заявки
      * 
@@ -21,24 +21,22 @@ class RequestChange extends Controller
      */
     public static function save(Request $request)
     {
-
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
         $errors = [];
 
-        if ($request->status_id AND !$status = Status::find($request->status_id))
+        if ($request->status_id and !$status = Status::find($request->status_id))
             $errors['status_id'][] = "Выбранный статус не существует";
 
         // Проверка времени для события
-        if (($status->event_time ?? null) AND (!$request->event_date OR !$request->event_time)) {
+        if (($status->event_time ?? null) and (!$request->event_date or !$request->event_time)) {
 
             if (!$request->event_date)
                 $errors['event_date'][] = "Необходимо указать дату";
 
             if (!$request->event_time)
                 $errors['event_time'][] = "Необходимо указать время";
-
         }
 
         if (count($errors)) {
@@ -63,11 +61,11 @@ class RequestChange extends Controller
         if ($request->event_date)
             $row->event_at = $request->event_date;
 
-        if ($row->event_at AND $request->event_time)
+        if ($row->event_at and $request->event_time)
             $row->event_at = date("Y-m-d {$request->event_time}:00", strtotime($row->event_at));
 
         $row->status_id = $request->status_id; // Статус заявки
-    
+
         $row->address = $request->address; // Адрес офиса
 
         $row->uplift = 0; // Убрать из необработанных с каким-либо статусом
@@ -77,10 +75,14 @@ class RequestChange extends Controller
         // Логирование изменений заявки
         RequestsStory::write($request, $row);
 
-        return response()->json([
-            'request' => Requests::getRequestRow($row),
-        ]);
+        $row = Requests::getRequestRow($row); // Полные данные по заявке
 
+        // Отправка события об изменении заявки
+        broadcast(new UpdateRequestRow($row))->toOthers();
+
+        return response()->json([
+            'request' => $row,
+        ]);
     }
 
     /**
@@ -91,7 +93,6 @@ class RequestChange extends Controller
      */
     public static function checkRegion($city = null)
     {
-
         if (!$city)
             return null;
 
@@ -99,7 +100,6 @@ class RequestChange extends Controller
             return 1;
 
         return 0;
-
     }
 
     /**
@@ -110,7 +110,6 @@ class RequestChange extends Controller
      */
     public static function saveCell(Request $request)
     {
-
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
@@ -123,8 +122,8 @@ class RequestChange extends Controller
         $method = "saveCell" . ucfirst($request->__cell);
 
         if (!method_exists(RequestChange::class, $method))
-            return response()->json(['message' => "Невозможно сохранить изменения"], 400);            
-        
+            return response()->json(['message' => "Невозможно сохранить изменения"], 400);
+
         $response = RequestChange::$method($request, $row);
 
         // Вывод ошибки
@@ -134,11 +133,14 @@ class RequestChange extends Controller
         // Логирование изменений заявки
         RequestsStory::write($request, $row);
 
-        return response()->json([
-            'request' => Requests::getRequestRow($row),
-            'method' => $method,
-        ]);
+        $row = Requests::getRequestRow($row); // Полные данные по заявке
 
+        // Отправка события об изменении заявки
+        broadcast(new UpdateRequestRow($row))->toOthers();
+
+        return response()->json([
+            'request' => $row,
+        ]);
     }
 
     /**
@@ -150,14 +152,12 @@ class RequestChange extends Controller
      */
     public static function saveCellDate(Request $request, RequestsRow $row)
     {
-
         $row->address = $request->address;
         $row->event_at = $request->event_datetime;
 
         $row->save();
 
         return $row;
-
     }
 
     /**
@@ -169,7 +169,6 @@ class RequestChange extends Controller
      */
     public static function saveCellClient(Request $request, RequestsRow $row)
     {
-
         $row->client_name = $request->client_name;
         $row->region = $request->region; // Город клиента
         $row->check_moscow = self::checkRegion($row->region); // Московский регион
@@ -177,7 +176,6 @@ class RequestChange extends Controller
         $row->save();
 
         return $row;
-
     }
 
     /**
@@ -189,13 +187,10 @@ class RequestChange extends Controller
      */
     public static function saveCellTheme(Request $request, RequestsRow $row)
     {
-
         $row->theme = $request->theme;
-
         $row->save();
 
         return $row;
-
     }
 
     /**
@@ -207,13 +202,10 @@ class RequestChange extends Controller
      */
     public static function saveCellCommentFirst(Request $request, RequestsRow $row)
     {
-
         $row->comment_first = $request->comment_first;
-
         $row->save();
 
         return $row;
-
     }
 
     /**
@@ -225,13 +217,10 @@ class RequestChange extends Controller
      */
     public static function saveCellComment(Request $request, RequestsRow $row)
     {
-
         $row->comment = $request->comment;
-
         $row->save();
 
         return $row;
-
     }
 
     /**
@@ -243,13 +232,9 @@ class RequestChange extends Controller
      */
     public static function saveCellCommentUrist(Request $request, RequestsRow $row)
     {
-
         $row->comment_urist = $request->comment_urist;
-
         $row->save();
 
         return $row;
-
     }
-
 }

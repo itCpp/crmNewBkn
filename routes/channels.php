@@ -23,7 +23,6 @@ Broadcast::channel('App.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
-
 /** Запрос авторизации */
 Broadcast::channel('App.Admin.AuthQueries.{callcenter}.{sector}', AuthQueries::class);
 
@@ -39,4 +38,9 @@ Broadcast::channel('App.Auth.{id}', function () {
 
 Broadcast::channel('App.Alerts.{id}', function () {
     return true;
+});
+
+/** Информация о заявках */
+Broadcast::channel('App.Requests', function ($user) {
+    return $user->can('requests_access');
 });

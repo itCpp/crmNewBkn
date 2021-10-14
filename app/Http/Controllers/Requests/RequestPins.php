@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Requests;
 
 use Illuminate\Http\Request;
 
+use App\Events\UpdateRequestRow;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\Requests;
 use App\Http\Controllers\Users\Worktime;
@@ -16,7 +17,6 @@ use App\Models\User;
 
 class RequestPins extends Controller
 {
-
     /**
      * Вывод списка доступных операторов для назначения на заявку
      * 
@@ -25,12 +25,11 @@ class RequestPins extends Controller
      */
     public static function changePinShow(Request $request)
     {
-
         // Проверка наличия заявки
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
-        $permits = $request->__user->getListPermits([
+        $permits = $request->user()->getListPermits([
             'requests_pin_set', # Может назначать оператора на заявку
             'requests_pin_change', # Может менять оператора в заявке
             'requests_pin_set_offline', # Может назначать оператора, находящегося в офлайне
@@ -223,8 +222,13 @@ class RequestPins extends Controller
         Worktime::checkAndWriteWork($old);
         Worktime::checkAndWriteWork($row->pin);
 
+        $row = Requests::getRequestRow($row); // Полные данные по заявке
+        
+        // Отправка события об изменении заявки
+        broadcast(new UpdateRequestRow($row))->toOthers();
+
         return response()->json([
-            'request' => Requests::getRequestRow($row),
+            'request' => $row,
         ]);
 
     }
