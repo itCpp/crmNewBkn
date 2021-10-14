@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class UpdateRequestRow implements ShouldBroadcast
+class CreatedNewRequest implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -22,15 +22,23 @@ class UpdateRequestRow implements ShouldBroadcast
     public $row;
 
     /**
+     * Идентификатор удаленной заявки
+     *
+     * @var bool|int
+     */
+    public $zeroing;
+
+    /**
      * Create a new event instance.
      *
      * @param object $row
      * @param bool|int
      * @return void
      */
-    public function __construct($row)
+    public function __construct($row, $zeroing = false)
     {
         $this->row = $row;
+        $this->zeroing = $zeroing;
     }
 
     /**
@@ -48,6 +56,7 @@ class UpdateRequestRow implements ShouldBroadcast
 
         return [
             'row' => $this->row,
+            'zeroing' => $this->zeroing,
         ];
     }
 

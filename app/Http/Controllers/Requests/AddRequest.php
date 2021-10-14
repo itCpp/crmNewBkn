@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Events\CreatedNewRequest;
+use App\Events\UpdateRequestRow;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Dev\Statuses;
 use App\Models\IncomingQuery;
@@ -93,6 +95,13 @@ class AddRequest extends Controller
     protected $comments = [];
 
     /**
+     * Флаг создания новой заявки
+     * 
+     * @var bool
+     */
+    protected $created = false;
+
+    /**
      * Инициализация объекта
      * 
      * @param \Illuminate\Http\Request $request
@@ -125,6 +134,8 @@ class AddRequest extends Controller
         ]);
 
         $this->response = [];
+
+        $this->zeroing = false; // Идентфиикатор удаленной заявки
     }
 
     /**
@@ -190,6 +201,7 @@ class AddRequest extends Controller
             'status' => $this->status,
             // 'query' => $this->query,
             'comments' => count($this->comments),
+            'created' => $this->created, // Флаг новой заявки
         ];
 
         if ($this->errors) {
@@ -382,7 +394,7 @@ class AddRequest extends Controller
      */
     public function requestZeroing()
     {
-        $this->zeroing = true;
+        $this->zeroing = $this->data->id;
 
         $this->data->delete();
         $this->createNewRequest();
@@ -414,6 +426,17 @@ class AddRequest extends Controller
         $this->addData();
 
         $this->data->save();
+
+        $row = Requests::getRequestRow($this->data); // Полные данные по заявке
+
+        // Отправка события о новой заявке
+        if ($this->created) {
+            broadcast(new CreatedNewRequest($row, $this->zeroing));
+        }
+        // Отправка события об изменении заявки
+        else {
+            broadcast(new UpdateRequestRow($row));
+        }
 
         return $this;
     }
@@ -447,11 +470,12 @@ class AddRequest extends Controller
      */
     public function createNewRequest()
     {
-
         $this->data = RequestsRow::create([
             'source_id' => $this->source->id ?? null,
             'sourse_resource' => $this->resource->id ?? null,
         ]);
+
+        $this->created = true;
 
         // Добавление отношения клиента к заявки
         $this->client->requests()->attach($this->data->id);
@@ -466,7 +490,6 @@ class AddRequest extends Controller
      */
     public function writeQuery()
     {
-
         $data = $this->request->all();
 
         if (isset($data['phone']))
@@ -491,7 +514,6 @@ class AddRequest extends Controller
      */
     public function __get($name)
     {
-
         if (isset($this->$name) === true)
             return $this->$name;
 
@@ -505,7 +527,6 @@ class AddRequest extends Controller
      */
     public function addData()
     {
-
         // Проверка имени клиента
         if ($this->request->client_name) {
 
@@ -573,7 +594,6 @@ class AddRequest extends Controller
      */
     public function addComment($comment = null, $type = "comment")
     {
-
         if (!$comment)
             return $this;
 
