@@ -147,6 +147,10 @@ class Tabs extends Controller
         $tab->name_title = $request->name_title;
         $tab->where_settings = $request->where_settings;
         $tab->order_by_settings = $request->order_by_settings;
+        $tab->request_all = $request->request_all;
+        $tab->request_all_permit = $request->request_all_permit;
+        $tab->date_view = $request->date_view;
+        $tab->date_types = $request->date_types ?: null;
 
         $tab->save();
 

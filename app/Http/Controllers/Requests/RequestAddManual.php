@@ -70,6 +70,7 @@ class RequestAddManual extends Controller
             'comment_main' => $request->comment,
             'comment_first' => $request->comment_first,
             'theme' => $request->theme,
+            'city' => $request->region,
         ]);
 
         $add = new AddRequest($add_request);

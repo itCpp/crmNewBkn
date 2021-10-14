@@ -118,7 +118,29 @@ class AddRequest extends Controller
         elseif ($this->site)
             $this->query_type = "text";
 
+        // Логирование всех запросов
+        $this->queryLog = IncomingQuery::create([
+            'ip' => $this->request->ip(),
+            'user_agent' => $this->request->header('User-Agent'),
+        ]);
+
         $this->response = [];
+    }
+
+    /**
+     * Вывод результата
+     * 
+     * @return array|response
+     */
+    public function response()
+    {
+        $this->writeQuery();
+
+        // Вывод массива данных
+        if ($this->request->responseData || $this->request->manual)
+            return $this->response;
+
+        return response()->json($this->response);
     }
 
     /**
@@ -131,11 +153,11 @@ class AddRequest extends Controller
         $this->response['done'] = "fail";
         $this->response['message'] = "Запрос не обработан";
 
-        // Вывод массива данных
-        if ($this->request->responseData || $this->request->manual)
-            return $this->response;
+        if ($this->errors) {
+            $this->response['errors'] = $this->errors;
+        }
 
-        return response()->json($this->response);
+        return $this->response();
     }
 
     /**
@@ -178,14 +200,7 @@ class AddRequest extends Controller
         // Логирование изменений заявки
         RequestsStory::write($this->request, $this->data);
 
-        // Логирование обращений
-        $this->query = $this->writeQuery();
-
-        // Вывод массива данных
-        if ($this->request->responseData || $this->request->manual)
-            return $this->response;
-
-        return response()->json($this->response);
+        return $this->response();
     }
 
     /**
@@ -457,15 +472,15 @@ class AddRequest extends Controller
         if (isset($data['phone']))
             $data['phone'] = $this->encrypt($data['phone']);
 
-        return IncomingQuery::create([
-            'query_data' => $data,
-            'client_id' => $this->client->id ?? null,
-            'request_id' => $this->data->id ?? null,
-            'request_data' => $this->data ?? [],
-            'response_data' => $this->response,
-            'ip' => $this->request->ip(),
-            'user_agent' => $this->request->header('User-Agent'),
-        ]);
+        $this->queryLog->query_data = $data; # Поступившие данные
+        $this->queryLog->client_id = $this->client->id ?? null; # Идентификатор клиента
+        $this->queryLog->request_id = $this->data->id ?? null; # Идентификатор заявки
+        $this->queryLog->request_data = $this->data ?? []; # Данные в заявке
+        $this->queryLog->response_data = $this->response; # Массив ответа
+
+        $this->queryLog->save();
+
+        return $this->queryLog;
     }
 
     /**

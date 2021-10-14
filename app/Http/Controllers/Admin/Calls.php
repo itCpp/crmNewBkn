@@ -27,7 +27,9 @@ class Calls extends Controller
 
         foreach ($data as $call) {
             $call->phone = parent::decrypt($call->phone);
-            $call->phone = parent::checkPhone($call->phone, 2);
+
+            if ($phone = parent::checkPhone($call->phone, 2))
+                $call->phone = $phone;
 
             if (!in_array($call->sip, $sips))
                 $sips[] = $call->sip;
@@ -89,6 +91,7 @@ class Calls extends Controller
             ['source_id', '!=', null],
             ['type', 'phone']
         ])
+            ->orderBy('source_id')
             ->get()
             ->map(function ($row) {
                 $row->source = $row->source;

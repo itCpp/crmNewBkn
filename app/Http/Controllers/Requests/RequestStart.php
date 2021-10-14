@@ -22,6 +22,9 @@ class RequestStart extends Controller
         'requests_sector_set', # Может назначать заявку для сектора
         'requests_sector_change', # Может менять сектор в заявке
         'requests_comment_first', # Может оставлять первичный комментарий
+        'requests_all_my_sector', # Видит все заявки и операторов только своего сектора
+        'requests_all_sectors', # Видит заявки и операторов всех колл-центров
+        'requests_all_callcenters', # Видит заявки и операторов всех секторов своего колл-центра
     ];
 
     /**

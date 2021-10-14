@@ -12,11 +12,9 @@ class Permissions
      */
     public function __construct($list = [])
     {
-
         foreach ($list as $key => $value) {
             $this->$key = $value;
         }
-
     }
 
     /**
@@ -25,13 +23,23 @@ class Permissions
      * @param string $name
      * @return mixed
      */
-    public function __get($name) {
-
+    public function __get($name)
+    {
         if (isset($this->$name) === true)
             return $this->$name;
 
         return null;
-        
     }
 
+    /**
+     * Добавление разрешений в список проверенных
+     * 
+     * @param array
+     */
+    public function appends($list = [])
+    {
+        foreach ($list as $key => $value) {
+            $this->$key = $value;
+        }
+    }
 }

@@ -3,17 +3,15 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Models\Office;
+use App\Models\RequestsRow;
+use App\Models\Status;
+use App\Models\Tab;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
-use App\Models\Tab;
-use App\Models\RequestsRow;
-use App\Models\Status;
-use App\Models\Office;
-
 class Requests extends Controller
 {
-
     /**
      * Вывод заявок
      * 
@@ -32,15 +30,11 @@ class Requests extends Controller
         // Разрешения для пользователя
         RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
 
-        $query = array_merge(
-            $request->tab->where_settings ?? [],
-            $request->tab->order_by_settings ?? []
-        );
+        // Формирование запроса на вывод
+        $query = new RequestsQuery($request);
+        $data =  $query->paginate($request->limit ?? 25);
 
-        $where = RequestsRow::setWhere($query);
-        $data = Requests::setQuery($request, $where)->paginate($request->limit ?? 25);
-
-        $requests = Requests::getRequests($data);
+        $requests = self::getRequests($data);
 
         $next = $data->currentPage() + 1; // Следующая страница
         $pages = $data->lastPage(); // Общее количество страниц
@@ -113,18 +107,6 @@ class Requests extends Controller
             $response['comments'] = Comments::getComments($request);
 
         return response()->json($response);
-    }
-
-    /**
-     * Дополнение запроса на вывод данных
-     * 
-     * @param \Illuminate\Http\Request  $request
-     * @param \App\Models\RequestsRow   $data
-     * @return \App\Models\RequestsRow
-     */
-    public static function setQuery(Request $request, $data)
-    {
-        return $data;
     }
 
     /**

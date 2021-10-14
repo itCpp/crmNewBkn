@@ -108,7 +108,6 @@ class RequestsRow extends Model
      */
     static function getColumnsList()
     {
-
         $model = new static;
 
         return DB::table('INFORMATION_SCHEMA.COLUMNS')
@@ -129,7 +128,6 @@ class RequestsRow extends Model
      */
     public static function setWhere($wheres = [])
     {
-
         /**
          * Определение типов переменных для конструктора запросов
          * 

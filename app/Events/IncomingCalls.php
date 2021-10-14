@@ -54,7 +54,9 @@ class IncomingCalls implements ShouldBroadcast
         $data = $this->data->toArray();
         
         $data['phone'] = Controller::decrypt($data['phone']);
-        $data['phone'] = Controller::checkPhone($data['phone'], 2);
+
+        if ($phone = Controller::checkPhone($data['phone'], 2))
+            $data['phone'] = $phone;
 
         $data['source'] = IncomingCallsToSource::where('extension', $data['sip'])->first();
 

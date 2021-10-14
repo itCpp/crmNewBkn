@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
+use App\Models\CallcenterSector;
 use App\Models\Role;
 use App\Models\UserWorkTime;
 use Illuminate\Http\Request;
@@ -46,12 +47,21 @@ class UserData extends Controller
     protected $level = null;
 
     /**
+     * Список проверенных разрешений
+     * 
+     * @var \App\Http\Controllers\Users\Permissions
+     */
+    protected $__permissions;
+
+    /**
      * Создание объекта
      * 
      * @param \App\Models\User $user Экземпляр модели пользователя
      */
     public function __construct($user)
     {
+        $this->__permissions = new Permissions;
+
         // Настройка проверки суперадмина
         $superadmin = (bool) env('USER_SUPER_ADMIN_ACCESS_FOR_ROLE', false);
 
@@ -195,7 +205,7 @@ class UserData extends Controller
     public function getListPermits($permits = [])
     {
         if (!count($permits))
-            return [];
+            return $this->__permissions;
 
         if ($this->superadmin)
             return $this->superAdminPermitsList($permits);
@@ -220,7 +230,19 @@ class UserData extends Controller
         foreach ($permits as $permit)
             $list[$permit] = in_array($permit, $access);
 
-        return new Permissions($list ?? []);
+        $this->__permissions->appends($list ?? []);
+
+        return $this->__permissions;
+    }
+
+    /**
+     * Вывод уже проверенных разрешений
+     * 
+     * @return Permissions
+     */
+    public function checkedPermits()
+    {
+        return $this->__permissions;
     }
 
     /**
@@ -235,7 +257,9 @@ class UserData extends Controller
             $list[$permit] = true;
         }
 
-        return new Permissions($list ?? []);
+        $this->__permissions->appends($list ?? []);
+
+        return $this->__permissions;
     }
 
     /**
@@ -369,5 +393,31 @@ class UserData extends Controller
             'callcenter' => $this->callcenter_id,
             'sector' => $this->callcenter_sector_id,
         ];
+    }
+
+    /**
+     * Массив идентификаторов всех секторов колл-центра сотрудника
+     * 
+     * @var array
+     */
+    protected $allSectors = [];
+
+    /**
+     * Вывод всех секторов коллцентра сотрудника
+     * 
+     * @return array
+     */
+    public function getAllSectors()
+    {
+        if (count($this->allSectors))
+            return $this->allSectors;
+
+        $this->allSectors = CallcenterSector::where('callcenter_id', $this->callcenter_id)
+            ->get()
+            ->map(function ($row) {
+                return $row->id;
+            });
+
+        return $this->allSectors;
     }
 }

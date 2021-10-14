@@ -17,6 +17,7 @@ class Tab extends Model
     protected $casts = [
         'where_settings' => 'array',
         'order_by_settings' => 'array',
+        'date_types' => 'array',
     ];
 
     /**
