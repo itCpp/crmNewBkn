@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Requests;
 
 use App\Events\CreatedNewRequest;
 use App\Events\UpdateRequestRow;
+use App\Events\Requests\AddRequestEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Dev\Statuses;
 use App\Models\IncomingQuery;
@@ -147,6 +148,8 @@ class AddRequest extends Controller
     {
         $this->writeQuery();
 
+        broadcast(new AddRequestEvent($this->data, $this->response));
+
         // Вывод массива данных
         if ($this->request->responseData || $this->request->manual)
             return $this->response;
@@ -209,10 +212,18 @@ class AddRequest extends Controller
             $this->response['errors'] = $this->errors;
         }
 
-        // Логирование изменений заявки
-        RequestsStory::write($this->request, $this->data);
-
         return $this->response();
+    }
+
+    /**
+     * Формирование хэша номера телефона
+     * 
+     * @param string $phone
+     * @return string
+     */
+    public static function getHashPhone($phone)
+    {
+        return md5($phone . env('APP_KEY'));
     }
 
     /**
@@ -228,7 +239,7 @@ class AddRequest extends Controller
             return $this;
         }
 
-        $hash = md5($this->phone . env('APP_KEY'));
+        $hash = $this->getHashPhone($this->phone);
 
         // Поиск или создание нового клиента
         if (!$this->client = RequestsClient::where('hash', $hash)->first()) {
@@ -427,11 +438,14 @@ class AddRequest extends Controller
 
         $this->data->save();
 
+        // Логирование изменений заявки
+        RequestsStory::write($this->request, $this->data);
+
         $row = Requests::getRequestRow($this->data); // Полные данные по заявке
 
         // Отправка события о новой заявке
         if ($this->created) {
-            broadcast(new CreatedNewRequest($row, $this->zeroing));
+            // broadcast(new CreatedNewRequest($row, $this->zeroing));
         }
         // Отправка события об изменении заявки
         else {

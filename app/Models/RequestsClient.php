@@ -26,9 +26,7 @@ class RequestsClient extends Model
      */
     public function requests()
     {
-
         return $this->belongsToMany(RequestsRow::class, 'requests_rows_requests_clients', 'id_requests_clients', 'id_request');
-
     }
 
 }

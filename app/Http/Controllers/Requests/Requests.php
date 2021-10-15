@@ -21,10 +21,10 @@ class Requests extends Controller
     public static function get(Request $request)
     {
         if (!$request->tab = Tab::find($request->tabId))
-            return response()->json(['message' => "Выбрана несуществующая вкладка"], 400);
+            $request->tab = new Tab;
 
         // Проверка разрешения на просмотр вкладки
-        if (!$request->user()->canTab($request->tab->id))
+        if ($request->tab->id and !$request->user()->canTab($request->tab->id))
             return response()->json(['message' => "Доступ к вкладке ограничен"], 403);
 
         // Разрешения для пользователя
