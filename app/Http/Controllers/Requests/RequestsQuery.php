@@ -96,7 +96,7 @@ class RequestsQuery extends Controller
      * 
      * @var object|null
      */
-    protected $search;
+    protected $search = null;
 
     /**
      * Создание объекта
@@ -117,7 +117,8 @@ class RequestsQuery extends Controller
 
         $this->tab = $request->tab;
 
-        $this->search = new RequestsQuerySearchParams($request->search);
+        if ($request->search)
+            $this->search = new RequestsQuerySearchParams($request->search);
     }
 
     /**
@@ -128,7 +129,8 @@ class RequestsQuery extends Controller
     public function where()
     {
         // Поисковой запрос
-        return $this->setSearchQuery();
+        if ($this->search)
+            return $this->setSearchQuery();
 
         $this->setWhere()
             ->setDatesFilter()
