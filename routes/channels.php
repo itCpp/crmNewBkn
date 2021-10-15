@@ -44,3 +44,8 @@ Broadcast::channel('App.Alerts.{id}', function () {
 Broadcast::channel('App.Requests', function ($user) {
     return $user->can('requests_access');
 });
+
+/** Информация о личных заявках */
+Broadcast::channel('App.Requests.{pin}', function ($user, $pin) {
+    return $user->pin == $pin and $user->can('requests_access');
+});

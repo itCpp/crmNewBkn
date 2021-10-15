@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Requests;
 
-use App\Events\UpdateRequestRow;
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
+use App\Events\Requests\UpdateRequestEvent;
+use App\Models\MoscowCity;
 use App\Models\RequestsRow;
 use App\Models\RequestsStory;
 use App\Models\Status;
-use App\Models\MoscowCity;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 
 class RequestChange extends Controller
 {
@@ -78,7 +77,7 @@ class RequestChange extends Controller
         $row = Requests::getRequestRow($row); // Полные данные по заявке
 
         // Отправка события об изменении заявки
-        broadcast(new UpdateRequestRow($row))->toOthers();
+        broadcast(new UpdateRequestEvent($row));
 
         return response()->json([
             'request' => $row,
@@ -136,7 +135,7 @@ class RequestChange extends Controller
         $row = Requests::getRequestRow($row); // Полные данные по заявке
 
         // Отправка события об изменении заявки
-        broadcast(new UpdateRequestRow($row))->toOthers();
+        broadcast(new UpdateRequestEvent($row));
 
         return response()->json([
             'request' => $row,

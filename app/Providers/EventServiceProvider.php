@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Events\Requests\AddRequestEvent;
+use App\Events\Requests\UpdateRequestEvent;
 use App\Listeners\Requests\AddRequestsDone;
+use App\Listeners\Requests\UpdateRequestsDone;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -22,6 +24,9 @@ class EventServiceProvider extends ServiceProvider
         // ],
         AddRequestEvent::class => [
             AddRequestsDone::class,
+        ],
+        UpdateRequestEvent::class => [
+            UpdateRequestsDone::class,
         ],
     ];
 

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Requests;
 
 use Illuminate\Http\Request;
 
-use App\Events\UpdateRequestRow;
+use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\Requests;
 use App\Http\Controllers\Users\Worktime;
@@ -223,9 +223,11 @@ class RequestPins extends Controller
         Worktime::checkAndWriteWork($row->pin);
 
         $row = Requests::getRequestRow($row); // Полные данные по заявке
+        $row->newPin = $row->pin;
+        $row->oldPin = $old;
         
         // Отправка события об изменении заявки
-        broadcast(new UpdateRequestRow($row))->toOthers();
+        broadcast(new UpdateRequestEvent($row));
 
         return response()->json([
             'request' => $row,

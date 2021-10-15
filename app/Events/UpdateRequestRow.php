@@ -21,6 +21,9 @@ class UpdateRequestRow implements ShouldBroadcast
      */
     public $row;
 
+    protected $addToPin = null;
+    protected $removeToPin = null;
+
     /**
      * Create a new event instance.
      *
@@ -46,8 +49,22 @@ class UpdateRequestRow implements ShouldBroadcast
         if (isset($this->row->permits))
             unset($this->row->permits);
 
+        // Флаг добавления заявки для оператора
+        if (isset($this->row->newPin)) {
+            if ($add = ($this->row->newPin == $this->row->pin))
+                $this->addToPin = $this->row->newPin;
+        }
+
+        // Флаг удаления заявки у оператора
+        if (isset($this->row->oldPin)) {
+            if ($remove = ($this->row->oldPin != $this->row->pin))
+                $this->removeToPin = $this->row->oldPin;
+        }
+
         return [
             'row' => $this->row,
+            'add' => $add ?? null,
+            'remove' => $remove ?? null,
         ];
     }
 
@@ -58,6 +75,14 @@ class UpdateRequestRow implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new PrivateChannel('App.Requests');
+        $channels = [new PrivateChannel('App.Requests')];
+
+        if ($this->addToPin)
+            $channels[] = new PrivateChannel("App.Requests.{$this->addToPin}");
+
+        if ($this->removeToPin)
+            $channels[] = new PrivateChannel("App.Requests.{$this->removeToPin}");
+
+        return $channels;
     }
 }

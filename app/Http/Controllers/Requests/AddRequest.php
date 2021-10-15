@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Requests;
 use App\Events\CreatedNewRequest;
 use App\Events\UpdateRequestRow;
 use App\Events\Requests\AddRequestEvent;
+use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Dev\Statuses;
 use App\Models\IncomingQuery;
@@ -449,7 +450,7 @@ class AddRequest extends Controller
         }
         // Отправка события об изменении заявки
         else {
-            broadcast(new UpdateRequestRow($row));
+            broadcast(new UpdateRequestEvent($row, false));
         }
 
         return $this;
