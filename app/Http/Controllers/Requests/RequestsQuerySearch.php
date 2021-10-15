@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Exceptions\CreateRequestsSqlQuery;
 use App\Models\RequestsClient;
 
 trait RequestsQuerySearch

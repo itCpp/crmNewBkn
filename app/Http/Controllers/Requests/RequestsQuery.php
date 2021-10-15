@@ -129,8 +129,13 @@ class RequestsQuery extends Controller
     public function where()
     {
         // Поисковой запрос
-        if ($this->search)
+        if ($this->search) {
+
+            if (!$this->search->getQueryKeysCount())
+                throw new CreateRequestsSqlQuery("Введите поисковой запрос");
+
             return $this->setSearchQuery();
+        }
 
         $this->setWhere()
             ->setDatesFilter()
@@ -343,7 +348,7 @@ class RequestsQuery extends Controller
         $sector = $this->user->checkedPermits()->requests_all_my_sector;
         $sectors = $this->user->checkedPermits()->requests_all_sectors;
         $callcenters = $this->user->checkedPermits()->requests_all_callcenters;
-        
+
         $my = $this->tab->request_all == "my" or $this->tab->request_all === null;
         $mySector = $this->tab->request_all == "sector";
         $myCallcenter = $this->tab->request_all == "callcenter";

@@ -5,6 +5,13 @@ namespace App\Http\Controllers\Requests;
 class RequestsQuerySearchParams
 {
     /**
+     * Массив ключей поискового запроса
+     * 
+     * @var array
+     */
+    protected $queryKeys = [];
+
+    /**
      * Объявление объекта
      * 
      * @param array|null $params
@@ -16,7 +23,13 @@ class RequestsQuerySearchParams
             return $this;
 
         foreach ($params as $key => $value) {
-            $this->$key = $value;
+
+            if ($value and $value != "") {
+
+                $this->$key = $value;
+
+                $this->queryKeys[] = $key;
+            }
         }
     }
 
@@ -37,5 +50,25 @@ class RequestsQuerySearchParams
         }
 
         return null;
+    }
+
+    /**
+     * Вывод количества найденных ключей
+     * 
+     * @return int
+     */
+    public function getQueryKeysCount()
+    {
+        return count($this->queryKeys);
+    }
+
+    /**
+     * Вывод массива ключей
+     * 
+     * @return int
+     */
+    public function getQueryKeys()
+    {
+        return $this->queryKeys;
     }
 }
