@@ -58,30 +58,30 @@ class UpdateRequestRowForPin implements ShouldBroadcast
      */
     public function broadcastWith()
     {
-        // Удаление данных о клиенте
-        if (isset($this->row->clients))
-            unset($this->row->clients);
+        // // Удаление данных о клиенте
+        // if (isset($this->row->clients))
+        //     unset($this->row->clients);
 
-        // Удаление данных о правах сотрудника по заявке
-        if (isset($this->row->permits))
-            unset($this->row->permits);
+        // // Удаление данных о правах сотрудника по заявке
+        // if (isset($this->row->permits))
+        //     unset($this->row->permits);
 
-        // Дополнение информации о заявке
-        if (!$this->drop) {
-            if ($user = Users::findUserPin($this->pin)) {
-                // Права пользователя по заявкам
-                $this->row->permits = $user->getListPermits(RequestStart::$permitsList);
+        // // Дополнение информации о заявке
+        // if (!$this->drop) {
+        //     if ($user = Users::findUserPin($this->pin)) {
+        //         // Права пользователя по заявкам
+        //         $this->row->permits = $user->getListPermits(RequestStart::$permitsList);
 
-                // Информация по клиентам
-                $this->row->clients = Requests::getClientPhones(
-                    RequestsRow::find($this->row->id),
-                    $this->row->permits->clients_show_phone
-                );
-            }
-        }
+        //         // Информация по клиентам
+        //         $this->row->clients = Requests::getClientPhones(
+        //             RequestsRow::find($this->row->id),
+        //             $this->row->permits->clients_show_phone
+        //         );
+        //     }
+        // }
 
         return [
-            'row' => $this->row,
+            'row' => $this->row->id,
             'drop' => $this->drop,
         ];
     }

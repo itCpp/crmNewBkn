@@ -113,6 +113,32 @@ class Requests extends Controller
     }
 
     /**
+     * Запрос на вывод данных для добавления заявки оператору
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function getRowForTab(Request $request)
+    {
+        if (!$request->tab = Tab::find($request->tabId))
+            return response()->json(['message' => "Информация о вкладке не найдена"], 400);
+
+        if (!$request->user()->canTab($request->tab->id))
+            return response()->json(['message' => "Доступ к вкладке ограничен"], 403);
+
+        // Разрешения для пользователя по заявкам
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
+
+        // Формирование запроса на вывод
+        $query = new RequestsQuery($request);
+        $row = $query->where('id', $request->id)->first();
+
+        return response()->json([
+            'row' => $row ? self::getRequestRow($row) : null,
+        ]);
+    }
+
+    /**
      * Формирование запроса и вывод заявок
      * 
      * @param \App\Models\RequestsRow $data Коллекция модели

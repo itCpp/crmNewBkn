@@ -124,9 +124,10 @@ class RequestsQuery extends Controller
     /**
      * Формирование запроса и применение фильтров
      * 
+     * @param mix $params
      * @return \App\Models\RequestsRow
      */
-    public function where()
+    public function where(...$params)
     {
         // Поисковой запрос
         if ($this->search) {
@@ -141,6 +142,7 @@ class RequestsQuery extends Controller
             ->setDatesFilter()
             ->setOptionsTabFilter()
             ->setUserPermitsFilter()
+            ->setWhereFromParams($params)
             ->setOrderBy();
 
         return $this->model;
@@ -474,6 +476,20 @@ class RequestsQuery extends Controller
                     $this->model = $this->model->orderBy(...$order_by);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * Применение условий при вызове метода формирования запроса
+     * 
+     * @param array $params
+     * @return $this
+     */
+    public function setWhereFromParams($params)
+    {
+        if ($params)
+            $this->model = $this->model->where(...$params);
 
         return $this;
     }

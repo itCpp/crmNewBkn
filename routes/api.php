@@ -53,6 +53,7 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('get', 'Requests\Requests@get');
         /** Вывод одной строки */
         Route::post('getRow', 'Requests\Requests@getRow');
+        Route::post('getRowForTab', 'Requests\Requests@getRowForTab');
 
         /** Изменение данных заявки */
         Route::post('save', 'Requests\RequestChange@save');
