@@ -21,8 +21,12 @@ class UpdateRequestRow implements ShouldBroadcast
      */
     public $row;
 
-    protected $addToPin = null;
-    protected $removeToPin = null;
+    /**
+     * Персональный идентификационный номер сотрудника, который должен проигнорировать уведомление
+     * 
+     * @var array
+     */
+    public $toExclude;
 
     /**
      * Create a new event instance.
@@ -31,9 +35,10 @@ class UpdateRequestRow implements ShouldBroadcast
      * @param bool|int
      * @return void
      */
-    public function __construct($row)
+    public function __construct($row, $toExclude = [])
     {
         $this->row = $row;
+        $this->toExclude = $toExclude;
     }
 
     /**
@@ -49,22 +54,9 @@ class UpdateRequestRow implements ShouldBroadcast
         if (isset($this->row->permits))
             unset($this->row->permits);
 
-        // Флаг добавления заявки для оператора
-        if (isset($this->row->newPin)) {
-            if ($add = ($this->row->newPin == $this->row->pin))
-                $this->addToPin = $this->row->newPin;
-        }
-
-        // Флаг удаления заявки у оператора
-        if (isset($this->row->oldPin)) {
-            if ($remove = ($this->row->oldPin != $this->row->pin))
-                $this->removeToPin = $this->row->oldPin;
-        }
-
         return [
             'row' => $this->row,
-            'add' => $add ?? null,
-            'remove' => $remove ?? null,
+            'toExclude' => $this->toExclude,
         ];
     }
 
@@ -75,14 +67,6 @@ class UpdateRequestRow implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        $channels = [new PrivateChannel('App.Requests')];
-
-        if ($this->addToPin)
-            $channels[] = new PrivateChannel("App.Requests.{$this->addToPin}");
-
-        if ($this->removeToPin)
-            $channels[] = new PrivateChannel("App.Requests.{$this->removeToPin}");
-
-        return $channels;
+        return new PrivateChannel('App.Requests');
     }
 }

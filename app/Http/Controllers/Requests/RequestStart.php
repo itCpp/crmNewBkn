@@ -25,12 +25,13 @@ class RequestStart extends Controller
         'requests_all_my_sector', # Видит все заявки и операторов только своего сектора
         'requests_all_sectors', # Видит заявки и операторов всех колл-центров
         'requests_all_callcenters', # Видит заявки и операторов всех секторов своего колл-центра
+        'clients_show_phone', # Может видеть номера телефонов клиента
     ];
 
     /**
      * Проверенный список разрешений
      * 
-     * @var array
+     * @var array|\App\Http\Controllers\Users\Permissions
      */
     public static $permits = [];
     
@@ -42,7 +43,6 @@ class RequestStart extends Controller
      */
     public static function start(Request $request)
     {
-
         // Формирование кнопок в верхушке сайта
         $menu = [];
 

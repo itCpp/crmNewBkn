@@ -150,12 +150,7 @@ class Requests extends Controller
             ? "{$row->event_date}T{$row->event_time}" : null;
 
         // Данные по номерам телефона
-        $row->clients = $row->clients()->get()->map(function ($client) {
-            return (object) [
-                'id' => $client->id,
-                'phone' => Crypt::decryptString($client->phone),
-            ];
-        });
+        $row->clients = self::getClientPhones($row, $row->permits->clients_show_phone ?? null);
 
         $row->source; # Источник заявки
         $row->status; # Вывод данных о статусе
@@ -163,5 +158,30 @@ class Requests extends Controller
         $row->sector; # Вывод данных по сектору
 
         return (object) $row->toArray();
+    }
+
+    /**
+     * Вывод номеров телефона клиента
+     * 
+     * @param \App\Models\RequestsRow $row
+     * @param null|bool $permit Флаг разрешения на вывод номера
+     * @return array
+     */
+    public static function getClientPhones(RequestsRow $row, $permit = false)
+    {
+        return $row->clients()->get()->map(function ($client) use ($permit) {
+
+            $phone = Crypt::decryptString($client->phone);
+            $type = 5; // Ключ модификации номера телефона
+
+            if ($permit)
+                $type = 3;
+
+            return (object) [
+                'id' => $client->id,
+                'phone' => parent::checkPhone($phone, $type),
+                'hidden' => !$permit,
+            ];
+        });
     }
 }

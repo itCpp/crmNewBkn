@@ -135,4 +135,18 @@ class Users extends Controller
 
         return $user;
     }
+
+    /**
+     * Поиск сотркдника по его персональному идентификационному номеру
+     * 
+     * @param int $pin
+     * @return UserData|null
+     */
+    public static function findUserPin($pin)
+    {
+        if (!$user = User::where('pin', $pin)->first())
+            return null;
+
+        return new UserData($user);
+    }
 }
