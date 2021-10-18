@@ -96,6 +96,20 @@ class UserData extends Controller
     }
 
     /**
+     * Магический метод для вывода несуществующего значения
+     * 
+     * @param string $name
+     * @return mixed
+     */
+    public function __get($name)
+    {
+        if (isset($this->$name) === true)
+            return $this->$name;
+
+        return null;
+    }
+
+    /**
      * Формирование имени и отчества
      * 
      * @param string $name Имя
@@ -151,20 +165,6 @@ class UserData extends Controller
     public function writeWorkTime($type)
     {
         return Worktime::writeEvent($this->pin, $type);
-    }
-
-    /**
-     * Магический метод для вывода несуществующего значения
-     * 
-     * @param string $name
-     * @return mixed
-     */
-    public function __get($name)
-    {
-        if (isset($this->$name) === true)
-            return $this->$name;
-
-        return null;
     }
 
     /**

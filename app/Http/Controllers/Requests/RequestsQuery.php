@@ -124,7 +124,7 @@ class RequestsQuery extends Controller
     /**
      * Формирование запроса и применение фильтров
      * 
-     * @param mix $params
+     * @param array $params
      * @return \App\Models\RequestsRow
      */
     public function where(...$params)

@@ -206,7 +206,7 @@ class Requests extends Controller
             return (object) [
                 'id' => $client->id,
                 'phone' => parent::checkPhone($phone, $type),
-                'hidden' => !$permit,
+                'hidden' => (bool) !$permit,
             ];
         });
     }

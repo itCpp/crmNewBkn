@@ -116,7 +116,7 @@ class RequestChange extends Controller
             return response()->json(['message' => "Невозможно сохранить изменения"], 400);
 
         // Поиск разрешений для заявок
-        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
 
         $method = "saveCell" . ucfirst($request->__cell);
 
@@ -127,7 +127,7 @@ class RequestChange extends Controller
 
         // Вывод ошибки
         if (!$response instanceof RequestsRow)
-            return $response;
+            return response()->json(['message' => "Невозможно сохранить изменения"], 400);
 
         // Логирование изменений заявки
         RequestsStory::write($request, $row);
@@ -151,7 +151,9 @@ class RequestChange extends Controller
      */
     public static function saveCellDate(Request $request, RequestsRow $row)
     {
-        $row->address = $request->address;
+        if ($request->user()->checkedPermits()->requests_addr_change)
+            $row->address = $request->address;
+
         $row->event_at = $request->event_datetime;
 
         $row->save();
@@ -201,6 +203,9 @@ class RequestChange extends Controller
      */
     public static function saveCellCommentFirst(Request $request, RequestsRow $row)
     {
+        if (!$request->user()->checkedPermits()->requests_addr_change)
+            return $row;
+
         $row->comment_first = $request->comment_first;
         $row->save();
 

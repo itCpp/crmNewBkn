@@ -26,6 +26,7 @@ class RequestStart extends Controller
         'requests_all_sectors', # Видит заявки и операторов всех колл-центров
         'requests_all_callcenters', # Видит заявки и операторов всех секторов своего колл-центра
         'clients_show_phone', # Может видеть номера телефонов клиента
+        'requests_addr_change', # Может менять адрес записи
     ];
 
     /**
