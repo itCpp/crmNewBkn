@@ -160,6 +160,16 @@ class RequestsQuery extends Controller
     }
 
     /**
+     * Выводит количество найденных строк
+     * 
+     * @return int
+     */
+    public function count()
+    {
+        return $this->where()->count();
+    }
+
+    /**
      * Применение фильтра по правам пользователя
      * 
      * @return $this

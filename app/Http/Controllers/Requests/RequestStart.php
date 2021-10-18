@@ -47,12 +47,46 @@ class RequestStart extends Controller
         // Формирование кнопок в верхушке сайта
         $menu = [];
 
+        // Список всех вкладок, доступных пользователю
+        $request->tabs = $request->user()->getAllTabs();
+
+        // Проверка прав пользователя
+        $permits = $request->user()->getListPermits(RequestStart::$permitsList);
+
+        // Преобразование данных для вывода
+        $tabs = $request->tabs->map(function ($tab) {
+            return [
+                'id' => $tab->id,
+                'name' => $tab->name,
+                'name_title' => $tab->name_title,
+            ];
+        });
+
         return response()->json([
-            'tabs' => $request->__user->getAllTabs(),
-            'permits' => $request->__user->getListPermits(RequestStart::$permitsList),
+            'tabs' => $tabs,
+            'permits' => $permits,
             'topMenu' => $menu,
+            'intervalCounter' => self::getCounterUpdateInterval(),
+            'counter' => Counters::getCounterData($request),
         ]);
 
+    }
+
+    /**
+     * Вывод настройки временного периода для обновления счетчика
+     * В конфигурационном .env файле необходимо объявить переменную
+     * `COUNTER_UPDATE_INTERVAL` которая будет принимать значение
+     * периода времени в секундах
+     * - `NULL`, `0` или отсутствие значения будут отключать период проверки
+     * 
+     * @return int|null Период времени интервала проверки в миллисекудах
+     */
+    public static function getCounterUpdateInterval()
+    {
+        if (!$options = env('COUNTER_UPDATE_INTERVAL', null))
+            return null;
+
+        return $options * 1000;
     }
 
 }

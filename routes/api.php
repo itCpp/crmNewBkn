@@ -78,6 +78,9 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Создание комментария для заявки */
         Route::post('sendComment', 'Requests\Comments@sendComment');
 
+        /** Счетчик заявок */
+        Route::post('getCounter', 'Requests\Counters@getCounter')->middleware('permits.requests');
+
     });
 
     /** Маршрутизация для работы с учетными записями */
