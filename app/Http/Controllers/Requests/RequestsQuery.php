@@ -331,6 +331,10 @@ class RequestsQuery extends Controller
         if (!$this->tab and !$this->user)
             throw new CreateRequestsSqlQuery("Ошибка формирования запроса на вывод данных");
 
+        // Применение фильтра вывода статусов
+        if ($this->tab->statuses)
+            $this->model = $this->model->whereIn('status_id', $this->tab->statuses);
+
         // Фильтр по публичным правам вкладки
         if ($this->tab->request_all_permit == 1)
             return $this->setOptionsTabFilterForUserPermits();
