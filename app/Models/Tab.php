@@ -18,6 +18,7 @@ class Tab extends Model
         'where_settings' => 'array',
         'order_by_settings' => 'array',
         'date_types' => 'array',
+        'statuses' => 'array',
     ];
 
     /**
@@ -32,5 +33,4 @@ class Tab extends Model
         'where_settings',
         'order_by_settings',
     ];
-
 }

@@ -229,6 +229,9 @@ Route::group(['middleware' => 'user.token'], function() {
             /** Установка порядка вывода вкладок */
             Route::post('tabsPosition', 'Dev\Tabs@tabsPosition');
 
+            /** Применение статусов для вывода во вкладке */
+            Route::post('setTabStatus', 'Dev\Tabs@setTabStatus');
+
         });
 
         /** Журнал вызовов и настройка источников */

@@ -3,23 +3,21 @@
 namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\Tab;
 use App\Models\RequestsRow;
+use App\Models\Status;
+use App\Models\Tab;
+use Illuminate\Http\Request;
 
 class Tabs extends Controller
 {
-
     /**
      * Вывод всех вкладок
      * 
      * @param \Illuminate\Http\Request $request
-     * @return \Response
+     * @return response
      */
     public static function getTabs(Request $request)
     {
-
         foreach (Tab::orderBy('position')->get() as $tab) {
 
             // $tab->where_settings = json_decode($tab->where_settings);
@@ -36,11 +34,10 @@ class Tabs extends Controller
      * Создание новой вкладки
      * 
      * @param \Illuminate\Http\Request $request
-     * @return \Response
+     * @return response
      */
     public static function createTab(Request $request)
     {
-
         $errors = [];
 
         if (!$request->name)
@@ -70,22 +67,23 @@ class Tabs extends Controller
      * Вывод данных одной вкладки
      * 
      * @param \Illuminate\Http\Request $request
-     * @return \Response
+     * @return response
      */
     public static function getTab(Request $request)
     {
-
         if (!$tab = Tab::find($request->id))
             return response()->json(['message' => "Данные по вкладке не найдены"], 400);
-
-        // $tab->where_settings = json_decode($tab->where_settings);
 
         if ($request->getColumns)
             $columns = RequestsRow::getColumnsList();
 
+        if ($request->getStatuses)
+            $statuses = Status::all();
+
         return response()->json([
             'tab' => $tab,
             'columns' => $columns ?? null,
+            'statuses' => $statuses ?? null,
         ]);
     }
 
@@ -117,11 +115,10 @@ class Tabs extends Controller
      * Изменение данных вкладки
      * 
      * @param \Illuminate\Http\Request $request
-     * @return \Response
+     * @return response
      */
     public static function saveTab(Request $request)
     {
-
         if (!$tab = Tab::find($request->id))
             return response()->json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
 
@@ -169,7 +166,6 @@ class Tabs extends Controller
      */
     public static function getSql(Request $request)
     {
-
         if (!$tab = Tab::find($request->id))
             return response()->json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
 
@@ -206,7 +202,6 @@ class Tabs extends Controller
      */
     public static function getListWhereIn(Request $request)
     {
-
         if ($request->preset == "status")
             $list = Statuses::getListStatuses($request);
         elseif ($request->preset == "sources")
@@ -228,7 +223,6 @@ class Tabs extends Controller
      */
     public static function tabsPosition(Request $request)
     {
-
         foreach ($request->all() as $tab) {
             Tab::where('id', $tab['id'])->limit(1)
                 ->update(['position' => (int) $tab['position']]);
@@ -236,6 +230,40 @@ class Tabs extends Controller
 
         return response()->json([
             'message' => "Порядок расположения обновлен",
+        ]);
+    }
+
+    /**
+     * Формирование массива выбранных статусов
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function setTabStatus(Request $request)
+    {
+        if (!$status = Status::find($request->id))
+            return response()->json(['message' => "Выбранный статус был уже удален или не существует"], 400);
+
+        if (!$tab = Tab::find($request->tab))
+            return response()->json(['message' => "Вкладка не найдена"], 400);
+
+        $statuses = $tab->statuses ?: [];
+
+        // Добавление статуса во вкладку
+        if ($request->checked and !in_array($status->id, $statuses))
+            $statuses[] = $status->id;
+        // Удаление статуса из вкладки
+        else if (!$request->checked and in_array($status->id, $statuses))
+            $statuses = array_diff($statuses, [$status->id]);
+
+        $tab->statuses = count($statuses) ? $statuses : null;
+
+        $tab->save();
+
+        parent::logData($request, $tab); // Логирование
+
+        return response()->json([
+            'tab' => $tab,
         ]);
     }
 }
