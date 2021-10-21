@@ -46,7 +46,7 @@ class RequestChange extends Controller
         }
 
         // Поиск разрешений для заявок
-        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
 
         $row->client_name = $request->client_name; // ФИО клиента
 
@@ -63,11 +63,12 @@ class RequestChange extends Controller
         if ($row->event_at and $request->event_time)
             $row->event_at = date("Y-m-d {$request->event_time}:00", strtotime($row->event_at));
 
-        $row->status_id = $request->status_id; // Статус заявки
-
         $row->address = $request->address; // Адрес офиса
 
-        $row->uplift = 0; // Убрать из необработанных с каким-либо статусом
+        $row->status_id = $request->status_id; // Статус заявки
+
+        if ($row->status_id)
+            $row->uplift = 0; // Убрать из необработанных с каким-либо статусом
 
         $row->save();
 
@@ -81,6 +82,7 @@ class RequestChange extends Controller
 
         return response()->json([
             'request' => $row,
+            'dropOutTab' => self::checkDropOutTab($request),
         ]);
     }
 
@@ -99,6 +101,20 @@ class RequestChange extends Controller
             return 1;
 
         return 0;
+    }
+
+    /**
+     * Проверка заявки для исключения из списка текущей вкладки
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return bool
+     */
+    public static function checkDropOutTab(Request $request)
+    {
+        if (!$request->selectedTabId)
+            return false;
+
+        return false;
     }
 
     /**
@@ -123,22 +139,28 @@ class RequestChange extends Controller
         if (!method_exists(RequestChange::class, $method))
             return response()->json(['message' => "Невозможно сохранить изменения"], 400);
 
-        $response = RequestChange::$method($request, $row);
+        $saved = RequestChange::$method($request, $row);
 
         // Вывод ошибки
-        if (!$response instanceof RequestsRow)
+        if (!$saved instanceof RequestsRow)
             return response()->json(['message' => "Невозможно сохранить изменения"], 400);
 
         // Логирование изменений заявки
         RequestsStory::write($request, $row);
 
-        $row = Requests::getRequestRow($row); // Полные данные по заявке
+        if ($saved->status_id and $saved->uplift == 1) {
+            $saved->uplift = 0; // Убрать из необработанных с каким-либо статусом
+            $saved->save();
+        }
+
+        $row = Requests::getRequestRow($saved); // Полные данные по заявке
 
         // Отправка события об изменении заявки
         broadcast(new UpdateRequestEvent($row));
 
         return response()->json([
             'request' => $row,
+            'dropOutTab' => self::checkDropOutTab($request),
         ]);
     }
 
