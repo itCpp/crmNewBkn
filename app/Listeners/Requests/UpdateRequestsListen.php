@@ -2,13 +2,14 @@
 
 namespace App\Listeners\Requests;
 
-use App\Events\UpdateRequestRow;
-use App\Events\UpdateRequestRowForPin;
 use App\Events\Requests\UpdateRequestEvent;
+use App\Events\Requests\UpdateRequestRow;
+use App\Events\Requests\UpdateRequestRowForPin;
+use App\Events\Requests\UpdateRequestRowForSector;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class UpdateRequestsDone
+class UpdateRequestsListen
 {
     /**
      * Create the event listener.
@@ -28,6 +29,9 @@ class UpdateRequestsDone
      */
     public function handle(UpdateRequestEvent $event)
     {
+        if (isset($event->row->oldSector) or isset($event->row->newSector))
+            return $this->handleForChangeSector($event);
+
         $toExclude = []; // Список сотрудников для отмены общего уведомления
 
         // Событие для добавления заявки сотруднику
@@ -46,11 +50,26 @@ class UpdateRequestsDone
             }
         }
 
-        // Отправка уведомления для всех об изменении заявки по каналу широковещания
+        // Отправка уведомления для всех об изменении заявки
         $broadcast = broadcast(new UpdateRequestRow($event->row, $toExclude));
 
         // Отправка уведомления только другим
         if ($event->toOthers)
             $broadcast->toOthers();
+    }
+
+    /**
+     * Обновление данных при смене сектора
+     * 
+     * @param  UpdateRequestEvent  $event
+     */
+    public function handleForChangeSector(UpdateRequestEvent $event)
+    {
+        $broadcast = broadcast(new UpdateRequestRowForSector($event->row));
+
+        if ($event->toOthers)
+            $broadcast->toOthers();
+
+        return false;
     }
 }

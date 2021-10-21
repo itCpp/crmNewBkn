@@ -47,7 +47,6 @@ class RequestsStorySector extends Model
      */
     public static function write($story, $old)
     {
-
         return static::create([
             'request_id' => $story->request_data['id'] ?? null,
             'old_sector' => $old,
@@ -55,7 +54,5 @@ class RequestsStorySector extends Model
             'story_id' => $story->id,
             'created_at' => date("Y-m-d H:i:s"),
         ]);
-
     }
-
 }

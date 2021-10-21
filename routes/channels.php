@@ -1,6 +1,7 @@
 <?php
 
 use App\Broadcasting\AuthQueries;
+use App\Broadcasting\RequestsAllChannel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -49,3 +50,6 @@ Broadcast::channel('App.Requests', function ($user) {
 Broadcast::channel('App.Requests.{pin}', function ($user, $pin) {
     return $user->pin == $pin and $user->can('requests_access');
 });
+
+/** Информация о всех новых заявках для всех секторов или коллцентров */
+Broadcast::channel('App.Requests.All.{callcenter}.{sector}', RequestsAllChannel::class);

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Events;
+namespace App\Events\Requests;
 
+use App\Models\CallcenterSector;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -19,14 +20,21 @@ class UpdateRequestRow implements ShouldBroadcast
      *
      * @var object
      */
-    public $row;
+    protected $row;
+
+    /**
+     * Идентификатор коллцентра
+     * 
+     * @var null|int
+     */
+    protected $callcenter = null;
 
     /**
      * Персональный идентификационный номер сотрудника, который должен проигнорировать уведомление
      * 
      * @var array
      */
-    public $toExclude;
+    protected $toExclude;
 
     /**
      * Create a new event instance.
@@ -39,6 +47,9 @@ class UpdateRequestRow implements ShouldBroadcast
     {
         $this->row = $row;
         $this->toExclude = $toExclude;
+
+        if ($callcenter = CallcenterSector::find($this->row->callcenter_sector))
+            $this->callcenter = $callcenter->id;
     }
 
     /**
@@ -67,6 +78,18 @@ class UpdateRequestRow implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new PrivateChannel('App.Requests');
+        $channels[] = "App.Requests.All.0.0";
+
+        if ($this->callcenter) {
+            $channels[] = "App.Requests.All.{$this->callcenter}.{$this->row->callcenter_sector}";
+            $channels[] = "App.Requests.All.{$this->callcenter}.0";
+        }
+
+        if ($this->row->pin)
+            $channels[] = "App.Requests.{$this->row->pin}";
+
+        return collect(array_unique($channels ?? []))->map(function ($channel) {
+            return new PrivateChannel($channel);
+        })->toArray();
     }
 }

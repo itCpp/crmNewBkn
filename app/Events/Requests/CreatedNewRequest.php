@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events;
+namespace App\Events\Requests;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -10,6 +10,9 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Отправка уведомлений при появлении новой заявки
+ */
 class CreatedNewRequest implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
@@ -22,23 +25,24 @@ class CreatedNewRequest implements ShouldBroadcast
     public $row;
 
     /**
-     * Идентификатор удаленной заявки
-     *
-     * @var bool|int
+     * Результат обработки входящего запроса
+     * @see \App\Http\Controllers\Requests\AddRequest::$response
+     * 
+     * @var array
      */
-    public $zeroing;
+    public $result;
 
     /**
      * Create a new event instance.
      *
-     * @param object $row
-     * @param bool|int
+     * @param object $row Данные по заявке
+     * @param array $result Результат обработки входящего запроса
      * @return void
      */
-    public function __construct($row, $zeroing = false)
+    public function __construct($row, $result)
     {
         $this->row = $row;
-        $this->zeroing = $zeroing;
+        $this->result = $result;
     }
 
     /**
@@ -48,15 +52,9 @@ class CreatedNewRequest implements ShouldBroadcast
      */
     public function broadcastWith()
     {
-        if (isset($this->row->clients))
-            unset($this->row->clients);
-
-        if (isset($this->row->permits))
-            unset($this->row->permits);
-
         return [
-            'row' => $this->row,
-            'zeroing' => $this->zeroing,
+            'row' => $this->row->id,
+            'result' => $this->result,
         ];
     }
 
@@ -67,6 +65,9 @@ class CreatedNewRequest implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new PrivateChannel('App.Requests');
+        // Доступ ко всем секторам и ко всем коллцентрам
+        $channels[] = new PrivateChannel('App.Requests.All.0.0');
+
+        return $channels;
     }
 }

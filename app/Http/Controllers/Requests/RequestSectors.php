@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Requests;
 
 use Illuminate\Http\Request;
 
+use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Users\Worktime;
 use App\Models\Callcenter;
@@ -15,7 +16,6 @@ use App\Models\UsersSession;
 
 class RequestSectors extends Controller
 {
-
     /**
      * Вывод списка секторов для выдачи заявки в нужный сектор
      * 
@@ -24,13 +24,12 @@ class RequestSectors extends Controller
      */
     public static function changeSectorShow(Request $request)
     {
-
         // Проверка наличия заявки
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
         // Проверка необходимых разрешений
-        $permits = $request->__user->getListPermits([
+        $permits = $request->user()->getListPermits([
             'requests_sector_set', # Может назначать заявку для сектора
             'requests_sector_change', # Может менять сектор в заявке
             'requests_sector_clear', # Может обнулить сектор
@@ -84,7 +83,6 @@ class RequestSectors extends Controller
      */
     public static function getStatsForSectors($sectors)
     {
-
         $ids = $sectors->map(function ($row) {
             return $row->id;
         });
@@ -149,15 +147,17 @@ class RequestSectors extends Controller
      */
     public static function setSector(Request $request)
     {
-
         // Проверка наличия заявки
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
         // Разрешения по заявке для пользователя
-        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
 
         $old = $row->callcenter_sector;
+
+        if ($old == $request->sector)
+            return response()->json(['message' => "Этот сектор уже выбран для данной заявки"], 400);
 
         $row->callcenter_sector = $request->sector;
         $row->save();
@@ -166,8 +166,15 @@ class RequestSectors extends Controller
         $story = RequestsStory::write($request, $row);
         RequestsStorySector::write($story, $old);
 
+        $row = Requests::getRequestRow($row);
+
+        $row->oldSector = $old;
+        $row->newSector = $request->sector;
+
+        broadcast(new UpdateRequestEvent($row));
+
         return response()->json([
-            'request' => Requests::getRequestRow($row),
+            'request' => $row,
         ]);
     }
 }

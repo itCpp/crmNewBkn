@@ -104,6 +104,13 @@ class AddRequest extends Controller
     protected $created = false;
 
     /**
+     * Массив данных о результате обработки заявки
+     * 
+     * @var array
+     */
+    public $response = [];
+
+    /**
      * Инициализация объекта
      * 
      * @param \Illuminate\Http\Request $request
@@ -141,6 +148,20 @@ class AddRequest extends Controller
     }
 
     /**
+     * Магический метод для вывода несуществующего значения
+     * 
+     * @param string $name
+     * @return mixed
+     */
+    public function __get($name)
+    {
+        if (isset($this->$name) === true)
+            return $this->$name;
+
+        return null;
+    }
+
+    /**
      * Вывод результата
      * 
      * @return array|response
@@ -149,6 +170,7 @@ class AddRequest extends Controller
     {
         $this->writeQuery();
 
+        // Отправка события о завершении обработки
         broadcast(new AddRequestEvent($this->data, $this->response));
 
         // Вывод массива данных
@@ -442,16 +464,16 @@ class AddRequest extends Controller
         // Логирование изменений заявки
         RequestsStory::write($this->request, $this->data);
 
-        $row = Requests::getRequestRow($this->data); // Полные данные по заявке
+        // $row = Requests::getRequestRow($this->data); // Полные данные по заявке
 
-        // Отправка события о новой заявке
-        if ($this->created) {
-            // broadcast(new CreatedNewRequest($row, $this->zeroing));
-        }
-        // Отправка события об изменении заявки
-        else {
-            broadcast(new UpdateRequestEvent($row, false));
-        }
+        // // Отправка события о новой заявке
+        // if ($this->created) {
+        //     // broadcast(new CreatedNewRequest($row, $this->zeroing));
+        // }
+        // // Отправка события об изменении заявки
+        // else {
+        //     broadcast(new UpdateRequestEvent($row, false));
+        // }
 
         return $this;
     }
@@ -519,20 +541,6 @@ class AddRequest extends Controller
         $this->queryLog->save();
 
         return $this->queryLog;
-    }
-
-    /**
-     * Магический метод для вывода несуществующего значения
-     * 
-     * @param string $name
-     * @return mixed
-     */
-    public function __get($name)
-    {
-        if (isset($this->$name) === true)
-            return $this->$name;
-
-        return null;
     }
 
     /**

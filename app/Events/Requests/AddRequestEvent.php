@@ -17,6 +17,7 @@ class AddRequestEvent
 
     /**
      * Данные по заявке
+     * @see \App\Http\Controllers\Requests\Requests::getRequestRow
      * 
      * @var \App\Models\RequestsRow
      */
@@ -25,8 +26,6 @@ class AddRequestEvent
     /**
      * Массив данных о работе добавления
      * 
-     * @param \App\Models\RequestsRow $row
-     * @param array $response
      * @var array
      */
     public $response;
@@ -34,6 +33,8 @@ class AddRequestEvent
     /**
      * Create a new event instance.
      *
+     * @param \App\Models\RequestsRow $row
+     * @param array $response
      * @return void
      */
     public function __construct(RequestsRow $row, $response)
