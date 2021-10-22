@@ -14,6 +14,7 @@ use App\Models\RequestsRow;
 use App\Models\RequestsStory;
 use App\Models\RequestsStoryPin;
 use App\Models\User;
+use App\Models\UserWorkTime;
 
 class RequestPins extends Controller
 {
@@ -41,23 +42,23 @@ class RequestPins extends Controller
         if (!$permits->requests_pin_set)
             return response()->json(['message' => "Доступ к назначению оператора ограничен"], 403);
 
-        if (!$permits->requests_pin_change AND $row->pin)
+        if (!$permits->requests_pin_change and $row->pin)
             return response()->json(['message' => "Доступ к смене оператора ограничен"], 403);
-        
+
         $pins_searched = []; // Список найденных пинов
 
         // Разрешение, при котором разрешен вывод сотрудника в списке выбора оператора
         $permission = Permission::find('requests_pin_for_appointment');
 
         // Идентификатор сектора и коллцентра
-        $permits->__callcenter_id = $request->__user->callcenter_id;
-        $permits->__callcenter_sector_id = $request->__user->callcenter_sector_id;
+        $permits->__callcenter_id = $request->user()->callcenter_id;
+        $permits->__callcenter_sector_id = $request->user()->callcenter_sector_id;
 
         // Поиск сотрудников, имеющих личное разрешение
-        $users = RequestPins::findUsers($permission->users(), $permits);
+        $users = self::findUsers($permission->users(), $permits);
 
         foreach ($users as $user) {
-            
+
             if (!in_array($user->pin, $pins_searched)) {
 
                 $pins_searched[] = $user->pin;
@@ -68,22 +69,20 @@ class RequestPins extends Controller
                     'callcenter' => $user->callcenter_id,
                     'sector' => $user->callcenter_sector_id,
                 ];
-
             }
-
         }
 
         // Поиск сотрудников по ролям, имеющее данное разрешение
         foreach ($permission->roles as $role) {
 
-            $users = RequestPins::findUsers($role->users(), $permits, $pins_searched);
+            $users = self::findUsers($role->users(), $permits, $pins_searched);
 
             foreach ($users as $user) {
-            
+
                 if (!in_array($user->pin, $pins_searched)) {
-    
+
                     $pins_searched[] = $user->pin;
-    
+
                     $pins[] = [
                         'id' => $user->id,
                         'pin' => $user->pin,
@@ -93,15 +92,12 @@ class RequestPins extends Controller
                         'color' => $row->pin == $user->pin ? "blue" : null,
                         'title' => $row->pin == $user->pin ? "Оператор назначен в заявке" : null,
                     ];
-    
                 }
-    
             }
-
         }
 
         // Добавление текущего оператора в заявке
-        if (!in_array($row->pin, $pins_searched) AND $row->pin) {
+        if (!in_array($row->pin, $pins_searched) and $row->pin) {
 
             $user = User::where('pin', $row->pin)->first();
 
@@ -123,7 +119,6 @@ class RequestPins extends Controller
             'offices' => Office::all(),
             'address' => $row->address,
         ]);
-
     }
 
     /**
@@ -136,7 +131,6 @@ class RequestPins extends Controller
      */
     public static function findUsers($rows, $permits, $pins = [])
     {
-
         // Список всех операторов своего колл-центра
         if (!$permits->requests_all_callcenters)
             $rows = $rows->where('callcenter_id', $permits->__callcenter_id);
@@ -149,7 +143,6 @@ class RequestPins extends Controller
             $rows = $rows->whereNotIn('pin', $pins);
 
         return $rows->get();
-
     }
 
     /**
@@ -160,13 +153,21 @@ class RequestPins extends Controller
      */
     public static function getWorkTimeAndStatusUsers($pins = [])
     {
+        foreach ($pins as &$pin) {
+            $worktime = UserWorkTime::where('user_pin', $pin['pin'])
+                ->whereDate('date', now())
+                ->orderBy('id', "DESC")
+                ->first();
 
-        usort($pins, function($a, $b) {
+            $pin['worktime'] = $worktime->event_type ?? null;
+            $pin['color'] = Worktime::getColorButton($pin['worktime']);
+        }
+
+        usort($pins, function ($a, $b) {
             return $a['pin'] - $b['pin'];
         });
 
         return $pins;
-
     }
 
     /**
@@ -177,7 +178,6 @@ class RequestPins extends Controller
      */
     public static function setPin(Request $request)
     {
-
         // Проверка наличия заявки
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
@@ -200,7 +200,7 @@ class RequestPins extends Controller
         // Данные выбранного оператора
         $user = User::find($request->user);
 
-        if (!$clear_pin AND !$user)
+        if (!$clear_pin and !$user)
             return response()->json(['message' => "Оператор не найден"], 400);
 
         $old = $row->pin;
@@ -225,14 +225,12 @@ class RequestPins extends Controller
         $row = Requests::getRequestRow($row); // Полные данные по заявке
         $row->newPin = $row->pin;
         $row->oldPin = $old;
-        
+
         // Отправка события об изменении заявки
         broadcast(new UpdateRequestEvent($row));
 
         return response()->json([
             'request' => $row,
         ]);
-
     }
-
 }

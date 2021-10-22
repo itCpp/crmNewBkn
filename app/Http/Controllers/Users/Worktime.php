@@ -36,6 +36,34 @@ class Worktime extends Controller
     ];
 
     /**
+     * Список статусов в работе
+     * 
+     * @var array
+     */
+    public static $inWork = [
+        'work',
+    ];
+
+    /**
+     * Список статусов, когда пользователь не активен
+     * 
+     * @var array
+     */
+    public static $disabled = [
+        'logout',
+    ];
+
+    /**
+     * Список статусов перерыва
+     * 
+     * @var array
+     */
+    public static $timeout = [
+        'timeout',
+        'lunch',
+    ];
+
+    /**
      * Запись события
      * 
      * @param int $pin
@@ -44,7 +72,6 @@ class Worktime extends Controller
      */
     public static function writeEvent($pin, $type)
     {
-
         $date = now();
 
         // Предотвращение записи одинакового события
@@ -82,5 +109,31 @@ class Worktime extends Controller
             self::writeEvent($pin, 'work');
         else
             self::writeEvent($pin, 'free');
+    }
+
+    /**
+     * Определение цвета по текущему статусу
+     * 
+     * @param null|string $type
+     * @return null|string
+     */
+    public static function getColorButton(null|string $type): null|string
+    {
+        if (!$type)
+            return null;
+
+        // Свободен
+        if (in_array($type, self::$free))
+            return "green";
+
+        // Статус в работе
+        if (in_array($type, self::$inWork))
+            return "red";
+
+        // Перив
+        if (in_array($type, self::$timeout))
+            return "yellow";
+
+        return "grey";
     }
 }
