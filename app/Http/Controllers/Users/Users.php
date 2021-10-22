@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 
 class Users extends Controller
 {
-
     /**
      * Проверка токена
      * 
@@ -20,7 +19,6 @@ class Users extends Controller
      */
     public static function checkToken($token)
     {
-
         $sessions = UsersSession::where([
             ['token', $token]
         ])
@@ -52,8 +50,12 @@ class Users extends Controller
      */
     public static function check(Request $request)
     {
+        $worktime = UserWorkTime::where('user_pin', $request->user()->pin)
+            ->orderBy('id', 'DESC')
+            ->first();
 
-        $worktime = UserWorkTime::where('user_pin', $request->__user->pin)->orderBy('id', 'DESC')->first();
+        if ($worktime)
+            $worktime->color = Worktime::getColorButton($worktime->event_type);
 
         $permits = self::getPermitsForMainPage($request);
 
@@ -61,7 +63,7 @@ class Users extends Controller
         $authQueries = $permits->user_auth_query ? Auth::countAuthQueries($request) : 0;
 
         $response = [
-            'user' => $request->__user,
+            'user' => $request->user(),
             'permits' => $permits,
             'worktime' => $worktime,
             'authQueries' => $authQueries,
@@ -81,13 +83,12 @@ class Users extends Controller
      */
     public static function getPermitsForMainPage(Request $request)
     {
-
         $permits = [
             'admin_access', # Доступ к админ-панели
             'user_auth_query', # Может обработать запрос авторизации пользователя
         ];
 
-        return $request->__user->getListPermits($permits);
+        return $request->user()->getListPermits($permits);
     }
 
     /**
@@ -98,7 +99,6 @@ class Users extends Controller
      */
     public static function adminCheck(Request $request)
     {
-
         $response = [
             'permits' => $request->user()->getListPermits([
                 'block_dev', # Блок разработчика
@@ -126,7 +126,6 @@ class Users extends Controller
      */
     public static function checkGodMode(UserData $user, $id)
     {
-
         if (!$user->can('god_mode'))
             return $user;
 

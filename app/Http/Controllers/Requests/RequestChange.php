@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Events\Requests\UpdateRequestEvent;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Users\Worktime;
 use App\Models\MoscowCity;
 use App\Models\RequestsRow;
 use App\Models\RequestsStory;
 use App\Models\Status;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class RequestChange extends Controller
@@ -79,6 +80,9 @@ class RequestChange extends Controller
 
         // Отправка события об изменении заявки
         broadcast(new UpdateRequestEvent($row));
+
+        if ($row->pin)
+            Worktime::checkAndWriteWork($row->pin);
 
         return response()->json([
             'request' => $row,
@@ -157,6 +161,9 @@ class RequestChange extends Controller
 
         // Отправка события об изменении заявки
         broadcast(new UpdateRequestEvent($row));
+
+        if ($row->pin)
+            Worktime::checkAndWriteWork($row->pin);
 
         return response()->json([
             'request' => $row,

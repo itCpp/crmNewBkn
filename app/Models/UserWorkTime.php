@@ -36,4 +36,14 @@ class UserWorkTime extends Model
     protected $casts = [
         'date' => 'date',
     ];
+
+    /**
+     * Отношение рабочего статуса к сотруднику
+     * 
+     * @return @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_pin', 'pin');
+    }
 }

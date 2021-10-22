@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\Events\Users\ChangeUserWorkTime;
 use App\Http\Controllers\Controller;
 use App\Models\RequestsRow;
 use App\Models\UserWorkTime;
@@ -74,8 +75,13 @@ class Worktime extends Controller
     {
         $date = now();
 
+        $last = UserWorkTime::whereDate('date', $date)
+            ->whereUserPin($pin)
+            ->orderBy('id', 'DESC')
+            ->first();
+
         // Предотвращение записи одинакового события
-        if ($last = UserWorkTime::whereDate('date', $date)->orderBy('id', 'DESC')->first()) {
+        if ($last) {
             if ($last->event_type == $type)
                 return $last;
         }
@@ -105,10 +111,12 @@ class Worktime extends Controller
         ])
             ->count();
 
-        if ($count)
-            self::writeEvent($pin, 'work');
-        else
-            self::writeEvent($pin, 'free');
+        $worktime = self::writeEvent($pin, $count ? 'work' : 'free');
+        $user = $worktime->user()->first('id');
+
+        broadcast(new ChangeUserWorkTime($worktime, $user->id ?? null));
+
+        return $worktime;
     }
 
     /**

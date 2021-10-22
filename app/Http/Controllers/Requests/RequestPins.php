@@ -14,6 +14,7 @@ use App\Models\RequestsRow;
 use App\Models\RequestsStory;
 use App\Models\RequestsStoryPin;
 use App\Models\User;
+use App\Models\UsersSession;
 use App\Models\UserWorkTime;
 
 class RequestPins extends Controller
@@ -39,18 +40,20 @@ class RequestPins extends Controller
             'requests_pin_clear', # Удаление оператора из заявки
         ]);
 
+        // Право на назначение оператора
         if (!$permits->requests_pin_set)
             return response()->json(['message' => "Доступ к назначению оператора ограничен"], 403);
 
+        // Право на смену уже назначенного оператора
         if (!$permits->requests_pin_change and $row->pin)
             return response()->json(['message' => "Доступ к смене оператора ограничен"], 403);
 
         $pins_searched = []; // Список найденных пинов
 
-        // Разрешение, при котором разрешен вывод сотрудника в списке выбора оператора
+        // Разрешение, при котором сотрудник отображается в списке выбора операторов
         $permission = Permission::find('requests_pin_for_appointment');
 
-        // Идентификатор сектора и коллцентра
+        // Идентификатор сектора и коллцентра администратора
         $permits->__callcenter_id = $request->user()->callcenter_id;
         $permits->__callcenter_sector_id = $request->user()->callcenter_sector_id;
 
@@ -101,6 +104,8 @@ class RequestPins extends Controller
 
             $user = User::where('pin', $row->pin)->first();
 
+            $pins_searched[] = $user->pin;
+
             $pins[] = [
                 'id' => $user->id ?? 0,
                 'pin' => $user->pin ?? $row->pin,
@@ -112,9 +117,12 @@ class RequestPins extends Controller
             ];
         }
 
+        // Время последней активности пользователя
+        $sessions = self::getLastAtiveTime($pins_searched);
+
         return response()->json([
             'offline' => $permits->requests_pin_set_offline,
-            'pins' => self::getWorkTimeAndStatusUsers($pins ?? []),
+            'pins' => self::getWorkTimeAndStatusUsers($pins ?? [], $sessions),
             'clear' => $permits->requests_pin_clear,
             'offices' => Office::all(),
             'address' => $row->address,
@@ -146,21 +154,46 @@ class RequestPins extends Controller
     }
 
     /**
-     * Метод поиска статуса пользователя, и сортировка массива
+     * Поиск активной сессии сотрудников
      * 
-     * @param array
+     * @param array $pins Массив пинов, найденных сотрудников
      * @return array
      */
-    public static function getWorkTimeAndStatusUsers($pins = [])
+    public static function getLastAtiveTime(array $pins): array
+    {
+        $data = UsersSession::whereIn('user_pin', $pins)
+            ->whereDate('created_at', now())
+            ->where('active_at', date("Y-m-d H:i:s", time() - 60 * 15))
+            ->get();
+
+        foreach ($data as $row) {
+            $sessions[$row->user_pin] = $row->active_at;
+        }
+
+        return $sessions ?? [];
+    }
+
+    /**
+     * Метод поиска статуса пользователя, и сортировка массива
+     * 
+     * @param array $pins
+     * @param array $sessions
+     * @return array
+     */
+    public static function getWorkTimeAndStatusUsers(array $pins, array $sessions): array
     {
         foreach ($pins as &$pin) {
+
+            $pin['active_at'] = $sessions[$pin['pin']] ?? null;
+            
             $worktime = UserWorkTime::where('user_pin', $pin['pin'])
                 ->whereDate('date', now())
                 ->orderBy('id', "DESC")
                 ->first();
 
             $pin['worktime'] = $worktime->event_type ?? null;
-            $pin['color'] = Worktime::getColorButton($pin['worktime']);
+
+            $pin['color'] = $pin['color'] ?: Worktime::getColorButton($pin['worktime']);
         }
 
         usort($pins, function ($a, $b) {
@@ -192,10 +225,10 @@ class RequestPins extends Controller
         }
 
         // Разрешения по заявке для пользователя
-        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
 
         // Право на удаление оператора из заявки
-        $clear_pin = $request->__user->can('requests_pin_clear');
+        $clear_pin = $request->user()->can('requests_pin_clear');
 
         // Данные выбранного оператора
         $user = User::find($request->user);
@@ -207,8 +240,8 @@ class RequestPins extends Controller
 
         $row->pin = $user->pin ?? null;
 
-        if ($user)
-            $row->callcenter_sector = $user->callcenter_sector_id ?? null;
+        if ($user->callcenter_sector_id ?? null)
+            $row->callcenter_sector = $user->callcenter_sector_id;
 
         $row->address = $request->addr;
 
@@ -218,16 +251,16 @@ class RequestPins extends Controller
         $story = RequestsStory::write($request, $row);
         RequestsStoryPin::write($story, $old);
 
-        // Установка статуса рбочего времени операторам
-        Worktime::checkAndWriteWork($old);
-        Worktime::checkAndWriteWork($row->pin);
-
         $row = Requests::getRequestRow($row); // Полные данные по заявке
         $row->newPin = $row->pin;
         $row->oldPin = $old;
 
         // Отправка события об изменении заявки
         broadcast(new UpdateRequestEvent($row));
+
+        // Установка статуса рабочего времени операторам
+        Worktime::checkAndWriteWork($row->oldPin);
+        Worktime::checkAndWriteWork($row->newPin);
 
         return response()->json([
             'request' => $row,
