@@ -163,7 +163,7 @@ class RequestPins extends Controller
     {
         $data = UsersSession::whereIn('user_pin', $pins)
             ->whereDate('created_at', now())
-            ->where('active_at', date("Y-m-d H:i:s", time() - 60 * 15))
+            ->where('active_at', '>', date("Y-m-d H:i:s", time() - 60 * 15))
             ->get();
 
         foreach ($data as $row) {
@@ -182,18 +182,20 @@ class RequestPins extends Controller
      */
     public static function getWorkTimeAndStatusUsers(array $pins, array $sessions): array
     {
-        foreach ($pins as &$pin) {
+        foreach ($pins as $key => &$pin) {
 
             $pin['active_at'] = $sessions[$pin['pin']] ?? null;
-            
+
             $worktime = UserWorkTime::where('user_pin', $pin['pin'])
                 ->whereDate('date', now())
                 ->orderBy('id', "DESC")
                 ->first();
 
-            $pin['worktime'] = $worktime->event_type ?? null;
+            if ($worktime)
+                $worktime = Worktime::getDataForEvent($worktime);
 
-            $pin['color'] = $pin['color'] ?: Worktime::getColorButton($pin['worktime']);
+            $pin['worktime'] = $worktime['event_type'] ?? null;
+            $pin['color'] = $pins[$key]['color'] ?: ($worktime['color'] ?? null);
         }
 
         usort($pins, function ($a, $b) {

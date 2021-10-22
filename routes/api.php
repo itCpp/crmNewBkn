@@ -91,6 +91,9 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Завершение запроса авторизации */
         Route::post('authComplete', 'Users\Auth@complete')->middleware('user.can:user_auth_query');
 
+        /** Ручная установка статуса сотрудника */
+        Route::post('setWorkTime', 'Users\Worktime@setWorkTime');
+
     });
 
     /** Маршрутизация админпанели */

@@ -54,9 +54,6 @@ class Users extends Controller
             ->orderBy('id', 'DESC')
             ->first();
 
-        if ($worktime)
-            $worktime->color = Worktime::getColorButton($worktime->event_type);
-
         $permits = self::getPermitsForMainPage($request);
 
         // Количество запросов на авторизацию
@@ -65,7 +62,7 @@ class Users extends Controller
         $response = [
             'user' => $request->user(),
             'permits' => $permits,
-            'worktime' => $worktime,
+            'worktime' => $worktime ? Worktime::getDataForEvent($worktime) : [],
             'authQueries' => $authQueries,
         ];
 

@@ -39,9 +39,7 @@ class ChangeUserWorkTime implements ShouldBroadcast
      */
     public function __construct($wortime, $id)
     {
-        $this->worktime = $wortime->toArray();
-        $this->worktime['color'] = Worktime::getColorButton($wortime->event_type);
-
+        $this->worktime = Worktime::getDataForEvent($wortime);
         $this->userId = $id;
     }
 
