@@ -13,6 +13,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::get('/', function (\Illuminate\Http\Request $request) {
+    return response()->json([
+        'ip' => $request->ip(),
+        'date' => now(),
+        'laravel' => Illuminate\Foundation\Application::VERSION,
+        'php' => PHP_VERSION,
+    ]);
 });
+
+Route::get('/event/{id}', 'Requests\Events@eventView');

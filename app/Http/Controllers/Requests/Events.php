@@ -237,4 +237,58 @@ class Events extends Controller
 
         return null;
     }
+
+    /**
+     * Просмотр входящих событий
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
+     * @return view
+     */
+    public function eventView(Request $request, int $id)
+    {
+        $row = \App\Models\Incomings\IncomingEvent::find($id);
+
+        if ($row and self::checkIpForDecrypt($request->ip())) {
+
+            if (!$row->recrypt)
+                $crypt = new Encrypter($this->key, config('app.cipher'));
+
+            $row->request_data = parent::decrypt($row->request_data, $crypt ?? null);
+
+        }
+
+        return view('event', [
+            'row' => $row ? $row->toArray() : null,
+            'next' => $id + 1,
+            'back' => $id - 1,
+            'id' => $id,
+            'ip' => $request->ip(),
+            'max' => \App\Models\Incomings\IncomingEvent::max('id'),
+        ]);
+    }
+
+    /**
+     * Проверка IP для вывод расшифровывания события
+     * 
+     * @param string $ip
+     * @return bool
+     */
+    public static function checkIpForDecrypt(string $ip): bool
+    {
+        if (in_array($ip, ['91.230.53.106']))
+            return true;
+
+        $parts = [
+            '192.168.0.',
+            '172.16.255.',
+        ];
+
+        foreach ($parts as $part) {
+            if (strripos($ip, $part) !== false)
+                return true;
+        }
+
+        return false;
+    }
 }

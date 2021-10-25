@@ -94,6 +94,9 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Ручная установка статуса сотрудника */
         Route::post('setWorkTime', 'Users\Worktime@setWorkTime');
 
+        /** Вывод данных сотрудника */
+        Route::post('getUserMainData', 'Users\UserMainData@getUserMainData');
+
     });
 
     /** Маршрутизация админпанели */
