@@ -43,7 +43,7 @@
                             <span style="padding: 0 1rem;"></span>
                             @endif
 
-                            @if ($next < $max)
+                            @if ($next <= $max)
                             <a href="/event/{{ $next }}" class="ml-1 underline">
                                 Next {{ $next }}
                             </a>
@@ -58,7 +58,7 @@
             </div>
         </div>
         <script>
-            let elems = document.querySelectorAll('.sf-dump-note, .sf-dump-key').forEach((e, i) => {
+            let elems = document.querySelectorAll('.sf-dump-note, .sf-dump-key, .sf-dump-public').forEach((e, i) => {
                 
                 if (i === 0)
                     return;
