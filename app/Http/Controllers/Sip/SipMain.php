@@ -40,7 +40,7 @@ class SipMain extends Controller
         $sipTimeEvent = new SipTimeEvent;
 
         if ($request->last)
-            $sipTimeEvent = $sipTimeEvent->where('event_at', '>=', $request->last);
+            $sipTimeEvent = $sipTimeEvent->where('event_at', '>', $request->last);
 
         if ($request->start)
             $this->first = $request->start;
@@ -55,9 +55,12 @@ class SipMain extends Controller
             });
 
         $rows = [];
+        
         $this->first_time = strtotime($this->first);
         $this->last_time = strtotime($this->last);
         $this->period = $this->last_time - $this->first_time;
+
+        $this->time = time();
 
         foreach ($this->data as $row) {
             
@@ -73,7 +76,7 @@ class SipMain extends Controller
             'last' => $this->last,
             'stop' => date("Y-m-d H:i:s"),
             'events' => $rows,
-            'period' => time() - $this->first_time,
+            'period' => $this->time - $this->first_time,
         ]);
     }
 
@@ -141,6 +144,7 @@ class SipMain extends Controller
 
         $event['start'] = $start;
         $event['percent'] = round(($start * 100) / $this->period, 4);
+        $event['period'] = $this->time - $this->first_time;
 
         return $event;
     }
