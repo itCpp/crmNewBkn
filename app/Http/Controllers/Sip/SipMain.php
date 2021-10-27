@@ -37,7 +37,15 @@ class SipMain extends Controller
      */
     public function stats(Request $request)
     {
-        SipTimeEvent::whereDate('event_at', now())
+        $sipTimeEvent = new SipTimeEvent;
+
+        if ($request->last)
+            $sipTimeEvent = $sipTimeEvent->where('event_at', '>=', $request->last);
+
+        if ($request->start)
+            $this->first = $request->start;
+        
+        $sipTimeEvent->whereDate('event_at', now())
             ->orderBy('event_at')
             ->orderBy('extension')
             ->chunk(100, function ($rows) {
@@ -63,7 +71,9 @@ class SipMain extends Controller
         return response()->json([
             'first' => $this->first,
             'last' => $this->last,
+            'stop' => date("Y-m-d H:i:s"),
             'events' => $rows,
+            'period' => time() - $this->first_time,
         ]);
     }
 
@@ -128,6 +138,8 @@ class SipMain extends Controller
     public function getPercentEvent($event)
     {
         $start = $event['event_time'] - $this->first_time;
+
+        $event['start'] = $start;
         $event['percent'] = round(($start * 100) / $this->period, 4);
 
         return $event;
