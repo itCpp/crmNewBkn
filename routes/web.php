@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,5 +23,10 @@ Route::get('/', function (\Illuminate\Http\Request $request) {
         'php' => PHP_VERSION,
     ]);
 });
+
+Route::middleware('user.token')
+    ->any('/broadcasting/auth', function (Request $request) {
+        return Broadcast::auth($request);
+    });
 
 Route::get('/event/{id}', 'Requests\Events@eventView');
