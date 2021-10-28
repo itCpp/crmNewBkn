@@ -8,4 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class MoscowCity extends Model
 {
     use HasFactory;
+
+    /**
+     * Атрибуты, которые назначаются массово
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'city',
+    ];
 }
