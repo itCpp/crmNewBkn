@@ -16,7 +16,7 @@ class CreateIncomingCallsTable extends Migration
         Schema::create('incoming_calls', function (Blueprint $table) {
             $table->id();
             $table->string('phone', 500)->nullable()->comment("Номер клиента");
-            $table->string('phone', 50)->nullable()->comment("Номер сип, на который поступил звонок");
+            $table->string('sip', 50)->nullable()->comment("Номер сип, на который поступил звонок");
             $table->timestamps();
             $table->tinyInteger('locked')->default(0)->comment("Заблокировано для добавления");
             $table->dateTime('added')->nullable()->comment("Добавлено в заявку");
