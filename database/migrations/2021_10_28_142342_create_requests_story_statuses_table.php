@@ -15,8 +15,8 @@ class CreateRequestsStoryStatusesTable extends Migration
     {
         Schema::create('requests_story_statuses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('story_id')->nullable()->comment('Идентификатор основной записи лога')->constrained('requests_stories');
-            $table->foreignId('request_id')->nullable()->comment('Идентификатор заявки')->constrained('requests_rows');
+            $table->foreignId('story_id')->comment('Идентификатор основной записи лога')->constrained('requests_stories');
+            $table->foreignId('request_id')->comment('Идентификатор заявки')->constrained('requests_rows');
             $table->string('status_old', 100)->nullable()->comment('Старый статус');
             $table->string('status_new', 100)->nullable()->comment('Новый статус');
             $table->string('created_pin', 50)->nullable()->comment('Сотрудник, внесший изменения');

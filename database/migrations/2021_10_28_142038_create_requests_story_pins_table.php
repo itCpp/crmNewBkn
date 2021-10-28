@@ -15,10 +15,10 @@ class CreateRequestsStoryPinsTable extends Migration
     {
         Schema::create('requests_story_pins', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('request_id')->nullable()->comment('Идентификатор заявки')->constrained('requests_rows');
+            $table->foreignId('request_id')->comment('Идентификатор заявки')->constrained('requests_rows');
             $table->string('old_pin', 50)->nullable()->comment('Оператор до смены');
             $table->string('new_pin', 50)->nullable()->comment('Новый оператор');
-            $table->foreignId('story_id')->nullable()->comment('Идентификатор основной записи лога')->constrained('requests_stories');
+            $table->foreignId('story_id')->comment('Идентификатор основной записи лога')->constrained('requests_stories');
             $table->timestamp('created_at')->useCurrent()->comment('Время смены');
         });
     }

@@ -15,10 +15,10 @@ class CreateRequestsStorySectorsTable extends Migration
     {
         Schema::create('requests_story_sectors', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('request_id')->nullable()->comment('Идентификатор заявки')->constrained('requests_rows');
+            $table->foreignId('request_id')->comment('Идентификатор заявки')->constrained('requests_rows');
             $table->integer('old_sector', 50)->nullable()->comment('Сектор до смены');
             $table->integer('new_sector', 50)->nullable()->comment('Новый сектор');
-            $table->foreignId('story_id')->nullable()->comment('Идентификатор основной записи лога')->constrained('requests_stories');
+            $table->foreignId('story_id')->comment('Идентификатор основной записи лога')->constrained('requests_stories');
             $table->timestamp('created_at')->useCurrent()->comment('Время смены');
         });
     }
