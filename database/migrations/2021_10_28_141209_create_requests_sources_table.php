@@ -19,7 +19,7 @@ class CreateRequestsSourcesTable extends Migration
             $table->string('comment', 255)->nullable()->comment('Краткое описание к источнику');
             $table->tinyInteger('show_counter')->default(0)->comment('Отображать в счетчике доп. информации');
             $table->tinyInteger('actual_list')->default(0)->comment('Отображать в списке при создании новой заявки');
-            $table->tinyInteger('auto_done_text_queue')->default(0)->comment('Автоматически добавлять текстовую заявку из очереди	');
+            $table->tinyInteger('auto_done_text_queue')->default(0)->comment('Автоматически добавлять текстовую заявку из очереди');
             $table->timestamps();
         });
     }

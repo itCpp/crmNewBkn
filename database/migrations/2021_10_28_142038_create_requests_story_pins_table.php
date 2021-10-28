@@ -15,14 +15,11 @@ class CreateRequestsStoryPinsTable extends Migration
     {
         Schema::create('requests_story_pins', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('request_id')->comment('Идентификатор заявки');
+            $table->foreignId('story_id')->comment('Идентификатор основной записи лога')->constrained('requests_rows')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignId('request_id')->comment('Идентификатор заявки')->constrained('requests_stories')->onUpdate('cascade')->onDelete('cascade');
             $table->string('old_pin', 50)->nullable()->comment('Оператор до смены');
             $table->string('new_pin', 50)->nullable()->comment('Новый оператор');
-            $table->bigInteger('story_id')->comment('Идентификатор основной записи лога');
             $table->timestamp('created_at')->useCurrent()->comment('Время смены');
-
-            $table->foreign('request_id')->references('id')->on('requests_rows')->onUpdate('cascade')->onDelete('cascade');
-            $table->foreign('story_id')->references('id')->on('requests_stories')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 

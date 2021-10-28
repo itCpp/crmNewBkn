@@ -15,13 +15,13 @@ class CreateRequestsSourcesResourcesTable extends Migration
     {
         Schema::create('requests_sources_resources', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('source_id')->comment('Идентификатор источника');
+            $table->unsignedBigInteger('source_id')->comment('Идентификатор источника');
             $table->string('type', 50)->nullable()->comment('Тип ресурса');
             $table->string('val', 150)->nullable()->comment('Значение ресурса');
             $table->timestamps();
 
             $table->index(['source_id', 'type', 'val']);
-            $tbale->foreign('source_id')->references('id')->on('requests_sources')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreign('source_id')->references('id')->on('requests_sources')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 
