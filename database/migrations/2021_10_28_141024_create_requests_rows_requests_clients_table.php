@@ -16,7 +16,8 @@ class CreateRequestsRowsRequestsClientsTable extends Migration
         Schema::create('requests_rows_requests_clients', function (Blueprint $table) {
             $table->foreignId('id_request')->constrained('requests_rows');
             $table->foreignId('id_requests_clients')->constrained('requests_clients');
-            $table->unique(['id_request', 'id_requests_clients']);
+
+            $table->unique(['id_request', 'id_requests_clients'], 'id_requests_clients');
         });
     }
 
