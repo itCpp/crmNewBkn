@@ -207,7 +207,7 @@ class Auth extends Controller
      */
     public static function logout(Request $request)
     {
-        $token = $request->header('Authorization');
+        $token = $request->bearerToken();
 
         // Обнуление сессии
         if ($session = UsersSession::where('token', $token)->first())

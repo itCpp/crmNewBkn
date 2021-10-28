@@ -18,8 +18,7 @@ class UserToken
      */
     public function handle(Request $request, Closure $next)
     {
-
-        if (!$user = Users::checkToken($request->header('Authorization')))
+        if (!$user = Users::checkToken($request->bearerToken()))
             return response()->json(['message' => "Ошибка авторизации"], 401);
 
         if ($request->header('X-God-Mode'))
