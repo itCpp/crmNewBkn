@@ -14,8 +14,6 @@ class CreateTabStatusTable extends Migration
     public function up()
     {
         Schema::create('tab_status', function (Blueprint $table) {
-            $table->bigInteger('tab_id');
-            $table->bigInteger('status_id');
             $table->foreignId('tab_id')->constrained('tabs');
             $table->foreignId('status_id')->constrained('statuses');
             $table->unique(['tab_id', 'status_id']);

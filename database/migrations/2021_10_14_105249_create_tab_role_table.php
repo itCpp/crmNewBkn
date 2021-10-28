@@ -14,9 +14,8 @@ class CreateTabRoleTable extends Migration
     public function up()
     {
         Schema::create('tab_role', function (Blueprint $table) {
-            $table->bigInteger('tab_id');
-            $table->string('role_id', 100);
             $table->foreignId('tab_id')->constrained('tabs');
+            $table->string('role_id', 100);
             $table->unique(['tab_id', 'role_id']);
         });
     }
