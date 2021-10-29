@@ -42,10 +42,10 @@ class Events extends Controller
         $response['message'] = "Событие обработано";
 
         if ($request->text and $text = IncomingTextRequest::find($request->text)) {
-            $response['job'] = now();
+            $response['job'] = date("Y-m-d H:i:s");
             IncomingRequestTextJob::dispatch($text);
         } elseif ($request->call and $call = IncomingCallRequest::find($request->call)) {
-            $response['job'] = now();
+            $response['job'] = date("Y-m-d H:i:s");
             IncomingRequestCallJob::dispatch($call);
         }
 
@@ -60,7 +60,7 @@ class Events extends Controller
      */
     public function textEvent(IncomingTextRequest $row)
     {
-        $date = now();
+        $date = date("Y-m-d H:i:s");
 
         // Расшифровка события
         $crypt = new Encrypter($this->key, config('app.cipher'));
@@ -91,7 +91,7 @@ class Events extends Controller
      */
     public function callEvent(IncomingCallRequest $row)
     {
-        $date = now();
+        $date = date("Y-m-d H:i:s");
 
         // Расшифровка события
         $crypt = new Encrypter($this->key, config('app.cipher'));
@@ -136,7 +136,7 @@ class Events extends Controller
 
         if (!$sip) {
 
-            $incoming->failed = now();
+            $incoming->failed = date("Y-m-d H:i:s");
             $incoming->save();
 
             broadcast(new \App\Events\IncomingCalls($incoming));
@@ -159,7 +159,7 @@ class Events extends Controller
         $addRequest = new AddRequest($request);
         $addRequest->add($request);
 
-        $incoming->added = now();
+        $incoming->added = date("Y-m-d H:i:s");
         $incoming->save();
 
         $sip->added++;
@@ -190,7 +190,7 @@ class Events extends Controller
 
         if (!$sip) {
 
-            $incoming->failed = now();
+            $incoming->failed = date("Y-m-d H:i:s");
             $incoming->added = null;
             $incoming->save();
 
@@ -220,7 +220,7 @@ class Events extends Controller
         if ($response['done'] == "fail") {
 
             $incoming->added = null;
-            $incoming->failed = now();
+            $incoming->failed = date("Y-m-d H:i:s");
             $incoming->save();
 
             broadcast(new \App\Events\IncomingCalls($incoming, true));
@@ -228,7 +228,7 @@ class Events extends Controller
             return null;
         }
 
-        $incoming->added = now();
+        $incoming->added = date("Y-m-d H:i:s");
         $incoming->failed = null;
         $incoming->save();
 
