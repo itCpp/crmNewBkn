@@ -24,6 +24,7 @@ class Calls extends Controller
             ->get();
 
         $sips = [];
+        $calls = [];
 
         foreach ($data as $call) {
             $call->phone = parent::decrypt($call->phone);
@@ -34,7 +35,7 @@ class Calls extends Controller
             if (!in_array($call->sip, $sips))
                 $sips[] = $call->sip;
 
-            $calls[] = $call->toArray();
+            $calls[] = $call;
         }
 
         $sources = [];
@@ -44,11 +45,11 @@ class Calls extends Controller
         }
 
         foreach ($calls as &$call) {
-            $call['source'] = $sources[$call['sip']] ?? null;
+            $call->source = $sources[$call['sip']] ?? null;
         }
 
         return response()->json([
-            'calls' => $calls ?? [],
+            'calls' => $calls,
             'sources' => $sources,
         ]);
     }
