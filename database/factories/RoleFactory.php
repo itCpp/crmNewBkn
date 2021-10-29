@@ -51,14 +51,14 @@ class RoleFactory extends Factory
     /**
      * Формирование стандартных данных
      * 
-     * @return array
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
-    public function makeDefault()
+    public function defaultState()
     {
         $count = count($this->roles);
         $state = new Sequence(...$this->roles);
 
-        return $this->count($count)->state($state)->make();
+        return $this->count($count)->state($state);
     }
 
     /**
