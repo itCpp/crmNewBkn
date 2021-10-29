@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class IncomingCall extends Model
 {
@@ -30,4 +31,9 @@ class IncomingCall extends Model
     // protected $casts = [
     //     'created_at' => 'datetime:Y-m-d H:i:s',
     // ];
+
+    // public function getCreatedAtAttribute($date)
+    // {
+    //     return date("Y-m-d H:i:s", strtotime($date));
+    // }
 }

@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Dev;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Controller;
 use App\Models\RequestsClient;
+use App\Models\RequestsRow;
+use App\Models\RequestsSource;
+use App\Models\User;
 use App\Models\CrmMka\CrmRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -22,6 +25,30 @@ class RequestsMerge extends Controller
 
     /** Экземпляр объекта создания заявки @var AddRequest */
     protected $add;
+
+    /** Массив сопоставления идентификаторов источников @var array */
+    public $sourceToSource = [
+        [2, 'БАСМАНКА'],
+        [14, 'БЗБ'],
+        [6, 'БРАКИ'],
+        [15, 'ГАЗЕТА'],
+        [1, 'ГОСЮРИСТ'],
+        [11, 'Департамент юридических услуг'],
+        [4, 'ДОСТ'],
+        [10, 'Коллегия адвокатов'],
+        [16, 'КОНСАЛТИНГ'],
+        [8, 'Московская коллегия адвокатов'],
+        [17, 'Подарки от Худякова'],
+        [9, 'правовые эксперты России'],
+        [3, 'СПР'],
+        [5, 'ХУД'],
+        [12, 'ЦПП'],
+        [7, 'Эксперты права'],
+        [18, 'ЮК'],
+        [19, 'Юридический центр'],
+        [20, 'ЮРИСКОНСУЛЬТ'],
+        [21, 'ЮРСЛУЖБА'],
+    ];
 
     /** Сопоставления источников */
 
@@ -65,9 +92,41 @@ class RequestsMerge extends Controller
         if (!$row = $this->getRow())
             return false;
 
-        $clients = $this->chenckOrCreteClients($this->getPhones($row));
+        $data = (object) [
+            'row' => $row->toArray(),
+        ];
 
-        dd($clients);
+        $create = [];
+
+        // Определение номеров клиента
+        $data->phones = $this->getPhones($row);
+
+        // Поиск и/или создание клиентов
+        $data->clients = $this->chenckOrCreteClients($data->phones);
+
+        $create['query_type'] = $this->getQueryType($row);
+        $create['callcenter_sector'] = $this->getSectorId($row);
+        $create['pin'] = $this->getNewPin($row);
+        $create['source_id'] = $this->getSourceId($row);
+        $create['client_name'] = $row->name != "" ? $row->name : null;
+        $create['theme'] = null;
+        $create['region'] = null;
+        $create['check_moscow'] = null;
+        $create['comment'] = null;
+        $create['comment_urist'] = null;
+        $create['comment_first'] = null;
+        $create['status_id'] = null;
+        $create['address'] = null;
+        $create['event_at'] = null;
+        $create['uplift'] = 0;
+        $create['uplift_at'] = null;
+        $create['created_at'] = null;
+        $create['updated_at'] = null;
+        $create['deleted_at'] = null;
+
+        $data->new = new RequestsRow;
+
+        dd($data, $create);
 
         return $row;
     }
@@ -106,14 +165,80 @@ class RequestsMerge extends Controller
         foreach ($phones as $phone) {
 
             $hash = $this->add->getHashPhone($phone);
-            
+
             $clients[] = RequestsClient::firstOrCreate(
                 ['hash' => $hash],
                 ['phone' => Crypt::encryptString($phone)]
             );
-
         }
 
         return $clients ?? [];
+    }
+
+    /**
+     * Определение типа заявки
+     * 
+     * @param CrmRequest
+     * @return string
+     */
+    public function getQueryType($row)
+    {
+        return $row->typeReq == "Звонок" ? "call" : "text";
+    }
+
+    /**
+     * Определение сектора
+     * 
+     * @param CrmRequest
+     * @return null|int
+     */
+    public function getSectorId($row)
+    {
+        $sector = $row->{'call-center'};
+
+        if ($sector === "" or $sector === null)
+            return null;
+
+        $sectors = [
+            1 => 1,
+            2 => 1,
+            3 => 1,
+            4 => 1,
+            5 => 1,
+            6 => 1,
+            7 => 2,
+        ];
+
+        return $sectors[(int) $sector] ?? null;
+    }
+
+    /**
+     * Определение источника старой заявки
+     * 
+     * @param CrmRequest
+     * @return null|int
+     */
+    public function getSourceId($row)
+    {
+        foreach ($this->sourceToSource as $source) {
+            if ($row->type == $source[1])
+                return $source[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * Поиск нового пина сотрудника
+     * 
+     * @param CrmRequest
+     * @return int|string
+     */
+    public function getNewPin($row)
+    {
+        if (!$user = User::where('old_pin', $row->pin)->first())
+            return $row->pin;
+
+        return $user->pin;
     }
 }

@@ -50,6 +50,7 @@ class RequestsMergeCommand extends Command
         $this->question("                                       ");
         $this->question("  Миграция старых заявок в новую базу  ");
         $this->question("                                       ");
+        
         $this->newLine();
 
         $start = microtime(1);

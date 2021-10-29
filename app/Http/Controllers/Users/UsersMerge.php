@@ -27,7 +27,6 @@ use Illuminate\Http\Request;
  */
 class UsersMerge extends Controller
 {
-
     /**
      * Начало новых пинов для сектора
      * 
@@ -74,7 +73,6 @@ class UsersMerge extends Controller
      */
     public function start()
     {
-
         // Формирование руководителей, сисадминов и тд
         $users = CrmUser::where('state', 'Работает')
             ->whereIn('rights', ['admin', 'nachColl'])
@@ -122,7 +120,6 @@ class UsersMerge extends Controller
      */
     public function createUser($user, $auth = "admin")
     {
-
         // Определение пина
         $max = null;
         $pinStart = $this->sectorsPin[$user->{'call-center'}] ?? null;
@@ -162,20 +159,17 @@ class UsersMerge extends Controller
         ];
 
         try {
-
             $new = User::create($create);
             echo "\033[32m";
 
             // Роли сотрудника
-            if (isset($new) AND $roles = $this->roles[$user->{'call-center'}] ?? null) {
+            if (isset($new) and $roles = $this->roles[$user->{'call-center'}] ?? null) {
 
                 foreach ($roles as $role) {
                     $new->roles()->attach($role);
                     echo "\t\tAdd role {$role}\n";
                 }
-
             }
-
         } catch (\Illuminate\Database\QueryException) {
             echo "\033[31m";
         }
