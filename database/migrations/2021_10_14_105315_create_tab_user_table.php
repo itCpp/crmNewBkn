@@ -14,8 +14,8 @@ class CreateTabUserTable extends Migration
     public function up()
     {
         Schema::create('tab_user', function (Blueprint $table) {
-            $table->foreignId('tab_id')->constrained('tabs');
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('tab_id')->constrained('tabs')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onUpdate('cascade')->onDelete('cascade');
             $table->unique(['tab_id', 'user_id']);
         });
     }

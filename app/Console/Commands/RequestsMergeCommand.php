@@ -12,7 +12,7 @@ class RequestsMergeCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'requests:merge';
+    protected $signature = 'crm:requestsmerge';
 
     /**
      * The console command description.

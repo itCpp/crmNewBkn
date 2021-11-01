@@ -7,24 +7,6 @@ use App\Models\CrmMka\CrmUser;
 use App\Models\User;
 use Illuminate\Http\Request;
 
-/** 
- * Black 0;30
- * Blue 0;34
- * Green 0;32
- * Cyan 0;36
- * Red 0;31
- * Purple 0;35
- * Brown 0;33
- * Light Gray 0;37 
- * Dark Gray 1;30
- * Light Blue 1;34
- * Light Green 1;32
- * Light Cyan 1;36
- * Light Red 1;31
- * Light Purple 1;35
- * Yellow 1;33
- * White 1;37
- */
 class UsersMerge extends Controller
 {
     /**
@@ -67,49 +49,52 @@ class UsersMerge extends Controller
     ];
 
     /**
-     * Начало процесса
+     * Список ролей для разработчиков
      * 
-     * @return null
+     * @var array
      */
-    public function start()
+    protected $developers = [
+        401 => ['developer'],
+        424 => ['developer'],
+    ];
+
+    /**
+     * Вывод списка руководителей, разработчиков, сисадминов и тд
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getNachUsers()
     {
-        // Формирование руководителей, сисадминов и тд
-        $users = CrmUser::where('state', 'Работает')
+        return CrmUser::where('state', 'Работает')
             ->whereIn('rights', ['admin', 'nachColl'])
             ->orderBy('pin')
             ->get();
+    }
 
-        echo "Разработчики, руководители и тд...\n\033[0m";
-
-        foreach ($users as $user) {
-            $new = $this->createUser($user, "secret");
-        }
-
-        // Формирование админов секторов
-        $users = CrmUser::where('state', 'Работает')
+    /**
+     * Вывод списка администраторов секторов
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAdmins()
+    {
+        return CrmUser::where('state', 'Работает')
             ->whereIn('rights', ['nachCollSamara'])
             ->orderBy('pin')
             ->get();
+    }
 
-        echo "Админы\n\033[0m";
-
-        foreach ($users as $user) {
-            $new = $this->createUser($user, "secret");
-        }
-
-        // Формирование кольщиков
-        $users = CrmUser::where('state', 'Работает')
+    /**
+     * Вывод списка операторов колл-центра
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getcallers()
+    {
+        return CrmUser::where('state', 'Работает')
             ->whereIn('rights', ['caller'])
             ->orderBy('pin')
             ->get();
-
-        echo "Кольщики\n\033[0m";
-
-        foreach ($users as $user) {
-            $new = $this->createUser($user);
-        }
-
-        return null;
     }
 
     /**
@@ -122,8 +107,6 @@ class UsersMerge extends Controller
      */
     public function createUser($user, $auth = "admin", $fired = false)
     {
-        $echo = !$fired;
-
         // Определение пина
         $max = null;
         $pinStart = $this->sectorsPin[$user->{'call-center'}] ?? null;
@@ -166,29 +149,20 @@ class UsersMerge extends Controller
             $create['deleted_at'] = now();
         }
 
-        try {
-            $new = User::create($create);
+        $new = User::create($create);
 
-            if ($echo)
-                echo "\033[32m";
+        // Роли сотрудника
+        if ($new and !$fired) {
 
-            // Роли сотрудника
-            if (isset($new) and !$fired and $roles = $this->roles[$user->{'call-center'}] ?? null) {
+            $roles = array_merge(
+                $this->roles[$user->{'call-center'}] ?? [],
+                $this->developers[$new->pin] ?? []
+            );
 
-                foreach ($roles as $role) {
-                    $new->roles()->attach($role);
-
-                    if ($echo)
-                        echo "\t\tAdd role {$role}\n";
-                }
+            foreach ($roles as $role) {
+                $new->roles()->attach($role);
             }
-        } catch (\Illuminate\Database\QueryException) {
-            if ($echo)
-                echo "\033[31m";
         }
-
-        if ($echo)
-            echo "\t{$user->pin} {$user->username} {$user->fullName}\n\033[0m";
 
         return $new ?? null;
     }
@@ -204,6 +178,10 @@ class UsersMerge extends Controller
         if (!$old = CrmUser::where('pin', $pin)->first())
             return null;
 
-        return $this->createUser($old, "admin", true);
+        try {
+            return $this->createUser($old, "admin", true);
+        } catch (\Illuminate\Database\QueryException) {
+            return null;
+        }
     }
 }

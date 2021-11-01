@@ -17,8 +17,8 @@ class CreateStatusRoleTable extends Migration
             $table->string('role', 50);
             $table->unsignedBigInteger('status_id');
 
-            $table->foreign('role')->references('role')->on('roles');
-            $table->foreign('status_id')->references('id')->on('statuses');
+            $table->foreign('role')->references('role')->on('roles')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreign('status_id')->references('id')->on('statuses')->onUpdate('cascade')->onDelete('cascade');
 
             $table->unique(['role', 'status_id'], 'role_status_id');
         });

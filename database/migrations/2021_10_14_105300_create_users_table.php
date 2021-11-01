@@ -15,9 +15,9 @@ class CreateUsersTable extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->integer('pin')->nullable()->comment('Персональный идентификационный номер')->index();
-            $table->string('old_pin', 50)->nullable()->comment('Идентификатор из старой ЦРМ');
-            $table->string('login', 250)->nullable()->comment('Логин для авторизации')->index();
+            $table->integer('pin')->nullable()->comment('Персональный идентификационный номер')->unique();
+            $table->string('old_pin', 50)->nullable()->comment('Идентификатор из старой ЦРМ')->index();
+            $table->string('login', 250)->nullable()->comment('Логин для авторизации')->unique();
             $table->integer('callcenter_id')->nullable()->comment('Идентификатор колл-центра');
             $table->integer('callcenter_sector_id')->nullable()->comment('Идентификатор сектора колл-центра');
             $table->string('surname', 250)->nullable()->comment('Фамилия');
