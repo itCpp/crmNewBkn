@@ -27,6 +27,7 @@ class User extends Model
         'telegram_id',
         'auth_type',
         'created_at',
+        'deleted_at',
     ];
 
     /**

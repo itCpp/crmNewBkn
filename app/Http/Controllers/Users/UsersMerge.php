@@ -63,7 +63,7 @@ class UsersMerge extends Controller
         4 => ['caller'],
         5 => ['caller'],
         6 => ['caller'],
-        7 => ['caller', 'caller_che'],
+        7 => ['caller'],
     ];
 
     /**
@@ -115,11 +115,15 @@ class UsersMerge extends Controller
     /**
      * Создание строки пользователя
      * 
-     * @param \App\Models\CrmMka\CrmUser $user
-     * @param string $auth
+     * @param CrmUser $user
+     * @param string $auth Тип авторизации сотрудника
+     * @param bool $fired Флаг уволенного сотрудника
+     * @return null|User
      */
-    public function createUser($user, $auth = "admin")
+    public function createUser($user, $auth = "admin", $fired = false)
     {
+        $echo = !$fired;
+
         // Определение пина
         $max = null;
         $pinStart = $this->sectorsPin[$user->{'call-center'}] ?? null;
@@ -158,24 +162,48 @@ class UsersMerge extends Controller
             'callcenter_sector_id' => $this->oldSectors[$user->{'call-center'}][1] ?? null,
         ];
 
+        if ($fired) {
+            $create['deleted_at'] = now();
+        }
+
         try {
             $new = User::create($create);
-            echo "\033[32m";
+
+            if ($echo)
+                echo "\033[32m";
 
             // Роли сотрудника
-            if (isset($new) and $roles = $this->roles[$user->{'call-center'}] ?? null) {
+            if (isset($new) and !$fired and $roles = $this->roles[$user->{'call-center'}] ?? null) {
 
                 foreach ($roles as $role) {
                     $new->roles()->attach($role);
-                    echo "\t\tAdd role {$role}\n";
+
+                    if ($echo)
+                        echo "\t\tAdd role {$role}\n";
                 }
             }
         } catch (\Illuminate\Database\QueryException) {
-            echo "\033[31m";
+            if ($echo)
+                echo "\033[31m";
         }
 
-        echo "\t{$user->pin} {$user->username} {$user->fullName}\n\033[0m";
+        if ($echo)
+            echo "\t{$user->pin} {$user->username} {$user->fullName}\n\033[0m";
 
         return $new ?? null;
+    }
+
+    /**
+     * Создание уволеного оператора
+     * 
+     * @param string|int $pin
+     * @return null|User
+     */
+    public function createFiredUser($pin)
+    {
+        if (!$old = CrmUser::where('pin', $pin)->first())
+            return null;
+
+        return $this->createUser($old, "admin", true);
     }
 }

@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Dev;
 
-use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Requests\AddRequest;
+use App\Http\Controllers\Users\UsersMerge;
 use App\Models\RequestsClient;
 use App\Models\RequestsRow;
-use App\Models\RequestsSource;
 use App\Models\User;
 use App\Models\CrmMka\CrmRequest;
+use App\Models\CrmMka\CrmUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
@@ -50,6 +51,25 @@ class RequestsMerge extends Controller
         [21, 'ЮРСЛУЖБА'],
     ];
 
+    /** Соотношение статуса старой заявки к идентификтору нового статуса */
+    public $stateToStatusId = [
+        'bk' => 5,
+        'brak' => 6,
+        'color-promo' => 12,
+        'nedozvon' => 1,
+        'neobr' => null,
+        'online' => 10,
+        'online-doc' => 11,
+        'podtverjden' => 4,
+        'prihod' => 7,
+        'promo' => 9,
+        'shipping' => 14,
+        'sliv' => 8,
+        'sozvon' => 2,
+        'vtorich' => 13,
+        'zapis' => 3,
+    ];
+
     /** Сопоставления источников */
 
     /**
@@ -65,6 +85,8 @@ class RequestsMerge extends Controller
 
         $request = new Request;
         $this->add = new AddRequest($request);
+
+        $this->usersMerge = new UsersMerge;
     }
 
     /**
@@ -92,41 +114,42 @@ class RequestsMerge extends Controller
         if (!$row = $this->getRow())
             return false;
 
-        $data = (object) [
-            'row' => $row->toArray(),
-        ];
+        $data = (object) [];
 
-        $create = [];
-
-        // Определение номеров клиента
-        $data->phones = $this->getPhones($row);
+        $data->row = $row->toArray(); # Данные старой заявки
+        $data->phones = $this->getPhones($row); # Номера телефонов клиента
 
         // Поиск и/или создание клиентов
         $data->clients = $this->chenckOrCreteClients($data->phones);
 
-        $create['query_type'] = $this->getQueryType($row);
-        $create['callcenter_sector'] = $this->getSectorId($row);
-        $create['pin'] = $this->getNewPin($row);
-        $create['source_id'] = $this->getSourceId($row);
-        $create['client_name'] = $row->name != "" ? $row->name : null;
-        $create['theme'] = null;
-        $create['region'] = null;
-        $create['check_moscow'] = null;
-        $create['comment'] = null;
-        $create['comment_urist'] = null;
-        $create['comment_first'] = null;
-        $create['status_id'] = null;
-        $create['address'] = null;
-        $create['event_at'] = null;
-        $create['uplift'] = 0;
-        $create['uplift_at'] = null;
-        $create['created_at'] = null;
-        $create['updated_at'] = null;
-        $create['deleted_at'] = null;
+        $create = []; # Массив данных новой заявки
 
-        $data->new = new RequestsRow;
+        $new = new RequestsRow;
 
-        dd($data, $create);
+        $new->id = $row->id;
+        $new->query_type = $this->getQueryType($row);
+        $new->callcenter_sector = $this->getSectorId($row);
+        $new->pin = $this->getNewPin($row);
+        $new->source_id = $this->getSourceId($row);
+        $new->client_name = $row->name != "" ? $row->name : null;
+        $new->theme = $row->theme != "" ? $row->theme : null;
+        $new->region = $row->region != "" ? $row->region : null;
+        $new->check_moscow = $row->checkMoscow == "moscow" ? 1
+            : ($row->checkMoscow == "region" ? 0 : null);
+        $new->comment = $row->comment != "" ? $row->comment : null;
+        $new->comment_urist = $row->uristComment != "" ? $row->uristComment : null;
+        $new->comment_first = $row->first_comment != "" ? $row->first_comment : null;
+        $new->status_id = $this->getStatusId($row);
+        $new->address = $row->address ?: null;
+        $new->uplift = $row->vtorCall == "vtorCall" ? 1 : 0;
+
+        $new->event_at = $this->getEventAt($row);
+        $new->created_at = $this->getCreatedAt($row);
+        $new->uplift_at = $this->getUpliftAt($row, $new);
+        $new->deleted_at = $this->getDeletedAt($row, $new);
+        $new->updated_at = $this->getUpdatedAt($new);
+
+        dd($data, $new->toArray());
 
         return $row;
     }
@@ -236,9 +259,133 @@ class RequestsMerge extends Controller
      */
     public function getNewPin($row)
     {
+        if (!$row->pin)
+            return null;
+
         if (!$user = User::where('old_pin', $row->pin)->first())
-            return $row->pin;
+            return $this->getFiredAndCreateNewUser($row->pin);
 
         return $user->pin;
+    }
+
+    /**
+     * Создание уволенного сотрудника
+     * 
+     * @param string $pin
+     * @return int
+     */
+    public function getFiredAndCreateNewUser($pin)
+    {
+        if (!$user = $this->usersMerge->createFiredUser($pin))
+            return $pin;
+
+        return $user->pin;
+    }
+
+    /**
+     * Определение идентификатора статуса заявки
+     * 
+     * @param CrmRequest $row
+     * @return null|int
+     */
+    public function getStatusId($row)
+    {
+        return $this->stateToStatusId[$row->state] ?? null;
+    }
+
+    /**
+     * Определение времени события
+     * 
+     * @param CrmRequest $row
+     * @return null|string
+     */
+    public function getEventAt($row)
+    {
+        if (!$row->rdate or !$row->time)
+            return null;
+
+        return trim($row->rdate . " " . $row->time);
+    }
+
+    /**
+     * Дата создания заявки
+     * 
+     * @param CrmRequest $row
+     * @return null|string
+     */
+    public function getCreatedAt($row)
+    {
+        $date = $row->staticDate;
+
+        if (!$date or $date == "")
+            $date = $row->date;
+
+        if (!$date or $date == "")
+            return null;
+
+        return trim($date . " " . $row->staticTime);
+    }
+
+    /**
+     * Определение времени подъема заявки
+     * 
+     * @param CrmRequest $row
+     * @param RequestsRow $new
+     * @return null|string
+     */
+    public function getUpliftAt($row, $new)
+    {
+        $time = null;
+
+        if ($row->timeSort and $row->timeSort != "")
+            $time = $row->timeSort;
+
+        if (!$time and $new->created_at)
+            $time = strtotime($new->created_at);
+
+        return $time ? date("Y-m-d H:i:s", $time) : null;
+    }
+
+    /**
+     * Дата и время удаления заявки
+     * 
+     * @param CrmRequest $row
+     * @param RequestsRow $new
+     * @return null|string
+     */
+    public function getDeletedAt($row, $new)
+    {
+        if ($row->del != "hide" and $row->noView != 1)
+            return null;
+
+        if ($date = $this->getUpdatedAt($new))
+            return $date;
+
+        return now();
+    }
+
+    /**
+     * Дата и время обновления
+     * 
+     * @param RequestsRow $new
+     * @return null|string
+     */
+    public function getUpdatedAt($new)
+    {
+        $date = null;
+
+        if (!$date or $new->created_at > $date)
+            $date = $new->created_at;
+
+        if (!$date or $new->event_at > $date)
+            $date = $new->event_at;
+
+        if (!$date or $new->uplift_at > $date)
+            $date = $new->uplift_at;
+
+        if (!$date or $new->uplift_at > $date)
+            $date = $new->uplift_at;
+
+        return $date;
     }
 }
