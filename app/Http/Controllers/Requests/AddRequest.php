@@ -137,10 +137,9 @@ class AddRequest extends Controller
             $this->query_type = "text";
 
         // Логирование всех запросов
-        $this->queryLog = IncomingQuery::create([
-            'ip' => $this->request->ip(),
-            'user_agent' => $this->request->header('User-Agent'),
-        ]);
+        $this->queryLog = new IncomingQuery;
+        $this->queryLog->ip = $this->request->ip();
+        $this->queryLog->user_agent = $this->request->header('User-Agent');
 
         $this->response = [];
 
