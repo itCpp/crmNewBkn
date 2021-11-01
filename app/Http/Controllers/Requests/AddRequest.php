@@ -613,6 +613,10 @@ class AddRequest extends Controller
      * 
      * @param string|null $comment Текст комментария
      * @param string $type Тип комментария
+     * - `comment` Обычный комментарий
+     * - `sb` Комментарий Службы безопасности
+     * - `client` Комментарий еклиента
+     * - `system` Системный комментарий
      * @return $this
      */
     public function addComment($comment = null, $type = "comment")

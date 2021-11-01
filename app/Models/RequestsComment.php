@@ -20,6 +20,8 @@ class RequestsComment extends Model
         'type_comment',
         'created_pin',
         'comment',
+        'created_at',
+        'updated_at',
     ];
 
     /**

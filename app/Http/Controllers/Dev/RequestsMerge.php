@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Users\UsersMerge;
 use App\Models\RequestsClient;
+use App\Models\RequestsComment;
 use App\Models\RequestsRow;
 use App\Models\User;
 use App\Models\CrmMka\CrmRequest;
-use App\Models\CrmMka\CrmUser;
+use App\Models\CrmMka\CrmRequestsRemark;
+use App\Models\CrmMka\CrmRequestsSbComment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
@@ -70,7 +72,8 @@ class RequestsMerge extends Controller
         'zapis' => 3,
     ];
 
-    /** Сопоставления источников */
+    /** Проверяемые сотрудники @var array */
+    protected $users = [];
 
     /**
      * Объвление нового экзкмпляра
@@ -114,6 +117,10 @@ class RequestsMerge extends Controller
         if (!$row = $this->getRow())
             return false;
 
+        // Проверка наличия заявки в новой БД для пропуска
+        if ($check = RequestsRow::find($row->id))
+            return $check;
+
         $data = (object) [];
 
         $data->row = $row->toArray(); # Данные старой заявки
@@ -121,8 +128,6 @@ class RequestsMerge extends Controller
 
         // Поиск и/или создание клиентов
         $data->clients = $this->chenckOrCreteClients($data->phones);
-
-        $create = []; # Массив данных новой заявки
 
         $new = new RequestsRow;
 
@@ -149,9 +154,17 @@ class RequestsMerge extends Controller
         $new->deleted_at = $this->getDeletedAt($row, $new);
         $new->updated_at = $this->getUpdatedAt($new);
 
-        dd($data, $new->toArray());
+        $new->save();
 
-        return $row;
+        // Привязка клиента к заявке
+        foreach ($data->clients as $client) {
+            $client->requests()->attach($new->id);
+        }
+
+        // Поиск и добавление комментариев по заявке
+        $data->comments = $this->getAndCreateAllComments($new->id);
+
+        return $new;
     }
 
     /**
@@ -387,5 +400,63 @@ class RequestsMerge extends Controller
             $date = $new->uplift_at;
 
         return $date;
+    }
+
+    /**
+     * Поиск и добавление комментариев по заявке
+     * 
+     * @param int $id Идентификтаор заявки
+     * @return int Количество комментариев
+     */
+    public function getAndCreateAllComments($id)
+    {
+        $count = 0;
+
+        // Комментарии СБ
+        foreach (CrmRequestsSbComment::where('request_id', $id)->get() as $row) {
+            RequestsComment::create([
+                'request_id' => $id,
+                'type_comment' => "sb",
+                'created_pin' => $row->pin,
+                'comment' => $row->comment,
+                'created_at' => $row->created_at,
+                'updated_at' => $row->updated_at,
+            ]);
+
+            $count++;
+        }
+
+        // Заметки
+        foreach (CrmRequestsRemark::where('idReq', $id)->get() as $row) {
+            RequestsComment::create([
+                'request_id' => $id,
+                'type_comment' => "comment",
+                'created_pin' => $this->getCommentAuthor($row->pin),
+                'comment' => $row->remark,
+                'created_at' => $row->create_at,
+                'updated_at' => $row->create_at,
+            ]);
+
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * Поиск сотрудника по старому пину
+     * 
+     * @param int|string $pin
+     * @return int
+     */
+    public function getCommentAuthor($pin)
+    {
+        if (isset($this->users[$pin]))
+            return $this->users[$pin]->pin;
+
+        if (!$this->users[$pin] = User::where('old_pin', $row->pin)->first())
+            $this->users[$pin] = $this->getFiredAndCreateNewUser($row->pin);
+
+        return $this->users[$pin]->pin ?? $pin;
     }
 }
