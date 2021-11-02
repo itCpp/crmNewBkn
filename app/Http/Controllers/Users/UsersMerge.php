@@ -175,7 +175,8 @@ class UsersMerge extends Controller
 
         $create = [
             'pin' => $pin,
-            'old_pin' => $pin == $user->pin ? null : $user->pin,
+            // 'old_pin' => $pin == $user->pin ? null : $user->pin,
+            'old_pin' => $user->pin,
             'surname' => $fio[0] ?? null,
             'name' =>  $fio[1] ?? null,
             'patronymic' =>  $fio[2] ?? null,

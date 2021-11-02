@@ -458,10 +458,10 @@ class RequestsMerge extends Controller
      */
     public function getCommentAuthor($pin)
     {
-        if (isset($this->users[$pin]))
-            return $this->users[$pin]->pin;
+        if (!empty($this->users[$pin]))
+            return $this->users[$pin]->pin ?? $pin;
 
-        if (!$this->users[$pin] = User::where('old_pin', $pin)->first())
+        if (!User::where('old_pin', $pin)->first())
             $this->users[$pin] = $this->getFiredAndCreateNewUser($pin);
 
         return $this->users[$pin]->pin ?? $pin;
