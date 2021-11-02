@@ -140,7 +140,7 @@ class RequestsMerge extends Controller
         $new->source_id = $this->getSourceId($row);
         $new->client_name = $row->name != "" ? $row->name : null;
         $new->theme = $row->theme != "" ? $row->theme : null;
-        $new->region = $row->region != "" and $row->region != "Неизвестно" ? $row->region : null;
+        $new->region = ($row->region != "" and $row->region != "Неизвестно") ? $row->region : null;
         $new->check_moscow = $new->region ? RequestChange::checkRegion($new->region) : null;
         $new->comment = $row->comment != "" ? $row->comment : null;
         $new->comment_urist = $row->uristComment != "" ? $row->uristComment : null;

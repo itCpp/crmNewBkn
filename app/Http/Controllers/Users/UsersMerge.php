@@ -16,6 +16,7 @@ class UsersMerge extends Controller
      * @var array
      */
     protected $sectorsPin = [
+        2 => 20000,
         3 => 30000,
         4 => 30000,
         5 => 30000,
