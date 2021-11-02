@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Role extends Model
 {
-
     use HasFactory, SoftDeletes;
 
     /**
@@ -47,19 +46,17 @@ class Role extends Model
     /**
      * Разрешения для роли
      */
-    public function permissions() {
-
+    public function permissions()
+    {
         return $this->belongsToMany(Permission::class, "roles_permissions", "role", "permission");
-
     }
 
     /**
      * Пользователи, относящиеся к роли
      */
-    public function users() {
-
+    public function users()
+    {
         return $this->belongsToMany("App\Models\User", "users_roles", "role", "user");
-
     }
 
     /**
@@ -67,9 +64,7 @@ class Role extends Model
      */
     public function tabs()
     {
-
         return $this->belongsToMany(Tab::class, 'tab_role', 'role_id');
-
     }
 
     /**
@@ -77,9 +72,6 @@ class Role extends Model
      */
     public function statuses()
     {
-
         return $this->belongsToMany(Status::class, 'status_role', 'role');
-
     }
-
 }

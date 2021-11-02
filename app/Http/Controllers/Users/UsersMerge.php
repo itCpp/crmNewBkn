@@ -63,6 +63,17 @@ class UsersMerge extends Controller
     ];
 
     /**
+     * Роли для группы прав
+     * 
+     * @var array
+     */
+    protected $groupToRole = [
+        'caller' => ['caller'],
+        'nachColl' => ['callCenterManager'],
+        'nachCollSamara' => ['admin'],
+    ];
+
+    /**
      * Список сотрудников, которым необходимо обнулить колл-центр
      * 
      * @var array
@@ -189,10 +200,11 @@ class UsersMerge extends Controller
 
             $roles = array_merge(
                 $this->roles[$user->{'call-center'}] ?? [],
-                $this->developers[$new->pin] ?? []
+                $this->developers[$new->pin] ?? [],
+                $this->groupToRole[$user->rights] ?? [],
             );
 
-            foreach ($roles as $role) {
+            foreach (array_unique($roles) as $role) {
                 $new->roles()->attach($role);
             }
         }

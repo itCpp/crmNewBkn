@@ -16,16 +16,16 @@ class CreateCrm extends Seeder
     public function run()
     {
         $this->call([
-            MoscowCitySeeder::class, // Список городов Московской области
-            PermissionSeeder::class, // Начальный список разрешений
-            RolesSeeder::class, // Начальные роли
             SettingsGlobalSeeder::class, // Глобальные настройки ЦРМ
-            IncomingCallsToSourceSeeder::class, // Источники слушателей входящих звонков
             OfficeSeeder::class, // Список офисов
-            RequestsSourceSeeder::class, // Источники
+            PermissionSeeder::class, // Начальный список разрешений
             StatusSeeder::class, // Статусы заявок
             TabSeeder::class, // Вкладки заявок
             CallCenterAndSectorsSeeder::class, // Создание колл-центров
+            RolesSeeder::class, // Начальные роли
+            RequestsSourceSeeder::class, // Источники
+            IncomingCallsToSourceSeeder::class, // Источники слушателей входящих звонков
+            MoscowCitySeeder::class, // Список городов Московской области
         ]);
 
         $output = new ConsoleOutput; // Вывод в консоль

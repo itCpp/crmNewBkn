@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\AddRequest;
+use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Users\UsersMerge;
 use App\Models\RequestsClient;
 use App\Models\RequestsComment;
@@ -139,9 +140,8 @@ class RequestsMerge extends Controller
         $new->source_id = $this->getSourceId($row);
         $new->client_name = $row->name != "" ? $row->name : null;
         $new->theme = $row->theme != "" ? $row->theme : null;
-        $new->region = $row->region != "" ? $row->region : null;
-        $new->check_moscow = $row->checkMoscow == "moscow" ? 1
-            : ($row->checkMoscow == "region" ? 0 : null);
+        $new->region = $row->region != "" and $row->region != "Неизвестно" ? $row->region : null;
+        $new->check_moscow = $new->region ? RequestChange::checkRegion($new->region) : null;
         $new->comment = $row->comment != "" ? $row->comment : null;
         $new->comment_urist = $row->uristComment != "" ? $row->uristComment : null;
         $new->comment_first = $row->first_comment != "" ? $row->first_comment : null;
@@ -424,7 +424,7 @@ class RequestsMerge extends Controller
             RequestsComment::create([
                 'request_id' => $id,
                 'type_comment' => "sb",
-                'created_pin' => $row->pin,
+                'created_pin' => $this->getCommentAuthor($row->pin),
                 'comment' => $row->comment,
                 'created_at' => $row->created_at,
                 'updated_at' => $row->updated_at,
@@ -461,8 +461,8 @@ class RequestsMerge extends Controller
         if (isset($this->users[$pin]))
             return $this->users[$pin]->pin;
 
-        if (!$this->users[$pin] = User::where('old_pin', $row->pin)->first())
-            $this->users[$pin] = $this->getFiredAndCreateNewUser($row->pin);
+        if (!$this->users[$pin] = User::where('old_pin', $pin)->first())
+            $this->users[$pin] = $this->getFiredAndCreateNewUser($pin);
 
         return $this->users[$pin]->pin ?? $pin;
     }
