@@ -46,6 +46,7 @@ class RequestsMerge extends Controller
         [3, 'СПР'],
         [5, 'ХУД'],
         [12, 'ЦПП'],
+        [12, null],
         [7, 'Эксперты права'],
         [18, 'ЮК'],
         [19, 'Юридический центр'],
@@ -238,11 +239,11 @@ class RequestsMerge extends Controller
         $sectors = [
             1 => 1,
             2 => 1,
-            3 => 1,
-            4 => 1,
-            5 => 1,
-            6 => 1,
-            7 => 2,
+            3 => 2,
+            4 => 2,
+            5 => 2,
+            6 => 2,
+            7 => 3,
         ];
 
         return $sectors[(int) $sector] ?? null;
@@ -303,7 +304,7 @@ class RequestsMerge extends Controller
      */
     public function getStatusId($row)
     {
-        return $this->stateToStatusId[$row->state] ?? null;
+        return $this->stateToStatusId[$row->state] ?? 5;
     }
 
     /**
@@ -317,7 +318,13 @@ class RequestsMerge extends Controller
         if (!$row->rdate or !$row->time)
             return null;
 
-        return trim($row->rdate . " " . $row->time);
+        $date = trim($row->rdate . " " . $row->time);
+        $time = strtotime($date);
+
+        if (!$time or $time > 1640995200 or $time < 1420070400)
+            return null;
+
+        return $date;
     }
 
     /**

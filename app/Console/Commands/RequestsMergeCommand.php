@@ -2,17 +2,20 @@
 
 namespace App\Console\Commands;
 
+use App\Console\MyOutput;
 use App\Http\Controllers\Dev\RequestsMerge;
 use Illuminate\Console\Command;
 
 class RequestsMergeCommand extends Command
 {
+    use MyOutput;
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'crm:requestsmerge';
+    protected $signature = 'old:requests';
 
     /**
      * The console command description.
@@ -47,17 +50,14 @@ class RequestsMergeCommand extends Command
      */
     public function handle()
     {
-        $this->question("                                       ");
-        $this->question("  Миграция старых заявок в новую базу  ");
-        $this->question("                                       ");
-        
-        $this->newLine();
+        $this->title("Миграция старых заявок в новую базу");
 
         $start = microtime(1);
+        $memory = memory_get_usage();
 
         $this->info("Найдено заявок: {$this->merge->count}");
         $this->info("Время начала: " . date("Y-m-d H:i:s", $start));
-        $this->newLine();       
+        $this->newLine();
 
         $bar = $this->output->createProgressBar($this->merge->count);
         $bar->start();
@@ -69,15 +69,32 @@ class RequestsMergeCommand extends Command
             $stop = $this->merge->step() ? false : true;
 
             $bar->advance();
-
-            break;
         }
-        
+
         $bar->finish();
 
-        $this->newLine();     
+        $this->newLine();
+        $this->newLine();
+
         $this->info("Время завершения: " . date("Y-m-d H:i:s"));
-        $this->newLine();     
+
+        $stop = microtime(1) - $start;
+
+        $this->info("Время работы: " . round($stop, 3) . " сек");
+
+        $memory = memory_get_usage() - $memory;
+
+        // Конвертация результата в килобайты и мегабайты 
+        $i = 0;
+        while (floor($memory / 1024) > 0) {
+            $i++;
+            $memory /= 1024;
+        }
+
+        $name = ['байт', 'КБ', 'МБ'];
+        $this->info("Использовано памяти: " . round($memory, 2) . " " . ($name[$i] ?? ""));
+
+        $this->newLine();
 
         return 0;
     }

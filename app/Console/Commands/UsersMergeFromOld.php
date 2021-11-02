@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Console\MyOutput;
 use App\Http\Controllers\Users\UsersMerge;
-use App\Models\CrmMka\CrmUser;
-use App\Models\User;
 use Illuminate\Console\Command;
 
 /**
@@ -14,6 +13,8 @@ use Illuminate\Console\Command;
  */
 class UsersMergeFromOld extends Command
 {
+    use MyOutput;
+
     /**
      * The name and signature of the console command.
      *
@@ -26,7 +27,7 @@ class UsersMergeFromOld extends Command
      *
      * @var string
      */
-    protected $description = 'Миграция пользователей из старой ЦРМ';
+    protected $description = 'Transfer of employees from the old CRM';
 
     /**
      * Экземпляр объекта обработки
@@ -54,6 +55,8 @@ class UsersMergeFromOld extends Command
      */
     public function handle()
     {
+        $this->title('Перенос сотрудников');
+
         $this->question(" Разработчики, руководители и тд... ");
         $this->createUsers($this->users->getNachUsers(), "secret");
 
@@ -83,8 +86,10 @@ class UsersMergeFromOld extends Command
                 $created = $this->users->createUser($user, $auth);
                 $roles = $created->roles->map(fn ($role) => $role->role)->toArray();
                 $this->info(" " . trim($message . " ". implode(" ", $roles)) . " ");
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (\Illuminate\Database\QueryException) {
                 $this->error(" " . $message . " ");
+            } catch (\App\Exceptions\CreateNewUser $e) {
+                $this->line("<fg=red;options=bold> " . $message . "</> <bg=red;fg=white>" . $e->getMessage() . "</>");
             }
         }
 

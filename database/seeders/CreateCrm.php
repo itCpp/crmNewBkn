@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Artisan;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class CreateCrm extends Seeder
 {
@@ -24,7 +25,13 @@ class CreateCrm extends Seeder
             RequestsSourceSeeder::class, // Источники
             StatusSeeder::class, // Статусы заявок
             TabSeeder::class, // Вкладки заявок
+            CallCenterAndSectorsSeeder::class, // Создание колл-центров
         ]);
+
+        $output = new ConsoleOutput; // Вывод в консоль
+
+        Artisan::call('old:users', [], $output); // Перенос сотрудников
+        Artisan::call('old:requests', [], $output); // Перенос старых заявок
     }
 
     /**

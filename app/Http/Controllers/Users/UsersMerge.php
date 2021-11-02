@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\Exceptions\CreateNewUser;
 use App\Http\Controllers\Controller;
 use App\Models\CrmMka\CrmUser;
 use App\Models\User;
@@ -28,11 +29,13 @@ class UsersMerge extends Controller
      * @var array
      */
     protected $oldSectors = [
-        3 => [1, 1],
-        4 => [1, 1],
-        5 => [1, 1],
-        6 => [1, 1],
-        7 => [2, 2],
+        1 => [1, 1],
+        2 => [1, 1],
+        3 => [2, 2],
+        4 => [2, 2],
+        5 => [2, 2],
+        6 => [2, 2],
+        7 => [3, 3],
     ];
 
     /**
@@ -56,6 +59,25 @@ class UsersMerge extends Controller
     protected $developers = [
         401 => ['developer'],
         424 => ['developer'],
+        866 => ['developer'],
+    ];
+
+    /**
+     * Список сотрудников, которым необходимо обнулить колл-центр
+     * 
+     * @var array
+     */
+    protected $sectorClear = [
+        1, 132, 401, 402, 424, 666, 813, 866, 890, 920,
+    ];
+
+    /**
+     * Список сотрудников, которые должны быть заблокированы в БД
+     * 
+     * @var array
+     */
+    protected $firedUser = [
+        195, 403, 411, 428, 443, 475, 40002, 4900, 4901, 4902, 4903, 4908, 40909
     ];
 
     /**
@@ -131,6 +153,14 @@ class UsersMerge extends Controller
         $user->fullName = preg_replace('/\s/', ' ', $user->fullName);
         $fio = explode(" ", $user->fullName);
 
+        $callcenter = null;
+        $sector = null;
+
+        if (!in_array($user->pin, $this->sectorClear)) {
+            $callcenter = $this->oldSectors[$user->{'call-center'}][0] ?? null;
+            $sector = $this->oldSectors[$user->{'call-center'}][1] ?? null;
+        }
+
         $create = [
             'pin' => $pin,
             'old_pin' => $pin == $user->pin ? null : $user->pin,
@@ -141,13 +171,16 @@ class UsersMerge extends Controller
             'auth_type' => $auth,
             'password' => "old|" . $user->password,
             'login' => $user->username,
-            'callcenter_id' => $this->oldSectors[$user->{'call-center'}][0] ?? null,
-            'callcenter_sector_id' => $this->oldSectors[$user->{'call-center'}][1] ?? null,
+            'callcenter_id' => $callcenter,
+            'callcenter_sector_id' => $sector,
         ];
 
-        if ($fired) {
+        if ($fired or in_array($user->pin, $this->firedUser)) {
             $create['deleted_at'] = now();
         }
+
+        if (User::where('pin', $create['pin'])->orWhere('login', $create['login'])->count())
+            throw new CreateNewUser('Пользователь уже существует');
 
         $new = User::create($create);
 
@@ -181,6 +214,8 @@ class UsersMerge extends Controller
         try {
             return $this->createUser($old, "admin", true);
         } catch (\Illuminate\Database\QueryException) {
+            return null;
+        } catch (CreateNewUser) {
             return null;
         }
     }
