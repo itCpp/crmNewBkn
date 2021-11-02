@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Http\Controllers\Settings;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -32,6 +33,8 @@ class CreateCrm extends Seeder
 
         Artisan::call('old:users', [], $output); // Перенос сотрудников
         Artisan::call('old:requests', [], $output); // Перенос старых заявок
+
+        Settings::set('DROP_ADD_REQUEST', false); // Отключение блокировки добавления новых заявок
     }
 
     /**

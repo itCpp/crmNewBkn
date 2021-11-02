@@ -7,6 +7,7 @@ use App\Events\UpdateRequestRow;
 use App\Events\Requests\AddRequestEvent;
 use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Settings;
 use App\Http\Controllers\Dev\Statuses;
 use App\Models\IncomingQuery;
 use App\Models\RequestsClient;
@@ -143,7 +144,9 @@ class AddRequest extends Controller
 
         $this->response = [];
 
-        $this->zeroing = false; // Идентфиикатор удаленной заявки
+        $this->zeroing = false; // Идентифиикатор удаленной заявки
+
+        $this->settings = new Settings('DROP_ADD_REQUEST');
     }
 
     /**
@@ -207,6 +210,12 @@ class AddRequest extends Controller
 
         if (!$this->phone)
             return $this->badRequest();
+
+        // Отмена запроса при отключенной настройке
+        if ($this->settings->DROP_ADD_REQUEST) {
+            $this->errors[] = "Добавление заявок отключено в настрйоках";
+            return $this->badRequest();
+        }
 
         $this->findSource() // Поиск источника
             ->findRequest() // Поиск заявки клиента по источнику

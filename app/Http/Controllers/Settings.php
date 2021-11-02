@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\Exceptions;
 use App\Models\SettingsGlobal;
 
 class Settings
 {
-
     /**
      * Допустимые типы переменных
      * 
@@ -19,32 +19,29 @@ class Settings
         "string",
         "null",
     ];
-    
+
     /**
      * Инициализаяция объекта
      * 
      * @param array $settings Список требуемых настроек
      * @return void
      */
-    public function __construct($settings = [])
+    public function __construct(...$settings)
     {
-        
         $rows = new SettingsGlobal;
 
         if ($settings)
-            $rows = $rows->whereIn('name', $settings);
+            $rows = $rows->whereIn('id', $settings);
 
         foreach ($rows->get() as $row) {
 
             $value = $row->value;
-            $type = in_array($row->type, $this->types) ? $row->type : "boolean";
+            $type = $this->getType($row->type);
 
             settype($value, $type);
 
-            $this->{$row->name} = $value;
-
+            $this->{$row->id} = $value;
         }
-
     }
 
     /**
@@ -53,13 +50,49 @@ class Settings
      * @param string $name
      * @return mixed
      */
-    public function __get($name) {
-
+    public function __get($name)
+    {
         if (isset($this->$name) === true)
             return $this->$name;
 
         return null;
-        
     }
 
+    /**
+     * Определение типа переменной
+     * 
+     * @param null|string $type
+     * @return string
+     */
+    public function getType($type = null)
+    {
+        return in_array($type, $this->types) ? $type : "boolean";
+    }
+
+    /**
+     * Изменение занчения настройки
+     * 
+     * @param string $key
+     * @param mixed $value
+     * @return mixed
+     */
+    public static function set($key, $value = null)
+    {
+        if (!$setting = SettingsGlobal::find($key))
+            throw new Exceptions("Настройка {$key} не найдена");
+
+        $settings = new static($key);
+
+        $type = $settings->getType($setting->type);
+        
+        if (gettype($value) != $type)
+            throw new Exceptions("Передан неправильный тип переменной, должен быть {$type}");
+
+        settype($value, $type);
+        
+        $setting->value = $value;
+        $setting->save();
+
+        return $value;
+    }
 }

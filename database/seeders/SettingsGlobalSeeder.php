@@ -12,12 +12,18 @@ class SettingsGlobalSeeder extends Seeder
      * 
      * @var array
      */
-    protected $rows = [
+    protected $settings = [
         [
-            'name' => "TEXT_REQUEST_AUTO_ADD",
+            'id' => "TEXT_REQUEST_AUTO_ADD",
             'value' => 0,
             'type' => null,
             'comment' => "Автоматически добавлять текстовую заявку минуя очередь",
+        ],
+        [
+            'id' => "DROP_ADD_REQUEST",
+            'value' => 1,
+            'type' => null,
+            'comment' => "Отклонять запросы на добавление новых заявок",
         ]
     ];
     /**
@@ -27,7 +33,7 @@ class SettingsGlobalSeeder extends Seeder
      */
     public function run()
     {
-        foreach ($this->rows as $row) {
+        foreach ($this->settings as $row) {
             SettingsGlobal::create($row);
         }
     }

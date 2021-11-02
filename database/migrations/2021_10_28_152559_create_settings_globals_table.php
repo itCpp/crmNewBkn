@@ -14,8 +14,7 @@ class CreateSettingsGlobalsTable extends Migration
     public function up()
     {
         Schema::create('settings_globals', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 150)->nullable()->comment('Наименование переменной настройки');
+            $table->string('id', 150)->nullable()->comment('Наименование переменной настройки')->primary();
             $table->string('value', 500)->nullable()->comment('Значение переменной');
             $table->string('type', 50)->nullable()->comment('Тип значения настройки, по умолчанию bool');
             $table->string('comment', 500)->nullable()->comment('Комментарий к настройке');
