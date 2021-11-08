@@ -49,8 +49,8 @@ class RequestsStorySector extends Model
     {
         return static::create([
             'request_id' => $story->request_data['id'] ?? null,
-            'old_sector' => $old,
-            'new_sector' => $story->request_data['callcenter_sector'],
+            'old_sector' => (int) $old,
+            'new_sector' => (int) $story->request_data['callcenter_sector'],
             'story_id' => $story->id,
             'created_at' => date("Y-m-d H:i:s"),
         ]);
