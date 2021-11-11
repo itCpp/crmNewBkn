@@ -37,13 +37,13 @@ class Log extends Model
      * Метод создания строки лога
      * 
      * @param \Illuminate\Http\Request $request
-     * @param \Illuminate\Database\Eloquent\Model $data     Экземпляр затрагиваемой модели
+     * @param null|\Illuminate\Database\Eloquent\Model $data     Экземпляр затрагиваемой модели
      * @return \App\Models\Log
      */
     public static function log($request, $data) {
 
         return static::create([
-            'table_name' => $data->getTable() ?? null,
+            'table_name' => $data?->getTable() ?? null,
             'row_id' => $data->id ?? null,
             'row_data' => json_encode($data, JSON_UNESCAPED_UNICODE),
             'request_data' => json_encode($request->all(), JSON_UNESCAPED_UNICODE),

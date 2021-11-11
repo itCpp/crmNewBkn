@@ -21,6 +21,7 @@ class PermissionFactory extends Factory
      */
     public $permissions = [
         ['admin_access', 'Доступ к админ-панели'],
+        ['admin_callsqueue', 'Может настраивать распределение звонков между секторами'],
         ['admin_user_set_permission', 'Может устанавливать личные права сотрудникам'],
         ['admin_user_set_role', 'Может менять роли сотрудникам'],
         ['admin_users', 'Доступ администратора к созданию и редактированию данных сотрудников'],

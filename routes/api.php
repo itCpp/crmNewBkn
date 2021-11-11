@@ -132,7 +132,16 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('saveCallcenter', 'Callcenter\Callcenters@saveCallcenter')->middleware('user.can:admin_callcenters');
         
         include __DIR__ . "/api/api.sip.php";
-        
+
+        /** Вывод настройки распределения звонков */
+        Route::post('getDistributionCalls', 'Admin\DistributionCalls@getDistributionCalls');
+
+        /** Определние настроек единичного выбора */
+        Route::post('distributionSetOnly', 'Admin\DistributionCalls@distributionSetOnly');
+
+        /** Сохранение значений распределения звонков */
+        Route::post('distributionSetCountQueue', 'Admin\DistributionCalls@distributionSetCountQueue');
+
     });
 
     /** Маршрутизация админпанели разработчика */

@@ -298,13 +298,14 @@ class RequestsMerge extends Controller
 
     /**
      * Определение идентификатора статуса заявки
+     * По умолчнию будет бракованная заявка, чтобы обнулить её при следующем поступлении
      * 
      * @param CrmRequest $row
      * @return null|int
      */
     public function getStatusId($row)
     {
-        return $this->stateToStatusId[$row->state] ?? 5;
+        return $this->stateToStatusId[$row->state] ?? 6;
     }
 
     /**
