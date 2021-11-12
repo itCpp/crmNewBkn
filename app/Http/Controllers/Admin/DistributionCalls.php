@@ -123,4 +123,32 @@ class DistributionCalls extends Controller
 
         return self::getDistributionCalls($request);
     }
+
+    /**
+     * Включение сектора в распределение звонков
+     * 
+     * @param Request $request
+     * @return response
+     */
+    public static function setSectorDistribution(Request $request)
+    {
+        if (!$row = CallcenterSector::find($request->id))
+            return response()->json(['message' => "Сектор не найден или уже отключен"], 400);
+
+        if (!$distribution = CallsSectorSetting::find($row->id)) {
+            $distribution = new CallsSectorSetting;
+            
+            $distribution->id = $row->id;
+            $distribution->name = $row->name;
+            $distribution->comment = $row->comment;
+            $distribution->count_change_queue = 1;
+        }
+
+        $distribution->active = $request->checked ? 1 : 0;
+        $distribution->save();
+
+        Log::log($request, $distribution);
+
+        return self::getDistributionCalls($request);
+    }
 }

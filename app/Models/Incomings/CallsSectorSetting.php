@@ -15,4 +15,18 @@ class CallsSectorSetting extends Model
      * @var string
      */
     protected $connection = "incomings";
+
+    /**
+     * Атрибуты, которые назначаются массово
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'id',
+        'name',
+        'comment',
+        'count_change_queue',
+        'only_queue',
+        'active',
+    ];
 }

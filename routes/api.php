@@ -133,14 +133,16 @@ Route::group(['middleware' => 'user.token'], function() {
         
         include __DIR__ . "/api/api.sip.php";
 
-        /** Вывод настройки распределения звонков */
-        Route::post('getDistributionCalls', 'Admin\DistributionCalls@getDistributionCalls');
-
-        /** Определние настроек единичного выбора */
-        Route::post('distributionSetOnly', 'Admin\DistributionCalls@distributionSetOnly');
-
-        /** Сохранение значений распределения звонков */
-        Route::post('distributionSetCountQueue', 'Admin\DistributionCalls@distributionSetCountQueue');
+        Route::group(['middleware' => 'user.can:admin_callsqueue'], function() {
+            /** Вывод настройки распределения звонков */
+            Route::post('getDistributionCalls', 'Admin\DistributionCalls@getDistributionCalls');
+            /** Определние настроек единичного выбора */
+            Route::post('distributionSetOnly', 'Admin\DistributionCalls@distributionSetOnly');
+            /** Сохранение значений распределения звонков */
+            Route::post('distributionSetCountQueue', 'Admin\DistributionCalls@distributionSetCountQueue');
+            /** Включение сектора в распределение звонков */
+            Route::post('setSectorDistribution', 'Admin\DistributionCalls@setSectorDistribution');
+        });
 
     });
 
