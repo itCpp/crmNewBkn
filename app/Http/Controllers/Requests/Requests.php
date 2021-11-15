@@ -26,6 +26,8 @@ class Requests extends Controller
         if (!$request->tab = Tab::find($request->tabId))
             $request->tab = new Tab;
 
+        $request->page = $request->page ? (int) $request->page : null;
+
         // Проверка разрешения на просмотр вкладки
         if ($request->tab->id and !$request->user()->canTab($request->tab->id))
             return response()->json(['message' => "Доступ к вкладке ограничен"], 403);
