@@ -62,7 +62,7 @@ class Clients extends Controller
         // Удаление всех повторяющихся заявок с одинаковым истоником
         $for_delete = RequestsRow::whereIn('id', array_merge(
             [$request->row->id],
-            $requests->map(fn($item) => $item->id)->toArray()
+            $requests->map(fn ($item) => $item->id)->toArray()
         ));
 
         foreach ($for_delete->get() as $row) {
@@ -75,14 +75,14 @@ class Clients extends Controller
         if (!$client->requests()->where('id', $select)->count())
             $client->requests()->attach($select);
 
-        $clients = Requests::getClientPhones($request->row, $request->user()->can('clients_show_phone'));
+        $request->row->refresh();
         $request->row->clients;
 
         RequestsStory::write($request, $request->row);
 
         return response()->json([
             'message' => "Номер телефона добавлен в заявку",
-            'clients' => $clients,
+            'clients' => Requests::getClientPhones($request->row, $request->user()->can('clients_show_phone')),
         ]);
     }
 
@@ -101,14 +101,14 @@ class Clients extends Controller
 
         $client->requests()->attach($request->row->id);
 
-        $clients = Requests::getClientPhones($request->row, $request->user()->can('clients_show_phone'));
+        $request->row->refresh();
         $request->row->clients;
 
         RequestsStory::write($request, $request->row);
 
         return response()->json([
             'message' => "Номер телефона добавлен в заявку",
-            'clients' => $clients,
+            'clients' => Requests::getClientPhones($request->row, $request->user()->can('clients_show_phone')),
         ]);
     }
 }
