@@ -81,6 +81,9 @@ Route::group(['middleware' => 'user.token'], function() {
         /** Счетчик заявок */
         Route::post('getCounter', 'Requests\Counters@getCounter')->middleware('permits.requests');
 
+        /** Добавление номера телефона в заявку */
+        Route::post('addClientPhone', 'Requests\Clients@addClientPhone');
+
     });
 
     /** Маршрутизация для работы с учетными записями */
