@@ -103,7 +103,7 @@ class Requests extends Controller
             'request' => $row,
             'permits' => RequestStart::$permits,
             'statuses' => $statuses,
-            'offices' => Office::all(),
+            'offices' => Office::orderBy('active', 'DESC')->orderBy('name')->get(),
             'cities' => \App\Http\Controllers\Infos\Cities::$data, // Список городов
             'themes' => \App\Http\Controllers\Infos\Themes::$data, // Список тем
         ];

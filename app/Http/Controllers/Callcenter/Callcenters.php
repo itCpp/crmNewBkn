@@ -3,14 +3,11 @@
 namespace App\Http\Controllers\Callcenter;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
 use App\Models\Callcenter;
-use App\Models\CallcenterSector;
+use Illuminate\Http\Request;
 
 class Callcenters extends Controller
 {
-    
     /**
      * Вывод списка колл-центорв
      * 
@@ -19,7 +16,6 @@ class Callcenters extends Controller
      */
     public static function getCallcenters(Request $request)
     {
-
         $rows = Callcenter::get();
 
         foreach ($rows as &$row) {
@@ -29,7 +25,6 @@ class Callcenters extends Controller
         return response()->json([
             'callcenters' => $rows,
         ]);
-
     }
 
     /**
@@ -40,7 +35,6 @@ class Callcenters extends Controller
      */
     public static function getCallcenter(Request $request)
     {
-
         if (!$row = Callcenter::find($request->id))
             return response()->json(['message' => "Данные колл-центра не найдены"], 400);
 
@@ -49,7 +43,6 @@ class Callcenters extends Controller
         return response()->json([
             'callcenter' => $row,
         ]);
-
     }
 
     /**
@@ -60,12 +53,11 @@ class Callcenters extends Controller
      */
     public static function saveCallcenter(Request $request)
     {
-
         $request->validate([
             'name' => 'required',
         ]);
 
-        if (!$row = Callcenter::find($request->id) AND $request->id)
+        if (!$row = Callcenter::find($request->id) and $request->id)
             return response()->json(['message' => "Данные колл-центра не найдены"], 400);
 
         if (!$row)
@@ -80,7 +72,6 @@ class Callcenters extends Controller
         return response()->json([
             'callcenter' => $row,
         ]);
-
     }
 
     /**
@@ -91,14 +82,11 @@ class Callcenters extends Controller
      */
     public static function getCallcenterSectors(Request $request)
     {
-
         if (!$row = Callcenter::find($request->id))
             return response()->json(['message' => "Сектор по колл-центру не найдены"], 400);
 
         return response()->json([
             'sectors' => $row->sectors,
         ]);
-
     }
-
 }

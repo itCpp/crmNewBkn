@@ -133,6 +133,11 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('getCallcenter', 'Callcenter\Callcenters@getCallcenter')->middleware('user.can:admin_callcenters');
         /** Сохранение данных колл-центра */
         Route::post('saveCallcenter', 'Callcenter\Callcenters@saveCallcenter')->middleware('user.can:admin_callcenters');
+
+        /** Данные одного сектора */
+        Route::post('getSector', 'Callcenter\Sectors@getSector')->middleware('user.can:admin_callcenters');
+        /** Изменение данных сектора */
+        Route::post('saveSector', 'Callcenter\Sectors@saveSector')->middleware('user.can:admin_callcenters');
         
         include __DIR__ . "/api/api.sip.php";
 
