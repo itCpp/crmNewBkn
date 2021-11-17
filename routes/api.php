@@ -277,6 +277,16 @@ Route::group(['middleware' => 'user.token'], function() {
 
         });
 
+        /** Настройки офисов */
+        Route::group(['middleware' => "user.can:dev_offices"], function() {
+
+            /** Вывод списка офисов */
+            Route::post('getOffices', 'Offices\Offices@getOffices');
+            /** Вывод данных офиса */
+            Route::post('getOffice', 'Offices\Offices@getOffice');
+
+        });
+
     });
 
 });
