@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Offices;
 use App\Http\Controllers\Controller;
 use App\Models\Log;
 use App\Models\Office;
+use App\Models\Status;
 use Illuminate\Http\Request;
 
 class Offices extends Controller
@@ -32,14 +33,14 @@ class Offices extends Controller
      */
     public static function getOffice(Request $request)
     {
+        if (!$request->row = Office::find($request->id))
+            return response()->json(['message' => "Данные выбранного офиса не найдены"], 400);
+
         if ($request->forSetting)
             return self::getOfficeForSetting($request);
 
-        if (!$row = Office::find($request->id))
-            return response()->json(['message' => "Данные выбранного офиса не найдены"], 400);
-
         return response()->json([
-            'office' => $row,
+            'office' => $request->row,
         ]);
     }
 
@@ -51,11 +52,9 @@ class Offices extends Controller
      */
     public static function getOfficeForSetting(Request $request)
     {
-        if (!$row = Office::find($request->id))
-            return response()->json(['message' => "Данные выбранного офиса не найдены"], 400);
-
         return response()->json([
-            'office' => $row,
+            'office' => $request->row,
+            'statuses' => Status::select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 
@@ -67,6 +66,18 @@ class Offices extends Controller
      */
     public static function saveOffice(Request $request)
     {
+        $errors = [];
+
+        if ($request->tel and !parent::checkPhone($request->tel))
+            $errors['tel'] = "Номер телефона секретаря указан неправильно";
+
+        if (count($errors)) {
+            return response()->json([
+                'message' => "Имеются ошибки в данных",
+                'errors' => $errors,
+            ], 400);
+        }
+
         if ($request->id)
             return self::updateOfficeData($request);
 
@@ -89,6 +100,8 @@ class Offices extends Controller
         $row->address = $request->address;
         $row->active = (int) $request->active;
         $row->sms = $request->sms;
+        $row->tel = $request->tel;
+        $row->statuses = $request->statuses;
 
         $row->save();
 
