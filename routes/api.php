@@ -284,6 +284,8 @@ Route::group(['middleware' => 'user.token'], function() {
             Route::post('getOffices', 'Offices\Offices@getOffices');
             /** Вывод данных офиса */
             Route::post('getOffice', 'Offices\Offices@getOffice');
+            /** Сохранение данных офиса */
+            Route::post('saveOffice', 'Offices\Offices@saveOffice');
 
         });
 
