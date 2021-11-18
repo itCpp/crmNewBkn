@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Offices;
 
 use App\Http\Controllers\Controller;
+use App\Models\CallcenterSector;
+use App\Models\Gate;
 use App\Models\Log;
 use App\Models\Office;
 use App\Models\Status;
@@ -52,9 +54,16 @@ class Offices extends Controller
      */
     public static function getOfficeForSetting(Request $request)
     {
+        $sectors = CallcenterSector::where('callcenter_id', '!=', null)
+            ->orderBy('callcenter_id')
+            ->orderBy('name')
+            ->get();
+
         return response()->json([
             'office' => $request->row,
             'statuses' => Status::select('id', 'name')->orderBy('name')->get(),
+            'sectors' => $sectors,
+            'gates' => Gate::where('for_sms', 1)->get(),
         ]);
     }
 
@@ -102,6 +111,8 @@ class Offices extends Controller
         $row->sms = $request->sms;
         $row->tel = $request->tel;
         $row->statuses = $request->statuses;
+
+        $row->settings = $request->settings;
 
         $row->save();
 

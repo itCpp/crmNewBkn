@@ -32,5 +32,6 @@ class Office extends Model
      */
     protected $casts = [
         'statuses' => 'array',
+        'settings' => 'object',
     ];
 }
