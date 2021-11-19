@@ -122,4 +122,43 @@ class Offices extends Controller
             'office' => $row,
         ]);
     }
+
+    /**
+     * Поиск значения в массиве настроек офиса
+     * 
+     * @param Office $office
+     * @param string $type
+     * @param null|int $gate
+     * @param null|int $sector
+     * @param string $value
+     * @return mixed
+     */
+    public static function getSettingValue(Office $office, $type = null, $gate = null, $sector = null, $value = "value")
+    {
+        if (!is_array($office->settings))
+            return null;
+
+        foreach ($office->settings as $row) {
+            if ($type == $row->type) {
+
+                // Вывод значения по шлюзу
+                if (!$sector and $gate and $gate == $row->gate)
+                    return !empty($row->$value) ? $row->$value : null;
+
+                // Вывод значения по сектору
+                if ($sector and !$gate and $sector == $row->sector)
+                    return !empty($row->$value) ? $row->$value : null;
+
+                // Вывод значение по шлюзу и сектору
+                if ($sector and $gate and $sector == $row->sector and $gate == $row->gate)
+                    return !empty($row->$value) ? $row->$value : null;
+
+                // Вывод по типу
+                if (!$gate and !$sector)
+                    return !empty($row->$value) ? $row->$value : null;
+            }
+        }
+
+        return null;
+    }
 }

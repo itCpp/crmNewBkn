@@ -102,6 +102,16 @@ class RequestsRow extends Model
     }
 
     /**
+     * Отношения заявки к смс сообшения
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function sms()
+    {
+        return $this->belongsToMany(SmsMessage::class, 'sms_request', 'request_id', 'sms_id');
+    }
+
+    /**
      * Вывод информации по колонкам
      * 
      * @return array
