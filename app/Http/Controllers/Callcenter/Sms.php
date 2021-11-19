@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Callcenter;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Offices\Offices;
 use App\Http\Controllers\Requests\Requests;
+use App\Jobs\SendSmsJob;
 use App\Models\Gate;
 use App\Models\Office;
 use App\Models\RequestsRow;
@@ -165,6 +166,10 @@ class Sms extends Controller
             'message' => $request->message,
             'direction' => "out",
         ]);
+
+        $sms->requests()->attach($row->id);
+
+        dispatch(new SendSmsJob($sms));
 
         return response()->json([
             'message' => "Сообщение создано",

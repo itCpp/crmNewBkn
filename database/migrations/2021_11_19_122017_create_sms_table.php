@@ -23,6 +23,7 @@ class CreateSmsTable extends Migration
             $table->text('message')->nullable()->comment('Текст сообщения');
             $table->string('direction')->nullable()->comment('Направление сообщения');
             $table->timestamp('sent_at')->nullable()->comment('Дата получения или отправки');
+            $table->json('response')->nullable()->comment('Ответ от шлюза при отправке сообщения');
             $table->timestamps();
         });
 
