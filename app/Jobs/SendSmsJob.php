@@ -40,9 +40,8 @@ class SendSmsJob implements ShouldQueue
     public function handle()
     {
         $worker = new SmsSends($this->row);
-        $worker->start();
 
-        // if (!$worker->start())
-        //     return $this->fail();
+        if (!$worker->start())
+            return $this->fail();
     }
 }

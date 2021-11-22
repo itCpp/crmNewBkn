@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Callcenter;
 
+use App\Jobs\SendSmsJob;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Offices\Offices;
 use App\Http\Controllers\Requests\Requests;
-use App\Jobs\SendSmsJob;
 use App\Models\Gate;
 use App\Models\Office;
 use App\Models\RequestsRow;

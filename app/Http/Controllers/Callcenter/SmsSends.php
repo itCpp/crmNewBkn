@@ -17,6 +17,13 @@ class SmsSends extends Controller
     public $sms;
 
     /**
+     * Код ответа
+     * 
+     * @var null|int
+     */
+    public $response_code = null;
+
+    /**
      * Создание экземпляра объекта
      * 
      * @param int $row
@@ -24,17 +31,17 @@ class SmsSends extends Controller
      */
     public function __construct($row)
     {
-        $this->sms = SmsMessage::find($row);
+        $this->sms = $row;
     }
 
     /**
      * Обработка очреди
      * 
-     * @return false|array
+     * @return boolean
      */
     public function start()
     {
-        if (!$gate = $this->getGateData($this->sms->gate))
+        if (!$this->sms or !$gate = $this->getGateData($this->sms->gate))
             return false;
 
         extract($gate);
@@ -50,14 +57,23 @@ class SmsSends extends Controller
         $response = $this->sendGateRequest($url);
 
         if (is_array($response)) {
+
+            $sent = false;
+
+            if (in_array($response['Response'] ?? null, ["Error", "Failed"]) or $this->response_code != 200) {
+                $this->sms->failed_at = now();
+            } else {
+                $this->sms->sent_at = now();
+                $sent = true;
+            }
+
             $this->sms->response = json_encode($response, JSON_UNESCAPED_UNICODE);
-            $this->send_at = now();
             $this->sms->save();
 
-            return $response;
+            return $sent;
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -68,7 +84,7 @@ class SmsSends extends Controller
      */
     public function getGateData($id = null)
     {
-        if (!$gate = Gate::where('id', $id)->where('for_sms')->first())
+        if (!$gate = Gate::where('id', $id)->where('for_sms', 1)->first())
             return null;
 
         return [
@@ -97,21 +113,18 @@ class SmsSends extends Controller
             CURLOPT_MAXREDIRS       => 10,          // stop after 10 redirects
             CURLOPT_SSL_VERIFYPEER  => false,       // SSL verification not required
             CURLOPT_SSL_VERIFYHOST  => false,       // SSL verification not required
-            CURLOPT_CONNECTTIMEOUT  => 5,           // timeout on connect (in seconds)
-            CURLOPT_TIMEOUT         => 5,           // timeout on response (in seconds)
+            CURLOPT_CONNECTTIMEOUT  => 10,          // timeout on connect (in seconds)
+            CURLOPT_TIMEOUT         => 10,          // timeout on response (in seconds)
         ];
 
         $ch = curl_init($url);
         curl_setopt_array($ch, $options);
         $response = curl_exec($ch);
 
-        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $this->response_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        if ($httpcode != 200)
-            return false;
-
-        $data = [];
+        $data['ResponseCode'] = $this->response_code;
         $array = explode("\r\n", $response);
 
         if (is_array($array)) {
