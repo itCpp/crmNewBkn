@@ -25,6 +25,7 @@ class SmsMessage extends Model
         'sent_at',
         'response',
         'failed_at',
+        'created_at',
     ];
 
     /**
