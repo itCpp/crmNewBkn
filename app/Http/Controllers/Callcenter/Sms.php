@@ -169,7 +169,7 @@ class Sms extends Controller
 
         $sms->requests()->attach($row->id);
 
-        dispatch(new SendSmsJob($sms));
+        dispatch(new SendSmsJob($sms, $row->id));
 
         return response()->json([
             'message' => "Сообщение создано",

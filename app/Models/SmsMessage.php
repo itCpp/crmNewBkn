@@ -26,6 +26,15 @@ class SmsMessage extends Model
     ];
 
     /**
+     * Атрибуты, которые преобразовываются в json
+     *
+     * @var array
+     */
+    protected $casts = [
+        'response' => 'object',
+    ];
+
+    /**
      * Привязанные заявки к сообщению
      * 
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany

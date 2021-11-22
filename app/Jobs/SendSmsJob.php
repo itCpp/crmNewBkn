@@ -15,6 +15,13 @@ class SendSmsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
+     * Количество попыток выполнения задания.
+     *
+     * @var int
+     */
+    public $tries = 3;
+
+    /**
      * Данные сообщения
      * 
      * @var int
@@ -22,14 +29,23 @@ class SendSmsJob implements ShouldQueue
     public $row;
 
     /**
+     * Идентификатор заявки
+     * 
+     * @var int
+     */
+    public $request_id;
+
+    /**
      * Create a new job instance.
      *
      * @param int $row
+     * @param int $request_id
      * @return void
      */
-    public function __construct($row)
+    public function __construct($row, $request_id)
     {
         $this->row = $row;
+        $this->request_id = $request_id;
     }
 
     /**
@@ -39,9 +55,9 @@ class SendSmsJob implements ShouldQueue
      */
     public function handle()
     {
-        $worker = new SmsSends($this->row);
+        $worker = (new SmsSends($this->row, $this->request_id))->start();
 
-        if (!$worker->start())
-            return $this->fail();
+        if (!$worker)
+            return $this->release(30);
     }
 }

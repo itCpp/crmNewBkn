@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Callcenter;
 
+use App\Events\AppUserEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Gate;
 use App\Models\SmsMessage;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class SmsSends extends Controller
@@ -17,6 +19,13 @@ class SmsSends extends Controller
     public $sms;
 
     /**
+     * Идентификатор заявки
+     * 
+     * @var int
+     */
+    public $request_id;
+
+    /**
      * Код ответа
      * 
      * @var null|int
@@ -27,11 +36,13 @@ class SmsSends extends Controller
      * Создание экземпляра объекта
      * 
      * @param int $row
+     * @param int $request_id
      * @return void
      */
-    public function __construct($row)
+    public function __construct($row, $request_id)
     {
         $this->sms = $row;
+        $this->request_id = $request_id;
     }
 
     /**
@@ -40,6 +51,52 @@ class SmsSends extends Controller
      * @return boolean
      */
     public function start()
+    {
+        $send = $this->sendRequest();
+
+        if (!$send) {
+            $alert = [
+                'type' => "error",
+                'title' => "СМС #{$this->request_id}",
+                'description' => "Сообщение не отправлено по причине: " . ($this->sms->response->Message ?? "Неизвестная причина"),
+                "icon" => "mail",
+                "time" => 10000,
+            ];
+        } else {
+            $alert = [
+                'type' => "success",
+                'title' => "СМС #{$this->request_id}",
+                'description' => "Сообщение отправлено",
+                "icon" => "mail"
+            ];
+        }
+
+        $this->sendAlert($alert);
+
+        return $send;
+    }
+
+    /**
+     * Уведомление о неудачной отправки сообщения
+     * 
+     * @param array $alert
+     * @return $this
+     */
+    public function sendAlert($alert = [])
+    {
+        if ($user = User::where('pin', $this->sms->created_pin)->first()) {
+            broadcast(new AppUserEvent(id: $user->id, alert: $alert));
+        }
+
+        return $this;
+    }
+
+    /**
+     * Отправка запроса
+     * 
+     * @return boolean
+     */
+    public function sendRequest()
     {
         if (!$this->sms or !$gate = $this->getGateData($this->sms->gate))
             return false;
@@ -67,7 +124,7 @@ class SmsSends extends Controller
                 $sent = true;
             }
 
-            $this->sms->response = json_encode($response, JSON_UNESCAPED_UNICODE);
+            $this->sms->response = (object) $response;
             $this->sms->save();
 
             return $sent;
