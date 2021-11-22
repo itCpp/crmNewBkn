@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Callcenter;
 
-use App\Jobs\SendSmsJob;
+use App\Exceptions\CrmException;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Offices\Offices;
 use App\Http\Controllers\Requests\Requests;
+use App\Jobs\SendSmsJob;
 use App\Models\Gate;
 use App\Models\Office;
 use App\Models\RequestsRow;
@@ -33,10 +34,13 @@ class Sms extends Controller
         if (!$message and !$request->user()->can('requests_send_sms_no_limit'))
             return response()->json(['message' => "Шаблон сообщения не сформирован, доступ к отправке сообщений с собственным текстом ограничен"], 403);
 
+        $request->row = $row;
+
         return response()->json([
             'phones' => $phones,
             'message' => $message,
             'request' => $row,
+            'messages' => self::getMessages($request),
         ]);
     }
 
@@ -227,5 +231,19 @@ class Sms extends Controller
             'gate' => $gate_row->id,
             'channel' => $channel,
         ];
+    }
+
+    /**
+     * Вывод списка СМС
+     * 
+     * @param Request $request
+     * @return array
+     */
+    public static function getMessages(Request $request)
+    {
+        if (!$request->row)
+            throw new CrmException("Отсутствует экземпляр модели заявки");
+
+        return $request->row->sms()->orderBy('created_at', 'DESC')->get()->toArray();
     }
 }

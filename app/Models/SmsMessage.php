@@ -23,6 +23,8 @@ class SmsMessage extends Model
         'message',
         'direction',
         'sent_at',
+        'response',
+        'failed_at',
     ];
 
     /**
