@@ -17,6 +17,9 @@ class AppUserEvent implements ShouldBroadcast
     /**
      * Create a new event instance.
      *
+     * @param null|int $id Идентификатор пользователя
+     * @param null|array|object $alert Данные уведомления
+     * @param null|array|object $fine Данные штрафа
      * @return void
      */
     public function __construct(
@@ -30,7 +33,7 @@ class AppUserEvent implements ShouldBroadcast
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return \Illuminate\Broadcasting\Channel|array
+     * @return \Illuminate\Broadcasting\PrivateChannel
      */
     public function broadcastOn()
     {

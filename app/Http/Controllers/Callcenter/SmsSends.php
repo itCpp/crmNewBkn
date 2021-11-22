@@ -116,11 +116,11 @@ class SmsSends extends Controller
         if (is_array($response)) {
 
             $sent = false;
+            $this->sms->sent_at = now();
 
             if (in_array($response['Response'] ?? null, ["Error", "Failed"]) or $this->response_code != 200) {
-                $this->sms->failed_at = now();
+                $this->sms->failed_at = $this->sms->sent_at;
             } else {
-                $this->sms->sent_at = now();
                 $sent = true;
             }
 
