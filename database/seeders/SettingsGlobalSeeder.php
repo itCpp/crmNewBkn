@@ -24,6 +24,12 @@ class SettingsGlobalSeeder extends Seeder
             'value' => 1,
             'type' => null,
             'comment' => "Отклонять запросы на добавление новых заявок",
+        ],
+        [
+            'id' => "CRONTAB_SMS_INCOMINGS_CHECK",
+            'value' => 0,
+            'type' => null,
+            'comment' => "Првоерка входящих смс на шлюзах",
         ]
     ];
     /**

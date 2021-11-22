@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Settings;
 use App\Http\Controllers\Gates\GateBase64;
 use App\Http\Controllers\Gates\Gates;
 use App\Http\Controllers\Requests\AddRequest;
@@ -57,7 +58,7 @@ class SmsIncomingsCheckCommand extends Command
     {
         parent::__construct();
 
-        $this->process = (boolean) env("CRONTAB_SMS_INCOMINGS_CHECK", false);
+        $this->settings = new Settings('CRONTAB_SMS_INCOMINGS_CHECK');
 
         $this->gates = (new Gates('sms_incomings'))->get();
         $this->base64 = new GateBase64;
@@ -70,8 +71,13 @@ class SmsIncomingsCheckCommand extends Command
      */
     public function handle()
     {
-        if (!($this->process ?? null)) {
-            $this->line(date("[Y-m-d H:i:s]") . "Проверка СМС ОТКЛЮЧЕНА в .env");
+        if (!$this->settings->CRONTAB_SMS_INCOMINGS_CHECK) {
+            $this->line(date("[Y-m-d H:i:s]") . " Проверка СМС ОТКЛЮЧЕНА в настройках ЦРМ");
+            return 0;
+        }
+
+        if (count($this->gates) == 0) {
+            $this->line(date("[Y-m-d H:i:s]") . " Шлюзы для проверки СМС не настроены");
             return 0;
         }
 

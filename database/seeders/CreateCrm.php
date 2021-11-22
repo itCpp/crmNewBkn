@@ -35,6 +35,7 @@ class CreateCrm extends Seeder
         Artisan::call('old:requests', [], $output); // Перенос старых заявок
 
         Settings::set('DROP_ADD_REQUEST', false); // Отключение блокировки добавления новых заявок
+        Settings::set('CRONTAB_SMS_INCOMINGS_CHECK', true); // Включение проверки СМС на шлюзах
     }
 
     /**
