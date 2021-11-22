@@ -49,10 +49,10 @@ class SmsSends extends Controller
         if (empty($address) or empty($login) or empty($password))
             return false;
 
-        $phone = $this->decrypt($this->sms->phone);
-        $phone = "%2B" . $this->checkPhone($this->sms->phone, false);
+        if (!$phone = $this->checkPhone($this->decrypt($this->sms->phone), false))
+            return false;
 
-        $url = "http://{$address}/cgi/WebCGI?1500101=account={$login}&password={$password}&port={$this->sms->channel}&destination={$phone}&content=" . urlencode($this->sms->message);
+        $url = "http://{$address}/cgi/WebCGI?1500101=account={$login}&password={$password}&port={$this->sms->channel}&destination=%2B{$phone}&content=" . urlencode($this->sms->message);
 
         $response = $this->sendGateRequest($url);
 

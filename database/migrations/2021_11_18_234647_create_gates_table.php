@@ -17,7 +17,7 @@ class CreateGatesTable extends Migration
         Schema::create('gates', function (Blueprint $table) {
             $table->id();
             $table->string('addr', 50)->unique()->comment('Адрес шлюза');
-            $table->string('ami_user', 50)->nullable()->comment('Логин доступа API');
+            $table->string('ami_user', 255)->nullable()->comment('Логин доступа API');
             $table->string('ami_pass', 255)->nullable()->comment('Пароль доступа API');
             $table->integer('channels')->default(0)->comment('Количество каналов');
             $table->boolean('for_sms')->default(0)->comment('Можно использовать для отправки смс');
