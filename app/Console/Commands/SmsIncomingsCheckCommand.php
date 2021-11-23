@@ -204,7 +204,7 @@ class SmsIncomingsCheckCommand extends Command
         }
 
         if (count($created) == 0)
-            $this->line(date("[Y-m-d H:i:s]") . " Новых сообщение не поступало");
+            $this->line(date("[Y-m-d H:i:s]") . " Новых сообщений не поступало");
 
         return null;
     }

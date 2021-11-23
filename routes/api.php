@@ -93,6 +93,14 @@ Route::group(['middleware' => 'user.token'], function() {
 
     });
 
+    /** Маршрутизация очередей */
+    Route::group(['prefix' => 'queues', 'middleware' => 'user.can:queues_access'], function() {
+        
+        /** Вывод очереди */
+        Route::post('getQueues', 'Queues\Queues@getQueues');
+
+    });
+
     /** Маршрутизация для работы с учетными записями */
     Route::group(['prefix' => 'users'], function() {
 

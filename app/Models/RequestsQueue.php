@@ -15,14 +15,13 @@ class RequestsQueue extends Model
      * @var array
      */
     protected $fillable = [
-        'phone',
-        'name',
+        'request_data',
+        'request_id',
         'comment',
         'ip',
-        'site',
-        'gets',
-        'done',
+        'user_agent',
         'done_pin',
+        'done_type',
         'done_at',
     ];
 
@@ -41,7 +40,7 @@ class RequestsQueue extends Model
      * @var array
      */
     protected $casts = [
-        'gets' => 'object',
+        'request_data' => 'object',
     ];
 
 }
