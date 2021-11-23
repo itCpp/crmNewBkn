@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Callcenter;
 
 use App\Exceptions\CrmException;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Gates\GateBase64;
 use App\Http\Controllers\Offices\Offices;
 use App\Http\Controllers\Requests\Requests;
 use App\Jobs\SendSmsJob;
@@ -167,7 +168,7 @@ class Sms extends Controller
             'channel' => $gate['channel'],
             'created_pin' => $request->user()->pin,
             'phone' => $client->phone,
-            'message' => $request->message,
+            'message' => (new GateBase64)->encode($request->message),
             'direction' => "out",
         ]);
 
@@ -244,6 +245,9 @@ class Sms extends Controller
         if (!$request->row)
             throw new CrmException("Отсутствует экземпляр модели заявки");
 
-        return $request->row->sms()->orderBy('created_at', 'DESC')->get()->toArray();
+        return $request->row->sms()->orderBy('created_at', 'DESC')->get()->map(function ($row) {
+            $row->message = (new GateBase64)->decode($row->message);
+            return $row;
+        })->toArray();
     }
 }

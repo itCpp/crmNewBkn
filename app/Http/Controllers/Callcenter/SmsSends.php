@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Callcenter;
 
 use App\Events\AppUserEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Gates\GateBase64;
 use App\Models\Gate;
 use App\Models\SmsMessage;
 use App\Models\User;
@@ -109,7 +110,9 @@ class SmsSends extends Controller
         if (!$phone = $this->checkPhone($this->decrypt($this->sms->phone), false))
             return false;
 
-        $url = "http://{$address}/cgi/WebCGI?1500101=account={$login}&password={$password}&port={$this->sms->channel}&destination=%2B{$phone}&content=" . urlencode($this->sms->message);
+        $message = (new GateBase64)->decode($this->sms->message);
+
+        echo $url = "http://{$address}/cgi/WebCGI?1500101=account={$login}&password={$password}&port={$this->sms->channel}&destination=%2B{$phone}&content=" . urlencode($message);
 
         $response = $this->sendGateRequest($url);
 
