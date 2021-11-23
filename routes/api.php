@@ -85,9 +85,11 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('addClientPhone', 'Requests\Clients@addClientPhone');
 
         /** Вывод данных для отправки смс */
-        Route::post('getSmsData', 'Callcenter\Sms@getSmsData')->middleware('user.can:requests_send_sms');
+        Route::post('getSmsData', 'Callcenter\Sms@getSmsData');
         /** Отправка смс сообщения */
         Route::post('sendSms', 'Callcenter\Sms@sendSms')->middleware('user.can:requests_send_sms');
+        /** Проверка обновлений в сообщениях */
+        Route::post('getSmsUpdates', 'Callcenter\Sms@getSmsUpdates');
 
     });
 

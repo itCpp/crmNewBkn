@@ -42,6 +42,11 @@ class Sms extends Controller
             'message' => $message,
             'request' => $row,
             'messages' => self::getMessages($request),
+            'now' => date("Y-m-d H:i:s"),
+            'permits' => $request->user()->getListPermits([
+                'requests_send_sms',
+                'requests_send_sms_no_limit',
+            ]),
         ]);
     }
 
@@ -176,9 +181,12 @@ class Sms extends Controller
 
         dispatch(new SendSmsJob($sms, $row->id));
 
+        $message = $sms->toArray();
+        $message['message'] = $request->message;
+
         return response()->json([
             'message' => "Сообщение создано",
-            'sms' => $sms ?? null,
+            'sms' => $message,
         ]);
     }
 
@@ -238,16 +246,42 @@ class Sms extends Controller
      * Вывод списка СМС
      * 
      * @param Request $request
+     * @param array $where Массив условий запроса
      * @return array
      */
-    public static function getMessages(Request $request)
+    public static function getMessages(Request $request, $where = [])
     {
         if (!$request->row)
             throw new CrmException("Отсутствует экземпляр модели заявки");
 
-        return $request->row->sms()->orderBy('created_at', 'DESC')->get()->map(function ($row) {
+        $messages = $request->row->sms()->orderBy('created_at', 'DESC');
+
+        if ($where)
+            $messages = $messages->where($where);
+
+        return $messages->get()->map(function ($row) {
             $row->message = (new GateBase64)->decode($row->message);
             return $row;
         })->toArray();
+    }
+
+    /**
+     * Проверка обвнолений сообщений
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function getSmsUpdates(Request $request)
+    {
+        if (!$request->row = RequestsRow::find($request->id))
+            return response()->json(['message' => "Заявка не найдена или уже удалена"], 400);
+
+        if ($request->time)
+            $where[] = ['updated_at', '>', $request->time];
+
+        return response()->json([
+            'now' => now(),
+            'messages' => self::getMessages($request, $where ?? []),
+        ]);
     }
 }
