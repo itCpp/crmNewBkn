@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Queues;
 
 use App\Http\Controllers\Controller;
 use App\Models\RequestsQueue;
+use App\Models\SettingsQueuesDatabase;
 use Illuminate\Http\Request;
 
 class Queues extends Controller

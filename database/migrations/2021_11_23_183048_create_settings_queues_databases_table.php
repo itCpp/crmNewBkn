@@ -15,6 +15,7 @@ class CreateSettingsQueuesDatabasesTable extends Migration
     {
         Schema::create('settings_queues_databases', function (Blueprint $table) {
             $table->id();
+            $table->string('name', 255)->nullable();
             $table->string('host', 255);
             $table->string('port', 255)->nullable();
             $table->string('user', 255);
