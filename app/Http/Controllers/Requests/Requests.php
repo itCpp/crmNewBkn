@@ -200,10 +200,10 @@ class Requests extends Controller
         return $row->clients()->get()->map(function ($client) use ($permit) {
 
             $phone = Crypt::decryptString($client->phone);
-            $type = 5; // Ключ модификации номера телефона
+            $type = parent::KEY_PHONE_HIDDEN; // Ключ модификации номера телефона
 
             if ($permit)
-                $type = 3;
+                $type = parent::KEY_PHONE_SHOW;
 
             return (object) [
                 'id' => $client->id,

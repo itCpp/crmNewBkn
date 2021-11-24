@@ -12,6 +12,12 @@ class Controller extends BaseController
 {
 	use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+	/** Ключ обработки номера телефона для полного вывода */
+	const KEY_PHONE_SHOW = 3;
+
+	/** Ключ обработки номера телефона для скрытого вывода */
+	const KEY_PHONE_HIDDEN = 5;
+
 	/**
 	 * Логирование изменения данных
 	 * 
@@ -90,10 +96,29 @@ class Controller extends BaseController
 	}
 
 	/**
+	 * Вывод номера телефона с его модификацией
+	 * 
+	 * @param string|int $phone
+	 * @param boolean $permit Парво на вывод полного номера
+	 * @param null|bool|int $key_show Ключ преобразования номера для открытого вывода
+	 * @param null|bool|int $key_hidden Ключ преобразования номера для скрытого вывода
+	 * @return false|string
+	 */
+	public static function displayPhoneNumber($phone, $permit = false, $key_show = null, $key_hidden = null)
+	{
+		return self::checkPhone(
+			$phone,
+			$permit
+				? ($key_show ?: self::KEY_PHONE_SHOW)
+				: ($key_hidden ?: self::KEY_PHONE_HIDDEN)
+		);
+	}
+
+	/**
 	 * Шифрование всех ключей массива
 	 * 
-	 * @param array|object $data
-	 * @return array
+	 * @param array|object|string|null $data
+	 * @return array|object|string|null
 	 */
 	public static function encrypt($data)
 	{
@@ -109,9 +134,7 @@ class Controller extends BaseController
 		$response = [];
 
 		foreach ($data as $key => $row) {
-			$response[$key] = (is_array($row) or is_object($row))
-				? Controller::encrypt($row)
-				: Crypt::encryptString($row);
+			$response[$key] = self::encrypt($row);
 		}
 
 		return $response;
@@ -120,9 +143,9 @@ class Controller extends BaseController
 	/**
 	 * Расшифровка всех ключей массива
 	 * 
-	 * @param array|object $data
+	 * @param array|object|string|null $data
 	 * @param \Illuminate\Encryption\Encrypter|null $crypt
-	 * @return array
+	 * @return array|object|string|null
 	 */
 	public static function decrypt($data, $crypt = null)
 	{
@@ -132,23 +155,20 @@ class Controller extends BaseController
 		if ($data == "")
 			return "";
 
-		if (!is_array($data) and !is_object($data))
-			return ($crypt !== null
-				? $crypt->decryptString($data)
-				: Crypt::decryptString($data));
+		if (!is_array($data) and !is_object($data)) {
+			try {
+				return $crypt !== null
+					? $crypt->decryptString($data)
+					: Crypt::decryptString($data);
+			} catch (\Illuminate\Contracts\Encryption\DecryptException) {
+				return $data;
+			}
+		}
 
 		$response = [];
 
 		foreach ($data as $key => $row) {
-			try {
-				$response[$key] = (is_array($row) or is_object($row))
-					? Controller::decrypt($row, $crypt)
-					: ($crypt !== null
-						? $crypt->decryptString($row)
-						: Crypt::decryptString($row));
-			} catch (\Illuminate\Contracts\Encryption\DecryptException) {
-				$response[$key] = $row;
-			}
+			$response[$key] = self::decrypt($row);
 		}
 
 		return $response;

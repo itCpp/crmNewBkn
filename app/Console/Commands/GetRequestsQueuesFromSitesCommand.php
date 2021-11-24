@@ -209,6 +209,7 @@ class GetRequestsQueuesFromSitesCommand extends Command
             'ip' => $row->ip,
             'site' => $row->site,
             'user_agent' => $row->user_agent,
+            'created_at' => $row->created_at ?? now(),
         ]);
 
         return $queue;
