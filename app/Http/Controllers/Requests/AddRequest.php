@@ -213,7 +213,7 @@ class AddRequest extends Controller
 
         // Отмена запроса при отключенной настройке
         if ($this->settings->DROP_ADD_REQUEST) {
-            $this->errors[] = "Добавление заявок отключено в настрйоках";
+            $this->errors[] = "Добавление заявок отключено в настройках";
             return $this->badRequest();
         }
 

@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Settings;
+use App\Http\Controllers\Queues\QueueProcessings;
 use App\Models\RequestsQueue;
 use App\Models\SettingsQueuesDatabase;
 use Illuminate\Console\Command;
@@ -56,6 +58,7 @@ class GetRequestsQueuesFromSitesCommand extends Command
         $this->start = $this->last = microtime(1);
 
         $this->databases = SettingsQueuesDatabase::getAllDecrypt();
+        $this->settings = new Settings('TEXT_REQUEST_AUTO_ADD');
 
         if (!count($this->databases)) {
             $this->line(date("[Y-m-d H:i:s]") . " <error>Подключения к базам данных не настроены</error>");
@@ -156,7 +159,15 @@ class GetRequestsQueuesFromSitesCommand extends Command
                 $deleted = "DELETED";
             }
 
-            $this->line("[{$connection}][R{$row->id}][{$deleted}][{$queue->id}][{$queue->ip}][{$queue->site}]");
+            // Автоматическое добавление заявки
+            $added = "NOT ADDED";
+
+            if ($this->settings->TEXT_REQUEST_AUTO_ADD) {
+                $added = "ADDED";
+                (new QueueProcessings($queue))->add();
+            }
+
+            $this->line("[{$connection}][{$row->id}][{$deleted}][{$queue->id}][{$added}][{$queue->ip}][{$queue->site}]");
         }
 
         return $this;
