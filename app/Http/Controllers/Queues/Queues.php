@@ -17,8 +17,15 @@ class Queues extends Controller
      */
     public static function getQueues(Request $request)
     {
+        $rows = RequestsQueue::where('done_at', null)
+            ->get()
+            ->map(function ($row) {
+                $row->request_data = parent::decrypt($row->request_data);
+                return $row->toArray();
+            });
+
         return response()->json([
-            'queues' => [],
+            'queues' => $rows,
         ]);
     }
 }

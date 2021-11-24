@@ -27,7 +27,7 @@ class CreateRequestsTextQueuesTable extends Migration
             $table->timestamps();
 
             $table->index('request_id');
-            $table->index('done_type');
+            $table->index('done_at');
         });
     }
 

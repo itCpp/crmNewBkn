@@ -53,12 +53,15 @@ class QueueProcessings extends Controller
             ]
         );
 
+        $added = (new AddRequest($request))->add();
+
+        $this->row->request_id = $added['requestId'] ?? null;
         $this->row->done_pin = "AUTO";
         $this->row->done_type = 1;
         $this->row->done_at = now();
 
         $this->row->save();
 
-        return (new AddRequest($request))->add();
+        return $added;
     }
 }
