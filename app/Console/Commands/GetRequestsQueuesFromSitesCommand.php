@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Settings;
 use App\Http\Controllers\Queues\QueueProcessings;
+use App\Http\Controllers\Requests\Queues;
 use App\Models\RequestsQueue;
 use App\Models\SettingsQueuesDatabase;
 use Illuminate\Console\Command;
@@ -37,6 +38,13 @@ class GetRequestsQueuesFromSitesCommand extends Command
      * @var array
      */
     protected $databases;
+
+    /**
+     * Настройки автоматического добавления заявок по источникам
+     * 
+     * @var array
+     */
+    protected $auto_sources = [];
 
     /**
      * Create a new command instance.
@@ -162,7 +170,7 @@ class GetRequestsQueuesFromSitesCommand extends Command
             // Автоматическое добавление заявки
             $added = "NOT ADDED";
 
-            if ($this->settings->TEXT_REQUEST_AUTO_ADD) {
+            if ($this->settings->TEXT_REQUEST_AUTO_ADD || $this->checkAutoDoneResource($queue->site)) {
                 $added = "ADDED";
                 (new QueueProcessings($queue))->add();
             }
@@ -235,5 +243,28 @@ class GetRequestsQueuesFromSitesCommand extends Command
         }
 
         return $this;
+    }
+
+    /**
+     * Проверка настроек ресурсов для автоматичесого доавбления заявки
+     * 
+     * @param string $resource
+     * @return boolean
+     */
+    public function checkAutoDoneResource($resource)
+    {
+        foreach ($this->auto_sources as $row) {
+            if ($row['site'] == $resource)
+                return $row['setting'];
+        }
+
+        $setting = Queues::checkSourceForAutoDone($resource);
+
+        $this->auto_sources[] = [
+            'site' => $resource,
+            'setting' => $setting,
+        ];
+        
+        return $setting;
     }
 }

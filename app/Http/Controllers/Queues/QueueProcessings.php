@@ -7,6 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\AddRequest;
 use Illuminate\Http\Request;
 
+/**
+ * Добавление заявки из очереди при автоматической настройки или вручную
+ * 
+ * @method add()
+ */
 class QueueProcessings extends Controller
 {
     /**
@@ -17,7 +22,7 @@ class QueueProcessings extends Controller
     protected $row;
 
     /**
-     * Создание экземпляра обхекта
+     * Создание экземпляра объекта
      * 
      * @param \App\Models\RequestsQueue|int $row
      * @return void
@@ -39,7 +44,7 @@ class QueueProcessings extends Controller
     {
         $request = new Request(
             query: array_merge(
-                collect($this->decrypt($this->row->request_data))->toArray(),
+                (array) $this->decrypt($this->row->request_data),
                 ['responseData' => true]
             ),
             server: [

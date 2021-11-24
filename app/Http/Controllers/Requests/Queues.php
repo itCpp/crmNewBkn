@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Crypt;
 
 class Queues extends Controller
 {
-
     /**
      * Глобальные настройки очереди
      * 
@@ -28,7 +27,7 @@ class Queues extends Controller
      */
     public function __construct()
     {
-        $this->settings = new Settings(['TEXT_REQUEST_AUTO_ADD']);
+        $this->settings = new Settings('TEXT_REQUEST_AUTO_ADD');
     }
 
     /**
@@ -39,33 +38,26 @@ class Queues extends Controller
      */
     public function checkEvent(IncomingTextRequest $row)
     {
-
         // Глобавльная настрока на автодобавлние
         if (!$this->settings->TEXT_REQUEST_AUTO_ADD) {
 
             // Настройка источника на автодобавление
             if (!$this->checkSourceForAutoDone($row->event->request_data->site ?? null)) {
 
-                // Создание очереди
                 RequestsQueue::create([
-                    'phone' => Crypt::encryptString($row->event->request_data->phone ?? null),
-                    'name' => Crypt::encryptString($row->event->request_data->name ?? null),
-                    'comment' => $row->event->request_data->comment ?? null,
+                    'request_data' => (object) parent::encrypt((array) ($row->event->request_data ?? [])),
                     'ip' => $row->event->ip ?? null,
                     'site' => $row->event->request_data->site ?? null,
-                    'gets' => $row->event->request_data->__GETS ?? [],
+                    'user_agent' => $row->event->user_agent ?? null,
                 ]);
 
                 return true;
-
             }
-
         }
 
         $this->autoAddRequest($row);
 
         return false;
-
     }
 
     /**
@@ -74,9 +66,8 @@ class Queues extends Controller
      * @param string $val
      * @return bool
      */
-    public function checkSourceForAutoDone($val)
+    public static function checkSourceForAutoDone($val)
     {
-
         if (!$resource = RequestsSourcesResource::where('val', $val)->first())
             return false;
 
@@ -84,7 +75,6 @@ class Queues extends Controller
             return false;
 
         return true;
-        
     }
 
     /**
@@ -95,7 +85,6 @@ class Queues extends Controller
      */
     public function autoAddRequest(IncomingTextRequest $row)
     {
-
         $request = new Request(
             query: (array) $row->event->request_data,
             server: [
@@ -104,11 +93,8 @@ class Queues extends Controller
             ]
         );
 
-        $addRequest = new AddRequest($request);
-        $addRequest->add($request);
+        (new AddRequest($request))->add();
 
         return $this;
-
     }
-    
 }
