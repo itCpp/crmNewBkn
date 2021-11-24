@@ -58,7 +58,7 @@ class GetRequestsQueuesFromSitesCommand extends Command
         $this->databases = SettingsQueuesDatabase::getAllDecrypt();
 
         if (!count($this->databases)) {
-            $this->line(date("[Y-m-d H:i:s]") . " Подключения к базам данных не настроены");
+            $this->line(date("[Y-m-d H:i:s]") . " <error>Подключения к базам данных не настроены</error>");
             return 0;
         }
 
