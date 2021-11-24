@@ -97,8 +97,11 @@ class Controller extends BaseController
 	 */
 	public static function encrypt($data)
 	{
-		if ($data === null)
+		if ($data == null)
 			return null;
+
+		if ($data == "")
+			return "";
 
 		if (!is_array($data) and !is_object($data))
 			return Crypt::encryptString($data);
@@ -123,8 +126,11 @@ class Controller extends BaseController
 	 */
 	public static function decrypt($data, $crypt = null)
 	{
-		if ($data === null)
+		if ($data == null)
 			return null;
+
+		if ($data == "")
+			return "";
 
 		if (!is_array($data) and !is_object($data))
 			return ($crypt !== null
