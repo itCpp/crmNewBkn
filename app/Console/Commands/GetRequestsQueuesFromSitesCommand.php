@@ -69,8 +69,6 @@ class GetRequestsQueuesFromSitesCommand extends Command
         $this->locked = $this->option('locked');
         $this->delete = $this->option('delete');
 
-        // dd($this);
-        // dd($this->databases);
         $this->handleStep();
 
         if (!$this->while)
@@ -113,9 +111,8 @@ class GetRequestsQueuesFromSitesCommand extends Command
     {
         $connection = "mysql_queue_{$db['id']}";
 
-        $this->line(date("[Y-m-d H:i:s]") . " " . $connection . " " . $db['name']);
-
         try {
+
             $table = DB::connection($connection)
                 ->table($db['table_name'] ?? 'queue_requests');
 
@@ -123,12 +120,14 @@ class GetRequestsQueuesFromSitesCommand extends Command
                 $where = $table->where('locked', 0);
 
             $data = ($where ?? $table)->get();
+
+            $this->line(date("[Y-m-d H:i:s]") . "[{$connection}][" . count($data) . "][<info>{$db['name']}</info>]");
         } catch (\Illuminate\Database\QueryException $e) {
-            $this->line("[{$connection}] Ошибка: <error>{$e->getMessage()}</error>");
+
+            $this->line(date("[Y-m-d H:i:s]") . "[{$connection}] Ошибка: <error>{$e->getMessage()}</error>");
+
             return $this;
         }
-
-        $this->line("[{$connection}] Обнаружено заявок: " . count($data));
 
         if (!count($data))
             return $this;

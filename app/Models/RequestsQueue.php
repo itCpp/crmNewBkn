@@ -19,6 +19,7 @@ class RequestsQueue extends Model
         'request_id',
         'comment',
         'ip',
+        'site',
         'user_agent',
         'done_pin',
         'done_type',

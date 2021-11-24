@@ -37,7 +37,7 @@ class AddRequestEvent
      * @param array $response
      * @return void
      */
-    public function __construct(RequestsRow $row, $response)
+    public function __construct($row, $response)
     {
         $this->row = $row;
         $this->response = $response;
