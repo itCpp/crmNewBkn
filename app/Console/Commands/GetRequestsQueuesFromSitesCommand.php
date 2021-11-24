@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
-class GetRequestsQueuesFromSitesCommend extends Command
+class GetRequestsQueuesFromSitesCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -45,9 +45,6 @@ class GetRequestsQueuesFromSitesCommend extends Command
     {
         parent::__construct();
 
-        $this->databases = SettingsQueuesDatabase::getAllDecrypt();
-        $this->setDatabasesConfigurations();
-
         $this->start = $this->last = microtime(1);
     }
 
@@ -58,6 +55,9 @@ class GetRequestsQueuesFromSitesCommend extends Command
      */
     public function handle()
     {
+        $this->databases = SettingsQueuesDatabase::getAllDecrypt();
+        $this->setDatabasesConfigurations();
+
         $this->while = $this->option('while');
         $this->sleep = (int) $this->option('sleep');
         $this->locked = $this->option('locked');
