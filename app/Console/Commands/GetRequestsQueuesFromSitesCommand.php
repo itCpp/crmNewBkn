@@ -193,7 +193,7 @@ class GetRequestsQueuesFromSitesCommand extends Command
             'phone' => $row->number,
             'client_name' => $row->name,
             'comment' => $row->comment,
-            'site' => $row->site,
+            'site' => idn_to_utf8($row->site),
             'page' => $row->page,
             'utm_source' => $row->utm_source,
             'utm_medium' => $row->utm_medium,
@@ -207,7 +207,7 @@ class GetRequestsQueuesFromSitesCommand extends Command
         $queue = RequestsQueue::create([
             'request_data' => $request_data,
             'ip' => $row->ip,
-            'site' => $row->site,
+            'site' => idn_to_utf8($row->site),
             'user_agent' => $row->user_agent,
             'created_at' => $row->created_at ?? now(),
         ]);
