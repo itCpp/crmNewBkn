@@ -9,6 +9,7 @@ use App\Http\Controllers\Requests\Queues;
 use App\Models\RequestsQueue;
 use App\Models\SettingsQueuesDatabase;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
@@ -209,7 +210,7 @@ class GetRequestsQueuesFromSitesCommand extends Command
             'ip' => $row->ip,
             'site' => idn_to_utf8($row->site),
             'user_agent' => $row->user_agent,
-            'created_at' => $row->created_at ?? now(),
+            'created_at' => Carbon::createFromTimeString($row->created_at ?? now()),
         ]);
 
         return $queue;
