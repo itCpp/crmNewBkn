@@ -44,8 +44,6 @@ class GetRequestsQueuesFromSitesCommand extends Command
     public function __construct()
     {
         parent::__construct();
-
-        $this->start = $this->last = microtime(1);
     }
 
     /**
@@ -55,7 +53,15 @@ class GetRequestsQueuesFromSitesCommand extends Command
      */
     public function handle()
     {
+        $this->start = $this->last = microtime(1);
+
         $this->databases = SettingsQueuesDatabase::getAllDecrypt();
+
+        if (!count($this->databases)) {
+            $this->line(date("[Y-m-d H:i:s]") . " Подключения к базам данных не настроены");
+            return 0;
+        }
+
         $this->setDatabasesConfigurations();
 
         $this->while = $this->option('while');

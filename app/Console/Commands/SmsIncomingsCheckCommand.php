@@ -57,11 +57,6 @@ class SmsIncomingsCheckCommand extends Command
     public function __construct()
     {
         parent::__construct();
-
-        $this->settings = new Settings('CRONTAB_SMS_INCOMINGS_CHECK');
-
-        $this->gates = (new Gates('sms_incomings'))->get();
-        $this->base64 = new GateBase64;
     }
 
     /**
@@ -71,6 +66,11 @@ class SmsIncomingsCheckCommand extends Command
      */
     public function handle()
     {
+        $this->settings = new Settings('CRONTAB_SMS_INCOMINGS_CHECK');
+
+        $this->gates = (new Gates('sms_incomings'))->get();
+        $this->base64 = new GateBase64;
+
         if (!$this->settings->CRONTAB_SMS_INCOMINGS_CHECK) {
             $this->line(date("[Y-m-d H:i:s]") . " Проверка СМС ОТКЛЮЧЕНА в настройках ЦРМ");
             return 0;
