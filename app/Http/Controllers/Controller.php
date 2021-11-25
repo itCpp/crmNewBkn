@@ -122,13 +122,10 @@ class Controller extends BaseController
 	 */
 	public static function encrypt($data)
 	{
-		if ($data == null)
-			return null;
+		if ($data == null or $data == "")
+			return $data;
 
-		if ($data == "")
-			return "";
-
-		if (!is_array($data) and !is_object($data))
+		if (!in_array(gettype($data), ['array', 'object']))
 			return Crypt::encryptString($data);
 
 		$response = [];
@@ -149,13 +146,10 @@ class Controller extends BaseController
 	 */
 	public static function decrypt($data, $crypt = null)
 	{
-		if ($data == null)
-			return null;
+		if ($data == null or $data == "")
+			return $data;
 
-		if ($data == "")
-			return "";
-
-		if (!is_array($data) and !is_object($data)) {
+		if (!in_array(gettype($data), ['array', 'object'])) {
 			try {
 				return $crypt !== null
 					? $crypt->decryptString($data)
@@ -168,7 +162,7 @@ class Controller extends BaseController
 		$response = [];
 
 		foreach ($data as $key => $row) {
-			$response[$key] = self::decrypt($row);
+			$response[$key] = self::decrypt($row, $crypt);
 		}
 
 		return $response;
