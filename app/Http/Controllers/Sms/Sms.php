@@ -59,7 +59,13 @@ class Sms extends Controller
 
         $view_at = $this->view->view_at; // Время последнего просмотра раздела
 
-        $data = SmsMessage::orderBy('created_at', "DESC")->paginate(25);
+        $data = new SmsMessage;
+
+        if (!$request->user()->can('sms_access_system')) {
+            $data = $data->join('sms_request', 'sms_request.sms_id', '=', 'sms_messages.id');
+        }
+
+        $data = $data->orderBy('created_at', "DESC")->paginate(25);
 
         $rows = $data->map(function ($row) {
             return $this->getRowSms($row);
@@ -186,6 +192,10 @@ class Sms extends Controller
 
         if ($view) {
             $counter = $counter->where('created_at', '>', $view->view_at);
+        }
+
+        if (!$request->user()->can('sms_access_system')) {
+            $counter = $counter->join('sms_request', 'sms_request.sms_id', '=', 'sms_messages.id');
         }
 
         return [
