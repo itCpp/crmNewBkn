@@ -210,7 +210,7 @@ class GetRequestsQueuesFromSitesCommand extends Command
             'ip' => $row->ip,
             'site' => idn_to_utf8($row->site),
             'user_agent' => $row->user_agent,
-            'created_at' => Carbon::createFromTimeString($row->created_at ?? now()),
+            'created_at' => Carbon::createFromTimeString($row->created_at ?? now(), 3),
         ]);
 
         return $queue;

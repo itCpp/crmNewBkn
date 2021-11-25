@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Models\RequestsQueue;
 use Illuminate\Http\Request;
 
 class Counters extends Controller
@@ -47,6 +48,23 @@ class Counters extends Controller
             ];
         }
 
+        // Счетчик очереди
+        if ($request->user()->can('queues_access'))
+            $counter['queue'] = self::getQueueCounter($request);
+
         return $counter;
+    }
+
+    /**
+     * Счетчик необработанной очереди
+     * 
+     * @param \Illuminate\Http\Request
+     * @return array
+     */
+    public static function getQueueCounter(Request $request)
+    {
+        return [
+            'count' => RequestsQueue::where('done_type', null)->count()
+        ];
     }
 }
