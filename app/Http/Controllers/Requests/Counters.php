@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Sms\Sms;
 use App\Models\RequestsQueue;
 use Illuminate\Http\Request;
 
@@ -48,9 +49,17 @@ class Counters extends Controller
             ];
         }
 
+        $permits = $request->user()->getListPermits([
+            'queues_access',
+            'sms_access'
+        ]);
+
         // Счетчик очереди
-        if ($request->user()->can('queues_access'))
+        if ($permits->queues_access)
             $counter['queue'] = self::getQueueCounter($request);
+
+        if ($permits->sms_access)
+            $counter['sms'] = Sms::getCounterNewSms($request);
 
         return $counter;
     }

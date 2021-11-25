@@ -169,4 +169,27 @@ class Sms extends Controller
 
         return $this->gates[$id] = $gate->addr;
     }
+
+    /**
+     * Счетчик непрочитанных смс сообщений
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function getCounterNewSms(Request $request)
+    {
+        $counter = new SmsMessage;
+
+        $view = UsersViewPart::whereUserId($request->user()->id)
+            ->wherePartName('sms')
+            ->first();
+
+        if ($view) {
+            $counter = $counter->where('created_at', '>', $view->view_at);
+        }
+
+        return [
+            'count' => $counter->count(),
+        ];
+    }
 }
