@@ -103,6 +103,14 @@ Route::group(['middleware' => 'user.token'], function() {
 
     });
 
+    /** Работа с СМС-сками */
+    Route::group(['prefix' => 'sms', 'middleware' => 'user.can:sms_access'], function() {
+        
+        /** Вывод сообщений */
+        Route::post('get', 'Sms\Sms@get');
+
+    });
+
     /** Маршрутизация для работы с учетными записями */
     Route::group(['prefix' => 'users'], function() {
 

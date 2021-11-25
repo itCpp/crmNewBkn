@@ -28,6 +28,7 @@ class RequestStart extends Controller
         'clients_show_phone', # Может видеть номера телефонов клиента
         'requests_addr_change', # Может менять адрес записи
         'queues_access', # Доступ к очередям
+        'sms_access', # Доступ к смс сообщениям
     ];
 
     /**
@@ -52,7 +53,7 @@ class RequestStart extends Controller
         $request->tabs = $request->user()->getAllTabs();
 
         // Проверка прав пользователя
-        $permits = $request->user()->getListPermits(RequestStart::$permitsList);
+        $permits = $request->user()->getListPermits(self::$permitsList);
 
         // Преобразование данных для вывода
         $tabs = $request->tabs->map(function ($tab) {

@@ -106,12 +106,14 @@ class Controller extends BaseController
 	 */
 	public static function displayPhoneNumber($phone, $permit = false, $key_show = null, $key_hidden = null)
 	{
-		return self::checkPhone(
+		$checked = self::checkPhone(
 			$phone,
 			$permit
 				? ($key_show ?: self::KEY_PHONE_SHOW)
 				: ($key_hidden ?: self::KEY_PHONE_HIDDEN)
 		);
+
+		return $checked ?: $phone;
 	}
 
 	/**
