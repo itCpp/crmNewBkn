@@ -98,6 +98,8 @@ Route::group(['middleware' => 'user.token'], function() {
         
         /** Вывод очереди */
         Route::post('getQueues', 'Queues\Queues@getQueues');
+        /** Решение по очереди */
+        Route::post('done', 'Queues\Queues@done');
 
     });
 
