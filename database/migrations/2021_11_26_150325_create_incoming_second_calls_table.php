@@ -15,8 +15,8 @@ class CreateIncomingSecondCallsTable extends Migration
     {
         Schema::create('incoming_second_calls', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('client_id')->comment('Идентификтаор клиента');
-            $table->bigInteger('request_id')->nullable()->comment('Идентификтаор заявки');
+            $table->bigInteger('client_id')->comment('Идентификатор клиента');
+            $table->json('request_id')->nullable()->comment('Идентификаторы заявок');
             $table->date('call_date')->comment('Дата звонка');
             $table->timestamps();
 

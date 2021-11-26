@@ -24,4 +24,24 @@ class UsersViewPart extends Model
     protected $dates = [
         'view_at',
     ];
+
+    /**
+     * Возвращает экземпляр модели по параметрам
+     * 
+     * @param int $user_id
+     * @param string $part_name
+     * @return UsersViewPart
+     */
+    public static function getLastTime($user_id, $part_name)
+    {
+        $view = new static;
+
+        if ($last = $view->whereUserId($user_id)->wherePartName($part_name)->first())
+            return $last;
+
+        $view->part_name = $part_name;
+        $view->user_id = $user_id;
+
+        return $view;
+    }
 }

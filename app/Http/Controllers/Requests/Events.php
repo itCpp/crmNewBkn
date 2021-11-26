@@ -16,6 +16,7 @@ use App\Jobs\IncomingRequestCallJob;
 use App\Jobs\IncomingRequestTextJob;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class Events extends Controller
 {
@@ -368,6 +369,10 @@ class Events extends Controller
             'call_date' => $this->callDate,
         ]);
 
+        Log::channel('second_calls')->info('Secondary call without requests.', [
+            'client_id' => $this->client->id,
+        ]);
+
         return null;
     }
 
@@ -379,13 +384,22 @@ class Events extends Controller
      */
     public function createIncomingCallForClientRequests($client)
     {
+        $requests = [];
+
         foreach ($client->requests as $request) {
-            IncomingSecondCall::create([
-                'client_id' => $client->id,
-                'request_id' => $request->id,
-                'call_date' => $this->callDate,
-            ]);
+            $requests[] = $request->id;
         }
+
+        IncomingSecondCall::create([
+            'client_id' => $client->id,
+            'request_id' => $requests,
+            'call_date' => $this->callDate,
+        ]);
+
+        Log::channel('second_calls')->info('Secondary call with requests.', [
+            'client_id' => $client->id,
+            'requests_id' => $requests,
+        ]);
 
         return null;
     }

@@ -111,6 +111,14 @@ Route::group(['middleware' => 'user.token'], function() {
 
     });
 
+    /** Работа со вторичными звонками */
+    Route::group(['prefix' => 'secondcalls', 'middleware' => 'user.can:second_calls_access'], function() {
+        
+        /** Вывод звонков */
+        Route::post('get', 'SecondCalls\SecondCalls@get');
+
+    });
+
     /** Маршрутизация для работы с учетными записями */
     Route::group(['prefix' => 'users'], function() {
 

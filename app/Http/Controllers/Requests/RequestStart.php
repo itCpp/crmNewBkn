@@ -29,6 +29,7 @@ class RequestStart extends Controller
         'requests_addr_change', # Может менять адрес записи
         'queues_access', # Доступ к очередям
         'sms_access', # Доступ к смс сообщениям
+        'second_calls_access', # Доступ ко вторичным звонкам
     ];
 
     /**

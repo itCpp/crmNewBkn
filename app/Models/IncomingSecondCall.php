@@ -19,4 +19,13 @@ class IncomingSecondCall extends Model
         'request_id',
         'call_date',
     ];
+
+    /**
+     * Атрибуты, которые будут преобразованы
+     *
+     * @var array
+     */
+    protected $casts = [
+        'request_id' => 'array',
+    ];
 }

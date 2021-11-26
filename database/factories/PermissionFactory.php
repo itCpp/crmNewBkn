@@ -48,8 +48,9 @@ class PermissionFactory extends Factory
         ['user_auth_query_all', 'Может обработать запрос авторизации любого сотрудника'],
         ['user_auth_query_all_sectors', 'Может обработать запрос авторизации всех секторов своего коллцентра'],
         ['queues_access', 'Доступ к очередям текстовых заявок'],
-        ['sms_access_system', 'Доступ к сообщениям без заявки'],
         ['sms_access', 'Доступ к чтению смс сообщений'],
+        ['sms_access_system', 'Доступ к сообщениям без заявки'],
+        ['second_calls_access', 'Доступ ко вторичным звонкам'],
     ];
 
     /**
