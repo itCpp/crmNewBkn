@@ -85,7 +85,7 @@ class SecondCalls extends Controller
         $names = [];
 
         foreach ($row->requests as $request) {
-            if ($request->client_name) {
+            if ($request->client_name ?? null) {
                 $names[] = $request->client_name;
             }
         }
@@ -114,7 +114,7 @@ class SecondCalls extends Controller
 
         foreach ($ids as $id) {
             if (isset($this->requests[$id])) {
-                $requests[] = $id;
+                $requests[] = $this->requests[$id];
                 $notIn[] = $id;
             }
         }
@@ -128,5 +128,29 @@ class SecondCalls extends Controller
         }
 
         return $requests;
+    }
+
+    /**
+     * Счетчик данных
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function getCounterNewSecondCalls(Request $request)
+    {
+        $view = UsersViewPart::getLastTime($request->user()->id, 'secondcalls');
+        $counter = (new IncomingSecondCall)->where('call_date', date("Y-m-d"));
+
+        $count = $counter->count();
+        $update = 0;
+
+        if ($view) {
+            $update = $counter->where('created_at', '>', $view->view_at)->count();
+        }
+
+        return [
+            'count' => $count,
+            'update' => $update > 0,
+        ];
     }
 }

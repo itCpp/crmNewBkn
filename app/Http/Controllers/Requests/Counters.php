@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\SecondCalls\SecondCalls;
 use App\Http\Controllers\Sms\Sms;
 use App\Models\RequestsQueue;
 use Illuminate\Http\Request;
@@ -51,7 +52,8 @@ class Counters extends Controller
 
         $permits = $request->user()->getListPermits([
             'queues_access',
-            'sms_access'
+            'sms_access',
+            'second_calls_access'
         ]);
 
         // Счетчик очереди
@@ -60,6 +62,9 @@ class Counters extends Controller
 
         if ($permits->sms_access)
             $counter['sms'] = Sms::getCounterNewSms($request);
+
+        if ($permits->second_calls_access)
+            $counter['secondcalls'] = SecondCalls::getCounterNewSecondCalls($request);
 
         return $counter;
     }

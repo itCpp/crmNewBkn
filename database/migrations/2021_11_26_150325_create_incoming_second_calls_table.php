@@ -21,6 +21,7 @@ class CreateIncomingSecondCallsTable extends Migration
             $table->timestamps();
 
             $table->index('call_date');
+            $table->index(['call_date', 'created_at'], 'call_date_created_at');
         });
     }
 
