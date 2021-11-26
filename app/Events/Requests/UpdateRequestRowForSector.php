@@ -105,7 +105,7 @@ class UpdateRequestRowForSector implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        // $channels[] = "App.Requests.All.0.0";
+        $channels[] = "App.Requests.All.0.0";
 
         if ($this->oldCallcenter and $this->oldSector) {
             $channels[] = "App.Requests.All.{$this->oldCallcenter}.{$this->oldSector}";

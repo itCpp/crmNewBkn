@@ -124,7 +124,7 @@ class RequestPins extends Controller
             'offline' => $permits->requests_pin_set_offline,
             'pins' => self::getWorkTimeAndStatusUsers($pins ?? [], $sessions),
             'clear' => $permits->requests_pin_clear,
-            'offices' => Office::all(),
+            'offices' => Office::orderBy('active', 'DESC')->orderBy('name')->get(),
             'address' => $row->address,
         ]);
     }

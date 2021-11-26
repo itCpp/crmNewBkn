@@ -149,7 +149,7 @@ class Requests extends Controller
     public static function getRequests($data)
     {
         foreach ($data as $row)
-            $requests[] = Requests::getRequestRow($row);
+            $requests[] = self::getRequestRow($row);
 
         return $requests ?? [];
     }
