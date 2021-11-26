@@ -3,10 +3,15 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
-use App\Models\Incomings\IncomingCallRequest;
-use App\Models\Incomings\IncomingTextRequest;
+use App\Models\RequestsClient;
 use App\Models\IncomingCall;
 use App\Models\IncomingCallsToSource;
+use App\Models\IncomingSecondCall;
+use App\Models\Incomings\IncomingEvent;
+use App\Models\Incomings\IncomingCallRequest;
+use App\Models\Incomings\IncomingTextRequest;
+use App\Models\Incomings\SipInternalExtension;
+use App\Jobs\IncomingCallAsteriskJob;
 use App\Jobs\IncomingRequestCallJob;
 use App\Jobs\IncomingRequestTextJob;
 use Illuminate\Encryption\Encrypter;
@@ -14,7 +19,6 @@ use Illuminate\Http\Request;
 
 class Events extends Controller
 {
-
     /**
      * Промежуточный ключ
      * 
@@ -34,18 +38,26 @@ class Events extends Controller
      * Обработка входящего события
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param null|string $type Параметр с типом запроса
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function incoming(Request $request)
+    public function incoming(Request $request, $type = null)
     {
-        $response = $request->all();
-        $response['message'] = "Событие обработано";
+        $date = date("Y-m-d H:i:s");
 
-        if ($request->text and $text = IncomingTextRequest::find($request->text)) {
-            $response['job'] = date("Y-m-d H:i:s");
+        $response = array_merge($request->all(), [
+            'message' => "Событие обработано",
+            '_TYPE' => $type
+        ]);
+
+        if ($type == "call_asterisk") {
+            $response['_JOB'] = $date;
+            IncomingCallAsteriskJob::dispatch($request->call_id);
+        } else if ($request->text and $text = IncomingTextRequest::find($request->text)) {
+            $response['_JOB'] = $date;
             IncomingRequestTextJob::dispatch($text);
         } elseif ($request->call and $call = IncomingCallRequest::find($request->call)) {
-            $response['job'] = date("Y-m-d H:i:s");
+            $response['_JOB'] = $date;
             IncomingRequestCallJob::dispatch($call);
         }
 
@@ -255,7 +267,6 @@ class Events extends Controller
                 $crypt = new Encrypter($this->key, config('app.cipher'));
 
             $row->request_data = parent::decrypt($row->request_data, $crypt ?? null);
-
         }
 
         return view('event', [
@@ -290,5 +301,92 @@ class Events extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Автоматическое назначение оператора на заявку
+     * 
+     * @param int $id
+     * @return null|bool|int
+     * 
+     * @todo Доделать обработку звонка для автоматического присвоения заявки оператору
+     */
+    public function incomingCallAsterisk($id = null)
+    {
+        if (!$event = IncomingEvent::find($id))
+            return null;
+
+        // Расшифровка данных при помощи внешнего ключа
+        if (!$event->recrypt)
+            $crypt = new Encrypter($this->key, config('app.cipher'));
+
+        // Расшифровка данных
+        $data = parent::decryptSetType($event->request_data ?? null, $crypt ?? null);
+
+        // Номер телефона и его хэш
+        $phone = parent::checkPhone($data->Number ?? null);
+        $hash = parent::hashPhone($data->Number ?? null);
+
+        if (!$phone)
+            return null;
+
+        // Поиск клиента с номером телефона
+        $this->client = RequestsClient::firstOrCreate(
+            ['hash' => $hash],
+            ['phone' => parent::encrypt($phone)],
+        );
+
+        // Внутренний номер ip-телефонии
+        $extension = $data->extension ?? null;
+
+        // Поиск внутреннего адреса номера телефонии
+        if (!$internal = SipInternalExtension::where('extension', $extension)->first())
+            return null;
+
+        // Обработка вторичного звонка
+        // Настройка идентификатор вторичного звонка указана в таблице внутренних номеров
+        if ($internal->for_in == 1)
+            return $this->incomingSecondCallAsterisk();
+
+        return null;
+    }
+
+    /**
+     * Подъем заявки вторичного звонка
+     * 
+     * @return null
+     */
+    public function incomingSecondCallAsterisk()
+    {
+        $this->callDate = date("Y-m-d");
+
+        if (count($this->client->requests))
+            return $this->createIncomingCallForClientRequests($this->client);
+
+        IncomingSecondCall::create([
+            'client_id' => $this->client->id,
+            'call_date' => $this->callDate,
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Создание строк для нескольки звонков
+     * 
+     * @param \App\Models\RequestsClient $client
+     * @return null
+     */
+    public function createIncomingCallForClientRequests($client)
+    {
+        foreach ($client->requests as $request) {
+            IncomingSecondCall::create([
+                'client_id' => $client->id,
+                'request_id' => $request->id,
+                'call_date' => $this->callDate,
+            ]);
+        }
+
+        return null;
     }
 }

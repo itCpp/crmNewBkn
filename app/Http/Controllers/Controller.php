@@ -117,10 +117,24 @@ class Controller extends BaseController
 	}
 
 	/**
+	 * Получение хэша номера телефона клиента
+	 * 
+	 * @param string $phone
+	 * @return string|int|null
+	 */
+	public static function hashPhone($phone)
+	{
+		if (!$check = self::checkPhone($phone))
+			return null;
+
+		return md5($check . env('APP_KEY'));
+	}
+
+	/**
 	 * Шифрование всех ключей массива
 	 * 
 	 * @param array|object|string|null $data
-	 * @return array|object|string|null
+	 * @return array|string|null
 	 */
 	public static function encrypt($data)
 	{
@@ -144,7 +158,7 @@ class Controller extends BaseController
 	 * 
 	 * @param array|object|string|null $data
 	 * @param \Illuminate\Encryption\Encrypter|null $crypt
-	 * @return array|object|string|null
+	 * @return array|string|null
 	 */
 	public static function decrypt($data, $crypt = null)
 	{
@@ -166,6 +180,39 @@ class Controller extends BaseController
 		foreach ($data as $key => $row) {
 			$response[$key] = self::decrypt($row, $crypt);
 		}
+
+		return $response;
+	}
+
+	/**
+	 * Шифрование данных с учетом типа переменной
+	 * 
+	 * @param array|object|string|null $data
+	 * @return array|object|string|null
+	 */
+	public static function encryptSetType($data)
+	{
+		$type = gettype($data);
+		$response = self::encrypt($data);
+
+		settype($response, $type);
+
+		return $response;
+	}
+
+	/**
+	 * Расшифровка данных с учетом типа переменной
+	 * 
+	 * @param array|object|string|null $data
+	 * @param \Illuminate\Encryption\Encrypter|null $crypt
+	 * @return array|object|string|null
+	 */
+	public static function decryptSetType($data, $crypt = null)
+	{
+		$type = gettype($data);
+		$response = self::decrypt($data, $crypt);
+
+		settype($response, $type);
 
 		return $response;
 	}

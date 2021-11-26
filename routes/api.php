@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 /** Обработка входящего события */
-Route::post('events', 'Requests\Events@incoming');
+Route::any('events/{type?}', 'Requests\Events@incoming');
 
 /** Добавление заявки */
 // Route::post('addRequest', 'Requests\AddRequest@add');
