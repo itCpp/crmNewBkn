@@ -9,7 +9,8 @@ use Illuminate\Http\Request;
 
 class CallCenters extends Controller
 {
-    use Data\Comings,
+    use CallCenters\CallCenterItog,
+        Data\Comings,
         Data\Requests,
         Data\Users;
 
@@ -77,15 +78,5 @@ class CallCenters extends Controller
             : [
                 'users' => $this->data->users,
             ];
-    }
-
-    /**
-     * Итоговый подсчет данных
-     * 
-     * @return $this
-     */
-    public function calculateData()
-    {
-        return $this;
     }
 }
