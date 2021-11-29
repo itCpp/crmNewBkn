@@ -13,7 +13,7 @@ trait Comings
      */
     public function getComings()
     {
-        $this->data->comings = CrmComing::selectRaw('COUNT(*) as count, collPin as pin')
+        $rows = CrmComing::selectRaw('COUNT(*) as count, collPin as pin, date')
             ->whereBetween('date', [
                 $this->dates->start,
                 $this->dates->stop,
@@ -28,14 +28,34 @@ trait Comings
                 'Иное',
             ])
             ->groupBy('collPin')
-            ->get()
-            ->map(function ($row) {
+            ->groupBy('date')
+            ->get();
 
-                if (!in_array($row->pin, $this->data->pins))
-                    $this->data->pins[] = $row->pin;
+        $comings = [];
 
-                return (object) $row->toArray();
-            });
+        foreach ($rows as $row) {
+
+            if (!in_array($row->pin, $this->data->pins))
+                $this->data->pins[] = $row->pin;
+
+            if (empty($comings[$row->pin])) {
+                $comings[$row->pin] = [
+                    'count' => 0,
+                    'pin' => $row->pin,
+                    'dates' => [],
+                ];
+            }
+
+            if (empty($comings[$row->pin]['dates'][$row->date])) {
+                $comings[$row->pin]['dates'][$row->date] = 0;
+            }
+
+            $comings[$row->pin]['count'] += $row->count;
+            $comings[$row->pin]['dates'][$row->date] += $row->count;
+            
+        }
+
+        $this->data->comings = $comings;
 
         return $this;
     }

@@ -14,6 +14,7 @@ trait Requests
     public function getRequests()
     {
         $this->data->requests = RequestsRow::selectRaw('COUNT(*) as count, pin')
+            ->whereDate('s', "202")
             ->whereBetween('created_at', [
                 $this->dates->start . " 00:00:00",
                 $this->dates->stop . " 23:59:59"
