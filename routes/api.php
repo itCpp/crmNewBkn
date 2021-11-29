@@ -93,6 +93,14 @@ Route::group(['middleware' => 'user.token'], function() {
 
     });
 
+    /** Маршрутизация различных рейтингов */
+    Route::group(['prefix' => 'ratings'], function() {
+        
+        /** Вывод основного рейтинга колл-центров */
+        Route::post('callcenter', 'Ratings\Ratings@getCallCenters');
+
+    });
+
     /** Маршрутизация очередей */
     Route::group(['prefix' => 'queues', 'middleware' => 'user.can:queues_access'], function() {
         
