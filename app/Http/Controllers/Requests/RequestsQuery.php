@@ -256,7 +256,7 @@ class RequestsQuery extends Controller
                     if ($arguments > 0) {
                         $query = $arguments == 1
                             ? $query->$method(...$where[0] ?? [])
-                            : $query = $model->$method($where);
+                            : $query = $this->model->$method($where);
                     }
                 }
             }

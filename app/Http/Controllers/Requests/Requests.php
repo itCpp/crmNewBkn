@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Dates;
 use App\Models\Office;
 use App\Models\RequestsRow;
 use App\Models\Status;
@@ -35,9 +36,13 @@ class Requests extends Controller
         // Разрешения для пользователя
         RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
 
+        $dates = new Dates($request->period[0] ?? null, $request->period[1] ?? null);
+        $request->start = $dates->start;
+        $request->stop = $dates->stop;
+
         // Формирование запроса на вывод
         $query = new RequestsQuery($request);
-        $data =  $query->paginate($request->limit ?? 25);
+        $data = $query->paginate($request->limit ?? 25);
 
         $requests = self::getRequests($data);
 
