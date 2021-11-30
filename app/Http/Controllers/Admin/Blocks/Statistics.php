@@ -31,9 +31,10 @@ class Statistics extends Controller
     /**
      * Вывод статистики
      * 
+     * @param null|string $ip
      * @return array
      */
-    public function getStatistic()
+    public function getStatistic($ip = null)
     {
         $this->getDrops()
             ->getVisits()
@@ -95,6 +96,17 @@ class Statistics extends Controller
         $response['date'] = $this->date ?? date("Y-m-d");
 
         return $response;
+    }
+
+    /**
+     * Вывод данных по IP
+     * 
+     * @param null|int $ip
+     * @return array
+     */
+    public function getStatisticIp($ip = null)
+    {
+        return [];
     }
 
     /**

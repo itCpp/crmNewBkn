@@ -37,6 +37,7 @@ class IpInfos extends Controller
         return [
             'ip' => $ip,
             'ipinfo' => $info,
+            'stats' => (new Statistics($this->request))->getStatisticIp($ip)
         ];
     }
 
