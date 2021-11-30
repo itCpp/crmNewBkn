@@ -28,7 +28,7 @@ Route::post('login', 'Users\Auth@login');
 Route::post('loginCancel', 'Users\Auth@loginCancel');
 
 /** Группа маршрутов авторизованного пользователя */
-Route::group(['middleware' => 'user.token'], function() {
+Route::group(['middleware' => 'user.token'], function () {
 
     /** Выход из системы */
     Route::post('logout', 'Users\Auth@logout');
@@ -44,7 +44,7 @@ Route::group(['middleware' => 'user.token'], function() {
     Route::group([
         'prefix' => "requests",
         'middleware' => "user.can:requests_access",
-    ], function() {
+    ], function () {
 
         /** Запуск заявок */
         Route::post('start', 'Requests\RequestStart@start');
@@ -90,45 +90,40 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('sendSms', 'Callcenter\Sms@sendSms')->middleware('user.can:requests_send_sms');
         /** Проверка обновлений в сообщениях */
         Route::post('getSmsUpdates', 'Callcenter\Sms@getSmsUpdates');
-
     });
 
     /** Маршрутизация различных рейтингов */
-    Route::group(['prefix' => 'ratings'], function() {
-        
+    Route::group(['prefix' => 'ratings'], function () {
+
         /** Вывод основного рейтинга колл-центров */
         Route::post('callcenter', 'Ratings\Ratings@getCallCenters');
-
     });
 
     /** Маршрутизация очередей */
-    Route::group(['prefix' => 'queues', 'middleware' => 'user.can:queues_access'], function() {
-        
+    Route::group(['prefix' => 'queues', 'middleware' => 'user.can:queues_access'], function () {
+
         /** Вывод очереди */
         Route::post('getQueues', 'Queues\Queues@getQueues');
         /** Решение по очереди */
         Route::post('done', 'Queues\Queues@done');
-
     });
 
     /** Работа с СМС-сками */
-    Route::group(['prefix' => 'sms', 'middleware' => 'user.can:sms_access'], function() {
-        
+    Route::group(['prefix' => 'sms', 'middleware' => 'user.can:sms_access'], function () {
+
         /** Вывод сообщений */
         Route::post('get', 'Sms\Sms@get');
-
     });
 
     /** Работа со вторичными звонками */
-    Route::group(['prefix' => 'secondcalls', 'middleware' => 'user.can:second_calls_access'], function() {
-        
+    Route::group(['prefix' => 'secondcalls', 'middleware' => 'user.can:second_calls_access'], function () {
+
         /** Вывод звонков */
         Route::post('get', 'SecondCalls\SecondCalls@get');
-
     });
 
     /** Маршрутизация для работы с учетными записями */
-    Route::group(['prefix' => 'users'], function() {
+    Route::group(['prefix' => 'users'], function () {
 
         /** Вывод списка запросов авторизации */
         Route::post('authQueries', 'Users\Auth@authQueries')->middleware('user.can:user_auth_query');
@@ -140,11 +135,10 @@ Route::group(['middleware' => 'user.token'], function() {
 
         /** Вывод данных сотрудника */
         Route::post('getUserMainData', 'Users\UserMainData@getUserMainData');
-
     });
 
     /** Маршрутизация админпанели */
-    Route::group(['prefix' => "admin", 'middleware' => "user.can:admin_access"], function() {
+    Route::group(['prefix' => "admin", 'middleware' => "user.can:admin_access"], function () {
 
         /** Первоначальная загрузка страницы со всеми данными */
         Route::post('start', 'Users\Users@adminCheck');
@@ -179,10 +173,11 @@ Route::group(['middleware' => 'user.token'], function() {
         Route::post('getSector', 'Callcenter\Sectors@getSector')->middleware('user.can:admin_callcenters');
         /** Изменение данных сектора */
         Route::post('saveSector', 'Callcenter\Sectors@saveSector')->middleware('user.can:admin_callcenters');
-        
+
         include __DIR__ . "/api/api.sip.php";
 
-        Route::group(['middleware' => 'user.can:admin_callsqueue'], function() {
+        Route::group(['middleware' => 'user.can:admin_callsqueue'], function () {
+
             /** Вывод настройки распределения звонков */
             Route::post('getDistributionCalls', 'Admin\DistributionCalls@getDistributionCalls');
             /** Определние настроек единичного выбора */
@@ -192,14 +187,13 @@ Route::group(['middleware' => 'user.token'], function() {
             /** Включение сектора в распределение звонков */
             Route::post('setSectorDistribution', 'Admin\DistributionCalls@setSectorDistribution');
         });
-
     });
 
     /** Маршрутизация админпанели разработчика */
-    Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function() {
+    Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function () {
 
         /** Настройка разрешений */
-        Route::group(['middleware' => "user.can:dev_permits"], function() {
+        Route::group(['middleware' => "user.can:dev_permits"], function () {
 
             /** Первоначальная загрузка страницы со всеми данными */
             Route::post('getAllPermits', 'Dev\Permissions@getAllPermits');
@@ -207,11 +201,10 @@ Route::group(['middleware' => 'user.token'], function() {
             Route::post('savePermit', 'Dev\Permissions@savePermit');
             /** Вывод данных одного правила */
             Route::post('getPermit', 'Dev\Permissions@getPermit');
-
         });
 
         /** Настройка ролей */
-        Route::group(['middleware' => "user.can:dev_roles"], function() {
+        Route::group(['middleware' => "user.can:dev_roles"], function () {
 
             /** Первоначальная загрузка страницы со всеми данными */
             Route::post('getAllRoles', 'Dev\Roles@getAllRoles');
@@ -229,11 +222,10 @@ Route::group(['middleware' => 'user.token'], function() {
             Route::post('setTabForRole', 'Dev\Roles@setTabForRole');
             /** Присвоение роли доступа к вкладке */
             Route::post('setStatusForRole', 'Dev\Roles@setStatusForRole');
-
         });
 
         /** Настройка источников и ресурсов */
-        Route::group(['middleware' => "user.can:dev_sources"], function() {
+        Route::group(['middleware' => "user.can:dev_sources"], function () {
 
             /** Список источников с ресурсами */
             Route::post('getSources', 'Dev\Sources@getSources');
@@ -255,11 +247,10 @@ Route::group(['middleware' => 'user.token'], function() {
 
             /** Вывод свободных и активных ресурсов по источнику */
             Route::post('getFreeResources', 'Dev\Sources@getFreeResources');
-
         });
 
         /** Настройка статусов */
-        Route::group(['middleware' => "user.can:dev_statuses"], function() {
+        Route::group(['middleware' => "user.can:dev_statuses"], function () {
 
             /** Список всех статусов */
             Route::post('getStatuses', 'Dev\Statuses@getStatuses');
@@ -272,11 +263,10 @@ Route::group(['middleware' => 'user.token'], function() {
             Route::post('saveStatus', 'Dev\Statuses@saveStatus');
             /** Изменение темы оформления вкладки */
             Route::post('setStatuseTheme', 'Dev\Statuses@setStatuseTheme');
-
         });
 
         /** Настройка вкладок */
-        Route::group(['middleware' => "user.can:dev_tabs"], function() {
+        Route::group(['middleware' => "user.can:dev_tabs"], function () {
 
             /** Список всех статусов */
             Route::post('getTabs', 'Dev\Tabs@getTabs');
@@ -298,11 +288,10 @@ Route::group(['middleware' => 'user.token'], function() {
 
             /** Применение статусов для вывода во вкладке */
             Route::post('setTabStatus', 'Dev\Tabs@setTabStatus');
-
         });
 
         /** Журнал вызовов и настройка источников */
-        Route::group(['middleware' => "user.can:dev_calls"], function() {
+        Route::group(['middleware' => "user.can:dev_calls"], function () {
 
             /** Загрузка страницы журнала звонков */
             Route::post('getCalls', 'Admin\Calls@start');
@@ -315,11 +304,10 @@ Route::group(['middleware' => 'user.token'], function() {
 
             /** Повторный запрос обработки входящего звонка */
             Route::post('retryIncomingCall', 'Admin\Calls@retryIncomingCall');
-
         });
 
         /** Настройки офисов */
-        Route::group(['middleware' => "user.can:dev_offices"], function() {
+        Route::group(['middleware' => "user.can:dev_offices"], function () {
 
             /** Вывод списка офисов */
             Route::post('getOffices', 'Offices\Offices@getOffices');
@@ -327,9 +315,13 @@ Route::group(['middleware' => 'user.token'], function() {
             Route::post('getOffice', 'Offices\Offices@getOffice');
             /** Сохранение данных офиса */
             Route::post('saveOffice', 'Offices\Offices@saveOffice');
-
         });
 
-    });
+        /** Маршрутизация блокировок */
+        Route::group(['prefix' => 'block'], function () {
 
+            /** Вывод основного рейтинга колл-центров */
+            Route::post('statistic', 'Admin\Blocks@statistic');
+        });
+    });
 });
