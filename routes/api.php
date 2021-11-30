@@ -322,6 +322,8 @@ Route::group(['middleware' => 'user.token'], function () {
 
             /** Вывод основного рейтинга колл-центров */
             Route::post('statistic', 'Admin\Blocks@statistic');
+            /** Блокировка ip адреса */
+            Route::post('setBlockIp', 'Admin\Blocks@setBlockIp');
         });
     });
 });
