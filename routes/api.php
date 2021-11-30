@@ -324,6 +324,8 @@ Route::group(['middleware' => 'user.token'], function () {
             Route::post('statistic', 'Admin\Blocks@statistic');
             /** Блокировка ip адреса */
             Route::post('setBlockIp', 'Admin\Blocks@setBlockIp');
+            /** Информация по IP-адресу */
+            Route::post('ipInfo', 'Admin\Blocks@ipInfo');
         });
     });
 });

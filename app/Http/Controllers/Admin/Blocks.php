@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\Blocks\IpInfos;
 use App\Http\Controllers\Admin\Blocks\Statistics;
 use App\Models\Company\BlockHost;
 use Illuminate\Http\Request;
@@ -46,5 +47,18 @@ class Blocks extends Controller
             'blocked_on' => $row->block == 1 ? true : false, // Вкл/Выкл блокировка
             'row' => $row,
         ]);
+    }
+
+    /**
+     * Информация по IP-адресу
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function ipInfo(Request $request)
+    {
+        return response()->json(
+            (new IpInfos($request))->getIpInfo($request->ip)
+        );
     }
 }
