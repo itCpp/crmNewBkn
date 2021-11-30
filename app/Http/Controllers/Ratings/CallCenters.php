@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 class CallCenters extends Controller
 {
-    use CallCenters\CallCenterItog,
+    use CallCenters\CallCenterResult,
         Data\Comings,
         Data\Requests,
         Data\Users;
@@ -58,25 +58,27 @@ class CallCenters extends Controller
             $request->stop ?? date("Y-m-d")
         );
 
-        $this->full_data = $full_data;
+        $this->full_data = $request->user()->can('rating_callcenter_full_data') ?: $full_data;
     }
 
     /**
      * Вывод основного рейтинга колл-центров
      * 
-     * @return \Illuminate\Http\JsonResponse
+     * @return array
      */
     public function get()
     {
         $this->getComings()
             ->getRequests()
             ->findUsers()
-            ->calculateData();
+            ->getResult();
 
-        return $this->full_data
+        $response = $this->full_data
             ? $this->data
             : [
                 'users' => $this->data->users,
             ];
+
+        return $response;
     }
 }

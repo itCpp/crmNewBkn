@@ -16,7 +16,7 @@ class Ratings extends Controller
     public static function getCallCenters(Request $request)
     {
         return response()->json(
-            (new CallCenters($request, true))->get()
+            (new CallCenters($request))->get()
         );
     }
 }

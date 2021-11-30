@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Ratings\CallCenters;
 /**
  * @method \App\Http\Controllers\Ratings\Data\Users userRowDateTemplate()
  *
- * @method calculateData()
- * @method calculateDataRow()
+ * @method getResult()
+ * @method getResultRow()
  * @method setComings()
  * @method findComingsData()
  * @method setRequests()
  */
-trait CallCenterItog
+trait CallCenterResult
 {
     /**
      * Экземпляр объекта данных обрабатываемого сотрудника
@@ -25,10 +25,10 @@ trait CallCenterItog
      * 
      * @return $this
      */
-    public function calculateData()
+    public function getResult()
     {
         foreach ($this->data->pins as $row) {
-            $this->data->users[] = $this->calculateDataRow($row);
+            $this->data->users[] = $this->getResultRow($row);
         }
 
         return $this;
@@ -40,7 +40,7 @@ trait CallCenterItog
      * @param object $row
      * @return object
      */
-    public function calculateDataRow($row)
+    public function getResultRow($row)
     {
         $this->row = $row;
 
