@@ -4,6 +4,11 @@ namespace App\Http\Controllers\Ratings\Data;
 
 use App\Models\User;
 
+/**
+ * @method findUsers()
+ * @method getTemplateUserRow()
+ * @method userRowDateTemplate()
+ */
 trait Users
 {
     /**
@@ -15,22 +20,22 @@ trait Users
     public function findUsers($pins = [])
     {
         $pins = array_unique([...$pins, ...$this->data->pins]);
+        $this->data->newToOld = collect([]);
 
         User::where(function ($query) use ($pins) {
             $query->whereIn('pin', $pins)
                 ->orWhereIn('old_pin', $pins);
         })
             ->get()
-            ->map(function ($row) use (&$users, &$old_to_new) {
+            ->map(function ($row) use (&$users) {
 
-                $old_to_new[$row->old_pin] = $row->pin;
+                $this->data->newToOld[$row->pin] = $row->old_pin;
                 $users[$row->pin] = $this->getTemplateUserRow($row);
 
                 return $row;
             });
 
         $this->data->pins = collect($users ?? []);
-        $this->data->old_to_new = collect($old_to_new ?? []);
 
         return $this;
     }
@@ -49,6 +54,7 @@ trait Users
 
         $template = [
             'pin' => $row->pin ?? null,
+            'pinOld' => $this->data->newToOld[$row->pin] ?? null,
             'name' => trim($name),
             'fio' => preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', trim($name)),
             'oklad' => 0, # Оклад за месяц
@@ -62,8 +68,26 @@ trait Users
             'load' => 0, # Нагрузка
             'kassa' => 0, # Кассв по приходам оператора
             'itogo' => 0, # Итоговая сумма по рейтингу
+            'dates' => [], # Подробные данные по кажому дню
         ];
 
         return (object) $template;
+    }
+
+    /**
+     * Шаблон статистики сотрудника за один день
+     * 
+     * @param string $date
+     * @return object
+     */
+    public function userRowDateTemplate($date)
+    {
+        return (object) [
+            'date' => $date,
+            'timestamp' => strtotime($date),
+            'comings' => 0,
+            'requests' => 0,
+            'requestsAll' => 0,
+        ];
     }
 }

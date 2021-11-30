@@ -47,10 +47,10 @@ class CallCenters extends Controller
         $this->request = $request;
 
         $this->data = (object) [
+            'users' => [], # Данные расчитанного рейтинга
             'pins' => [], # Список всех сотрудников, найденных при расчете рейтинга
             'comings' => [], # Данные по приходам
             'requests' => [], # Подсчет заявок
-            'users' => [], # Данные расчитанного рейтинга
         ];
 
         $this->dates = new Dates(
