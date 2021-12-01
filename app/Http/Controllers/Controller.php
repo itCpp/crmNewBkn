@@ -216,4 +216,24 @@ class Controller extends BaseController
 
 		return $response;
 	}
+
+	/**
+	 * Проверяет, является ли массив простым списков
+	 * 
+	 * @param array
+	 * @return bool
+	 */
+	public static function is_array_list(array $array): bool
+	{
+		$check_key = 0;
+
+		foreach ($array as $key => $value) {
+			if ($key !== $check_key)
+				return false;
+
+			$check_key++;
+		}
+
+		return true;
+	}
 }
