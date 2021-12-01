@@ -106,7 +106,77 @@ class Statistics extends Controller
      */
     public function getStatisticIp($ip = null)
     {
-        return [];
+        $dates[] = $this->date;
+        $time = strtotime($this->date);
+
+        $names = [
+            'count' => "Посещения сайта",
+            'block' => "Блокированные посещения",
+            'requests' => "Оставлено заявок",
+        ];
+
+        for ($i = 1; $i < 14; $i++) {
+            $time -= 86400;
+            $date = date("Y-m-d", $time);
+            $dates[] = $date;
+            $this->data['dates'][$date] = [];
+        }
+
+        StatVisitSite::whereIp($ip)
+            ->whereIn('date', $dates)
+            ->orderBy('date', "DESC")
+            ->get()
+            ->map(function ($row) {
+                $this->data['dates'][$row->date][] = $row;
+            });
+
+        $chart = [];
+
+        foreach ($this->data['dates'] as $date => $rows) {
+
+            $day = date("d.m.Y", strtotime($date));
+
+            foreach ($rows as $row) {
+
+                $site = idn_to_utf8($row->site);
+
+                if ($row->count > 0) {
+                    $chart['count'][] = [
+                        'name' => $site,
+                        'date' => $date,
+                        'day' => $day,
+                        'value' => $row->count,
+                    ];
+                }
+
+                if ($row->count_block > 0) {
+                    $chart['block'][] = [
+                        'name' => $site,
+                        'date' => $date,
+                        'day' => $day,
+                        'value' => $row->count_block,
+                    ];
+                }
+
+                if ($row->requests > 0) {
+                    $chart['requests'][] = [
+                        'name' => $site,
+                        'date' => $date,
+                        'day' => $day,
+                        'value' => $row->requests,
+                    ];
+                }
+            }
+        }
+
+        foreach ($chart as $type => $data) {
+            $this->data['chart'][] = [
+                'name' => $names[$type] ?? $type,
+                'data' => $data,
+            ];
+        }
+
+        return $this->data;
     }
 
     /**
