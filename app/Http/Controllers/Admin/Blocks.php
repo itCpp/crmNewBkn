@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\Blocks\BlockList;
 use App\Http\Controllers\Admin\Blocks\IpInfos;
 use App\Http\Controllers\Admin\Blocks\Statistics;
 use App\Models\Company\BlockHost;
@@ -59,6 +60,19 @@ class Blocks extends Controller
     {
         return response()->json(
             (new IpInfos($request))->getIpInfo($request->ip)
+        );
+    }
+
+    /**
+     * Вывод заблокированных адресов
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function getBlockData(Request $request)
+    {
+        return response()->json(
+            BlockList::get($request),
         );
     }
 }
