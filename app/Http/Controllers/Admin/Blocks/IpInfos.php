@@ -39,12 +39,26 @@ class IpInfos extends Controller
     }
 
     /**
-     * Вывод информации по IP-адресу
+     * Вывод только информации об IP
      * 
      * @param null|string $ip
      * @return array
      */
     public function getIpInfo($ip = null)
+    {
+        if (!$ip = ($ip ?: $this->request->ip))
+            throw new Exceptions("IP адрес не определен");
+        
+        return $this->checkInfoData($ip);
+    }
+
+    /**
+     * Вывод информации по IP-адресу и его статистику
+     * 
+     * @param null|string $ip
+     * @return array
+     */
+    public function getIpInfoAndStat($ip = null)
     {
         if (!$ip = ($ip ?: $this->request->ip))
             throw new Exceptions("IP адрес не определен");

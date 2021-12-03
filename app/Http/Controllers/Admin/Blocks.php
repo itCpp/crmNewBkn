@@ -51,12 +51,25 @@ class Blocks extends Controller
     }
 
     /**
-     * Информация по IP-адресу
+     * Информация по IP-адресу и его статистика
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public static function ipInfo(Request $request)
+    {
+        return response()->json(
+            (new IpInfos($request))->getIpInfoAndStat($request->ip)
+        );
+    }
+
+    /**
+     * Информация по IP-адресу для использования на сторонних сервисах
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function getIpInfo(Request $request)
     {
         return response()->json(
             (new IpInfos($request))->getIpInfo($request->ip)
