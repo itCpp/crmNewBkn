@@ -27,6 +27,8 @@ Route::post('login', 'Users\Auth@login');
 /** Отмена запроса на авторизацию */
 Route::post('loginCancel', 'Users\Auth@loginCancel');
 
+include __DIR__ . "/api/api.free.php";
+
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function () {
 
