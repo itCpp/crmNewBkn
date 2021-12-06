@@ -35,16 +35,18 @@ class Views extends Controller
             ->paginate(50);
 
         foreach ($data as $row) {
-            
+
             $row->link = "http://" . $row->site;
 
             if ($row->page)
                 $row->link .= $row->page;
-            
+
             $this->agent->setUserAgent($row->user_agent);
 
             $row->robot = $this->agent->isRobot();
             $row->platform = $this->agent->platform();
+            $row->desktop = $this->agent->isDesktop();
+            $row->phone = $this->agent->isPhone();
 
             $rows[] = $row->toArray();
         }
