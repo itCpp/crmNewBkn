@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Admin\Blocks\BlockList;
 use App\Http\Controllers\Admin\Blocks\IpInfos;
 use App\Http\Controllers\Admin\Blocks\Statistics;
+use App\Http\Controllers\Admin\Blocks\Views;
 use App\Models\Company\BlockHost;
 use Illuminate\Http\Request;
 
@@ -85,7 +86,20 @@ class Blocks extends Controller
     public static function getBlockData(Request $request)
     {
         return response()->json(
-            BlockList::get($request),
+            BlockList::get($request)
+        );
+    }
+
+    /**
+     * Вывод данных о просмотрах
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getViews(Request $request)
+    {
+        return response()->json(
+            Views::get($request)
         );
     }
 }

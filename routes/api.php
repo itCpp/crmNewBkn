@@ -330,6 +330,9 @@ Route::group(['middleware' => 'user.token'], function () {
             Route::post('ipInfo', 'Admin\Blocks@ipInfo');
             /** Вывод заблокированных адресов */
             Route::post('getBlockData', 'Admin\Blocks@getBlockData');
+
+            /** Вывод данных о просмотрах */
+            Route::post('getViews', 'Admin\Blocks@getViews');
         });
     });
 });
