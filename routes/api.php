@@ -29,6 +29,9 @@ Route::post('loginCancel', 'Users\Auth@loginCancel');
 
 include __DIR__ . "/api/api.free.php";
 
+/** Маршрутизация внутреннего чата */
+include __DIR__ . "/api/api.chat.php";
+
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function () {
 

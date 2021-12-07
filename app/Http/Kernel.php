@@ -69,5 +69,7 @@ class Kernel extends HttpKernel
         'user.can' => \App\Http\Middleware\UserCan::class,
         'permits.requests' => \App\Http\Middleware\CheckPermitsUserForRequests::class,
 
+        'user.old.token' => \App\Http\Middleware\AuthOldToken::class,
+
     ];
 }
