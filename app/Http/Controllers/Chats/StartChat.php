@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Chats;
 
 use App\Http\Controllers\Controller;
-use App\Models\ChatIdUser;
+use App\Models\ChatRooms;
+use App\Models\ChatRoomsUser;
 use App\Models\ChatMessage;
 use App\Models\CrmMka\CrmUser as User;
 use Illuminate\Http\Request;
@@ -35,16 +36,20 @@ class StartChat extends Controller
     /**
      * Вывод списка чатов сотрудника
      * 
+     * @param bool $get_id
      * @return array
      */
-    public function getChatsRooms()
+    public function getChatsRooms($get_id = false)
     {
-        $chats = ChatIdUser::where('user_id', $this->request->user()->pin)
+        $chats = ChatRoomsUser::where('user_id', $this->request->user()->id)
             ->get()
             ->map(function ($row) {
                 return $row->chat_id;
             })
             ->toArray();
+
+        if ($get_id)
+            return $chats;
 
         $rooms = $this->getChatsRoomsData($chats);
 
@@ -63,37 +68,102 @@ class StartChat extends Controller
      */
     public function getChatsRoomsData($chats = [])
     {
-        User::whereIn('id', $chats)
-            ->get()
-            ->map(function ($row) use (&$rooms) {
+        $rows = ChatRooms::whereIn('id', $chats);
 
-                $message = $this->findLastMessage($row->id);
+        foreach ($rows->get() as $row) {
 
-                $rooms[] = [
-                    'id' => $row->id,
-                    'name' => $row->fullName,
-                    'pin' => $row->pin,
-                    'message' => $message,
-                    'sort' => strtotime($message['created_at'] ?? null),
-                ];
+            $row->users = $row->users()
+                ->where('user_id', '!=', $this->request->user()->id)
+                ->get();
 
-                return $row;
-            });
-        
+            $rooms[] = $this->createChatRoomRow($row->toArray());
+        }
+
+        // User::whereIn('id', $chats)
+        //     ->get()
+        //     ->map(function ($row) use (&$rooms) {
+
+        //         $message = $this->findLastMessage($row->id);
+
+        //         $rooms[] = [
+        //             'id' => $row->id,
+        //             'name' => $row->fullName,
+        //             'pin' => $row->pin,
+        //             'message' => $message,
+        //             'sort' => strtotime($message['created_at'] ?? null),
+        //         ];
+
+        //         return $row;
+        //     });
+
         return $rooms ?? [];
     }
 
     /**
-     * Поиск последнего сообщения
+     * Создание массива данных чат группы
      * 
-     * @param int $chat_id
-     * @return null|array
+     * @param array
+     * @return array
      */
-    public function findLastMessage($chat_id)
+    public function createChatRoomRow($row)
     {
-        if (!$message = ChatMessage::where('chat_id', $chat_id)->orderBy('id', "DESC")->first())
-            return null;
+        $id = $row['id'] ?? null;
+        $message = Messages::findLastMessage($id);
 
-        return $message->toArray();
+        return [
+            'id' => $id,
+            'name' => $row['name'] ?? null,
+            'pin' => $row['pin'] ?? null,
+            'user_id' => $row['user_id'] ?? null,
+            'message' => $message,
+            'sort' => strtotime($message['created_at'] ?? null),
+            'users' => !empty($row['users']) ? count($row['users'] ?? []) + 1 : null,
+        ];
+    }
+
+    /**
+     * Поиск сотрудника или чат группы
+     * 
+     * @return array
+     */
+    public function search()
+    {
+        return [
+            'rooms' => $this->searchChatsRooms(),
+        ];
+    }
+
+    /**
+     * Поисковой запрос
+     * 
+     * @return array
+     */
+    public function searchChatsRooms()
+    {
+        return $this->findUsers()
+            ->map(function ($row) {
+                return array_merge(
+                    $this->createChatRoomRow($row->toArray()),
+                    ['new_chat_id' => true],
+                );
+            })
+            ->toArray();
+    }
+
+    /**
+     * Поиск чатов между пользователями по пользователям
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function findUsers()
+    {
+        return User::select('id as user_id', 'fullName as name', 'pin')
+            ->where('id', '!=', $this->request->user()->id)
+            ->where('state', 'Работает')
+            ->where(function ($query) {
+                $query->where('pin', 'LIKE', "%{$this->request->search}%")
+                    ->orWhere('fullName', 'LIKE', "%{$this->request->search}%");
+            })
+            ->get();
     }
 }

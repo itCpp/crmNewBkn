@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ChatIdUser extends Model
+class ChatRoomsUser extends Model
 {
     use HasFactory;
 
@@ -14,5 +14,5 @@ class ChatIdUser extends Model
      * 
      * @var string
      */
-    protected $table = "chat_id_user";
+    protected $table = "chat_rooms_user";
 }

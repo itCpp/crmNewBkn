@@ -15,10 +15,11 @@ class CreateChatMessagesTable extends Migration
     {
         Schema::create('chat_messages', function (Blueprint $table) {
             $table->id();
-            $table->string('pin', 50)->comment('Автор сообщения')->index();
-            $table->integer('chat_id')->comment('Идентификатор чата')->index();
+            $table->bigInteger('user_id')->comment('Идентификатор автора сообщения')->index();
+            $table->bigInteger('chat_id')->comment('Идентификатор чата')->index();
             $table->string('type', 255)->nullable()->comment('Тип сообщения');
-            $table->text('message')->comment('Содержание сообщения');
+            $table->text('message')->comment('Содержание сообщения или подписи');
+            $table->json('body')->nullable()->comment('Прикрепленные файлы к сообщению');
             $table->timestamps();
             $table->softDeletes();
             $table->index(['chat_id', 'deleted_at']);

@@ -12,4 +12,8 @@ return Route::group(['prefix' => "chat", 'middleware' => "user.old.token"], func
 
     /** Информация по IP-адресу */
     Route::post('startChat', 'Chats\Chat@startChat');
+    /** Поиск сотрудника или чат группы */
+    Route::post('searchRoom', 'Chats\Chat@searchRoom');
+    /** Вывод сообщений в группе */
+    Route::post('getMessages', 'Chats\Chat@getMessages');
 });
