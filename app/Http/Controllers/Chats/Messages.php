@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Chats;
 
 use Exception;
+use App\Events\Chat\NewMessage;
 use App\Http\Controllers\Controller;
 use App\Models\ChatRoom;
 use App\Models\ChatRoomsUser;
@@ -78,10 +79,17 @@ class Messages extends Controller
             'chat_id' => $request->chat_id,
             'message' => $request->message,
             'body' => null,
-        ]); 
+        ]);
+
+        $message = $message->toArray();
+
+        broadcast(new NewMessage($message, $this->channels ?? []));
 
         return [
-            'message' => $message,
+            'message' => array_merge(
+                $message,
+                ['uuid' => $request->uuid]
+            ),
         ];
     }
 
@@ -143,6 +151,9 @@ class Messages extends Controller
 
         // foreach ($users_list as $user) {
 
+        //     if ($user != $request->user()->id)
+        //         $this->channels[] = $user;
+
         //     if (in_array($user, $users))
         //         continue;
 
@@ -158,6 +169,9 @@ class Messages extends Controller
             ->toArray();
 
         foreach ($users_list as $user) {
+
+            if ($user != $request->user()->id)
+                $this->channels[] = $user;
 
             if (in_array($user, $users))
                 continue;

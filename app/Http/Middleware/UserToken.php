@@ -11,6 +11,7 @@ class UserToken
 {
     /**
      * Handle an incoming request.
+     * @todo Убрать перенаправление на авторизацию по токену староцрэмочного пользователя
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
