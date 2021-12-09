@@ -30,6 +30,7 @@ class StartChat extends Controller
     {
         return [
             'rooms' => $this->getChatsRooms(),
+            'userId' => $this->request->user()->id,
         ];
     }
 

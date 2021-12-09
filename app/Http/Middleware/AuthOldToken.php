@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Http\Controllers\Users\UderOldCrm;
 use App\Models\CrmMka\CrmUser;
 use App\Models\CrmMka\CrmUsersToken;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class AuthOldToken
             return response()->json(['message' => "Доступ ограничен"], 403);
 
         $request->setUserResolver(function () use ($user) {
-            return (object) $user->toArray();
+            return new UderOldCrm($user->toArray());
         });
 
         return $next($request);

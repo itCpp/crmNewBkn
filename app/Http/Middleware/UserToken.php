@@ -18,6 +18,9 @@ class UserToken
      */
     public function handle(Request $request, Closure $next)
     {
+        if ($request->header('X-Old-Token') == $request->bearerToken())
+            return (new AuthOldToken)->handle($request, $next);
+
         if (!$user = Users::checkToken($request->bearerToken()))
             return response()->json(['message' => "Ошибка авторизации"], 401);
 
