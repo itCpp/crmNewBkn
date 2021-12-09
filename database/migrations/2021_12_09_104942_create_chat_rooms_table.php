@@ -16,7 +16,9 @@ class CreateChatRoomsTable extends Migration
         Schema::create('chat_rooms', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id')->comment('Идентификатор пользователя, создавшего чат');
+            $table->string('user_to_user', 255)->nullable()->comment('Личная чат группа сотрудников')->index();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

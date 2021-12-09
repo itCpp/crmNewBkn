@@ -14,8 +14,8 @@ class CreateChatRoomsUserTable extends Migration
     public function up()
     {
         Schema::create('chat_rooms_user', function (Blueprint $table) {
-            $table->bigInteger('chat_id')->comment('Идентификатор чата');
-            $table->bigInteger('user_id')->comment('Идентификатор сотрудника');
+            $table->bigInteger('chat_id')->comment('Идентификатор чата')->index();
+            $table->bigInteger('user_id')->comment('Идентификатор сотрудника')->index();
             $table->unique(['chat_id', 'user_id']);
         });
     }

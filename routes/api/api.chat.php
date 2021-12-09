@@ -16,4 +16,6 @@ return Route::group(['prefix' => "chat", 'middleware' => "user.old.token"], func
     Route::post('searchRoom', 'Chats\Chat@searchRoom');
     /** Вывод сообщений в группе */
     Route::post('getMessages', 'Chats\Chat@getMessages');
+    /** Отправка сообщений */
+    Route::post('sendMessage', 'Chats\Chat@sendMessage');
 });

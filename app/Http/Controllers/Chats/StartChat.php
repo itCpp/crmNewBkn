@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Chats;
 
 use App\Http\Controllers\Controller;
-use App\Models\ChatRooms;
+use App\Models\ChatRoom;
 use App\Models\ChatRoomsUser;
 use App\Models\ChatMessage;
 use App\Models\CrmMka\CrmUser as User;
@@ -54,7 +54,7 @@ class StartChat extends Controller
         $rooms = $this->getChatsRoomsData($chats);
 
         usort($rooms, function ($a, $b) {
-            return (int) $a['sort'] > (int) $b['sort'];
+            return (int) $a['sort'] - (int) $b['sort'];
         });
 
         return $rooms;
@@ -62,39 +62,40 @@ class StartChat extends Controller
 
     /**
      * Поиск наименований чатов
+     * @todo При переходе на новую ЦРМ заменить выборку отношений пользователей к чат-группам
      * 
      * @param array $chats
      * @return array
      */
     public function getChatsRoomsData($chats = [])
     {
-        $rows = ChatRooms::whereIn('id', $chats);
+        $rows = ChatRoom::whereIn('id', $chats);
 
         foreach ($rows->get() as $row) {
 
-            $row->users = $row->users()
-                ->where('user_id', '!=', $this->request->user()->id)
+            // $row->users = $row->users()
+            //     ->where('user_id', '!=', $this->request->user()->id)
+            //     ->get();
+
+            $users = ChatRoomsUser::where('chat_id', $row->id)
+                ->get()
+                ->map(function ($row) {
+                    return $row->user_id;
+                })
+                ->toArray();
+
+            $row->users = User::whereIn('id', $users)
+                ->where('id', '!=', $this->request->user()->id)
                 ->get();
+
+            if (count($row->users) == 1) {
+                $row->name = $row->users[0]->fullName;
+                $row->pin = $row->users[0]->pin;
+                $row->user_id = $row->users[0]->id;
+            }
 
             $rooms[] = $this->createChatRoomRow($row->toArray());
         }
-
-        // User::whereIn('id', $chats)
-        //     ->get()
-        //     ->map(function ($row) use (&$rooms) {
-
-        //         $message = $this->findLastMessage($row->id);
-
-        //         $rooms[] = [
-        //             'id' => $row->id,
-        //             'name' => $row->fullName,
-        //             'pin' => $row->pin,
-        //             'message' => $message,
-        //             'sort' => strtotime($message['created_at'] ?? null),
-        //         ];
-
-        //         return $row;
-        //     });
 
         return $rooms ?? [];
     }

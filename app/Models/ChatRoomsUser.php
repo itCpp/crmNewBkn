@@ -15,4 +15,21 @@ class ChatRoomsUser extends Model
      * @var string
      */
     protected $table = "chat_rooms_user";
+
+    /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'user_id',
+        'chat_id',
+    ];
 }

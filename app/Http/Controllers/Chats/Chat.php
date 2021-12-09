@@ -45,4 +45,17 @@ class Chat extends Controller
             (new Messages())->get($request)
         );
     }
+
+    /**
+     * Вывод сообщений чата
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function sendMessage(Request $request)
+    {
+        return response()->json(
+            (new Messages())->sendMessage($request)
+        );
+    }
 }
