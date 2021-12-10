@@ -33,6 +33,7 @@ class Messages extends Controller
             ->paginate(50);
 
         foreach ($data as $row) {
+            $row->my = $row->user_id == $request->user()->id;
             $rows[] = $row->toArray();
         }
 
@@ -82,14 +83,16 @@ class Messages extends Controller
         ]);
 
         $message = $message->toArray();
+        $room = (new StartChat($request))->getRoomData($this->room);
 
-        broadcast(new NewMessage($message, $this->channels ?? []));
+        broadcast(new NewMessage($message, $room, $this->channels ?? []));
 
         return [
             'message' => array_merge(
                 $message,
-                ['uuid' => $request->uuid]
+                ['uuid' => $request->uuid, 'my' => true]
             ),
+            'room' => $room,
         ];
     }
 

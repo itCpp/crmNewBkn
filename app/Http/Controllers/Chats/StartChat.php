@@ -55,7 +55,7 @@ class StartChat extends Controller
         $rooms = $this->getChatsRoomsData($chats);
 
         usort($rooms, function ($a, $b) {
-            return (int) $a['sort'] - (int) $b['sort'];
+            return (int) $b['sort'] - (int) $a['sort'];
         });
 
         return $rooms;
@@ -167,5 +167,16 @@ class StartChat extends Controller
                     ->orWhere('fullName', 'LIKE', "%{$this->request->search}%");
             })
             ->get();
+    }
+
+    /**
+     * Данные чат группы для формирования списка
+     * 
+     * @param \App\Models\ChatRoom $room
+     * @return array
+     */
+    public function getRoomData(ChatRoom $room)
+    {
+        return $this->getChatsRoomsData([$room->id])[0] ?? null;
     }
 }
