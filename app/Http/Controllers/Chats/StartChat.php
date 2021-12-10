@@ -159,13 +159,25 @@ class StartChat extends Controller
      */
     public function findUsers()
     {
+        $user = $this->request->user()->id;
+
+        $exists = ChatRoom::where('user_to_user', 'LIKE', "%{$user}%")
+            ->get()
+            ->map(function ($row) use ($user) {
+                $id = str_replace([",", $user], "", $row->user_to_user);
+                return (int) $id;
+            })
+            ->toArray();
+
         return User::select('id as user_id', 'fullName as name', 'pin')
-            ->where('id', '!=', $this->request->user()->id)
+            ->whereNotIn('id', [...[$user], ...$exists])
             ->where('state', 'Работает')
             ->where(function ($query) {
                 $query->where('pin', 'LIKE', "%{$this->request->search}%")
                     ->orWhere('fullName', 'LIKE', "%{$this->request->search}%");
             })
+            ->orderBy('fullName')
+            ->limit(20)
             ->get();
     }
 
