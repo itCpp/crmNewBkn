@@ -83,9 +83,11 @@ class Messages extends Controller
         ]);
 
         $message = $message->toArray();
-        $room = (new StartChat($request))->getRoomData($this->room);
 
-        broadcast(new NewMessage($message, $room, $this->channels ?? []));
+        $rommData = new StartChat($request);
+        $room = $rommData->getRoomData($this->room);
+
+        broadcast(new NewMessage($message, $rommData->setOtherName($room), $this->channels ?? []));
 
         return [
             'message' => array_merge(

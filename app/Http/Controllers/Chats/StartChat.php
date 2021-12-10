@@ -179,4 +179,19 @@ class StartChat extends Controller
     {
         return $this->getChatsRoomsData([$room->id])[0] ?? null;
     }
+
+    /**
+     * Применение имени группы для собеседника
+     * @todo При переходе на новую авторизацию, заменить ключ с имененм пользователя
+     * 
+     * @param array $room
+     * @return array
+     */
+    public function setOtherName($room)
+    {
+        $room['name'] = $this->request->user()->fullName;
+        $room['pin'] = $this->request->user()->pin;
+
+        return $room;
+    }
 }
