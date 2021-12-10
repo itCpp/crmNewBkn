@@ -118,7 +118,7 @@ class StartChat extends Controller
             'pin' => $row['pin'] ?? null,
             'user_id' => $row['user_id'] ?? null,
             'message' => $message,
-            'sort' => strtotime($message['created_at'] ?? null),
+            'sort' => strtotime($message['created_at'] ?? $row['created_at']),
             'users' => !empty($row['users']) ? count($row['users'] ?? []) + 1 : null,
         ];
     }
