@@ -85,19 +85,19 @@ class Messages extends Controller
             'body' => $this->getBodyMessage($request),
         ]);
 
-        $message = $message->toArray();
+        $data = $message->toArray();
 
         $rommData = new StartChat($request);
         $room = $rommData->getRoomData($this->room);
 
-        broadcast(new NewMessage($message, $rommData->setOtherName($room), $this->channels ?? []));
+        broadcast(new NewMessage($data, $rommData->setOtherName($room), $this->channels ?? []));
 
         if ($message->body)
             UploadFilesChatJob::dispatch($message);
 
         return [
             'message' => array_merge(
-                $message,
+                $data,
                 ['uuid' => $request->uuid, 'my' => true]
             ),
             'room' => $room,
