@@ -131,7 +131,7 @@ class StartChat extends Controller
     public function search()
     {
         return [
-            'rooms' => $this->searchChatsRooms(),
+            'rooms' => $this->request->search ? $this->searchChatsRooms() : $this->getChatsRooms(),
         ];
     }
 

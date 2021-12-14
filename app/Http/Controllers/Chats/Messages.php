@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Chats;
 
 use Exception;
+use SplFileInfo;
 use App\Events\Chat\NewMessage;
 use App\Http\Controllers\Controller;
+use App\Jobs\Chat\UploadFilesChatJob;
 use App\Models\ChatRoom;
 use App\Models\ChatRoomsUser;
 use App\Models\ChatMessage;
@@ -78,8 +80,9 @@ class Messages extends Controller
         $message = ChatMessage::create([
             'user_id' => $request->user()->id,
             'chat_id' => $request->chat_id,
+            'type' => $request->type,
             'message' => $request->message,
-            'body' => null,
+            'body' => $this->getBodyMessage($request),
         ]);
 
         $message = $message->toArray();
@@ -89,6 +92,9 @@ class Messages extends Controller
 
         broadcast(new NewMessage($message, $rommData->setOtherName($room), $this->channels ?? []));
 
+        if ($message->body)
+            UploadFilesChatJob::dispatch($message);
+
         return [
             'message' => array_merge(
                 $message,
@@ -96,6 +102,51 @@ class Messages extends Controller
             ),
             'room' => $room,
         ];
+    }
+
+    /**
+     * Формирование массива тела сообщения с вложениями
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function getBodyMessage(Request $request)
+    {
+        $body = [];
+
+        if (!$request->urls)
+            return $body;
+
+        if (is_array($request->urls)) {
+            foreach ($request->urls as $url) {
+                $body[] = $this->bodyRowTempate([
+                    'name' => (new SplFileInfo($url))->getBasename(),
+                    'url' => $url
+                ]);
+            }
+        }
+
+        return $body;
+    }
+
+    /**
+     * Элемент объекта тела вложений сообщения
+     * 
+     * @param array
+     * @return array
+     */
+    public function bodyRowTempate($data = [])
+    {
+        return array_merge(
+            $data,
+            [
+                'name' => $data['name'] ?? null,
+                'hash' => null,
+                'type' => null,
+                'mimeType' => null,
+                'loading' => true,
+            ]
+        );
     }
 
     /**

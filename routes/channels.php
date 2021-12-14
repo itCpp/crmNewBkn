@@ -54,11 +54,12 @@ Broadcast::channel('App.Requests.{pin}', function ($user, $pin) {
 /** Информация о всех новых заявках для всех секторов или коллцентров */
 Broadcast::channel('App.Requests.All.{callcenter}.{sector}', RequestsAllChannel::class);
 
+/** Канал присутствия чата */
 Broadcast::channel('Chat', function ($user) {
     return $user->toPresenceData();
 });
 
-/** Информация о личных заявках */
+/** Общая информация по чату пользователя */
 Broadcast::channel('Chat.Room.{id}', function ($user, $id) {
     return (int) $user->id == (int) $id;
 });

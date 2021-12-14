@@ -22,15 +22,9 @@
     </head>
     <body class="antialiased">
         
-        <div class="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
+        <div class="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 py-4 sm:pt-0">
 
             <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-
-                <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-2" style="min-width: 1000px;">
-                    <div class="grid grid-cols-1 md:grid-cols-1" style="padding: 0 1rem;">
-                        @php dump($row) @endphp
-                    </div>
-                </div>
 
                 <div class="flex justify-center mt-4 sm:items-center sm:justify-between">
                     <div class="text-center text-sm text-gray-500 sm:text-left">
@@ -55,6 +49,13 @@
                         Laravel v{{ Illuminate\Foundation\Application::VERSION }} (PHP v{{ PHP_VERSION }})
                     </div>
                 </div>
+
+                <div class="mt-4 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-2" style="min-width: 1000px;">
+                    <div class="grid grid-cols-1 md:grid-cols-1" style="padding: 0 1rem;">
+                        @php dump($row) @endphp
+                    </div>
+                </div>
+                
             </div>
         </div>
         <script>
