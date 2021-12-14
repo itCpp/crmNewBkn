@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Chat;
 
+use App\Events\Chat\UpdateMessage;
 use App\Http\Controllers\Chats\Files;
 use App\Models\ChatMessage;
 use Illuminate\Bus\Queueable;
@@ -54,6 +55,8 @@ class UploadFilesChatJob implements ShouldQueue
 
         $this->message->body = $body;
         $this->message->save();
+
+        broadcast(new UpdateMessage($this->message->toArray()));
     }
 
     /**
