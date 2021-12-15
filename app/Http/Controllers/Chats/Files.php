@@ -222,6 +222,26 @@ class Files
     }
 
     /**
+     * Выдача файла по запросу
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param string $hash
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
+    public function responseFile(Request $request, $hash)
+    {
+        if (!$file = ChatFile::whereHash($hash)->first())
+            return response(['message' => "Файл не найден"], 404);
+
+        if (!$this->disk->exists($file->path . "/" . $file->name))
+            return response(['message' => "Файл не найден"], 404);
+
+        $path = $this->disk->path($file->path . "/" . $file->name);
+
+        return response()->file($path);
+    }
+
+    /**
      * Определение типа файла по mime-type
      * 
      * @param string $mime

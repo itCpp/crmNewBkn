@@ -19,7 +19,8 @@ class AuthOldToken
      */
     public function handle(Request $request, Closure $next)
     {
-        $token = CrmUsersToken::whereToken($request->bearerToken())
+        $token = CrmUsersToken::whereToken($request->bearerToken() ?? $request->get('token'))
+            ->where('token', '!=', null)
             ->whereDate('created_at', now())
             ->orderBy('id', "DESC")
             ->first();

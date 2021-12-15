@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Chats;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChatFile;
 use Illuminate\Http\Request;
 
 class Chat extends Controller
@@ -57,5 +58,17 @@ class Chat extends Controller
         return response()->json(
             (new Messages())->sendMessage($request)
         );
+    }
+
+    /**
+     * Выдача файла для чата
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param string $hash
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
+    public static function file(Request $request, $hash)
+    {
+        return (new Files)->responseFile($request, $hash);
     }
 }

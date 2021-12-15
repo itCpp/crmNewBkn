@@ -21,4 +21,7 @@ return Route::group(['prefix' => "chat", 'middleware' => "user.old.token"], func
     Route::post('getMessages', 'Chats\Chat@getMessages');
     /** Отправка сообщений */
     Route::post('sendMessage', 'Chats\Chat@sendMessage');
+
+    /** Выдача файла */
+    Route::get('file/{hash?}', 'Chats\Chat@file');
 });
