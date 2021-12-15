@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use FFMpeg\FFMpeg;
 
 class Files
 {
@@ -28,6 +29,16 @@ class Files
     public function __construct()
     {
         $this->disk = Storage::disk('chat');
+    }
+
+    /**
+     * Внешний доступ к свойству
+     * 
+     * @return \Illuminate\Support\Facades\Storage
+     */
+    public function disk()
+    {
+        return $this->disk;
     }
 
     /**
@@ -54,21 +65,31 @@ class Files
         if (!$this->downloadRemoteFile($url, $tmp))
             throw new Exception("Не удалось скачать файл");
 
+        $hash = hash_file('md5', $tmp);
+
+        if ($find = ChatFile::whereHash($hash)->first())
+            return $find;
+
         $file = new File($tmp);
+        $mime_type = $file->getMimeType();
 
         $data = [
-            'hash' => hash_file('md5', $tmp),
+            'hash' => $hash,
             'name' => $name,
             'original_name' => $basename,
             'path' => $path,
-            'mime_type' => $file->getMimeType(),
+            'type' => $this->mime2type($mime_type),
+            'mime_type' => $mime_type,
             'size' => $file->getSize(),
         ];
 
-        if ($find = ChatFile::whereHash($data['hash'])->first())
-            return $find;
-
         $this->disk->putFileAs($path, $file, $name);
+
+        if ($data['type'] == "audio") {
+            $data['duration'] = $this->getDurationAudio(
+                $this->disk->path($path . "/" . $name)
+            );
+        }
 
         return ChatFile::create($data);
     }
@@ -182,6 +203,22 @@ class Files
         fclose($i_handle);
         fclose($o_handle);
         return $cnt;
+    }
+
+    /**
+     * Определяет длину аудио файла
+     * 
+     * @param string $path
+     * @return int|null
+     */
+    public function getDurationAudio($path)
+    {
+        $ffmpeg = FFMpeg::create();
+        $audio = $ffmpeg->open($path);
+
+        $duration = (int) $audio->getFormat()->get('duration');
+
+        return $duration ? round($duration, 0) : null;
     }
 
     /**

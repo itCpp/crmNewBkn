@@ -75,10 +75,16 @@ class UploadFilesChatJob implements ShouldQueue
             $file['name'] = $uploaded->original_name ?? null;
             $file['hash'] = $uploaded->hash ?? null;
             $file['extension'] = $this->files->mime2ext($uploaded->mime_type);
-            $file['type'] = $this->files->mime2type($uploaded->mime_type);
+            $file['type'] = $uploaded->type ?? null;
+
+            if ($file['type'] == "audio") {
+                $file['duration'] = $uploaded->duration;
+            }
 
             if (isset($file['error']))
                 unset($file['error']);
+
+            unset($file['url']);
 
         } catch (\Exception $e) {
             $file['error'] = $e->getMessage();

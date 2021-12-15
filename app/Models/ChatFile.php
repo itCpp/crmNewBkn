@@ -19,7 +19,9 @@ class ChatFile extends Model
         'name',
         'original_name',
         'path',
+        'type',
         'mime_type',
         'size',
+        'duration',
     ];
 }
