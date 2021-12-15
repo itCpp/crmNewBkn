@@ -79,7 +79,7 @@ class Messages extends Controller
 
         $message = ChatMessage::create([
             'user_id' => $request->user()->id,
-            'chat_id' => $request->chat_id,
+            'chat_id' => (int) $request->chat_id,
             'type' => $request->type,
             'message' => $request->message,
             'body' => $this->getBodyMessage($request),
@@ -90,7 +90,7 @@ class Messages extends Controller
         $rommData = new StartChat($request);
         $room = $rommData->getRoomData($this->room);
 
-        broadcast(new NewMessage($data, $rommData->setOtherName($room), $this->channels ?? []));
+        broadcast(new NewMessage($data, $rommData->setOtherName($room), $this->channels ?? []))->toOthers();
 
         if ($message->body)
             UploadFilesChatJob::dispatch($message);
@@ -226,7 +226,7 @@ class Messages extends Controller
 
         foreach ($users_list as $user) {
 
-            if ($user != $request->user()->id)
+            // if ($user != $request->user()->id)
                 $this->channels[] = $user;
 
             if (in_array($user, $users))
