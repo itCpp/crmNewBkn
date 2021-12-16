@@ -255,10 +255,10 @@ class Events extends Controller
      * Просмотр входящих событий
      * 
      * @param \Illuminate\Http\Request $request
-     * @param int $id
+     * @param int|string $id
      * @return view
      */
-    public function eventView(Request $request, int $id)
+    public function eventView(Request $request, int|string $id)
     {
         if ($id === "last")
             $id = IncomingEvent::max('id');
