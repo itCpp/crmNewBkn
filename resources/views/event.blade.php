@@ -42,6 +42,10 @@
                                 Next #{{ $next }}
                             </a>
                             @endif
+
+                            <a href="/event/last" class="ml-1 underline">
+                                Last
+                            </a>
                         </div>
                     </div>
 

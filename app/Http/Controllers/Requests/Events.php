@@ -260,6 +260,9 @@ class Events extends Controller
      */
     public function eventView(Request $request, int $id)
     {
+        if ($id === "last")
+            $id = IncomingEvent::max('id');
+
         $row = IncomingEvent::find($id);
 
         if ($row and self::checkIpForDecrypt($request->ip())) {
