@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Chats;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChatMessage;
 use App\Models\ChatRoom;
 use App\Models\ChatRoomsUser;
-use App\Models\ChatMessage;
+use App\Models\ChatRoomsViewTime;
 use App\Models\CrmMka\CrmUser as User;
 use Illuminate\Http\Request;
 
@@ -49,6 +50,8 @@ class StartChat extends Controller
             })
             ->toArray();
 
+        $this->chats = $chats;
+
         if ($get_id)
             return $chats;
 
@@ -58,7 +61,7 @@ class StartChat extends Controller
             return (int) $b['sort'] - (int) $a['sort'];
         });
 
-        return $rooms;
+        return $this->countNewMessages($rooms);
     }
 
     /**
@@ -70,9 +73,7 @@ class StartChat extends Controller
      */
     public function getChatsRoomsData($chats = [])
     {
-        $rows = ChatRoom::whereIn('id', $chats);
-
-        foreach ($rows->get() as $row) {
+        foreach (ChatRoom::whereIn('id', $chats)->get() as $row) {
 
             // $row->users = $row->users()
             //     ->where('user_id', '!=', $this->request->user()->id)
@@ -85,14 +86,21 @@ class StartChat extends Controller
                 })
                 ->toArray();
 
-            $row->users = User::whereIn('id', $users)
-                ->where('id', '!=', $this->request->user()->id)
+            $row->users = User::select('id', 'fullName as name', 'pin')
+                ->whereIn('id', $users)
+                // ->where('id', '!=', $this->request->user()->id)
                 ->get();
 
-            if (count($row->users) == 1) {
-                $row->name = $row->users[0]->fullName;
-                $row->pin = $row->users[0]->pin;
-                $row->user_id = $row->users[0]->id;
+            // Поиск имени чата при личной беседе
+            if (count($row->users) == 2) {
+                foreach ($row->users as $user) {
+                    if ($this->request->user()->id != $user->id) {
+                        $row->name = $user->name ?? null;
+                        $row->pin = $user->pin ?? null;
+                        $row->user_id = $user->id ?? null;
+                        break;
+                    }
+                }
             }
 
             $rooms[] = $this->createChatRoomRow($row->toArray());
@@ -119,8 +127,45 @@ class StartChat extends Controller
             'user_id' => $row['user_id'] ?? null,
             'message' => $message,
             'sort' => strtotime($message['created_at'] ?? ($row['created_at'] ?? null)),
-            'users' => !empty($row['users']) ? count($row['users'] ?? []) + 1 : null,
+            'users' => count($row['users'] ?? []) ?: null,
+            'members' => $row['users'] ?? [],
         ];
+    }
+
+    /**
+     * Подсчет количества новых сообщений в чатах
+     * 
+     * @param array $rooms
+     * @return array
+     */
+    public function countNewMessages($rooms)
+    {
+        foreach ($rooms as &$room) {
+            $room['count'] = $this->getCountNewMessagesChatRoom($room['id'], $this->request->user()->id);
+        }
+
+        return $rooms;
+    }
+
+    /**
+     * Подсчет количетсва новых сообщения дл пользователя
+     * 
+     * @param int $chat_id
+     * @param int $user_id
+     * @return int
+     */
+    public function getCountNewMessagesChatRoom($chat_id, $user_id)
+    {
+        $last = ChatRoomsViewTime::where([
+            ['id', $chat_id],
+            ['user_id', $user_id]
+        ])->first();
+
+        return ChatMessage::where('chat_id', $chat_id)
+            ->when(!empty($last->last_show), function ($query) use ($last) {
+                $query->where('created_at', '>', $last->last_show);
+            })
+            ->count();
     }
 
     /**
@@ -189,7 +234,11 @@ class StartChat extends Controller
      */
     public function getRoomData(ChatRoom $room)
     {
-        return $this->getChatsRoomsData([$room->id])[0] ?? null;
+        $data = $this->countNewMessages(
+            $this->getChatsRoomsData([$room->id])
+        );
+
+        return $data[0] ?? null;
     }
 
     /**
@@ -201,8 +250,21 @@ class StartChat extends Controller
      */
     public function setOtherName($room)
     {
-        $room['name'] = $this->request->user()->fullName;
-        $room['pin'] = $this->request->user()->pin;
+        // $room['name'] = $this->request->user()->fullName;
+        // $room['pin'] = $this->request->user()->pin;
+        // $room['user_id'] = $this->request->user()->id;
+
+        // Для определения имени чата во фронтенде
+        $room['name'] = null;
+        $room['pin'] = null;
+        $room['user_id'] = null;
+
+        // Количетсво новых сообщений для каждого пользователя
+        if (count($room['members'] ?? []) == 2) {
+            foreach ($room['members'] as &$member) {
+                $member['count'] = $this->getCountNewMessagesChatRoom($room['id'], $member['id']);
+            }
+        }
 
         return $room;
     }

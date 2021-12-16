@@ -7,9 +7,10 @@ use SplFileInfo;
 use App\Events\Chat\NewMessage;
 use App\Http\Controllers\Controller;
 use App\Jobs\Chat\UploadFilesChatJob;
+use App\Models\ChatMessage;
 use App\Models\ChatRoom;
 use App\Models\ChatRoomsUser;
-use App\Models\ChatMessage;
+use App\Models\ChatRoomsViewTime;
 use Illuminate\Http\Request;
 
 class Messages extends Controller
@@ -29,6 +30,10 @@ class Messages extends Controller
 
         if (!$access and !$request->new_chat_id)
             throw new Exception("Доступ к этому чату ограничен", 403);
+
+        // if (!$request->page or $request->page == 1) {
+        //     ChatLastViewTime::firstOrCreate()
+        // }
 
         $data = ChatMessage::where('chat_id', $request->chat_id)
             ->orderBy('id', "DESC")
@@ -72,6 +77,8 @@ class Messages extends Controller
      */
     public function sendMessage(Request $request)
     {
+        $request->chat_id = (int) $request->chat_id;
+
         if (!$request->chat_id and $request->to_user_id)
             $request->chat_id = $this->createOrRestoreChatRoom($request);
 
@@ -87,10 +94,11 @@ class Messages extends Controller
 
         $data = $message->toArray();
 
-        $rommData = new StartChat($request);
-        $room = $rommData->getRoomData($this->room);
+        $chat = new StartChat($request);
+        $room = $chat->getRoomData($this->room);
 
-        broadcast(new NewMessage($data, $rommData->setOtherName($room), $this->channels ?? []))->toOthers();
+        broadcast(new NewMessage($data, $chat->setOtherName($room), $this->channels ?? []))
+            ->toOthers();
 
         if ($message->body)
             UploadFilesChatJob::dispatch($message);
@@ -165,7 +173,7 @@ class Messages extends Controller
         sort($users);
 
         $this->room = ChatRoom::withTrashed()
-            ->firstOrCreate(
+            ->firstOrNew(
                 ['user_to_user' => implode(",", $users)],
                 ['user_id' => $request->user()->id]
             );
@@ -227,7 +235,7 @@ class Messages extends Controller
         foreach ($users_list as $user) {
 
             // if ($user != $request->user()->id)
-                $this->channels[] = $user;
+            $this->channels[] = $user;
 
             if (in_array($user, $users))
                 continue;
