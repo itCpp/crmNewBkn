@@ -41,6 +41,7 @@
                             <a href="/event/{{ $next }}" class="ml-1 underline">
                                 Next #{{ $next }}
                             </a>
+                            <span style="padding: 0 1rem;"></span>
                             @endif
 
                             <a href="/event/last" class="ml-1 underline">
