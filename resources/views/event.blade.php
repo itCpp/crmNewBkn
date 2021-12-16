@@ -32,14 +32,14 @@
 
                             @if ($back > 0)
                             <a href="/event/{{ $back }}" class="ml-1 underline">
-                                Back {{ $back }}
+                                Back #{{ $back }}
                             </a>
                             <span style="padding: 0 1rem;"></span>
                             @endif
 
                             @if ($next <= $max)
                             <a href="/event/{{ $next }}" class="ml-1 underline">
-                                Next {{ $next }}
+                                Next #{{ $next }}
                             </a>
                             @endif
                         </div>
@@ -50,22 +50,68 @@
                     </div>
                 </div>
 
+                @if (count($list))
+
+                <div class="flex justify-center mt-4 sm:items-center sm:justify-between">
+
+                    <div class="text-center text-sm text-gray-500 sm:text-left">
+                        <div class="flex items-center">
+
+                            <div>
+
+                                <div class="ml-1 mb-2">События сессии <b>{{ $count ?? 0 }}</b></div>
+                                <pre class="ml-1" style="margin-top: 0; margin-bottom: 0;">{{ $session }}</pre>
+
+                                {{-- @foreach ($ids as $ids_id)
+                                <a href="/event/{{ $ids_id }}?session_id={{ $session }}" class="ml-1 mr-2 underline" style="{{ $id == $ids_id ? 'color: #1a202c !important; font-weight: 700;' : '' }}">#{{ $ids_id }}</a>
+                                @endforeach --}}
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                @else
+
+                <div class="flex justify-center mt-4 sm:items-center sm:justify-between">
+
+                    <div class="text-center text-sm text-gray-500 sm:text-left">
+                        <div class="flex items-center">
+
+                            <span>Отобразить все события сессии <b>{{ $count ?? 0 }}</b></span>
+
+                            <a href="/event/{{ $id }}?session_id={{ $row['session_id'] }}" class="ml-1 underline"><pre style="margin: 0;">{{ $row['session_id'] }}</pre></a>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                @endif
+
+                @php
+                $dumps = count($list ?? []) ? $list : [$row];                        
+                @endphp
+
                 <div class="mt-4 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg p-2" style="min-width: 1000px;">
                     <div class="grid grid-cols-1 md:grid-cols-1" style="padding: 0 1rem;">
-                        @php dump($row) @endphp
+                        @php dump(...$dumps) @endphp
                     </div>
-                </div>
+                </div>               
                 
             </div>
         </div>
         <script>
-            let elems = document.querySelectorAll('.sf-dump-note, .sf-dump-key, .sf-dump-public').forEach((e, i) => {
-                
-                if (i === 0)
-                    return;
-
-                e.click();
-            });
+            document.querySelectorAll('.sf-dump')
+                .forEach((dump, key) => {
+                    dump.querySelectorAll('.sf-dump-note, .sf-dump-key, .sf-dump-public')
+                        .forEach((e, i) => {
+                            if (i === 0) return;
+                            e.click();
+                        });
+                });
         </script>
     </body>
 </html>

@@ -260,7 +260,7 @@ class Events extends Controller
      */
     public function eventView(Request $request, int $id)
     {
-        $row = \App\Models\Incomings\IncomingEvent::find($id);
+        $row = IncomingEvent::find($id);
 
         if ($row and self::checkIpForDecrypt($request->ip())) {
 
@@ -270,13 +270,38 @@ class Events extends Controller
             $row->request_data = parent::decrypt($row->request_data, $crypt ?? null);
         }
 
+        if ($request->session_id) {
+            $ids = IncomingEvent::where('session_id', $request->session_id)
+                ->get()
+                ->map(function ($row) {
+                    return $row->id;
+                })
+                ->toArray();
+
+            $list = IncomingEvent::where('session_id', $row->session_id)
+                ->get()
+                ->map(function ($row) {
+
+                    if (!$row->recrypt)
+                        $crypt = new Encrypter($this->key, config('app.cipher'));
+
+                    $row->request_data = parent::decrypt($row->request_data, $crypt ?? null);
+
+                    return $row->toArray();
+                });
+        }
+
         return view('event', [
             'row' => $row ? $row->toArray() : null,
             'next' => $id + 1,
             'back' => $id - 1,
             'id' => $id,
             'ip' => $request->ip(),
-            'max' => \App\Models\Incomings\IncomingEvent::max('id'),
+            'max' => IncomingEvent::max('id'),
+            'ids' => $ids ?? [],
+            'list' => $list ?? [],
+            'session' => $request->session_id,
+            'count' => IncomingEvent::where('session_id', $row->session_id)->count(),
         ]);
     }
 
