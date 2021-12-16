@@ -31,10 +31,6 @@ class Messages extends Controller
         if (!$access and !$request->new_chat_id)
             throw new Exception("Доступ к этому чату ограничен", 403);
 
-        // if (!$request->page or $request->page == 1) {
-        //     ChatLastViewTime::firstOrCreate()
-        // }
-
         $data = ChatMessage::where('chat_id', $request->chat_id)
             ->orderBy('id', "DESC")
             ->paginate(50);
@@ -94,10 +90,14 @@ class Messages extends Controller
 
         $data = $message->toArray();
 
+        if ($request->uuid)
+            Rooms::updateLastViewTime($message->chat_id, $message->user_id);
+
         $chat = new StartChat($request);
         $room = $chat->getRoomData($this->room);
+        $room = $chat->setOtherName($room);
 
-        broadcast(new NewMessage($data, $chat->setOtherName($room), $this->channels ?? []))
+        broadcast(new NewMessage($data, $room, $this->channels ?? []))
             ->toOthers();
 
         if ($message->body)

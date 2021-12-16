@@ -38,13 +38,42 @@ class Rooms extends Controller
         if (!in_array($request->user()->id, $users))
             return response()->json(['message' => "Доступ к чату ограничен"], 403);
 
-        foreach (ChatRoomsViewTime::where('id', $request->chat_id)->get() as $row) {
+        $last_show = $this->updateLastViewTime($request->chat_id, $request->user()->id);
+
+        $room = $this->getRoomData($request);
+
+        $room['count'] = $this->chat->getCountNewMessagesChatRoom(
+            $room['id'] ?? null,
+            $request->user()->id
+        );
+
+        foreach (ChatRoomsViewTime::where('chat_id', $request->chat_id)->get() as $row) {
             $views[$row->user_id] = $row->last_show;
         }
 
+        foreach ($room['members'] as &$member) {
+            $member['last_show'] = $views[$member['id']] ?? null;
+        }
+
+        return response()->json([
+            'room' => $room,
+            'last_show' => $last_show,
+            'views' => $views ?? [],
+        ]);
+    }
+
+    /**
+     * Обновление времени просмотра чат команаты
+     * 
+     * @param int $chat_id
+     * @param int $user_id
+     * @return string|null Время просмотра до обновления
+     */
+    public static function updateLastViewTime($chat_id, $user_id)
+    {
         $view = ChatRoomsViewTime::firstOrNew([
-            'id' => $request->chat_id,
-            'user_id' => $request->user()->id,
+            'chat_id' => $chat_id,
+            'user_id' => $user_id,
         ]);
 
         $last_show = $view->last_show;
@@ -52,11 +81,7 @@ class Rooms extends Controller
         $view->last_show = now();
         $view->save();
 
-        return response()->json([
-            'room' => $this->getRoomData($request),
-            'last_show' => $last_show,
-            'views' => $views ?? [],
-        ]);
+        return $last_show;
     }
 
     /**

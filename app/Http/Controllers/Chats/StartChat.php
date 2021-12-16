@@ -157,11 +157,14 @@ class StartChat extends Controller
     public function getCountNewMessagesChatRoom($chat_id, $user_id)
     {
         $last = ChatRoomsViewTime::where([
-            ['id', $chat_id],
+            ['chat_id', $chat_id],
             ['user_id', $user_id]
         ])->first();
 
-        return ChatMessage::where('chat_id', $chat_id)
+        return ChatMessage::where([
+            ['chat_id', $chat_id],
+            ['user_id', '!=', $user_id]
+        ])
             ->when(!empty($last->last_show), function ($query) use ($last) {
                 $query->where('created_at', '>', $last->last_show);
             })

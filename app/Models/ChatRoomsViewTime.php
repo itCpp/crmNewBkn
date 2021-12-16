@@ -22,7 +22,7 @@ class ChatRoomsViewTime extends Model
      * @var array
      */
     protected $fillable = [
-        'id',
+        'chat_id',
         'user_id',
         'last_show',
     ];
