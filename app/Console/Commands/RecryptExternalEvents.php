@@ -2,10 +2,12 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Http\Controllers\Controller;
 use App\Models\Incomings\IncomingEvent;
 use Illuminate\Console\Command;
 use Illuminate\Encryption\Encrypter;
+use Illuminate\Support\Facades\Log;
 
 class RecryptExternalEvents extends Command
 {
@@ -49,6 +51,23 @@ class RecryptExternalEvents extends Command
      */
     public function handle()
     {
+        try {
+            $id = $this->eventRecrypt();
+            Log::channel('eventsrecrypt')->debug('Rewriting external events id: ' . $id);
+        } catch (\Exception $e) {
+            Log::channel('eventsrecrypt')->emergency($e->getMessage());
+        }
+
+        return 0;
+    }
+
+    /**
+     * Метод перешифрования
+     * 
+     * @return int
+     */
+    public function eventRecrypt()
+    {
         $event = IncomingEvent::where('recrypt', '=', null)
             ->where('created_at', '<=', now()->addMinutes(-60))
             ->first();
@@ -61,6 +80,6 @@ class RecryptExternalEvents extends Command
 
         $event->save();
 
-        return 0;
+        return $event->id;
     }
 }

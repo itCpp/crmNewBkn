@@ -105,7 +105,14 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/second_calls.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => 14,
+            'days' => 30,
+        ],
+
+        'eventsrecrypt' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/events/recrypt.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
         ],
     ],
 
