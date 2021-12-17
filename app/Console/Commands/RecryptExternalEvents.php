@@ -52,8 +52,8 @@ class RecryptExternalEvents extends Command
     public function handle()
     {
         try {
-            $id = $this->eventRecrypt();
-            Log::channel('eventsrecrypt')->debug('Rewriting external events id: ' . $id);
+            if ($id = $this->eventRecrypt())
+                Log::channel('eventsrecrypt')->debug('Rewriting external events id: ' . $id);
         } catch (\Exception $e) {
             Log::channel('eventsrecrypt')->emergency($e->getMessage());
         }
@@ -64,13 +64,16 @@ class RecryptExternalEvents extends Command
     /**
      * Метод перешифрования
      * 
-     * @return int
+     * @return int|null
      */
     public function eventRecrypt()
     {
         $event = IncomingEvent::where('recrypt', '=', null)
             ->where('created_at', '<=', now()->addMinutes(-60))
             ->first();
+
+        if (!$event)
+            return null;
 
         $crypt = new Encrypter($this->key, config('app.cipher'));
         $data = Controller::decrypt($event->request_data, $crypt);
