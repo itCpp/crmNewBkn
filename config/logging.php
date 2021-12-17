@@ -103,7 +103,7 @@ return [
 
         'second_calls' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/second_calls.log'),
+            'path' => storage_path('logs/calls/second_calls.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 30,
         ],
