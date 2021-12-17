@@ -32,19 +32,32 @@ class Messages extends Controller
             throw new Exception("Доступ к этому чату ограничен", 403);
 
         $data = ChatMessage::where('chat_id', $request->chat_id)
+            ->when($request->point !== null, function ($query) use ($request) {
+                $query->where('id', '<=', $request->point);
+            })
             ->orderBy('id', "DESC")
             ->paginate(50);
 
+        $end = null;
+
         foreach ($data as $row) {
             $row->my = $row->user_id == $request->user()->id;
+            $row->message = parent::decrypt($row->message);
+
             $rows[] = $row->toArray();
+
+            if (($request->page == 1 or !$request->page) and !$end) {
+                $end = $row->id;
+            }
         }
 
         return [
+            'page' => $data->currentPage(),
             'pages' => $data->lastPage(),
             'nextPage' => $data->currentPage() + 1,
             'total' => $data->total(),
             'messages' => $rows ?? [],
+            'point' => $end,
         ];
     }
 
@@ -59,10 +72,12 @@ class Messages extends Controller
         if (!$chat_id)
             return null;
 
-        if (!$message = ChatMessage::where('chat_id', $chat_id)->orderBy('id', "DESC")->first())
+        if (!$row = ChatMessage::where('chat_id', $chat_id)->orderBy('id', "DESC")->first())
             return null;
 
-        return $message->toArray();
+        $row->message = parent::decrypt($row->message);
+
+        return $row->toArray();
     }
 
     /**
@@ -84,10 +99,11 @@ class Messages extends Controller
             'user_id' => $request->user()->id,
             'chat_id' => (int) $request->chat_id,
             'type' => $request->type,
-            'message' => $request->message,
+            'message' => parent::encrypt($request->message),
             'body' => $this->getBodyMessage($request),
         ]);
 
+        $message->message = $request->message;
         $data = $message->toArray();
 
         if ($request->uuid)
