@@ -81,8 +81,46 @@ class RecryptExternalEvents extends Command
         $event->request_data = Controller::encrypt($data);
         $event->recrypt = now();
 
+        if (!$event->session_id) {
+            if ($event->api_type == "Asterisk" and !empty($data['ID'])) {
+                $event->session_id = $this->createCallId($data['ID']);
+            } else if ($event->api_type == "RT" and !empty($data['session_id'])) {
+                $event->session_id = $data['session_id'];
+            }
+        }
+
         $event->save();
 
         return $event->id;
+    }
+
+    /**
+     * Формирование уникального id по отпечатку времени
+     * 
+     * @param string $id
+     * @return string
+     */
+    public static function createCallId($id)
+    {
+        $id = $id ?: microtime(1);
+
+        $parts = explode(".", $id);
+        $hash = "";
+
+        foreach ($parts as $part) {
+            $hash .= md5($part);
+        }
+        $hash .= md5($hash);
+        $hash .= md5($hash);
+
+        $uuid = "";
+
+        $uuid .= substr($hash, 0, 8);
+        $uuid .= "-" . substr($hash, 7, 4);
+        $uuid .= "-4" . substr($hash, 11, 3);
+        $uuid .= "-8" . substr($hash, 15, 3);
+        $uuid .= "-" . substr($hash, 19, 12);
+
+        return $uuid;
     }
 }
