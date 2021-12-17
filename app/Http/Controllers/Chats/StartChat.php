@@ -249,9 +249,10 @@ class StartChat extends Controller
      * @todo При переходе на новую авторизацию, заменить ключ с имененм пользователя
      * 
      * @param array $room
+     * @param bool $from_crm
      * @return array
      */
-    public function setOtherName($room)
+    public function setOtherName($room, $from_crm = false)
     {
         // $room['name'] = $this->request->user()->fullName;
         // $room['pin'] = $this->request->user()->pin;
@@ -266,6 +267,12 @@ class StartChat extends Controller
         if (count($room['members'] ?? []) == 2) {
             foreach ($room['members'] as &$member) {
                 $member['count'] = $this->getCountNewMessagesChatRoom($room['id'], $member['id']);
+
+                if ($from_crm and $member['id'] != $this->request->user()->id) {
+                    $room['name'] = $this->request->user()->fullName;
+                    $room['pin'] = $this->request->user()->pin;
+                    $room['user_id'] = $this->request->user()->id;
+                }
             }
         }
 

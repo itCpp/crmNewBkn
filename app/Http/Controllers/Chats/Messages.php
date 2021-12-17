@@ -111,7 +111,7 @@ class Messages extends Controller
 
         $chat = new StartChat($request);
         $room = $chat->getRoomData($this->room);
-        $room = $chat->setOtherName($room);
+        $room = $chat->setOtherName($room, $request->fromCrm !== null);
 
         broadcast(new NewMessage($data, $room, $this->channels ?? []))
             ->toOthers();
