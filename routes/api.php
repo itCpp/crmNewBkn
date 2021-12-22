@@ -146,7 +146,7 @@ Route::group(['middleware' => 'user.token'], function () {
     Route::group(['prefix' => "admin", 'middleware' => "user.can:admin_access"], function () {
 
         /** Первоначальная загрузка страницы со всеми данными */
-        Route::post('start', 'Users\Users@adminCheck');
+        Route::post('start', 'Admin\Admin@start');
 
         /** Вывод сотрудников для админки */
         Route::post('getUsers', 'Users\AdminUsers@getUsers');

@@ -92,9 +92,10 @@ class Users extends Controller
      * Формирование данных для администратора
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param bool $get_array
+     * @return \Illuminate\Http\JsonResponse|array
      */
-    public static function adminCheck(Request $request)
+    public static function adminCheck(Request $request, $get_array = false)
     {
         $response = [
             'permits' => $request->user()->getListPermits([
@@ -113,6 +114,9 @@ class Users extends Controller
                 'dev_block', # Доступ к блокировкам
             ]),
         ];
+
+        if ($get_array)
+            return $response;
 
         return response()->json($response);
     }
