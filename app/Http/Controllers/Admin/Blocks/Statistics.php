@@ -15,6 +15,13 @@ use Illuminate\Http\Request;
 class Statistics extends Controller
 {
     /**
+     * Колчество дней для вывода статистики по IP
+     * 
+     * @var int
+     */
+    const DAYS = 31;
+
+    /**
      * Создание экземпляра объекта
      * 
      * @param \Illuminate\Http\Request $request
@@ -103,11 +110,13 @@ class Statistics extends Controller
      * 
      * @param null|int $ip
      * @return array
+     * 
+     * @todo Вернуть расчет статистики по заявкам
      */
     public function getStatisticIp($ip = null)
     {
-        $dates[] = $this->date;
-        $time = strtotime($this->date);
+        $dates = [];
+        $time = strtotime($this->date) - (86400 * self::DAYS);
 
         $names = [
             'count' => "Посещения сайта",
@@ -115,8 +124,8 @@ class Statistics extends Controller
             'requests' => "Оставлено заявок",
         ];
 
-        for ($i = 1; $i < 14; $i++) {
-            $time -= 86400;
+        for ($i = 1; $i <= self::DAYS; $i++) {
+            $time += 86400;
             $date = date("Y-m-d", $time);
             $dates[] = $date;
             $this->data['dates'][$date] = [];
@@ -124,7 +133,7 @@ class Statistics extends Controller
 
         StatVisitSite::whereIp($ip)
             ->whereIn('date', $dates)
-            ->orderBy('date', "DESC")
+            ->orderBy('date')
             ->get()
             ->map(function ($row) {
                 $this->data['dates'][$row->date][] = $row;
@@ -158,14 +167,14 @@ class Statistics extends Controller
                     ];
                 }
 
-                if ($row->requests > 0) {
-                    $chart['requests'][] = [
-                        'name' => $site,
-                        'date' => $date,
-                        'day' => $day,
-                        'value' => $row->requests,
-                    ];
-                }
+                // if ($row->requests > 0) {
+                //     $chart['requests'][] = [
+                //         'name' => $site,
+                //         'date' => $date,
+                //         'day' => $day,
+                //         'value' => $row->requests,
+                //     ];
+                // }
             }
         }
 

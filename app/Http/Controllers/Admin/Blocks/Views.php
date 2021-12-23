@@ -31,6 +31,9 @@ class Views extends Controller
     public function getData()
     {
         $data = AllVisit::where('created_at', '<', $this->start)
+            ->when((bool) $this->request->ip, function ($query) {
+                $query->where('ip', $this->request->ip);
+            })
             ->orderBy('id', "DESC")
             ->paginate(50);
 
