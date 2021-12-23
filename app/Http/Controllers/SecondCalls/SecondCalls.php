@@ -145,7 +145,8 @@ class SecondCalls extends Controller
         $update = 0;
 
         if ($view) {
-            $update = $counter->where('created_at', '>', $view->view_at)->count();
+            $view_at = $view->view_at ?? date("Y-m-d H:i:s");
+            $update = $counter->where('created_at', '>', $view_at)->count();
         }
 
         return [

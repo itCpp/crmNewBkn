@@ -42,9 +42,6 @@ class UsersViewPart extends Model
         $view->part_name = $part_name;
         $view->user_id = $user_id;
 
-        if (!$view->view_at)
-            $view->view_at = date("Y-m-d 00:00:00");
-
         return $view;
     }
 }
