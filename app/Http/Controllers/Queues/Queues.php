@@ -10,6 +10,13 @@ use Illuminate\Http\Request;
 class Queues extends Controller
 {
     /**
+     * Проверенные имена хостов определенных ip
+     *  
+     * @var array
+     */
+    public static $hostnames = [];
+
+    /**
      * Вывод очереди
      * 
      * @param \Illuminate\Http\Request $request
@@ -22,6 +29,8 @@ class Queues extends Controller
         $rows = RequestsQueue::where('done_type', null)
             ->get()
             ->map(function ($row) use ($show_phone) {
+                $row->hostname = self::getHostName($row->ip);
+
                 return self::modifyRow($row, $show_phone);
             });
 
@@ -29,6 +38,20 @@ class Queues extends Controller
             'queues' => $rows,
         ]);
     }
+
+    /**
+     * Получение имени хоста
+     * 
+     * @param string $ip
+     * @return string|null
+     */
+    public static function getHostName($ip)
+    {
+        if (!empty(self::$hostnames[$ip]))
+            return self::$hostnames[$ip];
+
+        return self::$hostnames[$ip] = gethostbyaddr($ip);
+    } 
 
     /**
      * Преобразование строки очереди
@@ -49,6 +72,8 @@ class Queues extends Controller
         $row->comment = $request_data['comment'] ?? null;
 
         $row->request_data = $request_data;
+
+        $row->hostname = self::getHostName($row->ip);
 
         return $row->toArray();
     }
