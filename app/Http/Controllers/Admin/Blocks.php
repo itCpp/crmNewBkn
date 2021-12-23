@@ -33,11 +33,18 @@ class Blocks extends Controller
      */
     public static function setBlockIp(Request $request)
     {
+        if (!$request->ip)
+            return response()->json(['message' => "Не указан IP адрес или имя хоста"], 403);
+
         if (!$row = BlockHost::where('host', $request->ip)->first())
             $row = BlockHost::create(['host' => $request->ip]);
 
         $block = (bool) $row->block;
         $row->block = (int) !$block;
+
+        if ($request->has('checked')) {
+            $row->block = (int) $request->boolean('checked');
+        }
 
         $row->save();
 

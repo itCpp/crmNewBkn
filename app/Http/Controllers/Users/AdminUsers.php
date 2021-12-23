@@ -220,7 +220,7 @@ class AdminUsers extends Controller
 
         $user->save();
 
-        \App\Models\Log::log($request, $user);
+        parent::logData($request, $user);
 
         $user = new UserData($user);
         
@@ -250,7 +250,7 @@ class AdminUsers extends Controller
         $user->deleted_at = $user->deleted_at ? null : date("Y-m-d H:i:s");
         $user->save();
 
-        \App\Models\Log::log($request, $user);
+        parent::logData($request, $user);
 
         return response()->json([
             'id' => $user->id,

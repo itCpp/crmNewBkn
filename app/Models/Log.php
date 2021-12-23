@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Log extends Model
 {
-
     use HasFactory;
 
     /**
@@ -40,10 +39,22 @@ class Log extends Model
      * @param null|\Illuminate\Database\Eloquent\Model $data     Экземпляр затрагиваемой модели
      * @return \App\Models\Log
      */
-    public static function log($request, $data) {
+    public static function log($request, $data)
+    {
+        $table_name = "";
+
+        $connection = $data?->getConnectionName() ?? null;
+        $db = config("database.connections.{$connection}.database");
+        $table = $data?->getTable() ?? null;
+
+        $table_name .= $connection ?: "";
+        $table_name .= ($connection and $db) ? "@" : "";
+        $table_name .= $db ?: "";
+        $table_name .= ($table_name != "") ? "." : "";
+        $table_name .= $table ?: "";
 
         return static::create([
-            'table_name' => $data?->getTable() ?? null,
+            'table_name' => $table_name != "" ? $table_name : null,
             'row_id' => $data->id ?? null,
             'row_data' => json_encode($data, JSON_UNESCAPED_UNICODE),
             'request_data' => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
@@ -52,7 +63,5 @@ class Log extends Model
             'ip' => $request->ip(),
             'user_agent' => $request->header('User-Agent'),
         ]);
-
     }
-
 }

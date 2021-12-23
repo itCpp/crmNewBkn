@@ -90,7 +90,7 @@ class Sectors extends Controller
 
         $row->save();
 
-        Log::log($request, $row); # Логирование изменений
+        parent::logData($request, $row); # Логирование изменений
 
         // Обновление данных настроек распределения сектора
         if ($setting = CallsSectorSetting::find($row->id)) {
@@ -100,7 +100,7 @@ class Sectors extends Controller
 
             $setting->save();
 
-            Log::log($request, $setting);
+            parent::logData($request, $setting);
 
         }
 

@@ -12,15 +12,14 @@ use App\Models\Status;
 
 class Roles extends Controller
 {
-
     /**
      * Загрузка страницы редактирования ролей
      * 
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getAllRoles(Request $request) {
-
+    public static function getAllRoles(Request $request)
+    {
         $roles = Role::orderBy('lvl', "DESC")->get();
 
         foreach ($roles as &$role) {
@@ -30,7 +29,6 @@ class Roles extends Controller
         return response()->json([
             'roles' => $roles,
         ]);
-
     }
 
     /**
@@ -39,8 +37,8 @@ class Roles extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getRole(Request $request) {
-
+    public static function getRole(Request $request)
+    {
         if (!$role = Role::find($request->role))
             return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
 
@@ -63,7 +61,6 @@ class Roles extends Controller
         $response['role'] = $role;
 
         return response()->json($response);
-
     }
 
     /**
@@ -72,8 +69,8 @@ class Roles extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getPermits(Request $request) {
-
+    public static function getPermits(Request $request)
+    {
         if (!$role = Role::find($request->role))
             return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
 
@@ -86,7 +83,6 @@ class Roles extends Controller
             'permissions' => Permission::all(),
             'role_permissions' => $role_permissions ?? [],
         ]);
-
     }
 
     /**
@@ -95,14 +91,14 @@ class Roles extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function setRolePermit(Request $request) {
-
+    public static function setRolePermit(Request $request)
+    {
         if (!$role = Role::find($request->role))
             return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
 
         $permission = $role->permissions()->where('roles_permissions.permission', $request->permission)->get();
         $permissions = count($permission);
-    
+
         if ($permissions)
             $role->permissions()->detach($request->permission);
         else
@@ -113,7 +109,6 @@ class Roles extends Controller
             'permission' => $request->permission,
             'set' => $permissions ? false : true,
         ]);
-
     }
 
     /**
@@ -122,8 +117,8 @@ class Roles extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function saveRole(Request $request) {
-
+    public static function saveRole(Request $request)
+    {
         $role = Role::withTrashed()->find($request->edit);
 
         $rules = [
@@ -135,7 +130,7 @@ class Roles extends Controller
         }
 
         $validate = $request->validate($rules);
-        
+
         if (!$role)
             $role = new Role;
 
@@ -145,14 +140,13 @@ class Roles extends Controller
 
         $role->save();
 
-        \App\Models\Log::log($request, $role);
+        parent::logData($request, $role);
 
         $role->users_count = $role->users()->count();
 
         return response()->json([
             'role' => $role,
         ]);
-
     }
 
     /**
@@ -163,21 +157,19 @@ class Roles extends Controller
      */
     public static function setTabForRole(Request $request)
     {
-
         if (!$role = Role::find($request->role))
             return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
 
         $presence = $role->tabs()->where('id', $request->tabId)->count();
 
-        if (!$presence AND $request->checked)
+        if (!$presence and $request->checked)
             $role->tabs()->attach($request->tabId);
-        else if ($presence AND !$request->checked)
+        else if ($presence and !$request->checked)
             $role->tabs()->detach($request->tabId);
 
         $request->tabsInfo = true;
 
         return Roles::getRole($request);
-
     }
 
     /**
@@ -188,21 +180,18 @@ class Roles extends Controller
      */
     public static function setStatusForRole(Request $request)
     {
-
         if (!$role = Role::find($request->role))
             return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
 
         $presence = $role->statuses()->where('id', $request->statusId)->count();
 
-        if (!$presence AND $request->checked)
+        if (!$presence and $request->checked)
             $role->statuses()->attach($request->statusId);
-        else if ($presence AND !$request->checked)
+        else if ($presence and !$request->checked)
             $role->statuses()->detach($request->statusId);
 
         $request->tabsInfo = true;
 
         return Roles::getRole($request);
-
     }
-
 }

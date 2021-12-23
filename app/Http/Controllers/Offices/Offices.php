@@ -116,7 +116,7 @@ class Offices extends Controller
 
         $row->save();
 
-        Log::log($request, $row);
+        parent::logData($request, $row);
 
         return response([
             'office' => $row,

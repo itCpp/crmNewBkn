@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Response;
 
 class Sources extends Controller
 {
-
     /**
      * Список источников с ресурсами
      *
@@ -69,7 +68,7 @@ class Sources extends Controller
 
         $source->resources = $source->resources;
 
-        \App\Models\Log::log($request, $source);
+        parent::logData($request, $source);
 
         return Response::json([
             'source' => $source,
@@ -87,7 +86,7 @@ class Sources extends Controller
         $source = RequestsSource::create();
         $source->resources;
 
-        \App\Models\Log::log($request, $source);
+        parent::logData($request, $source);
 
         return Response::json([
             'source' => $source,
@@ -201,7 +200,7 @@ class Sources extends Controller
             'val' => $request->phone,
         ]);
 
-        \App\Models\Log::log($request, $resource);
+        parent::logData($request, $resource);
 
         return Response::json([
             'resource' => Sources::getResourceRow($resource),
@@ -232,7 +231,7 @@ class Sources extends Controller
             'val' => $request->site,
         ]);
 
-        \App\Models\Log::log($request, $resource);
+        parent::logData($request, $resource);
 
         return Response::json([
             'resource' => Sources::getResourceRow($resource),
@@ -256,7 +255,7 @@ class Sources extends Controller
         $resource->source_id = $request->set ? $source->id : null;
         $resource->save();
 
-        \App\Models\Log::log($request, $resource);
+        parent::logData($request, $resource);
 
         $source->resources = $source->resources()->get();
 

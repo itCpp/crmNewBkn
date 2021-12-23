@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Blocks;
 use App\Exceptions\Exceptions;
 use App\Http\Controllers\Controller;
 use App\Models\IpInfo;
+use App\Models\Company\BlockHost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -69,7 +70,8 @@ class IpInfos extends Controller
             'ip' => $ip,
             'ipinfo' => $info,
             'stats' => (new Statistics($this->request))->getStatisticIp($ip),
-            'textInfo' => $this->getTextIpInfo()
+            'textInfo' => $this->getTextIpInfo(),
+            'block' => BlockHost::where('host', $ip)->first(),
         ];
     }
 

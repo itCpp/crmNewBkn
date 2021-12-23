@@ -156,7 +156,7 @@ class Calls extends Controller
 
         $extension->save();
 
-        \App\Models\Log::log($request, $extension);
+        parent::logData($request, $extension);
 
         $resource = RequestsSourcesResource::where([
             ['val', $phone],

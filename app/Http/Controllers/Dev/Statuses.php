@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
 use App\Models\Status;
+use Illuminate\Http\Request;
 
 class Statuses extends Controller
 {
-
     /**
      * Алгоритным обнуления заявок
      * 
@@ -126,7 +124,7 @@ class Statuses extends Controller
             ]);
         }
 
-        \App\Models\Log::log($request, $status);
+        parent::logData($request, $status);
 
         return response()->json([
             'status' => $status,
@@ -200,10 +198,10 @@ class Statuses extends Controller
 
         $status->theme = $request->theme;
         $status->save();
-        
+
         $status->zeroing_data = json_decode($status->zeroing_data);
 
-        \App\Models\Log::log($request, $status);
+        parent::logData($request, $status);
 
         return response()->json([
             'status' => $status,
