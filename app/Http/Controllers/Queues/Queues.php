@@ -58,6 +58,7 @@ class Queues extends Controller
             $request_data['phone'] = parent::displayPhoneNumber($request_data['phone'], $show_phone);
 
         $row->phone = $request_data['phone'] ?? null;
+        $row->show_phone = $show_phone;
         $row->name = $request_data['client_name'] ?? null;
         $row->comment = $request_data['comment'] ?? null;
 
