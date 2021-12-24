@@ -27,6 +27,9 @@ Route::post('login', 'Users\Auth@login');
 /** Отмена запроса на авторизацию */
 Route::post('loginCancel', 'Users\Auth@loginCancel');
 
+/** Получить номер телефона через идентификатор */
+Route::any('getNumberFromId', 'Asterisk\Phones@getNumberFromId');
+
 include __DIR__ . "/api/api.free.php";
 
 /** Маршрутизация внутреннего чата */
