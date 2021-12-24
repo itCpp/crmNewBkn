@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Asterisk;
 
 use App\Http\Controllers\Controller;
-use App\Models\RequestsClient;
+use App\Models\RequestsRow;
 use Illuminate\Http\Request;
 
 class Phones extends Controller
@@ -57,12 +57,15 @@ class Phones extends Controller
         $number = explode("s", $request->number);
 
         $id = $number[0] ?? 0; // Идентификатор заявки
-        $client = $number[1] ?? 0; // Идентификатор клиента
+        $client_id = $number[1] ?? 0; // Идентификатор клиента
 
-        if (!$row = RequestsClient::find($client))
+        if (!$row = RequestsRow::find($id))
             return $this->extension;
 
-        $phone = $this->decrypt($row->phone);
+        if (!$client = $row->clients()->where('id', $client_id)->first())
+            return $this->extension;
+
+        $phone = $this->decrypt($client->phone);
 
         return $this->checkPhone($phone, 3) ?: $this->extension;
     }
