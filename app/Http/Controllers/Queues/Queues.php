@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Queues;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Queues\QueueProcessings;
 use App\Http\Controllers\Users\Users;
+use App\Models\IpInfo;
 use App\Models\RequestsQueue;
 use Illuminate\Http\Request;
 
@@ -56,20 +57,6 @@ class Queues extends Controller
     }
 
     /**
-     * Получение имени хоста
-     * 
-     * @param string $ip
-     * @return string|null
-     */
-    public function getHostName($ip)
-    {
-        if (!empty($this->hostnames[$ip]))
-            return $this->hostnames[$ip];
-
-        return $this->hostnames[$ip] = gethostbyaddr($ip);
-    }
-
-    /**
      * Преобразование строки очереди
      * 
      * @param \App\Models\RequestsQueue $row
@@ -90,7 +77,7 @@ class Queues extends Controller
         $row->request_data = $request_data;
 
         $row->hostname = $this->getHostName($row->ip);
-
+        $row->ipInfo = $this->getIpInfo($row->ip);
         $row->doneInfo = $this->getDropInfo($row);
 
         return $row->toArray();
@@ -135,9 +122,39 @@ class Queues extends Controller
         if (!$row->done_type)
             return null;
 
-        if (empty($this->users[$row->done_pin]))
-            $this->users[$row->done_pin] = Users::findUserPin($row->done_pin);
+        if (!empty($this->users[$row->done_pin]))
+            return $this->users[$row->done_pin];
 
-        return $this->users[$row->done_pin]->name_fio ?? "Завершено автоматически";
+        $name = Users::findUserPin($row->done_pin)->name_fio ?? "Завершено автоматически";
+
+        return $this->users[$row->done_pin] = $name;
+    }
+
+    /**
+     * Получение имени хоста
+     * 
+     * @param string $ip
+     * @return string|null
+     */
+    public function getHostName($ip)
+    {
+        if (!empty($this->hostnames[$ip]))
+            return $this->hostnames[$ip];
+
+        return $this->hostnames[$ip] = gethostbyaddr($ip);
+    }
+
+    /**
+     * Информация об IP
+     * 
+     * @param string $ip
+     * @return array
+     */
+    public function getIpInfo($ip)
+    {
+        if (!empty($this->ip_info[$ip]))
+            return $this->ip_info[$ip];
+
+        return $this->ip_info[$ip] = IpInfo::where('ip', $ip)->first();
     }
 }
