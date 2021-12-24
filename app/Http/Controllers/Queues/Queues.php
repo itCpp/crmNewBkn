@@ -7,24 +7,11 @@ use App\Http\Controllers\Queues\QueueProcessings;
 use App\Http\Controllers\Users\Users;
 use App\Models\IpInfo;
 use App\Models\RequestsQueue;
+use App\Models\Company\BlockHost;
 use Illuminate\Http\Request;
 
 class Queues extends Controller
 {
-    /**
-     * Проверенные имена хостов определенных ip
-     *  
-     * @var array
-     */
-    public $hostnames = [];
-
-    /**
-     * Список сотрудников, принимавших решение по завершению запроса
-     * 
-     * @var array
-     */
-    public $users = [];
-
     /**
      * Вывод очереди
      * 
@@ -79,6 +66,7 @@ class Queues extends Controller
         $row->hostname = $this->getHostName($row->ip);
         $row->ipInfo = $this->getIpInfo($row->ip);
         $row->doneInfo = $this->getDropInfo($row);
+        $row->ipBlocked = $this->getBlockIpInfo($row->ip);
 
         return $row->toArray();
     }
@@ -156,5 +144,21 @@ class Queues extends Controller
             return $this->ip_info[$ip];
 
         return $this->ip_info[$ip] = IpInfo::where('ip', $ip)->first();
+    }
+
+    /**
+     * Информация о блокировки IP
+     * 
+     * @param string $ip
+     * @return boolean
+     */
+    public function getBlockIpInfo($ip)
+    {
+        if (!empty($this->ip_block[$ip]))
+            return $this->ip_block[$ip];
+
+        $block = BlockHost::where('host', $ip)->first();
+
+        return $this->ip_block[$ip] = ($block->block ?? null) == 1;
     }
 }
