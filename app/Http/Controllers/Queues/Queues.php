@@ -26,16 +26,19 @@ class Queues extends Controller
     {
         $show_phone = $request->user()->can('clients_show_phone');
 
-        $rows = RequestsQueue::where('done_type', null)
-            ->get()
-            ->map(function ($row) use ($show_phone) {
-                $row->hostname = self::getHostName($row->ip);
+        $data = RequestsQueue::where('done_type', null)
+            ->paginate(30);
 
-                return self::modifyRow($row, $show_phone);
-            });
+        foreach ($data as $row) {
+            $queues[] = self::modifyRow($row, $show_phone);
+        }
 
         return response()->json([
-            'queues' => $rows,
+            'queues' => $queues ?? [],
+            'current' => $data->currentPage(),
+            'next' => $data->currentPage() + 1,
+            'total' => $data->total(),
+            'pages' => $data->lastPage(),
         ]);
     }
 
@@ -51,7 +54,7 @@ class Queues extends Controller
             return self::$hostnames[$ip];
 
         return self::$hostnames[$ip] = gethostbyaddr($ip);
-    } 
+    }
 
     /**
      * Преобразование строки очереди
@@ -92,8 +95,7 @@ class Queues extends Controller
         if ($request->create) {
             $row->done_type = 1;
             $added = (new QueueProcessings($row))->add();
-        }
-        else if ($request->drop)
+        } else if ($request->drop)
             $row->done_type = 2;
 
         $row->done_at = now();
