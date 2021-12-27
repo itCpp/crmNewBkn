@@ -8,6 +8,7 @@ use App\Http\Controllers\Users\Worktime;
 use App\Models\MoscowCity;
 use App\Models\RequestsRow;
 use App\Models\RequestsStory;
+use App\Models\RequestsStoryStatus;
 use App\Models\Status;
 use Illuminate\Http\Request;
 
@@ -66,6 +67,7 @@ class RequestChange extends Controller
 
         $row->address = $request->address; // Адрес офиса
 
+        $status_old = $row->status_id;
         $row->status_id = $request->status_id; // Статус заявки
 
         if ($row->status_id)
@@ -74,7 +76,19 @@ class RequestChange extends Controller
         $row->save();
 
         // Логирование изменений заявки
-        RequestsStory::write($request, $row);
+        $story = RequestsStory::write($request, $row);
+
+        // Логирование изменения статуса
+        if ($status_old != $row->status_id) {
+            RequestsStoryStatus::create([
+                'story_id' => $story->id,
+                'request_id' => $row->id,
+                'status_old' => $status_old,
+                'status_new' => $row->status_id,
+                'created_pin' => $request->user()->pin,
+                'created_at' => now(),
+            ]);
+        }
 
         $row = Requests::getRequestRow($row); // Полные данные по заявке
 

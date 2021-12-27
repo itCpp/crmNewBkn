@@ -105,6 +105,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Вывод основного рейтинга колл-центров */
         Route::post('callcenter', 'Ratings\Ratings@getCallCenters');
+
+        /** Данные по операторам */
+        Route::post('getOperators', 'Statistics\Operators@getOperators');
     });
 
     /** Маршрутизация очередей */
