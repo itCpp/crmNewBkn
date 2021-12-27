@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Queues;
 
+use App\Events\QueueUpdateRow;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Queues\QueueProcessings;
 use App\Http\Controllers\Users\Users;
@@ -94,8 +95,12 @@ class Queues extends Controller
 
         $row->save();
 
+        $queue = $this->modifyRow($row, $request->user()->can('clients_show_phone'));
+
+        broadcast(new QueueUpdateRow($queue))->toOthers();
+
         return response()->json([
-            'queue' => $this->modifyRow($row, $request->user()->can('clients_show_phone')),
+            'queue' => $queue,
             'added' => $added ?? null,
         ]);
     }
