@@ -192,7 +192,8 @@ class Operators extends Controller
             ->whereDate('requests_story_statuses.created_at', $this->now)
             ->whereDate('request_data->created_at', $this->now)
             ->whereIn('requests_story_statuses.status_new', $status)
-            ->where('request_data->pin', '!=', null)
+            ->whereIn('request_data->pin', $this->operators->keys())
+            // ->where('request_data->pin', '!=', null)
             ->groupBy('pin')
             ->get()
             ->each(function ($row) {
@@ -217,7 +218,8 @@ class Operators extends Controller
             ->whereDate('requests_story_statuses.created_at', $this->now)
             ->whereDate('request_data->created_at', $this->now)
             ->whereIn('requests_story_statuses.status_new', $status)
-            ->where('request_data->pin', '!=', null)
+            ->whereIn('request_data->pin', $this->operators->keys())
+            // ->where('request_data->pin', '!=', null)
             ->groupBy('pin')
             ->get()
             ->each(function ($row) {
@@ -242,7 +244,8 @@ class Operators extends Controller
             ->whereDate('requests_story_statuses.created_at', $this->now)
             ->whereDate('request_data->created_at', $this->now)
             ->whereIn('requests_story_statuses.status_new', $status)
-            ->where('request_data->pin', '!=', null)
+            ->whereIn('request_data->pin', $this->operators->keys())
+            // ->where('request_data->pin', '!=', null)
             ->groupBy('pin')
             ->get()
             ->each(function ($row) {
@@ -265,7 +268,7 @@ class Operators extends Controller
         RequestsRow::selectRaw('count(*) as count, pin')
             ->whereDate('event_at', $this->now)
             ->whereIn('status_id', $status)
-            ->where('pin', '!=', null)
+            ->whereIn('pin', $this->operators->keys())
             ->groupBy('pin')
             ->get()
             ->each(function ($row) {
@@ -289,7 +292,31 @@ class Operators extends Controller
             ->whereDate('created_at', $this->now)
             ->whereDate('event_at', $this->now)
             ->whereIn('status_id', $status)
-            ->where('pin', '!=', null)
+            ->whereIn('pin', $this->operators->keys())
+            ->groupBy('pin')
+            ->get()
+            ->each(function ($row) {
+                $this->append($row->pin, 'recordsInDay', $row->count);
+            });
+
+        return $this;
+    }
+
+    /**
+     * Подсчет записей на следующий день из сегодняшних заявок
+     * 
+     * @return $this
+     */
+    public function getRecordsNextDay()
+    {
+        if (!$status = $this->getStatus("STATISTICS_OPERATORS_STATUS_RECORD_ID"))
+            return $this;
+
+        RequestsRow::selectRaw('count(*) as count, pin')
+            ->whereDate('created_at', $this->now)
+            ->whereDate('event_at', $this->now->addDay(1))
+            ->whereIn('status_id', $status)
+            ->whereIn('pin', $this->operators->keys())
             ->groupBy('pin')
             ->get()
             ->each(function ($row) {
