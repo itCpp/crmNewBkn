@@ -327,6 +327,29 @@ class Operators extends Controller
     }
 
     /**
+     * Подсчет записей на следующий день
+     * 
+     * @return $this
+     */
+    public function getRecordsToDay()
+    {
+        if (!$status = $this->getStatus("STATISTICS_OPERATORS_STATUS_RECORD_ID"))
+            return $this;
+
+        RequestsRow::selectRaw('count(*) as count, pin')
+            ->whereDate('event_at', $this->now->addDay(1))
+            ->whereIn('status_id', $status)
+            ->whereIn('pin', $this->operators->keys())
+            ->groupBy('pin')
+            ->get()
+            ->each(function ($row) {
+                $this->append($row->pin, 'recordsInDay', $row->count);
+            });
+
+        return $this;
+    }
+
+    /**
      * Подведение итогов по найденным данным
      * 
      * @return $this
