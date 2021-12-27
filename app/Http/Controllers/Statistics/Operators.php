@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 
 class Operators extends Controller
 {
+    use OperatorsColumns;
+
     /**
      * Данные по статистике
      * 
@@ -61,8 +63,11 @@ class Operators extends Controller
      */
     public static function getOperators(Request $request)
     {
+        $operators = new static($request);
+
         return response()->json([
-            'operators' => (new static($request))->operators($request),
+            'operators' => $operators->operators($request),
+            'columns' => $operators->columns,
         ]);
     }
 
@@ -83,9 +88,11 @@ class Operators extends Controller
             ->getRecordsInDay()
             ->getRecordsNextDay()
             ->getRecordsToDay()
-            ->getUsersData();
+            ->getTotals();
 
-        return $this->operators->flatten()->toArray();
+        return $this->operators->flatten()->sortBy([
+            ['efficiency', 'desc'],
+        ])->toArray();
     }
 
     /**
@@ -103,21 +110,30 @@ class Operators extends Controller
                 'pin' => $key,
                 'name' => null,
                 'sector' => null,
-                'requests' => 0,
-                'comings' => 0,
-                'comingsInDay' => 0,
-                'notRinging' => 0,
-                'drain' => 0,
-                'records' => 0,
-                'recordsInDay' => 0,
-                'recordsNextDay' => 0,
-                'recordsToDay' => 0,
             ];
+
+            foreach ($this->columns as $column) {
+                $this->operators[$key]->{$column['name']} = 0;
+            }
         }
 
         $this->operators[$key]->$name = $value;
 
         return $this->operators[$key];
+    }
+
+    /**
+     * Получает идентификаторы статусов
+     * 
+     * @param string $key
+     * @return null|array
+     */
+    public function getStatus($key = null)
+    {
+        if (!$status = env($key))
+            return null;
+
+        return explode(",", $status);
     }
 
     /**
@@ -168,14 +184,14 @@ class Operators extends Controller
      */
     public function getComingsInDay()
     {
-        if (!$status = env("STATISTICS_OPERATORS_STATUS_COMING_ID"))
+        if (!$status = $this->getStatus("STATISTICS_OPERATORS_STATUS_COMING_ID"))
             return $this;
 
         RequestsStoryStatus::selectRaw('count(*) as count, json_unquote(json_extract(request_data, "$.pin")) as pin')
             ->join('requests_stories', 'requests_stories.id', '=', 'requests_story_statuses.story_id')
             ->whereDate('requests_story_statuses.created_at', $this->now)
             ->whereDate('request_data->created_at', $this->now)
-            ->where('requests_story_statuses.status_new', $status)
+            ->whereIn('requests_story_statuses.status_new', $status)
             ->where('request_data->pin', '!=', null)
             ->groupBy('pin')
             ->get()
@@ -193,14 +209,14 @@ class Operators extends Controller
      */
     public function getNotRinging()
     {
-        if (!$status = env("STATISTICS_OPERATORS_STATUS_NOT_RINGING_ID"))
+        if (!$status = $this->getStatus("STATISTICS_OPERATORS_STATUS_NOT_RINGING_ID"))
             return $this;
 
         RequestsStoryStatus::selectRaw('count(*) as count, json_unquote(json_extract(request_data, "$.pin")) as pin')
             ->join('requests_stories', 'requests_stories.id', '=', 'requests_story_statuses.story_id')
             ->whereDate('requests_story_statuses.created_at', $this->now)
             ->whereDate('request_data->created_at', $this->now)
-            ->where('requests_story_statuses.status_new', $status)
+            ->whereIn('requests_story_statuses.status_new', $status)
             ->where('request_data->pin', '!=', null)
             ->groupBy('pin')
             ->get()
@@ -209,5 +225,77 @@ class Operators extends Controller
             });
 
         return $this;
+    }
+
+    /**
+     * Подсчет сливов сотрудника
+     * 
+     * @return $this
+     */
+    public function getDrain()
+    {
+        if (!$status = $this->getStatus("STATISTICS_OPERATORS_STATUS_DRAIN_ID"))
+            return $this;
+
+        RequestsStoryStatus::selectRaw('count(*) as count, json_unquote(json_extract(request_data, "$.pin")) as pin')
+            ->join('requests_stories', 'requests_stories.id', '=', 'requests_story_statuses.story_id')
+            ->whereDate('requests_story_statuses.created_at', $this->now)
+            ->whereDate('request_data->created_at', $this->now)
+            ->whereIn('requests_story_statuses.status_new', $status)
+            ->where('request_data->pin', '!=', null)
+            ->groupBy('pin')
+            ->get()
+            ->each(function ($row) {
+                $this->append($row->pin, 'drain', $row->count);
+            });
+
+        return $this;
+    }
+
+    /**
+     * Подсчет записей сотрудника за сегодня
+     * 
+     * @return $this
+     */
+    public function getRecords()
+    {
+        return $this;
+    }
+
+    /**
+     * Подведение итогов по найденным данным
+     * 
+     * @return $this
+     */
+    public function getTotals()
+    {
+        $this->operators->map(function ($row) {
+
+            if ($user = $this->getUserData($row->pin)) {
+                $row->name = $user->name_full ?? null;
+                $row->sector = $user->getSectorName();
+            }
+
+            if ($row->requests ?? 0)
+                $row->efficiency = round(($row->comings / $row->requests) * 100, 1);
+
+            return $row;
+        });
+
+        return $this;
+    }
+
+    /**
+     * Поиск данных сотрудника
+     * 
+     * @param string|int $pin
+     * @return \App\Http\Controllers\Users\UserData|null
+     */
+    public function getUserData($pin)
+    {
+        if (!empty($this->users_data[$pin]))
+            return $this->users_data[$pin];
+
+        return $this->users_data[$pin] = \App\Http\Controllers\Users\Users::findUserPin($pin);
     }
 }

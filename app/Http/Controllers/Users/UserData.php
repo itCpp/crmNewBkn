@@ -5,12 +5,9 @@ namespace App\Http\Controllers\Users;
 use App\Http\Controllers\Controller;
 use App\Models\CallcenterSector;
 use App\Models\Role;
-use App\Models\UserWorkTime;
-use Illuminate\Http\Request;
 
-class UserData extends Controller
+class UserData
 {
-
     /**
      * Настройка проверки супер-админа
      * 
@@ -52,6 +49,13 @@ class UserData extends Controller
      * @var \App\Http\Controllers\Users\Permissions
      */
     protected $__permissions;
+
+    /**
+     * Массив идентификаторов всех секторов колл-центра сотрудника
+     * 
+     * @var array
+     */
+    protected $allSectors = [];
 
     /**
      * Создание объекта
@@ -128,7 +132,7 @@ class UserData extends Controller
     /**
      * Формирование полного фио
      * 
-     * @param string $surname Фаимлия
+     * @param string $surname Фамилия
      * @param string $name Имя
      * @param string $patronymic Отчество
      * @return string
@@ -144,7 +148,7 @@ class UserData extends Controller
     /**
      * Формирование сокращенного фио
      * 
-     * @param string $surname Фаимлия
+     * @param string $surname Фамилия
      * @param string $name Имя
      * @param string $patronymic Отчество
      * @return string
@@ -396,13 +400,6 @@ class UserData extends Controller
     }
 
     /**
-     * Массив идентификаторов всех секторов колл-центра сотрудника
-     * 
-     * @var array
-     */
-    protected $allSectors = [];
-
-    /**
      * Вывод всех секторов коллцентра сотрудника
      * 
      * @return array
@@ -419,5 +416,15 @@ class UserData extends Controller
             });
 
         return $this->allSectors;
+    }
+
+    /**
+     * Вывод наименования сектора острудника
+     * 
+     * @return null|string
+     */
+    public function getSectorName()
+    {
+        return CallcenterSector::find($this->callcenter_id)->name ?? null;
     }
 }
