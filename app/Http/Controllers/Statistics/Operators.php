@@ -272,7 +272,8 @@ class Operators extends Controller
         $this->operators->map(function ($row) {
 
             if ($user = $this->getUserData($row->pin)) {
-                $row->name = $user->name_full ?? null;
+                $row->userId = $user->id;
+                $row->name = $user->name_full;
                 $row->sector = $user->getSectorName();
             }
 
