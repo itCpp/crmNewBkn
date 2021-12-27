@@ -259,6 +259,19 @@ class Operators extends Controller
      */
     public function getRecords()
     {
+        if (!$status = $this->getStatus("STATISTICS_OPERATORS_STATUS_RECORD_ID"))
+            return $this;
+
+        RequestsRow::selectRaw('count(*) as count, pin')
+            ->whereDate('event_at', $this->now)
+            ->whereIn('status_id', $status)
+            ->where('pin', '!=', null)
+            ->groupBy('pin')
+            ->get()
+            ->each(function ($row) {
+                $this->append($row->pin, 'records', $row->count);
+            });
+
         return $this;
     }
 
