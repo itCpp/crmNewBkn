@@ -22,11 +22,11 @@ Route::get('/', function (\Illuminate\Http\Request $request) {
         'laravel' => Illuminate\Foundation\Application::VERSION,
         'php' => PHP_VERSION,
     ]);
-});
+})->name('index');
 
 Route::middleware('user.token')
     ->any('/broadcasting/auth', function (Request $request) {
         return Broadcast::auth($request);
-    });
+    })->name('broadcasting.auth');
 
-Route::get('/event/{id}', 'Requests\Events@eventView');
+Route::get('/event/{id}', 'Requests\Events@eventView')->name('event.id');
