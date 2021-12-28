@@ -15,7 +15,14 @@ class Routes extends Controller
      *
      * @var string[]
      */
-    protected $headers = ['Domain', 'Method', 'URI', 'Name', 'Action', 'Middleware'];
+    protected $headers = [
+        // 'Domain',
+        'Method',
+        'URI',
+        'Name',
+        'Action',
+        'Middleware'
+    ];
 
     /**
      * Вывод всех маршрутов
@@ -45,7 +52,7 @@ class Routes extends Controller
     {
         return [
             'domain' => $route->domain(),
-            'method' => implode('|', $route->methods()),
+            'method' => implode("\n", $route->methods()),
             'uri' => $route->uri(),
             'name' => $route->getName(),
             'action' => ltrim($route->getActionName(), '\\'),
