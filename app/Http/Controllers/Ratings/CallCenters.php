@@ -64,7 +64,7 @@ class CallCenters extends Controller
     /**
      * Вывод основного рейтинга колл-центров
      * 
-     * @return array
+     * @return object
      */
     public function get()
     {
@@ -73,12 +73,29 @@ class CallCenters extends Controller
             ->findUsers()
             ->getResult();
 
-        $response = $this->full_data
-            ? $this->data
-            : [
-                'users' => $this->data->users,
-            ];
+        if ($this->full_data)
+            return $this->data;
 
-        return $response;
+        return (object) [
+            'users' => $this->data->users,
+        ];
+    }
+
+    /**
+     * Вывод рейтинга для страницы с личными данными
+     * 
+     * @param string|int $pin
+     * @return array|null
+     */
+    public function getMyRow($pin)
+    {
+        $users = $this->get()->users ?? [];
+
+        foreach ($users as $user) {
+            if ($user->pin === $pin)
+                return $user;
+        }
+
+        return null;
     }
 }

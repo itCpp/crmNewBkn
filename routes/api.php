@@ -146,6 +146,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Вывод данных сотрудника */
         Route::post('getUserMainData', 'Users\UserMainData@getUserMainData')->name('api.users.getUserMainData');
+
+        /** Вывод данных для кабинета */
+        Route::post('mydata', 'Users\MyData')->name('api.users.mydata');
     });
 
     /** Маршрутизация админпанели */
