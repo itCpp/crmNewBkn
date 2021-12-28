@@ -81,13 +81,14 @@ class Operators extends Controller
     {
         $this->getRequests()
             ->getComings()
-            ->getComingsInDay()
-            ->getNotRinging()
-            ->getDrain()
             ->getRecords()
+            ->getComingsInDay()
+            ->getRecordsDay()
             ->getRecordsInDay()
             ->getRecordsNextDay()
             ->getRecordsToDay()
+            ->getNotRinging()
+            ->getDrain()
             ->getTotals();
 
         return $this->operators->flatten()->sortBy([
@@ -178,6 +179,29 @@ class Operators extends Controller
     }
 
     /**
+     * Подсчет записей сотрудника на сегодня
+     * 
+     * @return $this
+     */
+    public function getRecords()
+    {
+        if (!$status = $this->getStatus("STATISTICS_OPERATORS_STATUS_RECORD_ID"))
+            return $this;
+
+        RequestsRow::selectRaw('count(*) as count, pin')
+            ->whereDate('event_at', $this->now)
+            ->whereIn('status_id', $status)
+            ->where('pin', '!=', null)
+            ->groupBy('pin')
+            ->get()
+            ->each(function ($row) {
+                $this->append($row->pin, 'records', $row->count);
+            });
+
+        return $this;
+    }
+
+    /**
      * Подсчет приходов сотрудника, по записям, сделанным день в день
      * 
      * @return $this
@@ -256,23 +280,23 @@ class Operators extends Controller
     }
 
     /**
-     * Подсчет записей сотрудника за сегодня
+     * Подсчет записей сотрудника, сделанных за сегодня
      * 
      * @return $this
      */
-    public function getRecords()
+    public function getRecordsDay()
     {
         if (!$status = $this->getStatus("STATISTICS_OPERATORS_STATUS_RECORD_ID"))
             return $this;
 
         RequestsRow::selectRaw('count(*) as count, pin')
-            ->whereDate('event_at', $this->now)
+            ->whereDate('created_at', $this->now)
             ->whereIn('status_id', $status)
             ->whereIn('pin', $this->operators->keys())
             ->groupBy('pin')
             ->get()
             ->each(function ($row) {
-                $this->append($row->pin, 'records', $row->count);
+                $this->append($row->pin, 'recordsDay', $row->count);
             });
 
         return $this;

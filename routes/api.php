@@ -204,7 +204,7 @@ Route::group(['middleware' => 'user.token'], function () {
     Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function () {
 
         /** Вывод всех маршрутов */
-        Route::post('getRoutes', 'Dev\Routes@getRoutes')->name('api.dev.getRoutes');
+        Route::post('getRoutes', 'Dev\Routes')->name('api.dev.getRoutes');
 
         /** Настройка разрешений */
         Route::group(['middleware' => "user.can:dev_permits"], function () {

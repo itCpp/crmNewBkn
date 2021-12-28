@@ -30,7 +30,7 @@ class Routes extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getRoutes(Request $request)
+    public function __invoke(Request $request)
     {
         $routes = collect(Route::getRoutes())->map(function ($route) {
             return $this->getRouteInformation($route);

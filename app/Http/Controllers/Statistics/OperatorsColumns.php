@@ -30,9 +30,15 @@ trait OperatorsColumns
         ],
         [
             'name' => 'records',
-            'title' => "Записи за сегодня",
+            'title' => "Записи на сегодня",
             'icon' => "edit",
             'iconColor' => null,
+        ],
+        [
+            'name' => 'recordsDay',
+            'title' => "Записи, сделанные за текущий день",
+            'icon' => "edit",
+            'iconColor' => "red",
         ],
         [
             'name' => 'recordsInDay',
