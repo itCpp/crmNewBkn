@@ -203,6 +203,9 @@ Route::group(['middleware' => 'user.token'], function () {
     /** Маршрутизация админпанели разработчика */
     Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function () {
 
+        /** Вывод всех маршрутов */
+        Route::post('getRoutes', 'Dev\Routes@getRoutes');
+
         /** Настройка разрешений */
         Route::group(['middleware' => "user.can:dev_permits"], function () {
 
