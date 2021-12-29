@@ -35,6 +35,7 @@ class MyData
     {
         return [
             'user' => $request->user(),
+            'requests' => [],
             'rating' => (new CallCenters($request))->getMyRow($request->user()->pin),
             'charts' => (new Charts($request))->getCharts($request),
         ];

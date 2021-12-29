@@ -13,7 +13,7 @@ class Charts
      * 
      * @var int
      */
-    const DAYS = 6;
+    const DAYS = 30;
 
     /**
      * Создание экземпляра объекта

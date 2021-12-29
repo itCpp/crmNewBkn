@@ -53,10 +53,7 @@ class CallCenters extends Controller
             'requests' => [], # Подсчет заявок
         ];
 
-        $this->dates = new Dates(
-            $request->start ?? date("Y-m-d"),
-            $request->stop ?? date("Y-m-d")
-        );
+        $this->dates = new Dates($request->start, $request->stop);
 
         $this->full_data = $request->user()->can('rating_callcenter_full_data') ?: $full_data;
     }
@@ -89,6 +86,8 @@ class CallCenters extends Controller
      */
     public function getMyRow($pin)
     {
+        $this->dates = new Dates(type: "periodNow");
+
         $users = $this->get()->users ?? [];
 
         foreach ($users as $user) {
