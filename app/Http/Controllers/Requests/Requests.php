@@ -243,6 +243,8 @@ class Requests extends Controller
      */
     public static function getNewRequests($pin)
     {
+        $sets = [];
+
         $requests = RequestsStoryPin::distinct()
             ->select('request_id', 'requests_story_pins.created_at')
             ->join('requests_rows', function ($join) use ($pin) {
@@ -256,16 +258,18 @@ class Requests extends Controller
             ->orderBy('requests_story_pins.created_at', 'DESC')
             ->limit(10)
             ->get()
-            ->map(function ($row) {
+            ->map(function ($row) use (&$sets) {
+                $sets[$row->request_id] = $row->created_at;
+
                 return $row->request_id;
             })
             ->toArray();
 
-        request()->user()->can('sss', 'sasdasdasd');
-
         return RequestsRow::whereIn('id', $requests)
             ->get()
-            ->map(function ($row) {
+            ->map(function ($row) use ($sets) {
+                $row->set_at = $sets[$row->id] ?? null;
+
                 return self::getRequestRow($row);
             });
     }
