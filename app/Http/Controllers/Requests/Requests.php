@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Dates;
 use App\Models\Office;
 use App\Models\RequestsRow;
+use App\Models\RequestsRowsView;
+use App\Models\RequestsStoryPin;
 use App\Models\Status;
 use App\Models\Tab;
 use Illuminate\Http\Request;
@@ -17,7 +19,7 @@ class Requests extends Controller
      * Вывод заявок
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function get(Request $request)
     {
@@ -63,7 +65,7 @@ class Requests extends Controller
      * Вывод одной строки
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getRow(Request $request)
     {
@@ -104,6 +106,14 @@ class Requests extends Controller
             ];
         }
 
+        $view = RequestsRowsView::firstOrNew([
+            'request_id' => $row->id,
+            'user_id' => $request->user()->id,
+        ]);
+
+        $view->view_at = now();
+        $view->save();
+
         $response = [
             'request' => $row,
             'permits' => RequestStart::$permits,
@@ -123,7 +133,7 @@ class Requests extends Controller
      * Запрос на вывод данных для добавления заявки оператору
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getRowForTab(Request $request)
     {
@@ -183,12 +193,19 @@ class Requests extends Controller
             ? "{$row->event_date}T{$row->event_time}" : null;
 
         // Данные по номерам телефона
-        $row->clients = self::getClientPhones($row, $row->permits->clients_show_phone ?? null);
+        $row->clients = self::getClientPhones($row, request()->user()->can('clients_show_phone'));
 
         $row->source; # Источник заявки
         $row->status; # Вывод данных о статусе
         $row->office; # Вывод данных по офису
         $row->sector; # Вывод данных по сектору
+
+        $row->view_at = RequestsRowsView::where([
+            'user_id' => request()->user()->id,
+            'request_id' => $row->id,
+        ])->first()->view_at ?? null;
+
+        $row->updated = $row->view_at < $row->updated_at;
 
         return (object) $row->toArray();
     }
@@ -216,5 +233,40 @@ class Requests extends Controller
                 'hidden' => (bool) !$permit,
             ];
         });
+    }
+
+    /**
+     * Вывод новых заявок для личной страницы
+     * 
+     * @param string|int $pin
+     * @return array
+     */
+    public static function getNewRequests($pin)
+    {
+        $requests = RequestsStoryPin::distinct()
+            ->select('request_id', 'requests_story_pins.created_at')
+            ->join('requests_rows', function ($join) use ($pin) {
+                $join->on('requests_rows.id', '=', 'requests_story_pins.request_id')
+                    ->where('requests_rows.pin', $pin);
+            })
+            ->where([
+                ['new_pin', $pin],
+                ['requests_rows.deleted_at', null],
+            ])
+            ->orderBy('requests_story_pins.created_at', 'DESC')
+            ->limit(10)
+            ->get()
+            ->map(function ($row) {
+                return $row->request_id;
+            })
+            ->toArray();
+
+        request()->user()->can('sss', 'sasdasdasd');
+
+        return RequestsRow::whereIn('id', $requests)
+            ->get()
+            ->map(function ($row) {
+                return self::getRequestRow($row);
+            });
     }
 }

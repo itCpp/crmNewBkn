@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Users;
 use App\Exceptions\ExceptionsJsonResponse;
 use App\Http\Controllers\Ratings\CallCenters;
 use App\Http\Controllers\Statistics\Charts;
+use App\Http\Controllers\Requests\Requests;
 use Illuminate\Http\Request;
 
 class MyData
@@ -17,7 +18,9 @@ class MyData
      */
     public function __invoke(Request $request)
     {
-        if ($request->user()->id != $request->userId)
+        $userId = $request->userId ?: $request->user()->id;
+
+        if ($request->user()->id != $userId)
             throw new ExceptionsJsonResponse("Доступ ограничен", 403);
 
         return response()->json(
@@ -34,10 +37,12 @@ class MyData
     public function getMyData(Request $request)
     {
         return [
-            'user' => $request->user(),
-            'requests' => [],
+            'alerts' => [
+                'requests' => Requests::getNewRequests($request->user()->pin),
+            ],
             'rating' => (new CallCenters($request))->getMyRow($request->user()->pin),
             'charts' => (new Charts($request))->getCharts($request),
+            'user' => $request->user(),
         ];
     }
 }

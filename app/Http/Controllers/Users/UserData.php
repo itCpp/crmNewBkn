@@ -182,20 +182,44 @@ class UserData
         if ($this->superadmin)
             return true;
 
+        foreach ($permits as $permit) {
+            if ($this->__permissions->$permit)
+                return true;
+        }
+
         $roles = Role::find($this->roles);
 
         foreach ($roles as $role) {
 
-            $permissions = $role->permissions()->whereIn('roles_permissions.permission', $permits)->get();
+            $permissions = $role->permissions()
+                ->whereIn('roles_permissions.permission', $permits)
+                ->get()
+                ->each(function ($row) {
+                    $this->__permissions->appends([
+                        $row->permission => true
+                    ]);
+                });
 
             if (count($permissions))
                 return true;
         }
 
-        $permissions = $this->__user->permissions()->whereIn('permission', $permits)->get();
+        $permissions = $this->__user
+            ->permissions()
+            ->whereIn('permission', $permits)
+            ->get()
+            ->each(function ($row) {
+                $this->__permissions->appends([
+                    $row->permission => true
+                ]);
+            });
 
         if (count($permissions))
             return true;
+
+        foreach ($permits as $permit) {
+            $this->__permissions->$permit = false;
+        }
 
         return false;
     }
