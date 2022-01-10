@@ -256,7 +256,7 @@ class Requests extends Controller
                 ['requests_rows.deleted_at', null],
             ])
             ->orderBy('requests_story_pins.created_at', 'DESC')
-            ->limit(10)
+            ->limit(15)
             ->get()
             ->map(function ($row) use (&$sets) {
                 $sets[$row->request_id] = $row->created_at;
@@ -271,6 +271,9 @@ class Requests extends Controller
                 $row->set_at = $sets[$row->id] ?? null;
 
                 return self::getRequestRow($row);
-            });
+            })
+            ->sortByDesc('set_at')
+            ->values()
+            ->all();
     }
 }
