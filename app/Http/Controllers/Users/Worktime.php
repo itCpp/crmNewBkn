@@ -355,10 +355,12 @@ class Worktime extends Controller
             ->whereNotIn('event_type', self::$timeoutOf)
             ->get();
 
-        $rows[] = (object) [
-            'created_at' => now()->format("Y-m-d H:i:s"),
-            'event_type' => "last",
-        ];
+        if (count($rows)) {
+            $rows[] = (object) [
+                'created_at' => now()->format("Y-m-d H:i:s"),
+                'event_type' => "last",
+            ];
+        }
 
         foreach ($rows as &$row) {
 
