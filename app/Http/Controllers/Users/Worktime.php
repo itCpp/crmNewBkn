@@ -336,4 +336,64 @@ class Worktime extends Controller
             '$timeoutLast' => $timeoutLast,
         ]);
     }
+
+    /**
+     * Вывод ленты рабочего времени
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function getTapeTimes(Request $request)
+    {
+        $start = null;
+        $stop = now()->format("Y-m-d") . " 18:00:00";
+        $last = null;
+        $login = null;
+
+        $rows = UserWorkTime::whereUserPin($request->user()->pin)
+            ->where('date', now()->format('Y-m-d'))
+            ->whereNotIn('event_type', self::$timeoutOf)
+            ->get();
+
+        $rows[] = (object) [
+            'created_at' => now()->format("Y-m-d H:i:s"),
+            'event_type' => "last",
+        ];
+
+        foreach ($rows as &$row) {
+
+            if ($row->event_type == "login")
+                $login = $row->created_at;
+            else if ($row->event_type == "logout")
+                $login = null;
+
+            if (!$start)
+                $start = $row->created_at;
+
+            if ($row->created_at > $stop)
+                $stop = $row->created_at;
+
+            $last = $row->created_at;
+
+            $row->color = self::getColorButton($row->event_type);
+            $row->logined = $login !== null;
+        }
+
+        $a = strtotime($start);
+        $b = strtotime($stop);
+        $l = strtotime($last);
+
+        foreach ($rows as &$row) {
+            $row->percent = ($l - $a) > 0
+                ? (strtotime($row->created_at) - $a) * 100 / ($l - $a)
+                : 0;
+        }
+
+        return [
+            'start' => $start,
+            'stop' => $stop,
+            'percent' => ($b - $a) > 0 ? ($l - $a) * 100 / ($b - $a) : 0,
+            'rows' => $rows->toArray(),
+        ];
+    }
 }

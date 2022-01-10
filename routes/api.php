@@ -149,6 +149,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Вывод данных для кабинета */
         Route::post('mydata', 'Users\MyData')->name('api.users.mydata');
+
+        /** Вывод временной шкалы */
+        Route::post('getWorktimeTape', 'Users\MyData@getTapeTimes')->name('api.users.getworktimetape');
     });
 
     /** Маршрутизация админпанели */
