@@ -146,6 +146,9 @@ class Testings extends Controller
         $id = $this->findNextQuestionId($request->question);
         $process['question'] = $id;
 
+        if (!$id)
+            $process = $this->serialiseAnswers($process);
+
         $this->process->answer_process = $process;
         $this->process->done_at = $id ? null : now();
 
@@ -184,6 +187,39 @@ class Testings extends Controller
             return $next;
 
         return false;
+    }
+
+    /**
+     * Обработка данных при завершении
+     * 
+     * @return null
+     */
+    public function serialiseAnswers($process)
+    {
+        $correct = 0;
+        $incorrect = 0;
+
+        foreach ($process['questions'] ?? [] as $key => $question) {
+
+            $answers_rights = $this->decrypt($question['answers_rights']);
+            $answers_rights = json_decode($answers_rights, true);
+
+            $diff = array_diff($question['answers_selected'], $answers_rights);
+
+            $process['questions'][$key]['bad'] = count($diff) > 0;
+            $process['questions'][$key]['diff'] = $diff;
+
+            if ($process['questions'][$key]['bad']) {
+                $incorrect++;
+            } else {
+                $correct++;
+            }
+        }
+
+        $process['correct'] = $correct;
+        $process['incorrect'] = $incorrect;
+
+        return $process;
     }
 
     /**
