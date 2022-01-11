@@ -15,4 +15,7 @@ return Route::group(['prefix' => "testing"], function () {
 
     /** Начало тестирования */
     Route::post('start', 'Testing\Testings@start')->name('api.testing.start');
+
+    /** Следующий вопрос */
+    Route::post('next', 'Testing\Testings@next')->name('api.testing.next');
 });

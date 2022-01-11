@@ -40,9 +40,13 @@ class Testings extends Controller
      */
     public function __invoke(Request $request)
     {
+        $question = ($this->process->start_at and !$this->process->done_at)
+            ? $this->findQuestion()
+            : null;
+
         return response()->json([
             'process' => $this->process,
-            'question' => $this->process->start_at ? $this->findQuestion() : null,
+            'question' => $question,
         ]);
     }
 
@@ -69,11 +73,13 @@ class Testings extends Controller
 
         $this->process->answer_process = $process;
 
+        $question = $this->findQuestion();
+
         $this->process->save();
 
         return response()->json([
             'process' => $this->process,
-            'question' => $this->findQuestion(),
+            'question' => $question,
         ]);
     }
 
@@ -89,10 +95,95 @@ class Testings extends Controller
         if (empty($process['question']))
             $process['question'] = $this->process->questions_id[0] ?? null;
 
+        $id = $process['question'];
+
+        if (empty($process['questions'][$id]))
+            $process['questions'][$id] = $this->createQuestion($id);
+
         $this->process->answer_process = $process;
         $this->process->save();
 
-        return TestingQuestion::find($process['question'])->toArray();
+        return $process['questions'][$id];
+    }
+
+    /**
+     * Создание вопроса для вывода на страницу
+     * 
+     * @param int $id
+     * @return array
+     */
+    public function createQuestion($id)
+    {
+        $question = TestingQuestion::find($id);
+
+        $question->answers = collect($question->answers)->shuffle();
+        $question->answers_rights = $this->encrypt(json_encode($question->right_answers));
+
+        return $question->toArray();
+    }
+
+    /**
+     * Следующий вопрос
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function next(Request $request)
+    {
+        $process = $this->process->answer_process;
+
+        if (empty($process['questions'][$request->question]))
+            return response()->json(['message' => "Вопрос не найден"], 400);
+
+        // Запись ответов на текущий вопрос
+        $process['questions'][$request->question]['answers_selected'] = $request->answers;
+        $process['questions'][$request->question]['answer_data'] = [
+            'time' => now(),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ];
+
+        $id = $this->findNextQuestionId($request->question);
+        $process['question'] = $id;
+
+        $this->process->answer_process = $process;
+        $this->process->done_at = $id ? null : now();
+
+        $question = $id ? $this->findQuestion() : null;
+
+        $this->process->save();
+
+        return response()->json([
+            'process' => $this->process,
+            'question' => $question ?? null,
+        ]);
+    }
+
+    /**
+     * Поиск идентификатор следующего вопроса
+     * 
+     * @param int $question_id Идентификатор текущего вопроса
+     * @return false|int
+     */
+    public function findNextQuestionId($question_id)
+    {
+        $next = false; // Флаг остановки
+
+        foreach ($this->process->questions_id as $id) {
+
+            if ($next) {
+                $next = $id;
+                break;
+            }
+
+            if ($id == $question_id)
+                $next = true;
+        }
+
+        if (gettype($next) == "integer")
+            return $next;
+
+        return false;
     }
 
     /**
