@@ -37,5 +37,7 @@ class TestingQuestion extends Model
      */
     protected $hidden = [
         'right_answers',
+        'created_at',
+        'updated_at',
     ];
 }
