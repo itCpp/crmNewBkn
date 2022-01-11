@@ -28,6 +28,7 @@ class CreateCrm extends Seeder
             IncomingCallsToSourceSeeder::class, // Источники слушателей входящих звонков
             MoscowCitySeeder::class, // Список городов Московской области
             SettingsQueuesDatabasesSeeder::class, // Настройки внешних бд для очередей
+            TestingQuestionSeeder::class, // Вопросы тестирования
         ]);
 
         $output = new ConsoleOutput; // Вывод в консоль

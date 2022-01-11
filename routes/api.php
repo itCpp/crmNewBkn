@@ -30,10 +30,14 @@ Route::post('loginCancel', 'Users\Auth@loginCancel')->name('api.loginCancel');
 /** Получить номер телефона через идентификатор */
 Route::any('getNumberFromId', 'Asterisk\Phones@getNumberFromId')->name('api.getNumberFromId');
 
+/** Маршрутизая общего доступа */
 include __DIR__ . "/api/api.free.php";
 
 /** Маршрутизация внутреннего чата */
 include __DIR__ . "/api/api.chat.php";
+
+/** Маршрутизация тестирования сотрудников */
+include __DIR__ . "/api/api.testing.php";
 
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function () {
