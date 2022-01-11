@@ -45,7 +45,8 @@ trait CallCenterResult
         $this->row = $row;
 
         $this->setComings()
-            ->setRequests();
+            ->setRequests()
+            ->setDatesArray();
 
         return $this->row;
     }
@@ -108,6 +109,22 @@ trait CallCenterResult
             $this->row->dates[$date]->requests += $data['all'];
             $this->row->dates[$date]->requestsAll += $data['moscow'];
         }
+
+        return $this;
+    }
+
+    /**
+     * Формирование массива подробных данных за каждый расчетный день
+     * 
+     * @return $this
+     */
+    public function setDatesArray()
+    {
+        foreach (($this->row->dates ?? []) as $data) {
+            $dates[] = $data;
+        }
+
+        $this->row->dates = $dates ?? [];
 
         return $this;
     }

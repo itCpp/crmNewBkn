@@ -46,14 +46,20 @@ class CallCenters extends Controller
     {
         $this->request = $request;
 
+        $this->dates = new Dates($request->start, $request->stop);
+
+        if ($request->toPeriod) {
+            $this->dates->start = $this->dates->startPeriod;
+            $this->dates->stop = $this->dates->stopPeriod;
+        }
+
         $this->data = (object) [
             'users' => [], # Данные расчитанного рейтинга
             'pins' => [], # Список всех сотрудников, найденных при расчете рейтинга
             'comings' => [], # Данные по приходам
             'requests' => [], # Подсчет заявок
+            'dates' => $this->dates,
         ];
-
-        $this->dates = new Dates($request->start, $request->stop);
 
         $this->full_data = $request->user()->can('rating_callcenter_full_data') ?: $full_data;
     }
