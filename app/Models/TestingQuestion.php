@@ -16,6 +16,7 @@ class TestingQuestion extends Model
      */
     protected $fillable = [
         'question',
+        'theme',
         'answers',
         'right_answers',
     ];

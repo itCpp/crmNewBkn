@@ -7,6 +7,7 @@ use App\Http\Controllers\Users\UserData;
 use App\Models\User;
 use App\Models\UsersSession;
 use App\Models\UserWorkTime;
+use App\Models\CrmMka\CrmUser;
 use Illuminate\Http\Request;
 
 class Users extends Controller
@@ -151,5 +152,19 @@ class Users extends Controller
             return null;
 
         return new UserData($user);
+    }
+
+    /**
+     * Поиск данных сотрудника из старой бд
+     * 
+     * @param int|string $pin
+     * @return
+     */
+    public static function findUserOldPin($pin)
+    {
+        if (!$user = CrmUser::wherePin($pin)->first())
+            return null;
+
+        return new UderOldCrm((object) $user->toArray());
     }
 }

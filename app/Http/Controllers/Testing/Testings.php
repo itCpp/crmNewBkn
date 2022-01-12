@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Testing;
 
 use Exception;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Users\Users;
 use App\Models\TestingProcess;
 use App\Models\TestingQuestion;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,13 @@ class Testings extends Controller
     const QUESTIONS_COUNT = 20;
 
     /**
+     * Экземпляр моедели процесса тестирования
+     * 
+     * @var TestingProcess|null
+     */
+    public $process = null;
+
+    /**
      * Создание экземпляра объекта
      * 
      * @param \Illuminate\Http\Request $request
@@ -28,8 +36,11 @@ class Testings extends Controller
      */
     public function __construct(Request $request)
     {
-        if (!$this->process = TestingProcess::where('uuid', $request->uuid)->first())
+        if ($request->uuid and !$this->process = TestingProcess::where('uuid', $request->uuid)->first())
             throw new Exception("Тестирование не найдено");
+
+        if ($this->process)
+            $this->getUserName();
     }
 
     /**
@@ -48,6 +59,21 @@ class Testings extends Controller
             'process' => $this->process,
             'question' => $question,
         ]);
+    }
+
+    /**
+     * Поиск имени сотрудника
+     * 
+     * @return string|null
+     */
+    public function getUserName()
+    {
+        if ($this->process->pin)
+            $this->process->name = Users::findUserPin($this->process->pin)->name_full ?? null;
+        else if ($this->process->pin_old)
+            $this->process->name = Users::findUserOldPin($this->process->pin_old)->fullName ?? null;
+
+        return $this->process->name ?? null;
     }
 
     /**

@@ -16,8 +16,9 @@ class CreateTestingProcessesTable extends Migration
     {
         Schema::create('testing_processes', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid');
+            $table->uuid('uuid')->index();
             $table->string('pin', 50)->nullable()->comment('Персональный идентификационный номер сотрудника');
+            $table->string('pin_old', 50)->nullable()->comment('Персональный идентификационный номер сотрудника старой ЦРМ');
             $table->json('questions_id')->default(new Expression('(JSON_ARRAY())'))->comment('Идентификаторы вопросов');
             $table->json('answer_process')->default(new Expression('(JSON_ARRAY())'))->comment('Процесс выполнения теста');
             $table->timestamp('created_at')->nullable()->comment('Время создания');

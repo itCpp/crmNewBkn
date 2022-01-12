@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\TestingQuestion;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Eloquent\Factories\Sequence;
+// use Illuminate\Database\Eloquent\Factories\Sequence;
 
 class TestingQuestionSeeder extends Seeder
 {
@@ -15,10 +15,13 @@ class TestingQuestionSeeder extends Seeder
      */
     public function run()
     {
-        $factory = TestingQuestion::factory();
-        $state = $factory->questions;
-        $count = count($state);
+        // $factory = TestingQuestion::factory();
+        // $state = $factory->questions;
+        // $count = count($state);
 
-        $factory->count($count)->state(new Sequence(...$state))->create();
+        // $factory->count($count)->state(new Sequence(...$state))->create();
+
+        foreach (TestingQuestion::factory()->questions as $row)
+            TestingQuestion::create($row);
     }
 }

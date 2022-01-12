@@ -16,7 +16,8 @@ class CreateTestingQuestionsTable extends Migration
     {
         Schema::create('testing_questions', function (Blueprint $table) {
             $table->id();
-            $table->string('question')->comment('Текст вопроса');
+            $table->text('question')->comment('Текст вопроса');
+            $table->string('theme', 255)->nullable()->comment('Тематика вопроса, null - Общая тематика')->index();
             $table->json('answers')->comment("Варианты ответов")->default(new Expression('(JSON_ARRAY())'));
             $table->json('right_answers')->comment("Варианты правильных ответов")->default(new Expression('(JSON_ARRAY())'));
             $table->timestamps();

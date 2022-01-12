@@ -27,6 +27,7 @@ class TestingQuestionFactory extends Factory
 
         return [
             'question' => $this->questions[$rand]['question'],
+            'theme' => $this->questions[$rand]['theme'] ?? null,
             'answers' => $this->questions[$rand]['answers'],
             'right_answers' => $this->questions[$rand]['right_answers'],
         ];
