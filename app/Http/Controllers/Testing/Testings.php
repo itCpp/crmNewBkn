@@ -310,7 +310,17 @@ class Testings extends Controller
 
         foreach ($themes as $theme) {
             foreach ($this->generateNumbers($request, $theme) as $offset) {
-                $questions[] = TestingQuestion::select('id')->offset($offset)->limit(1)->first()->id;
+                $questions[] = TestingQuestion::select('id')
+                    ->when(is_array($theme), function ($query) use ($theme) {
+                        $query->whereIn('theme', $theme);
+                    })
+                    ->when($theme === null, function ($query) {
+                        $query->where('theme', null);
+                    })
+                    ->offset($offset)
+                    ->limit(1)
+                    ->first()
+                    ->id;
             }
         }
 
