@@ -269,7 +269,20 @@ class Testings extends Controller
      */
     public function create(Request $request)
     {
+        $request = new Request(
+            query: $request->all(),
+            server: [
+                'HTTP_USER_AGENT' => $request->userAgent(),
+                'REMOTE_ADDR' => $request->header('x-forwarded-for') ?: $request->ip(),
+            ]
+        );
+
+        $request->general = $request->general ? (int) $request->general : 0;
+        $request->thematic = $request->thematic ? (int) $request->thematic : 0;
+
         $this->process = $this->createTesting($request);
+
+        $this->getUserName();
 
         return response()->json($this->processToArray());
     }
@@ -279,31 +292,64 @@ class Testings extends Controller
      * 
      * @param \Illuminate\Http\Request $request
      * @return array
+     * 
+     * @throws \App\Exceptions\ExceptionsJsonResponse
      */
     public function createTesting(Request $request)
     {
-        foreach ($this->generateNumbers() as $offset) {
-            $questions[] = TestingQuestion::select('id')->offset($offset)->limit(1)->first()->id;
+        if ($request->thematic and !$request->themes)
+            throw new ExceptionsJsonResponse("Необходимо выбрать тему дополнительных вопросов, либо изменить их количетсво на 0");
+
+        if (!$request->general and !$request->thematic)
+            $request->general = self::QUESTIONS_COUNT;
+
+        $themes = [null];
+
+        if (is_array($request->themes))
+            $themes = [null, $request->themes];
+
+        foreach ($themes as $theme) {
+            foreach ($this->generateNumbers($request, $theme) as $offset) {
+                $questions[] = TestingQuestion::select('id')->offset($offset)->limit(1)->first()->id;
+            }
         }
 
-        return TestingProcess::create([
-            'uuid' => Str::orderedUuid(),
-            'pin' => $request->pin,
-            'pin_old' => $request->pin_old,
-            'questions_id' => $questions ?? [],
-        ]);
+        $test = new TestingProcess;
+        $test->uuid = Str::orderedUuid();
+        $test->pin = $request->pin;
+        $test->pin_old = $request->pin_old;
+        $test->questions_id = $questions ?? [];
+
+        $test->save();
+
+        return $test;
     }
 
     /**
      * Формирование порядковых номеров для вопросов
      * 
+     * @param \Illuminate\Http\Request $request
+     * @param null|string $theme
      * @return array
+     * 
+     * @throws \App\Exceptions\ExceptionsJsonResponse
      */
-    public function generateNumbers()
+    public function generateNumbers(Request $request, $theme)
     {
-        $questions = TestingQuestion::count();
+        if (($theme !== null and !$request->thematic) or ($theme === null and !$request->general))
+            return [];
 
-        $limit = $questions > self::QUESTIONS_COUNT ? self::QUESTIONS_COUNT : $questions;
+        $questions = TestingQuestion::when(is_array($theme), function ($query) use ($theme) {
+            $query->whereIn('theme', $theme);
+        })
+            ->when($theme === null, function ($query) {
+                $query->where('theme', null);
+            })
+            ->count();
+
+        $count = $theme === null ? $request->general : $request->thematic;
+
+        $limit = $questions > $count ? $count : $questions;
         $numbers = [];
 
         while (count($numbers) < $limit) {

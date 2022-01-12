@@ -18,4 +18,7 @@ return Route::group(['prefix' => "testing"], function () {
 
     /** Следующий вопрос */
     Route::post('next', 'Testing\Testings@next')->name('api.testing.next');
+
+    /** Создание теста */
+    Route::post('create', 'Testing\Testings@create')->name('api.testing.create');
 });
