@@ -56,9 +56,22 @@ class Testings extends Controller
             : null;
 
         return response()->json([
-            'process' => $this->process,
+            'process' => $this->processToArray(),
             'question' => $question,
         ]);
+    }
+
+    /**
+     * Преобразование данных процесса для вывода на страницу
+     * 
+     * @return array
+     */
+    public function processToArray()
+    {
+        return array_merge(
+            ['name' => $this->name ?? null],
+            $this->process->toArray(),
+        );
     }
 
     /**
@@ -69,11 +82,11 @@ class Testings extends Controller
     public function getUserName()
     {
         if ($this->process->pin)
-            $this->process->name = Users::findUserPin($this->process->pin)->name_full ?? null;
+            $this->name = Users::findUserPin($this->process->pin)->name_full ?? null;
         else if ($this->process->pin_old)
-            $this->process->name = Users::findUserOldPin($this->process->pin_old)->fullName ?? null;
+            $this->name = Users::findUserOldPin($this->process->pin_old)->fullName ?? null;
 
-        return $this->process->name ?? null;
+        return $this->name ?? null;
     }
 
     /**
@@ -104,7 +117,7 @@ class Testings extends Controller
         $this->process->save();
 
         return response()->json([
-            'process' => $this->process,
+            'process' => $this->processToArray(),
             'question' => $question,
         ]);
     }
@@ -183,7 +196,7 @@ class Testings extends Controller
         $this->process->save();
 
         return response()->json([
-            'process' => $this->process,
+            'process' => $this->processToArray(),
             'question' => $question ?? null,
         ]);
     }
@@ -256,9 +269,9 @@ class Testings extends Controller
      */
     public function create(Request $request)
     {
-        $response = $this->createTesting($request);
+        $this->process = $this->createTesting($request);
 
-        return response()->json($response);
+        return response()->json($this->processToArray());
     }
 
     /**
@@ -276,6 +289,7 @@ class Testings extends Controller
         return TestingProcess::create([
             'uuid' => Str::orderedUuid(),
             'pin' => $request->pin,
+            'pin_old' => $request->pin_old,
             'questions_id' => $questions ?? [],
         ]);
     }
