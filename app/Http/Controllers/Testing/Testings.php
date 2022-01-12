@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Testing;
 
-use Exception;
+use App\Exceptions\ExceptionsJsonResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Users\Users;
 use App\Models\TestingProcess;
@@ -32,12 +32,12 @@ class Testings extends Controller
      * @param \Illuminate\Http\Request $request
      * @return void
      * 
-     * @throws Exception
+     * @throws ExceptionsJsonResponse
      */
     public function __construct(Request $request)
     {
         if ($request->uuid and !$this->process = TestingProcess::where('uuid', $request->uuid)->first())
-            throw new Exception("Тестирование не найдено");
+            throw new ExceptionsJsonResponse("Тестирование не найдено");
 
         if ($this->process)
             $this->getUserName();
