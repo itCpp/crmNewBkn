@@ -3,48 +3,46 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\User;
 use App\Models\Callcenter;
 use App\Models\CallcenterSector;
-
-use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Role;
+use App\Models\User;
+use App\Models\UsersPosition;
+use App\Models\UsersPositionsStory;
+use Illuminate\Http\Request;
 
 class AdminUsers extends Controller
 {
-
     /**
      * Вывод списка сотрудников по запросу
      * 
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getUsers(Request $request) {
-
+    public static function getUsers(Request $request)
+    {
         $data = User::select(
             'users.*',
             'callcenters.name as callcenter',
             'callcenter_sectors.name as sector'
         )
-        ->leftjoin('callcenters', 'callcenters.id', '=', 'users.callcenter_id')
-        ->leftjoin('callcenter_sectors', 'callcenter_sectors.id', '=', 'users.callcenter_sector_id');
+            ->leftjoin('callcenters', 'callcenters.id', '=', 'users.callcenter_id')
+            ->leftjoin('callcenter_sectors', 'callcenter_sectors.id', '=', 'users.callcenter_sector_id');
 
         if ($request->search) {
             $data = $data->orderBy('users.deleted_at')
-            ->orderBy('users.surname')
-            ->orderBy('users.name')
-            ->orderBy('users.patronymic')
-            ->where(function($query) use ($request) {
-                $query->where('users.surname', 'LIKE', "%{$request->search}%")
-                ->orWhere('users.name', 'LIKE', "%{$request->search}%")
-                ->orWhere('users.patronymic', 'LIKE', "%{$request->search}%")
-                ->orWhere('users.pin', 'LIKE', "%{$request->search}%")
-                ->orWhere('users.login', 'LIKE', "%{$request->search}%");
-            });
-        }
-        else {
+                ->orderBy('users.surname')
+                ->orderBy('users.name')
+                ->orderBy('users.patronymic')
+                ->where(function ($query) use ($request) {
+                    $query->where('users.surname', 'LIKE', "%{$request->search}%")
+                        ->orWhere('users.name', 'LIKE', "%{$request->search}%")
+                        ->orWhere('users.patronymic', 'LIKE', "%{$request->search}%")
+                        ->orWhere('users.pin', 'LIKE', "%{$request->search}%")
+                        ->orWhere('users.login', 'LIKE', "%{$request->search}%");
+                });
+        } else {
             $data = $data->orderBy('users.id', "DESC");
         }
 
@@ -54,7 +52,6 @@ class AdminUsers extends Controller
         return response()->json([
             'users' => $users ?? []
         ]);
-
     }
 
     /**
@@ -63,15 +60,14 @@ class AdminUsers extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getUser(Request $request) {
-
+    public static function getUser(Request $request)
+    {
         if (!$user = User::find($request->id))
             return response()->json(['message' => "Данные сотрудника не найдены"], 400);
 
         return response()->json([
             'user' => $user
         ]);
-
     }
 
     /**
@@ -80,36 +76,40 @@ class AdminUsers extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getAddUserData(Request $request) {
-
+    public static function getAddUserData(Request $request)
+    {
         $rows = Callcenter::where('active', 1);
 
-        if ($request->__user->callcenter_id)
-            $rows = $rows->where('id', $request->__user->callcenter_id);
+        if ($request->user()->callcenter_id)
+            $rows = $rows->where('id', $request->user()->callcenter_id);
 
         foreach ($rows->get() as $row) {
 
             $sectors = $row->sectors;
 
             $callcenters[] = $row;
-
         }
 
-        $user = User::find($request->id);
-        $pin = $user->pin ?? self::getNextPinCallcenter($request->__user->callcenter_id);
+        $user = User::find(is_array($request->id) ? null : $request->id);
+
+        if ($request->id and $user) {
+            $pin = $user->pin ?? self::getNextPinCallcenter($request->user()->callcenter_id);
+        } else {
+            $pin = self::getNextPinCallcenter($request->user()->callcenter_id);
+        }
 
         return response()->json([
-            'callcenter' => $request->__user->callcenter_id, // Колл-центр администратора
-            'sector' => $request->__user->callcenter_sector_id, // Сектор администратора
+            'callcenter' => $request->user()->callcenter_id, // Колл-центр администратора
+            'sector' => $request->user()->callcenter_sector_id, // Сектор администратора
             'callcenters' => $callcenters ?? [],
             'pin' => $pin,
             'user' => $user, // Данные сотрудника для редактирования
+            'positions' => UsersPosition::all(),
             'auth_types' => [
                 ['text' => "По паролю", 'value' => "secret"],
                 ['text' => "Через руководителя", 'value' => "admin"],
             ],
         ]);
-
     }
 
     /**
@@ -118,8 +118,8 @@ class AdminUsers extends Controller
      * @param int $id   Идентификтаор коллцентра
      * @return int      Следующий pin коллцентра
      */
-    public static function getNextPinCallcenter($id = null) {
-
+    public static function getNextPinCallcenter($id = null)
+    {
         if (!$id)
             return null;
 
@@ -130,21 +130,20 @@ class AdminUsers extends Controller
             ['pin', '>', $pin],
             ['pin', '<', $pin + 10000],
         ])
-        ->max('pin');
+            ->max('pin');
 
         $last = User::select('pin')
-        ->where([
-            ['pin', '>=', $max ?? $pin],
-            ['pin', '<', $pin + 10000],
-        ])
-        ->limit(1)
-        ->get();
+            ->where([
+                ['pin', '>=', $max ?? $pin],
+                ['pin', '<', $pin + 10000],
+            ])
+            ->limit(1)
+            ->get();
 
         if ($last[0]->pin ?? null)
             $pin = $last[0]->pin + 1;
 
         return (int) $pin;
-
     }
 
     /**
@@ -153,8 +152,8 @@ class AdminUsers extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getCallCenterData(Request $request) {
-
+    public static function getCallCenterData(Request $request)
+    {
         if ($request->id !== null) {
             if (!$row = Callcenter::find($request->id))
                 return response()->json(['message' => "Колл-центр не найден"], 400);
@@ -164,7 +163,6 @@ class AdminUsers extends Controller
             'pin' => self::getNextPinCallcenter($row->id ?? null),
             'sectors' => $row->sectors ?? [],
         ]);
-
     }
 
     /**
@@ -173,8 +171,8 @@ class AdminUsers extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function saveUser(Request $request) {
-
+    public static function saveUser(Request $request)
+    {
         $user = User::find($request->id);
 
         $rules = [
@@ -183,17 +181,17 @@ class AdminUsers extends Controller
             'pin' => "required",
         ];
 
-        if (!$user || ($user AND ($user->pin != $request->pin)))
+        if (!$user || ($user and ($user->pin != $request->pin)))
             $rules['pin'] .= "|unique:App\Models\User,pin";
 
         if ($request->login) {
-            if (!$user || ($user AND ($user->login != $request->login)))
+            if (!$user || ($user and ($user->login != $request->login)))
                 $rules['login'] = "unique:App\Models\User,login";
         }
 
         $validate = $request->validate($rules);
 
-        if ($request->auth_type == "secret" AND !$request->password AND !$user) {
+        if ($request->auth_type == "secret" and !$request->password and !$user) {
             return response()->json([
                 'message' => "Обязательно укажите пароль при выборе соответствующего способа авторизации",
                 'errors' => [
@@ -205,7 +203,7 @@ class AdminUsers extends Controller
         if (!$user)
             $user = new User;
 
-        if (!$user OR ($user AND $request->password))
+        if (!$user or ($user and $request->password))
             $user->password = Auth::getHashPass($request->password);
 
         $user->pin = $request->pin;
@@ -218,19 +216,32 @@ class AdminUsers extends Controller
         $user->telegram_id = $request->telegram_id;
         $user->auth_type = $request->auth_type;
 
+        $old_position_id = $user->position_id;
+        $user->position_id = $request->position_id;
+
         $user->save();
 
-        parent::logData($request, $user);
+        $log = parent::logData($request, $user);
+
+        // Логирование изменения должности
+        if ($old_position_id != $request->position_id) {
+            UsersPositionsStory::create([
+                'log_id' => $log->id,
+                'user_id' => $user->id,
+                'position_old' => $old_position_id,
+                'position_new' => $user->position_id,
+                'created_at' => now(),
+            ]);
+        }
 
         $user = new UserData($user);
-        
+
         $user->callcenter = Callcenter::find($user->callcenter_id)->name ?? $user->callcenter_id;
         $user->sector = CallcenterSector::find($user->callcenter_sector_id)->name ?? $user->callcenter_sector_id;
 
         return response()->json([
             'user' => $user,
         ]);
-
     }
 
     /**
@@ -239,8 +250,8 @@ class AdminUsers extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function blockUser(Request $request) {
-
+    public static function blockUser(Request $request)
+    {
         if (!$user = User::find($request->id))
             return response()->json(['message' => "Сотрудник не найден"], 400);
 
@@ -256,7 +267,6 @@ class AdminUsers extends Controller
             'id' => $user->id,
             'deleted_at' => $user->deleted_at,
         ]);
-
     }
 
     /**
@@ -265,8 +275,8 @@ class AdminUsers extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getRolesAndPermits(Request $request) {
-
+    public static function getRolesAndPermits(Request $request)
+    {
         if (!$user = User::find($request->id))
             return response()->json(['message' => "Пользователь не найден"], 400);
 
@@ -274,7 +284,7 @@ class AdminUsers extends Controller
         $roles = new Role;
 
         // Роли с учетом своих ролей
-        if ($request->__user->roles AND !$request->__user->superadmin) {
+        if ($request->__user->roles and !$request->__user->superadmin) {
             $roles = $roles->whereIn('role', $request->__user->roles);
         }
 
@@ -313,7 +323,6 @@ class AdminUsers extends Controller
             'user_roles' => $user_roles ?? [],
             'user_permits' => $user_permits ?? [],
         ]);
-
     }
 
     /**
@@ -322,8 +331,8 @@ class AdminUsers extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function setUserRole(Request $request) {
-
+    public static function setUserRole(Request $request)
+    {
         if (!$user = User::find($request->id))
             return response()->json(['message' => "Пользователь не найден"], 400);
 
@@ -349,7 +358,6 @@ class AdminUsers extends Controller
             'roles' => $roles ?? [],
             'checked' => $search ? false : true,
         ]);
-
     }
 
     /**
@@ -358,8 +366,8 @@ class AdminUsers extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function setUserPermission(Request $request) {
-
+    public static function setUserPermission(Request $request)
+    {
         if (!$user = User::find($request->id))
             return response()->json(['message' => "Пользователь не найден"], 400);
 
@@ -372,7 +380,7 @@ class AdminUsers extends Controller
         $permission = $user->permissions()->where('permission_id', $request->permission)->get();
         $permissions = count($permission);
 
-        if ( $permissions)
+        if ($permissions)
             $user->permissions()->detach($request->permission);
         else
             $user->permissions()->attach($request->permission);
@@ -381,7 +389,5 @@ class AdminUsers extends Controller
             'permission' => $request->permission,
             'checked' =>  $permissions ? false : true,
         ]);
-
     }
-
 }

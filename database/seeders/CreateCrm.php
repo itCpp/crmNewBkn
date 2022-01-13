@@ -29,6 +29,7 @@ class CreateCrm extends Seeder
             MoscowCitySeeder::class, // Список городов Московской области
             SettingsQueuesDatabasesSeeder::class, // Настройки внешних бд для очередей
             TestingQuestionSeeder::class, // Вопросы тестирования
+            UsersPositionSeeder::class, // Создание должностей
         ]);
 
         $output = new ConsoleOutput; // Вывод в консоль
