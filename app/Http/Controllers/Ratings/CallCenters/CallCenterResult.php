@@ -42,21 +42,23 @@ trait CallCenterResult
             $users->push($this->getResultRow($row));
         }
 
+        $places = [];
+
         $sorted = $users->sortByDesc('efficiency')
-            ->each(function ($row) {
-                $this->data->places[] = $row->efficiency;
+            ->each(function ($row) use (&$places) {
+                $places[] = $row->efficiency;
             })
             ->sortByDesc('comings')
             ->sortBy(function ($user) {
                 return array_search($user->color, $this->color_sorted);
             });
 
-        $this->data->places = array_unique($this->data->places);
+        $places = array_unique($places);
 
         $this->data->users = $sorted->values()
-            ->map(function ($row) {
+            ->map(function ($row) use ($places) {
 
-                $place = array_search($row->efficiency, $this->data->places);
+                $place = array_search($row->efficiency, $places);
                 $row->place = $place !== null ? ($place + 1) : 0;
 
                 return $row;
@@ -247,6 +249,12 @@ trait CallCenterResult
 
         // Цвет блока на странице рейтинга
         $row->color = $this->getColor();
+
+        // Общая сумма всех бонусов
+        $row->bonuses = $row->bonus_cahsbox + $row->bonus_comings;
+
+        // Расчет зарплаты
+        $row->salary = $row->comings_sum;
 
         return $this;
     }

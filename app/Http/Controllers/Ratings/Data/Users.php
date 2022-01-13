@@ -60,31 +60,31 @@ trait Users
         $name .= " " . $row->patronymic;
 
         $template = [
-            'row' => $row->toArray(),
-            'pin' => $row->pin ?? null,
-            'pinOld' => $this->data->newToOld[$row->pin] ?? null,
-            'name' => trim($name),
-            'fio' => preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', trim($name)),
-            'oklad' => 0, # Оклад за месяц
+            'bonuses' => 0, # Общая сумма бонусов
+            'bonus_cahsbox' => 0, # Бонус кассы
+            'bonus_comings' => 0, # Сумма бонусов за приходы
+            'cahsbox' => 0, # Касса по приходам оператора
+            'color' => null, # Цвет блока на странице рейтинга
+            'coming_one_pay' => 0, # Сумма за один приход
             'comings' => 0, # Количество приходов
             'comings_in_day' => 0, # Количество приходов в день
             'comings_sum' => 0, # Сумма за приходы
-            'coming_one_pay' => 0, # Сумма за один приход
+            'dates' => [], # Подробные данные по кажому дню
+            'efficiency' => 0, # КПД
+            'fio' => preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', trim($name)),
+            'load' => 0, # Нагрузка
+            'name' => trim($name),
+            'oklad' => 0, # Оклад за месяц
+            'pin' => $row->pin ?? null,
+            'pinOld' => $this->data->newToOld[$row->pin] ?? null,
+            'place' => 0, # Место в рейтинге
+            'position' => $row->position,
             'requests' => 0, # Количество заявок для расчета
             'requestsAll' => 0, # Общее количество заявок
-            'efficiency' => 0, # КПД
-            'position' => 0, # Место в рейтинге
-            'load' => 0, # Нагрузка
-            'cahsbox' => 0, # Касса по приходам оператора
-            'result' => 0, # Итоговая сумма по рейтингу
-            'dates' => [], # Подробные данные по кажому дню
-            'bonus_cahsbox' => 0, # Бонус кассы
-            'bonus_comings' => 0, # Сумма бонусов за приходы
-            'color' => null, # Цвет блока на странице рейтинга
+            'salary' => 0, # Итоговая сумма по рейтингу
             'sector' => $this->getSectorName($row), # Данные сектора сотруднкиа
-            'position' => $row->position,
             'working' => $row->deleted_at === null, # Идентификатор уволнения
-            'place' => 0, # Место в рейтинге
+            'row' => $row->toArray(),
         ];
 
         return (object) $template;
