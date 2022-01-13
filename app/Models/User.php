@@ -72,4 +72,14 @@ class User extends Model
     {
         return $this->belongsTo(UserWorkTime::class, 'pin', 'user_pin');
     }
+
+    /**
+     * Получение информации о секторе сотрудника
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function sector()
+    {
+        return $this->belongsTo(CallcenterSector::class, 'callcenter_sector_id', 'id');
+    }
 }

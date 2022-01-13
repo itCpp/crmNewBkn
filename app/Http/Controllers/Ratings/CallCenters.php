@@ -47,12 +47,12 @@ class CallCenters extends Controller
     {
         $this->request = $request;
 
-        $this->dates = new Dates($request->start, $request->stop);
+        $dates_type = null;
 
-        if ($request->toPeriod) {
-            $this->dates->start = $this->dates->startPeriod;
-            $this->dates->stop = $this->dates->stopPeriod;
-        }
+        if ($request->toPeriod)
+            $dates_type = "periodNow";
+
+        $this->dates = new Dates($request->start, $request->stop, $dates_type);
 
         $this->data = (object) [
             'users' => [], # Данные расчитанного рейтинга

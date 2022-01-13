@@ -33,6 +33,7 @@ trait Cashbox
                 'Промо',
                 'СМИ',
                 'Иное',
+                'ЦПП',
             ])
             ->groupBy([
                 'crm_agreement.coll',

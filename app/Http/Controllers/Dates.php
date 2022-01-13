@@ -51,6 +51,8 @@ class Dates
             $this->second = $this->first->copy();
 
         $this->setDates($type);
+
+        $this->type = $type;
     }
 
     /**
@@ -95,6 +97,8 @@ class Dates
 
         $this->start = $this->first->format("Y-m-d");
         $this->stop = $this->second->format("Y-m-d");
+
+        $this->diff = $this->first->diffInDays($this->second);
 
         return null;
     }
