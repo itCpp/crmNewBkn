@@ -26,6 +26,7 @@ trait Comings
                 'Промо',
                 'СМИ',
                 'Иное',
+                'ЦПП',
             ])
             ->groupBy('collPin')
             ->groupBy('date')

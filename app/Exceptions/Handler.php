@@ -37,13 +37,5 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
-
-        $this->renderable(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e) {
-            return response([
-                request()->bearerToken(),
-                $e->getMessage(),
-                $e->getTrace(),
-            ], 400);
-        });
     }
 }

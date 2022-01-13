@@ -60,15 +60,16 @@ trait Users
             'oklad' => 0, # Оклад за месяц
             'comings' => 0, # Количество приходов
             'comings_summa' => 0, # Сумма за приходы
-            'comings_summa_bonus' => 0, # Сумма бонусов за приходы
             'requests' => 0, # Количество заявок для расчета
             'requestsAll' => 0, # Общее количество заявок
             'kpd' => 0, # КПД
             'position' => 0, # Место в рейтинге
             'load' => 0, # Нагрузка
-            'kassa' => 0, # Кассв по приходам оператора
+            'cahsbox' => 0, # Касса по приходам оператора
             'itogo' => 0, # Итоговая сумма по рейтингу
             'dates' => [], # Подробные данные по кажому дню
+            'bonus_cahsbox' => 0, # Бонус кассы
+            'bonus_comings' => 0, # Сумма бонусов за приходы
         ];
 
         return (object) $template;
@@ -85,7 +86,8 @@ trait Users
         return (object) [
             'date' => $date,
             'timestamp' => strtotime($date),
-            'comings' => 0,
+            'comings' => 0, // Количество приходов
+            'cahsbox' => 0, // Сумма с заключенных договоров
             'requests' => 0,
             'requestsAll' => 0,
         ];

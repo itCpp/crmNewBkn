@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 class CallCenters extends Controller
 {
     use CallCenters\CallCenterResult,
+        Data\Cashbox,
         Data\Comings,
         Data\Requests,
         Data\Users;
@@ -65,6 +66,16 @@ class CallCenters extends Controller
     }
 
     /**
+     * Вызов несуществующих методов
+     * 
+     * @return $this
+     */
+    public function __call($name, $arguments)
+    {
+        return $this;
+    }
+
+    /**
      * Вывод основного рейтинга колл-центров
      * 
      * @return object
@@ -73,6 +84,7 @@ class CallCenters extends Controller
     {
         $this->getComings()
             ->getRequests()
+            ->getCashboxData()
             ->findUsers()
             ->getResult();
 

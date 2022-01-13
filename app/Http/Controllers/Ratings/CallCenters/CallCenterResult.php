@@ -46,6 +46,7 @@ trait CallCenterResult
 
         $this->setComings()
             ->setRequests()
+            ->setCashbox()
             ->setDatesArray();
 
         return $this->row;
@@ -58,6 +59,7 @@ trait CallCenterResult
      */
     public function setComings()
     {
+        // Двойной вызов функции необходим при плавном переходе с одной ЦРМ на другую
         $this->findComingsData($this->row->pin)
             ->findComingsData($this->row->pinOld);
 
@@ -79,7 +81,7 @@ trait CallCenterResult
 
         foreach (($this->data->comings[$pin]['dates'] ?? []) as $date => $comings) {
 
-            if (!isset($this->row->dates['date']))
+            if (empty($this->row->dates[$date]))
                 $this->row->dates[$date] = $this->userRowDateTemplate($date);
 
             $this->row->dates[$date]->comings += $comings;
@@ -103,11 +105,48 @@ trait CallCenterResult
 
         foreach (($requests['dates'] ?? []) as $date => $data) {
 
-            if (!isset($this->row->dates['date']))
+            if (empty($this->row->dates[$date]))
                 $this->row->dates[$date] = $this->userRowDateTemplate($date);
 
             $this->row->dates[$date]->requests += $data['all'];
             $this->row->dates[$date]->requestsAll += $data['moscow'];
+        }
+
+        return $this;
+    }
+
+    /**
+     * Применение данных кассы
+     * 
+     * @return $this
+     */
+    public function setCashbox()
+    {
+        $this->setCashboxForPin($this->row->pin)
+            ->setCashboxForPin($this->row->pinOld);
+
+        return $this;
+    }
+
+    /**
+     * Применение данных кассы
+     * 
+     * @param string|int|null $pin
+     * @return $this
+     */
+    public function setCashboxForPin($pin = null)
+    {
+        if (!$row = ($this->data->cahsbox[$pin] ?? null))
+            return $this;
+
+        $this->row->cahsbox += $row['sum'];
+
+        foreach (($row['dates'] ?? []) as $date => $data) {
+
+            if (empty($this->row->dates[$date]))
+                $this->row->dates[$date] = $this->userRowDateTemplate($date);
+
+            $this->row->dates[$date]->cahsbox += $data;
         }
 
         return $this;
