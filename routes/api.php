@@ -152,10 +152,10 @@ Route::group(['middleware' => 'user.token'], function () {
         Route::post('getUserMainData', 'Users\UserMainData@getUserMainData')->name('api.users.getUserMainData');
 
         /** Вывод данных для кабинета */
-        Route::post('mydata', 'Users\MyData')->name('api.users.mydata');
+        Route::post('mydata', 'Users\UserMainData')->name('api.users.mydata');
 
         /** Вывод временной шкалы */
-        Route::post('getWorktimeTape', 'Users\MyData@getTapeTimes')->name('api.users.getworktimetape');
+        Route::post('getWorktimeTape', 'Users\UserMainData@getTapeTimes')->name('api.users.getworktimetape');
     });
 
     /** Маршрутизация админпанели */

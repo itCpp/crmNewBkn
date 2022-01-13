@@ -2,22 +2,86 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\Exceptions\ExceptionsJsonResponse;
+use App\Http\Controllers\Ratings\CallCenters;
+use App\Http\Controllers\Sip\SipMain;
+use App\Http\Controllers\Statistics\Charts;
+use App\Http\Controllers\Requests\Requests;
+use App\Models\Notification;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
-/**
- * Формирование и работа страницы с личными данными сотрудника
- */
 class UserMainData
 {
     /**
-     * Метод сбора данных для страницы
+     * Обработка запроса на вывод данных
      * 
      * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public static function getUserMainData(Request $request)
+    public function __invoke(Request $request)
     {
-        return Response::json();
+        $userId = $request->userId ?: $request->user()->id;
+
+        if ($request->user()->id != $userId)
+            throw new ExceptionsJsonResponse("Доступ ограничен", 403);
+
+        return response()->json(
+            $this->getMyData($request),
+        );
+    }
+
+    /**
+     * Сбор данных для статистики
+     * 
+     * @param \Illuminate\Http\Request
+     * @return array
+     * 
+     * @todo Вывести новые сообщения из внутреннего чата
+     */
+    public function getMyData(Request $request)
+    {
+        return [
+            'alerts' => [
+                'requests' => Requests::getNewRequests($request->user()->pin),
+                'notifications' => $this->getNotifications($request),
+                // 'chat' => null,
+            ],
+            'rating' => (new CallCenters($request))->getMyRow($request->user()->pin),
+            'charts' => (new Charts($request))->getCharts($request),
+            'user' => $request->user(),
+            'worktime' => Worktime::getTapeTimes($request),
+            'calls' => (new SipMain)->getTapeTimes($request),
+        ];
+    }
+
+    /**
+     * Список уведомлений
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function getNotifications(Request $request)
+    {
+        $notif = Notification::where('user_id', $request->user()->id)
+            ->orderBy('id', "DESC");
+
+        return [
+            'count' => $notif->count(),
+            'rows' => $notif->limit(50)->get(),
+            'recent' => Notification::where('readed_at', null)->count(),
+        ];
+    }
+
+    /**
+     * Вывод данных для временных шкал
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getTapeTimes(Request $request)
+    {
+        return response()->json([
+            'worktime' => Worktime::getTapeTimes($request),
+        ]);
     }
 }
