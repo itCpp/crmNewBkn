@@ -432,6 +432,8 @@ trait CallCenterResult
                 if ($sector->requests > 0)
                     $sector->efficiency = round(($sector->comings / $sector->requests) * 100, 2);
 
+                $sector->comings_in_day = round($sector->comings / $this->dates->diff, 1);
+
                 $sector->dates = $this->setDatesArray($sector->dates);
 
                 foreach ($sector->dates as &$row) {
@@ -448,6 +450,11 @@ trait CallCenterResult
                 }
             }
 
+            if ($callcenter->requests > 0)
+                $callcenter->efficiency = round(($callcenter->comings / $callcenter->requests) * 100, 2);
+
+            $callcenter->comings_in_day = round($callcenter->comings / $this->dates->diff, 1);
+
             $callcenter->dates = $this->setDatesArray($callcenter->dates);
 
             foreach ($callcenter->dates as &$row) {
@@ -463,6 +470,8 @@ trait CallCenterResult
 
         if ($crm->requests > 0)
             $crm->efficiency = round(($crm->comings / $crm->requests) * 100, 2);
+
+        $crm->comings_in_day = round($crm->comings / $this->dates->diff, 1);
 
         $this->data->crm = $crm;
 

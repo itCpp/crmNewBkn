@@ -100,7 +100,7 @@ class Dates
         $this->start = $this->first->format("Y-m-d");
         $this->stop = $this->second->format("Y-m-d");
 
-        $this->diff = $this->first->diffInDays($this->second);
+        $this->diff = $this->first->diffInDays($this->second) + 1;
 
         $this->findDays();
 
