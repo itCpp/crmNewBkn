@@ -91,7 +91,6 @@ class CallCenters extends Controller
         $this->getComings()
             ->getRequests()
             ->getCashboxData()
-            ->findAdmins()
             ->findUsers()
             ->getResult();
 

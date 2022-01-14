@@ -27,11 +27,39 @@ trait Users
     protected $posiitons = [];
 
     /**
-     * Массив руководителей
+     * Массив руководителей колл-центров
+     * 
+     * @var array
+     */
+    protected $сhiefs = [];
+
+    /**
+     * Массив руководителей секторов
      * 
      * @var array
      */
     protected $admins = [];
+
+    /**
+     * Поиск руководителей и админов секторов
+     * 
+     * @return $this
+     */
+    public function findChiefs()
+    {
+        if (!request()->user()->can('rating_show_chiefs'))
+            return $this;
+
+        $this->сhiefs = User::select('pin')
+            ->whereIn('position_id', $this->envExplode('RATING_CHIEF_POSITION_ID'))
+            ->get()
+            ->map(function ($row) {
+                return $row->pin;
+            })
+            ->toArray();
+
+        return $this;
+    }
 
     /**
      * Поиск руководителей и админов секторов
@@ -62,26 +90,58 @@ trait Users
      */
     public function findUsers($pins = [])
     {
-        $pins = array_unique([...$pins, ...$this->data->pins]);
-        $this->data->newToOld = collect([]);
+        $this->findChiefs()
+            ->findAdmins();
+
+        $pins = array_unique([
+            ...$pins,
+            ...$this->data->pins,
+            ...$this->admins,
+            ...$this->сhiefs,
+        ]);
+
+        $this->data->newToOld = [];
 
         User::where(function ($query) use ($pins) {
             $query->whereIn('pin', $pins)
                 ->orWhereIn('old_pin', $pins);
         })
-            ->when(count($this->admins) > 0, function ($query) {
-                $query->orWhereIn('pin', $this->admins);
-            })
             ->get()
-            ->map(function ($row) use (&$users) {
+            ->map(function ($row) use (&$rows) {
 
                 $row->position = $this->getPositionName($row->position_id);
 
                 $this->data->newToOld[$row->pin] = $row->old_pin;
-                $users[$row->pin] = $this->getTemplateUserRow($row);
+                $rows[$row->pin] = $row;
 
                 return $row;
             });
+
+        foreach ($pins ?? [] as $pin) {
+
+            $row = null;
+            $pin = (int) $pin;
+
+            if (isset($rows[$pin])) {
+                $row = $rows[$pin] ?? null;
+            }
+            else if ($key = array_search($pin, $this->data->newToOld)) {
+                $pin = $key;
+                $row = $rows[$pin] ?? null;
+            }
+
+            if (!$row) {
+                $row = new User;
+                $row->pin = $pin;
+                $row->name = "Неизвестно";
+                $row->deleted_at = true;
+            }
+
+            if (isset($users[$pin]))
+                continue;
+
+            $users[$pin] = $this->getTemplateUserRow($row);
+        }
 
         $this->data->pins = collect($users ?? []);
 
@@ -106,8 +166,8 @@ trait Users
             'bonus_comings' => 0, # Сумма бонусов за приходы
             'cahsbox' => 0, # Касса по приходам оператора
             'color' => null, # Цвет блока на странице рейтинга
-            'callcenter_id' => $row->callcenter_id,
-            'callcenter_sector_id' => $row->callcenter_sector_id,
+            'callcenter_id' => $row->callcenter_id ?? 0,
+            'callcenter_sector_id' => $row->callcenter_sector_id ?? 0,
             'coming_one_pay' => 0, # Сумма за один приход
             'comings' => 0, # Количество приходов
             'comings_in_day' => 0, # Количество приходов в день
@@ -127,7 +187,7 @@ trait Users
             'salary' => 0, # Итоговая сумма по рейтингу
             'sector' => $this->getSectorName($row), # Данные сектора сотруднкиа
             'working' => $row->deleted_at === null, # Идентификатор уволнения
-            'row' => $row->toArray(),
+            // 'row' => $row->toArray(),
         ];
 
         return (object) $template;

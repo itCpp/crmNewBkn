@@ -52,19 +52,20 @@ trait CallCenterResult
      */
     public function getResult()
     {
-        $users = collect([]);
+        $this->users = collect([]);
 
         foreach ($this->data->pins as $row) {
-            $users->push($this->getResultRow($row));
+            $this->users->push($this->getResultRow($row));
         }
 
         $this->calcGeneralStats();
 
-        $users = $this->pushAdminRating($users);
+        $this->pushChiefRating()
+            ->pushAdminRating();
 
         $places = [];
 
-        $sorted = $users->sortByDesc('efficiency')
+        $sorted = $this->users->sortByDesc('efficiency')
             ->each(function ($row) use (&$places) {
                 $places[] = $row->efficiency;
             })
@@ -330,13 +331,31 @@ trait CallCenterResult
     }
 
     /**
-     * Добавляет данные для админов и руководителей
+     * Добавляет данные для руководителей колл-центров
      * 
      * @return $this
      */
-    public function pushAdminRating($users)
+    public function pushChiefRating()
     {
-        foreach ($users as &$user) {
+        foreach ($this->users as &$user) {
+
+            if (!in_array($user->pin, $this->сhiefs))
+                continue;
+
+            $user->color = $this->getColorAdmin($user);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Добавляет данные для руководителей секторов
+     * 
+     * @return $this
+     */
+    public function pushAdminRating()
+    {
+        foreach ($this->users as &$user) {
 
             if (!in_array($user->pin, $this->admins))
                 continue;
@@ -357,7 +376,7 @@ trait CallCenterResult
             $user->color = $this->getColorAdmin($user);
         }
 
-        return $users;
+        return $this;
     }
 
     /**
@@ -575,6 +594,8 @@ trait CallCenterResult
     {
         if (in_array($row->pin, $this->admins))
             return "blue";
+        else if (in_array($row->pin, $this->сhiefs))
+            return "white";
 
         return $row->color;
     }
