@@ -21,6 +21,20 @@ trait CallCenterResult
     protected $row;
 
     /**
+     * Идентификатор колл-центра сотрудника
+     * 
+     * @var int|null
+     */
+    protected $callcenter_id = null;
+
+    /**
+     * Идентификатор сектора сотрудника
+     * 
+     * @var int|null
+     */
+    protected $sector_id = null;
+
+    /**
      * Порядок сортировки по цветам блока
      * 
      * @var array
@@ -65,6 +79,8 @@ trait CallCenterResult
             })
             ->all();
 
+        $this->calcGeneralStats();
+
         return $this;
     }
 
@@ -78,13 +94,37 @@ trait CallCenterResult
     {
         $this->row = $row;
 
-        $this->setComings()
+        $this->callcenter_id = $row->callcenter_id;
+        $this->sector_id = $row->callcenter_sector_id;
+
+        $this->checkStatsRow()
+            ->setComings()
             ->setRequests()
             ->setCashbox()
-            ->setDatesArray()
             ->setResult();
 
         return $this->row;
+    }
+
+    /**
+     * Проверяет наличие статистической строки
+     * 
+     * @return $this;
+     */
+    public function checkStatsRow()
+    {
+        $stats = &$this->data->stats;
+
+        $callcenter = $this->callcenter_id;
+        $sector = $this->sector_id;
+
+        if (empty($stats[$callcenter]))
+            $stats[$callcenter] = $this->getTemplateStatsRow();
+
+        if (empty($stats[$callcenter]->sectors[$sector]))
+            $stats[$callcenter]->sectors[$sector] = $this->getTemplateStatsRow(false);
+
+        return $this;
     }
 
     /**
@@ -112,14 +152,21 @@ trait CallCenterResult
         if (!isset($this->data->comings[$pin]))
             return $this;
 
+        $stat = &$this->data->stats[$this->callcenter_id]->sectors[$this->sector_id];
+
         $this->row->comings += $this->data->comings[$pin]['count'];
+        $stat->comings += $this->data->comings[$pin]['count'];
 
         foreach (($this->data->comings[$pin]['dates'] ?? []) as $date => $comings) {
 
             if (empty($this->row->dates[$date]))
                 $this->row->dates[$date] = $this->userRowDateTemplate($date);
 
+            if (empty($stat->dates[$date]))
+                $stat->dates[$date] = $this->userRowDateTemplate($date);
+
             $this->row->dates[$date]->comings += $comings;
+            $stat->dates[$date]->comings += $comings;
         }
 
         return $this;
@@ -135,16 +182,27 @@ trait CallCenterResult
         if (!$requests = ($this->data->requests[$this->row->pin] ?? null))
             return $this;
 
+        $stat = &$this->data->stats[$this->callcenter_id]->sectors[$this->sector_id];
+
         $this->row->requestsAll += $requests['all'];
         $this->row->requests += $requests['moscow'];
+
+        $stat->requestsAll += $requests['all'];
+        $stat->requests += $requests['moscow'];
 
         foreach (($requests['dates'] ?? []) as $date => $data) {
 
             if (empty($this->row->dates[$date]))
                 $this->row->dates[$date] = $this->userRowDateTemplate($date);
 
+            if (empty($stat->dates[$date]))
+                $stat->dates[$date] = $this->userRowDateTemplate($date);
+
             $this->row->dates[$date]->requestsAll += $data['all'];
             $this->row->dates[$date]->requests += $data['moscow'];
+
+            $stat->dates[$date]->requestsAll += $data['all'];
+            $stat->dates[$date]->requests += $data['moscow'];
         }
 
         return $this;
@@ -190,21 +248,20 @@ trait CallCenterResult
     /**
      * Формирование массива подробных данных за каждый расчетный день
      * 
-     * @return $this
+     * @param array $data Массив c датами
+     * @return array
      */
-    public function setDatesArray()
+    public function setDatesArray($data = [])
     {
         $dates = collect([]);
 
-        foreach (($this->row->dates ?? []) as $data) {
-            $dates->push($data);
+        foreach (($data ?? []) as $row) {
+            $dates->push($row);
         }
 
-        $this->row->dates = $dates->sortBy('timestamp')
+        return $dates->sortBy('timestamp')
             ->values()
             ->all();
-
-        return $this;
     }
 
     /**
@@ -215,6 +272,8 @@ trait CallCenterResult
     public function setResult()
     {
         $row = &$this->row;
+
+        $row->dates = $this->setDatesArray($row->dates);
 
         // Расчет КПД
         if ($row->requests)
@@ -255,6 +314,52 @@ trait CallCenterResult
 
         // Расчет зарплаты
         $row->salary = $row->comings_sum;
+
+        return $this;
+    }
+
+    /**
+     * Подсчет общей статистики
+     * 
+     * @return $this
+     */
+    public function calcGeneralStats()
+    {
+        foreach ($this->data->stats as &$callcenter) {
+
+            foreach ($callcenter->sectors as &$sector) {
+
+                $callcenter->comings += $sector->comings;
+                $callcenter->requestsAll += $sector->requestsAll;
+                $callcenter->requests += $sector->requests;
+
+                if ($callcenter->requests > 0)
+                    $callcenter->efficiency = round(($callcenter->comings / $callcenter->requests) * 100, 2);
+
+                $sector->dates = $this->setDatesArray($sector->dates);
+
+                foreach ($sector->dates as &$row) {
+
+                    if ($row->requests > 0)
+                        $row->efficiency = round(($row->comings / $row->requests) * 100, 2);
+
+                    if (empty($callcenter->dates[$row->date]))
+                        $callcenter->dates[$row->date] = $this->userRowDateTemplate($row->date);
+
+                    $callcenter->dates[$row->date]->comings += $row->comings;
+                    $callcenter->dates[$row->date]->requestsAll += $row->requestsAll;
+                    $callcenter->dates[$row->date]->requests += $row->requests;
+                }
+            }
+
+            $callcenter->dates = $this->setDatesArray($callcenter->dates);
+
+            foreach ($callcenter->dates as &$row) {
+
+                if ($row->requests > 0)
+                    $row->efficiency = round(($row->comings / $row->requests) * 100, 2);
+            }
+        }
 
         return $this;
     }

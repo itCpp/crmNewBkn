@@ -15,7 +15,7 @@ use Carbon\Carbon;
  * @property    string              $startMonth     Дата начала месяца
  * @property    string              $stopMonth      Дата окончания месяца
  * @property    int                 $diff           Количество дней в периоде
- * @property    array<string>       $days           Масив дат выбранного периода
+ * @property    array<string>       $days           Масcив дат выбранного периода
  */
 class Dates
 {

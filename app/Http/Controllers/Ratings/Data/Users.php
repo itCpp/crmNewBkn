@@ -106,6 +106,8 @@ trait Users
             'bonus_comings' => 0, # Сумма бонусов за приходы
             'cahsbox' => 0, # Касса по приходам оператора
             'color' => null, # Цвет блока на странице рейтинга
+            'callcenter_id' => $row->callcenter_id,
+            'callcenter_sector_id' => $row->callcenter_sector_id,
             'coming_one_pay' => 0, # Сумма за один приход
             'comings' => 0, # Количество приходов
             'comings_in_day' => 0, # Количество приходов в день
@@ -187,6 +189,7 @@ trait Users
             'cahsbox' => 0, // Сумма с заключенных договоров
             'requests' => 0,
             'requestsAll' => 0,
+            'efficiency' => 0, # КПД
         ];
     }
 }

@@ -61,6 +61,7 @@ class CallCenters extends Controller
             'requests' => [], # Подсчет заявок
             'dates' => $this->dates,
             'stories' => (object) [], # История сотрудников
+            'stats' => [], # Общая статистика
         ];
 
         $this->full_data = $request->user()->can('rating_callcenter_full_data') ?: $full_data;
@@ -71,6 +72,8 @@ class CallCenters extends Controller
     /**
      * Вызов несуществующих методов
      * 
+     * @param string $name
+     * @param array $arguments
      * @return $this
      */
     public function __call($name, $arguments)
@@ -118,5 +121,27 @@ class CallCenters extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Шаблон строки статистики
+     * 
+     * @param bool $forAll
+     * @return object
+     */
+    public function getTemplateStatsRow($forAll = true)
+    {
+        $row = (object) [
+            'comings' => 0,
+            'requests' => 0,
+            'requestsAll' => 0,
+            'efficiency' => 0,
+            'dates' => [],
+        ];
+
+        if ($forAll)
+            $row->sectors = [];
+
+        return $row;
     }
 }
