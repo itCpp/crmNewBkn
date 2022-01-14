@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Ratings\CallCenters;
 
+use App\Http\Controllers\Ratings\CallCenters;
+
 /**
  * @method \App\Http\Controllers\Ratings\Data\Users userRowDateTemplate()
  *
@@ -56,6 +58,10 @@ trait CallCenterResult
             $users->push($this->getResultRow($row));
         }
 
+        $this->calcGeneralStats();
+
+        $users = $this->pushAdminRating($users);
+
         $places = [];
 
         $sorted = $users->sortByDesc('efficiency')
@@ -78,8 +84,6 @@ trait CallCenterResult
                 return $row;
             })
             ->all();
-
-        $this->calcGeneralStats();
 
         return $this;
     }
@@ -229,7 +233,7 @@ trait CallCenterResult
      */
     public function setCashboxForPin($pin = null)
     {
-        if (!$row = ($this->data->cahsbox[$pin] ?? null))
+        if (!$row = ($this->data->cahsbox->users[$pin] ?? null))
             return $this;
 
         $stat = &$this->data->stats[$this->callcenter_id]->sectors[$this->sector_id];
@@ -326,7 +330,38 @@ trait CallCenterResult
     }
 
     /**
-     * Подсчет общей статистики
+     * Добавляет данные для админов и руководителей
+     * 
+     * @return $this
+     */
+    public function pushAdminRating($users)
+    {
+        foreach ($users as &$user) {
+
+            if (!in_array($user->pin, $this->admins))
+                continue;
+
+            $callcenter = $user->callcenter_id;
+            $sector = $user->callcenter_sector_id;
+            $stat = $this->data->stats[$callcenter]->sectors[$sector] ?? null;
+
+            $user->admin = $stat;
+            $user->admin_coming_one_pay = $this->getAdminPercent($user);
+            $user->admin_comings_sum = $user->admin_coming_one_pay * ($stat->comings ?? 0);
+
+            $user->admin_bonus_cashbox = $this->getCashboxMonthPercent();
+
+            $user->admin_bonus = $user->admin_bonus_cashbox;
+            $user->salary += $user->admin_comings_sum;
+
+            $user->color = $this->getColorAdmin($user);
+        }
+
+        return $users;
+    }
+
+    /**
+     * Подсчет общей статистики колл-центров
      * 
      * @return $this
      */
@@ -341,8 +376,8 @@ trait CallCenterResult
                 $callcenter->requests += $sector->requests;
                 $callcenter->requestsAll += $sector->requestsAll;
 
-                if ($callcenter->requests > 0)
-                    $callcenter->efficiency = round(($callcenter->comings / $callcenter->requests) * 100, 2);
+                if ($sector->requests > 0)
+                    $sector->efficiency = round(($sector->comings / $sector->requests) * 100, 2);
 
                 $sector->dates = $this->setDatesArray($sector->dates);
 
@@ -410,6 +445,89 @@ trait CallCenterResult
     }
 
     /**
+     * Метод определения ставки для руководителя за один приход его сектора
+     * 
+     * * Антон Суханов, [15.12.20 11:33]
+     * [Переслано от Daria]
+     * Менеджеры (руководители отделов) - ДЕНЬ
+     * 1 приход - 50 руб.
+     * При выполнении КПД приходы перерасчитываются:
+     * 21% КПД - 60 руб. приход
+     * 22% КПД 70 руб. приход
+     * и тд, до 30% КПД, прибавляется 10 рублей за приход.
+     * 
+     * * Антон Суханов, [15.12.20 11:33]
+     * [Переслано от Daria]
+     * РУКОВОДИТЕЛЬ (НОЧНАЯ СМЕНА)
+     * 1 приход - 100 руб.При выполнении КПД приходы перерасчитываются:
+     * 21% КПД - 110 руб. приход
+     * 22% КПД 120 руб. приход
+     * и тд, до 30% КПД, прибавляется 10 рублей за приход.
+     * 
+     * @param object $row Объект данных сотрудника
+     * @return int
+     */
+    public function getAdminPercent($row)
+    {
+        $efficiency = $row->admin->efficiency ?? 0;
+
+        if ($efficiency >= 30)
+            return 150;
+        elseif ($efficiency >= 29)
+            return 140;
+        elseif ($efficiency >= 28)
+            return 130;
+        elseif ($efficiency >= 27)
+            return 120;
+        elseif ($efficiency >= 26)
+            return 110;
+        elseif ($efficiency >= 25)
+            return 100;
+        elseif ($efficiency >= 24)
+            return 90;
+        elseif ($efficiency >= 23)
+            return 80;
+        elseif ($efficiency >= 22)
+            return 70;
+        elseif ($efficiency >= 21)
+            return 60;
+
+        return 50;
+    }
+
+    /**
+     * Метод расчета премии руководителям в конце месяца
+     * 
+     * @param null|int $sum Сумма кассы
+     * @return int
+     */
+    public function getCashboxMonthPercent($sum = null)
+    {
+        // Расчет премии от кассы происходит в последнем периоде месяца
+        if ($this->dates->stopPeriod != $this->dates->stopMonth)
+            return 0;
+
+        $sum = $sum ?: ($this->cashbox->sum->month ?? 0);
+
+        if ($sum >= 26000000)
+            return 20000;
+        elseif ($sum >= 25000000)
+            return 17500;
+        elseif ($sum >= 24000000)
+            return 15000;
+        elseif ($sum >= 23000000)
+            return 12500;
+        elseif ($sum >= 22000000)
+            return 10000;
+        elseif ($sum >= 21000000)
+            return 7500;
+        elseif ($sum >= 20000000)
+            return 5000;
+
+        return 0;
+    }
+
+    /**
      * Бонус за приходы в один день
      * 
      * @param int $comings
@@ -436,9 +554,6 @@ trait CallCenterResult
         if (!$this->row->working)
             return "gray";
 
-        if (in_array($this->row->pin, $this->admins))
-            return "blue";
-
         if ($this->dates->start >= "2021-07-01") {
 
             if ($this->row->efficiency >= 25)
@@ -448,5 +563,19 @@ trait CallCenterResult
         }
 
         return "red";
+    }
+
+    /**
+     * Определяет цвет блока для руководителя или админа
+     * 
+     * @param object $row
+     * @return string
+     */
+    public function getColorAdmin($row)
+    {
+        if (in_array($row->pin, $this->admins))
+            return "blue";
+
+        return $row->color;
     }
 }
