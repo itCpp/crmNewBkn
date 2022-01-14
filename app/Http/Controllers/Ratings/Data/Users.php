@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ratings\Data;
 
 use App\Models\User;
+use App\Models\UsersPosition;
 
 /**
  * @method findUsers()
@@ -19,6 +20,41 @@ trait Users
     protected $sectors = [];
 
     /**
+     * Должности сотрудников
+     * 
+     * @var array<\App\Models\UsersPosition>
+     */
+    protected $posiitons = [];
+
+    /**
+     * Массив руководителей
+     * 
+     * @var array
+     */
+    protected $admins = [];
+
+    /**
+     * Поиск руководителей и админов секторов
+     * 
+     * @return $this
+     */
+    public function findAdmins()
+    {
+        if (!request()->user()->can('rating_show_admins'))
+            return $this;
+
+        $this->admins = User::select('pin')
+            ->whereIn('position_id', $this->envExplode('RATING_ADMIN_POSITION_ID'))
+            ->get()
+            ->map(function ($row) {
+                return $row->pin;
+            })
+            ->toArray();
+
+        return $this;
+    }
+
+    /**
      * Поиск сотрудников
      * 
      * @param array $pins
@@ -33,8 +69,13 @@ trait Users
             $query->whereIn('pin', $pins)
                 ->orWhereIn('old_pin', $pins);
         })
+            ->when(count($this->admins) > 0, function ($query) {
+                $query->orWhereIn('pin', $this->admins);
+            })
             ->get()
             ->map(function ($row) use (&$users) {
+
+                $row->position = $this->getPositionName($row->position_id);
 
                 $this->data->newToOld[$row->pin] = $row->old_pin;
                 $users[$row->pin] = $this->getTemplateUserRow($row);
@@ -109,6 +150,25 @@ trait Users
         $this->sectors[$id] = $row->sector ? $row->sector->toArray() : null;
 
         return $this->sectors[$id];
+    }
+
+    /**
+     * Должности сотрудников
+     * 
+     * @param null|int $position_id
+     * @return null|string
+     */
+    public function getPositionName($position_id)
+    {
+        if (!$position_id)
+            return null;
+
+        if (!empty($this->positions[$position_id]))
+            return $this->positions[$position_id]->name ?? null;
+
+        $this->positions[$position_id] = UsersPosition::find($position_id);
+
+        return $this->positions[$position_id]->name ?? null;
     }
 
     /**

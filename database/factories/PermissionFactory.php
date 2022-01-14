@@ -51,6 +51,7 @@ class PermissionFactory extends Factory
         ['sms_access', 'Доступ к чтению смс сообщений'],
         ['sms_access_system', 'Доступ к сообщениям без заявки'],
         ['second_calls_access', 'Доступ ко вторичным звонкам'],
+        ['rating_show_admins', 'Может видеть рейтинг руководителей'],
     ];
 
     /**

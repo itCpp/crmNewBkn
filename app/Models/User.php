@@ -24,6 +24,7 @@ class User extends Model
         'name',
         'patronymic',
         'password',
+        'position_id',
         'telegram_id',
         'auth_type',
         'created_at',

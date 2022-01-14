@@ -61,10 +61,10 @@ class UsersMergeFromOld extends Command
         $this->createUsers($this->users->getNachUsers(), "secret");
 
         $this->question(" Администраторы секторов... ");
-        $this->createUsers($this->users->getAdmins(), "secret");
+        $this->createUsers($this->users->getAdmins(), "secret", 2);
 
         $this->question(" Кольщики... ");
-        $this->createUsers($this->users->getcallers());
+        $this->createUsers($this->users->getcallers(), position: 3);
 
         return 0;
     }
@@ -74,11 +74,16 @@ class UsersMergeFromOld extends Command
      * 
      * @param \Illuminate\Database\Eloquent\Collection $users
      * @param string $auth Способ авторизации
+     * @param null|int $position Должность сотрудника
+     *          Начальный список должностей представлен в соответсвующей фабрики
+     *          `\Database\Factories\UsersPositionFactory::class`
      * @return null
      */
-    public function createUsers($users, $auth = "admin")
+    public function createUsers($users, $auth = "admin", $position = null)
     {
         foreach ($users as $user) {
+
+            $user->position_id = $position;
 
             $message = trim("{$user->pin} {$user->username} {$user->fullName}");
 

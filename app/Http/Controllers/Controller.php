@@ -218,7 +218,7 @@ class Controller extends BaseController
 	}
 
 	/**
-	 * Проверяет, является ли массив простым списков
+	 * Проверяет, является ли массив простым списком
 	 * 
 	 * @param array
 	 * @return bool
@@ -235,5 +235,23 @@ class Controller extends BaseController
 		}
 
 		return true;
+	}
+
+	/**
+	 * Преобразует строку в массив по символу разделения
+	 * 
+	 * @param string $key
+	 * @param string $separator
+	 * @return array
+	 */
+	public function envExplode($key, $separator = ",")
+	{
+		$string = env($key, "");
+
+		foreach (explode($separator, $string) as $row) {
+			$array[] = trim($row);
+		}
+
+		return $array ?? [];
 	}
 }

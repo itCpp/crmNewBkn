@@ -60,9 +60,12 @@ class CallCenters extends Controller
             'comings' => [], # Данные по приходам
             'requests' => [], # Подсчет заявок
             'dates' => $this->dates,
+            'stories' => (object) [], # История сотрудников
         ];
 
         $this->full_data = $request->user()->can('rating_callcenter_full_data') ?: $full_data;
+
+        $this->positions_admin = $this->envExplode("RATING_ADMIN_POSITION_ID");
     }
 
     /**
@@ -85,6 +88,7 @@ class CallCenters extends Controller
         $this->getComings()
             ->getRequests()
             ->getCashboxData()
+            ->findAdmins()
             ->findUsers()
             ->getResult();
 

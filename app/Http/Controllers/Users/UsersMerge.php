@@ -186,6 +186,7 @@ class UsersMerge extends Controller
             'login' => $user->username,
             'callcenter_id' => $callcenter,
             'callcenter_sector_id' => $sector,
+            'position_id' => $user->position_id ?? null,
         ];
 
         if ($fired or in_array($user->pin, $this->firedUser)) {

@@ -322,7 +322,7 @@ trait CallCenterResult
         if (!$this->row->working)
             return "gray";
 
-        if ($this->row->position == "administration")
+        if (in_array($this->row->pin, $this->admins))
             return "blue";
 
         if ($this->dates->start >= "2021-07-01") {

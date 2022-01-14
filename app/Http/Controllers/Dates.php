@@ -8,12 +8,14 @@ use Carbon\Carbon;
 /**
  * Подготавливает набор дат
  * 
- * @property    string      $start
- * @property    string      $stop
- * @property    string      $startPeriod
- * @property    string      $stopPeriod
- * @property    string      $startMonth
- * @property    string      $stopMonth
+ * @property    string              $start          Дата начала
+ * @property    string              $stop           Дата окончания
+ * @property    string              $startPeriod    Дата начала периода
+ * @property    string              $stopPeriod     Дата окончания периода
+ * @property    string              $startMonth     Дата начала месяца
+ * @property    string              $stopMonth      Дата окончания месяца
+ * @property    int                 $diff           Количество дней в периоде
+ * @property    array<string>       $days           Масив дат выбранного периода
  */
 class Dates
 {
@@ -100,6 +102,8 @@ class Dates
 
         $this->diff = $this->first->diffInDays($this->second);
 
+        $this->findDays();
+
         return null;
     }
 
@@ -178,5 +182,21 @@ class Dates
         $this->second = $this->first->copy();
 
         return $this->setNowPeriod();
+    }
+
+    /**
+     * Поиск дат в выбранном периоде
+     * 
+     * @return $this
+     */
+    public function findDays()
+    {
+        $this->days = [];
+
+        for ($date = $this->first; $date->lte($this->second); $date->addDay()) {
+            $this->days[] = $date->format('Y-m-d');
+        }
+
+        return $this;
     }
 }
