@@ -232,14 +232,21 @@ trait CallCenterResult
         if (!$row = ($this->data->cahsbox[$pin] ?? null))
             return $this;
 
+        $stat = &$this->data->stats[$this->callcenter_id]->sectors[$this->sector_id];
+
         $this->row->cahsbox += $row['sum'];
+        $stat->cahsbox += $row['sum'];
 
         foreach (($row['dates'] ?? []) as $date => $data) {
 
             if (empty($this->row->dates[$date]))
                 $this->row->dates[$date] = $this->userRowDateTemplate($date);
 
+            if (empty($stat->dates[$date]))
+                $stat->dates[$date] = $this->userRowDateTemplate($date);
+
             $this->row->dates[$date]->cahsbox += $data;
+            $stat->dates[$date]->cahsbox += $data;
         }
 
         return $this;
@@ -329,9 +336,10 @@ trait CallCenterResult
 
             foreach ($callcenter->sectors as &$sector) {
 
+                $callcenter->cahsbox += $sector->cahsbox;
                 $callcenter->comings += $sector->comings;
-                $callcenter->requestsAll += $sector->requestsAll;
                 $callcenter->requests += $sector->requests;
+                $callcenter->requestsAll += $sector->requestsAll;
 
                 if ($callcenter->requests > 0)
                     $callcenter->efficiency = round(($callcenter->comings / $callcenter->requests) * 100, 2);
@@ -346,9 +354,10 @@ trait CallCenterResult
                     if (empty($callcenter->dates[$row->date]))
                         $callcenter->dates[$row->date] = $this->userRowDateTemplate($row->date);
 
+                    $callcenter->dates[$row->date]->cahsbox += $row->cahsbox;
                     $callcenter->dates[$row->date]->comings += $row->comings;
-                    $callcenter->dates[$row->date]->requestsAll += $row->requestsAll;
                     $callcenter->dates[$row->date]->requests += $row->requests;
+                    $callcenter->dates[$row->date]->requestsAll += $row->requestsAll;
                 }
             }
 

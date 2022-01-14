@@ -132,11 +132,12 @@ class CallCenters extends Controller
     public function getTemplateStatsRow($forAll = true)
     {
         $row = (object) [
-            'comings' => 0,
-            'requests' => 0,
-            'requestsAll' => 0,
-            'efficiency' => 0,
-            'dates' => [],
+            'cahsbox' => 0, # Касса
+            'comings' => 0, # Количетство приходов
+            'dates' => [], # Ежедневная статистика
+            'efficiency' => 0, # КПД
+            'requests' => 0, # Московские заявки
+            'requestsAll' => 0, # Всего заявок
         ];
 
         if ($forAll)
