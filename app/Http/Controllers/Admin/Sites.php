@@ -59,7 +59,7 @@ class Sites extends Controller
 
         return response()->json([
             'rows' => $this->getSiteStatistic($request),
-            'chart' => [],
+            'chart' => $this->getChartDataSiteVisits($request->site),
         ]);
     }
 
@@ -255,5 +255,41 @@ class Sites extends Controller
             });
 
         return $this;
+    }
+
+    /**
+     * Данные для графика посещений сайта
+     * 
+     * @param string $site
+     * @param null|string $date
+     * @return array
+     */
+    public static function getChartDataSiteVisits($site, $date = null)
+    {
+        $sites = [$site, "www." . $site];
+        $date = $date ?: now();
+
+        $data = [];
+
+        StatVisitSite::selectRaw('sum(count + count_block) as count, ip, date')
+            ->whereIn('site', $sites)
+            ->groupBy(['ip', 'date'])
+            ->get()
+            ->each(function ($row) use (&$data) {
+                $key = strtotime($row->date);
+
+                if (empty($data[$key])) {
+                    $data[$key] = [
+                        'date' => $row->date,
+                        'hosts' => 0,
+                        'views' => 0,
+                    ];
+                }
+
+                $data[$key]['hosts']++;
+                $data[$key]['views'] += $row->count;
+            });
+
+        return collect($data)->sortBy('date')->values()->all();
     }
 }
