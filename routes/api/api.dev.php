@@ -157,5 +157,7 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('sites', 'Admin\Sites@sites')->name('api.dev.block.sites');
         /** Вывод статистики по сайтам */
         Route::post('sitesStats', 'Admin\Sites@sitesStats')->name('api.dev.block.sitesStats');
+        /** Вывод данных графика */
+        Route::post('getChartSite', 'Admin\Sites@getChartSite')->name('api.dev.block.getChartSite');
     });
 });

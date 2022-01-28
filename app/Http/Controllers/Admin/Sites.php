@@ -59,6 +59,20 @@ class Sites extends Controller
 
         return response()->json([
             'rows' => $this->getSiteStatistic($request),
+        ]);
+    }
+
+    /**
+     * Вывод данных графика
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getChartSite(Request $request)
+    {
+        $this->checkDomain($request->site);
+
+        return response()->json([
             'chart' => $this->getChartDataSiteVisits($request->site),
         ]);
     }
@@ -73,6 +87,9 @@ class Sites extends Controller
      */
     public function checkDomain($site)
     {
+        if (!$site)
+            throw new ExceptionsJsonResponse("Адрес сайта не выбран");
+
         if (!in_array($site, $this->getSitesList()))
             throw new ExceptionsJsonResponse("Данный сайт не найден среди разрешенного списка");
 
@@ -273,6 +290,10 @@ class Sites extends Controller
 
         StatVisitSite::selectRaw('sum(count + count_block) as count, date')
             ->whereIn('site', $sites)
+            ->where(function ($query) use ($date) {
+                $query->whereDate('date', '>=', date("Y-m-d", strtotime($date) - 90 * 24 * 60 * 60))
+                    ->whereDate('date', '<=', $date);
+            })
             ->groupBy('date')
             ->get()
             ->each(function ($row) use (&$data) {
@@ -291,6 +312,10 @@ class Sites extends Controller
 
         StatVisitSite::selectRaw('count(*) as count, ip, date')
             ->whereIn('site', $sites)
+            ->where(function ($query) use ($date) {
+                $query->whereDate('date', '>=', date("Y-m-d", strtotime($date) - 90 * 24 * 60 * 60))
+                    ->whereDate('date', '<=', $date);
+            })
             ->groupBy(['ip', 'date'])
             ->get()
             ->each(function ($row) use (&$data) {
