@@ -34,6 +34,13 @@ class Dates
     protected $second;
 
     /**
+     * Текщая дата
+     * 
+     * @var \Carbon\Carbon
+     */
+    protected $today;
+
+    /**
      * Создание экземпляра объекта
      * 
      * @param null|string $start
@@ -46,6 +53,7 @@ class Dates
      */
     public function __construct($start = null, $stop = null, $type = null)
     {
+        $this->today = Carbon::now();
         $this->first = $start ? Carbon::create($start) : Carbon::now();
         $this->second = $stop ? Carbon::create($stop) : Carbon::now();
 
@@ -100,7 +108,9 @@ class Dates
         $this->start = $this->first->format("Y-m-d");
         $this->stop = $this->second->format("Y-m-d");
 
-        $this->diff = $this->first->diffInDays($this->second) + 1;
+        $this->diff = ($this->today < $this->second and $this->today > $this->first)
+            ? $this->first->diffInDays($this->today) + 1
+            : $this->first->diffInDays($this->second) + 1;
 
         $this->findDays();
 
@@ -196,6 +206,8 @@ class Dates
         for ($date = $this->first; $date->lte($this->second); $date->addDay()) {
             $this->days[] = $date->format('Y-m-d');
         }
+
+        $this->daysCount = count($this->days);
 
         return $this;
     }
