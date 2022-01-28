@@ -271,23 +271,40 @@ class Sites extends Controller
 
         $data = [];
 
-        StatVisitSite::selectRaw('sum(count + count_block) as count, ip, date')
+        StatVisitSite::selectRaw('sum(count + count_block) as count, date')
             ->whereIn('site', $sites)
-            ->groupBy(['ip', 'date'])
+            ->groupBy('date')
             ->get()
             ->each(function ($row) use (&$data) {
-                $key = strtotime($row->date);
+                $key = strtotime($row->date) . "views";
 
                 if (empty($data[$key])) {
                     $data[$key] = [
                         'date' => $row->date,
-                        'hosts' => 0,
-                        'views' => 0,
+                        'name' => "views",
+                        'value' => 0,
                     ];
                 }
 
-                $data[$key]['hosts']++;
-                $data[$key]['views'] += $row->count;
+                $data[$key]['value'] += $row->count;
+            });
+
+        StatVisitSite::selectRaw('count(*) as count, ip, date')
+            ->whereIn('site', $sites)
+            ->groupBy(['ip', 'date'])
+            ->get()
+            ->each(function ($row) use (&$data) {
+                $key = strtotime($row->date) . "hosts";
+
+                if (empty($data[$key])) {
+                    $data[$key] = [
+                        'date' => $row->date,
+                        'name' => "hosts",
+                        'value' => 0,
+                    ];
+                }
+
+                $data[$key]['value'] += $row->count;
             });
 
         return collect($data)->sortBy('date')->values()->all();
