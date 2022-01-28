@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Exceptions\ExceptionsJsonResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Company\AllVisit;
-use App\Models\Company\StatRequest;
+use App\Models\Company\AutoBlockHost;
+use App\Models\Company\BlockHost;
 use App\Models\Company\StatVisit;
 use App\Models\Company\StatVisitSite;
 use App\Models\CrmMka\CrmRequestsQueue;
@@ -147,23 +148,50 @@ class Sites extends Controller
                 $this->data[md5($row->ip)]['host'] = $row->host;
             });
 
-        return collect($this->data)
+        // Информация о блокировках
+        BlockHost::whereIn('host', $this->ips)
+            ->whereIsHostname(0)
+            ->whereBlock(1)
+            ->get()
+            ->each(function ($row) {
+                $this->data[md5($row->host)]['blocked_on'] = true;
+            });
+
+        // Автоматические блокировки
+        AutoBlockHost::whereIn('ip', $this->ips)
+            ->whereDate('date', now())
+            ->distinct()
+            ->get()
+            ->each(function ($row) {
+                $this->data[md5($row->ip)]['autoblock'] = true;
+            });
+
+        $this->data = collect($this->data)
             ->map(function ($row) {
                 return array_merge($row, [
-                    'visits' => $row['visits'] ?? 0,
-                    'visitsAll' => $row['visitsAll'] ?? 0,
+                    'autoblock' => $row['autoblock'] ?? false,
+                    'blocked_on' => $row['blocked_on'] ?? false,
                     'requests' => $row['requests'] ?? 0,
                     'requestsAll' => $row['requestsAll'] ?? 0,
+                    'visits' => $row['visits'] ?? 0,
+                    'visitsAll' => $row['visitsAll'] ?? 0,
                     'queues' => $row['queues'] ?? 0,
                     'queuesAll' => $row['queuesAll'] ?? 0,
                 ]);
             })
-            ->sortBy([
-                ['queues', 'DESC'],
-                ['visits', "DESC"]
-            ])
             ->values()
             ->all();
+
+        usort($this->data, function ($a, $b) {
+            $c = (int) $b['blocked_on'] - (int) $a['blocked_on'];
+            $c .= (int) $b['autoblock'] - (int) $a['autoblock'];
+            $c .= $b['requests'] - $a['requests'];
+            $c .= $b['queues'] - $a['queues'];
+            $c .= $b['visits'] - $a['visits'];
+            return $c;
+        });
+
+        return $this->data;
     }
 
     /**
