@@ -6,6 +6,7 @@ use App\Exceptions\ExceptionsJsonResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Company\AllVisit;
 use App\Models\Company\StatRequest;
+use App\Models\Company\StatVisit;
 use App\Models\Company\StatVisitSite;
 use App\Models\CrmMka\CrmRequestsQueue;
 use App\Models\RequestsQueue;
@@ -137,6 +138,14 @@ class Sites extends Controller
 
         // Статистика по очередям
         $this->getQueuesData();
+
+        // Поиск имени хоста
+        StatVisit::whereIn('ip', $this->ips)
+            ->whereDate('date', now())
+            ->get()
+            ->each(function ($row) {
+                $this->data[md5($row->ip)]['host'] = $row->host;
+            });
 
         return collect($this->data)
             ->map(function ($row) {
