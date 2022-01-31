@@ -10,6 +10,7 @@ use App\Models\Company\BlockHost;
 use App\Models\Company\StatVisit;
 use App\Models\Company\StatVisitSite;
 use App\Models\CrmMka\CrmRequestsQueue;
+use App\Models\IpInfo;
 use App\Models\RequestsQueue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -181,6 +182,14 @@ class Sites extends Controller
             ->get()
             ->each(function ($row) {
                 $this->data[md5($row->ip)]['autoblock'] = true;
+            });
+
+        // Информация об IP
+        IpInfo::select('ip', 'country_code', 'region_name', 'city')
+            ->whereIn('ip', $this->ips)
+            ->get()
+            ->each(function ($row) {
+                $this->data[md5($row->ip)]['info'] = $row->toArray();
             });
 
         $this->data = collect($this->data)
