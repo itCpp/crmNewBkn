@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Blocks;
 use App\Http\Controllers\Controller;
 use App\Models\Company\BlockHost;
 use App\Models\Company\StatVisit;
+use App\Models\Company\StatVisitSite;
 use App\Models\IpInfo;
 use Illuminate\Http\Request;
 
@@ -60,6 +61,26 @@ class BlockList extends Controller
             ->get()
             ->each(function ($row) use (&$rows) {
                 $rows[$row->ip]['hostname'] = $row->host;
+            });
+
+        StatVisitSite::selectRaw('sum(requests) as requests, sum(count) as visits, ip')
+            ->whereIn('ip', $ips)
+            ->whereDate('date', now())
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) use (&$rows) {
+                $rows[$row->ip]['requests'] = $row->requests;
+                $rows[$row->ip]['visits'] = $row->visits;
+            });
+
+        StatVisitSite::selectRaw('sum(count_block) as blocks, sum(count) as visitsAll, ip')
+            ->whereIn('ip', $ips)
+            ->whereDate('date', now())
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) use (&$rows) {
+                $rows[$row->ip]['blocks'] = $row->blocks;
+                $rows[$row->ip]['visitsAll'] = $row->visitsAll;
             });
 
         return [
