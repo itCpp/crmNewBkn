@@ -10,6 +10,8 @@ use App\Models\Company\StatVisit;
 use App\Models\Company\StatVisitSite;
 use App\Models\Company\StatRequest;
 use App\Models\Company\AutoBlockHost;
+use App\Models\CrmMka\CrmRequestsQueue;
+use App\Models\IpInfo;
 use Illuminate\Http\Request;
 
 class Statistics extends Controller
@@ -48,7 +50,8 @@ class Statistics extends Controller
             ->getStatRequests()
             ->getQueues()
             ->getStatAllDays()
-            ->getBlockData();
+            ->getBlockData()
+            ->getIpInfo();
 
         $response = [];
 
@@ -88,6 +91,7 @@ class Statistics extends Controller
                 'all' => $row['all'] ?? 0,
                 'blocked_sort' => $blocked_sort,
                 'requestsAll' => $row['requestsAll'] ?? 0,
+                'info' => $row['info'] ?? null,
             ];
         }
 
@@ -338,11 +342,37 @@ class Statistics extends Controller
      */
     public function getQueues()
     {
+        if (env("NEW_CRM_OFF", true))
+            return $this->getQueuesDataFromOldCrm();
+
         RequestsQueue::selectRaw('COUNT(*) as count, ip')
             ->whereDate('created_at', $this->date)
             ->groupBy('ip')
             ->get()
             ->map(function ($row) {
+
+                if (!isset($this->data[$row->ip]['queues']))
+                    $this->data[$row->ip]['queues'] = 0;
+
+                $this->data[$row->ip]['queues'] += $row->count;
+            });
+
+        return $this;
+    }
+
+    /**
+     * Статистические данные по очередям из старых таблиц
+     * 
+     * @return $this
+     */
+    public function getQueuesDataFromOldCrm()
+    {
+        CrmRequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->whereDate('created_at', $this->date)
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
 
                 if (!isset($this->data[$row->ip]['queues']))
                     $this->data[$row->ip]['queues'] = 0;
@@ -360,11 +390,36 @@ class Statistics extends Controller
      */
     public function getQueuesAllDays()
     {
+        if (env("NEW_CRM_OFF", true))
+            return $this->getQueuesAllDaysDataFromOldCrm();
+
         RequestsQueue::selectRaw('COUNT(*) as count, ip')
             ->whereIn('ip', $this->ips)
             ->groupBy('ip')
             ->get()
             ->map(function ($row) {
+
+                if (!isset($this->data[$row->ip]['queuesAll']))
+                    $this->data[$row->ip]['queuesAll'] = 0;
+
+                $this->data[$row->ip]['queuesAll'] += $row->count;
+            });
+
+        return $this;
+    }
+
+    /**
+     * Статистические данные по очередям из старых таблиц
+     * 
+     * @return $this
+     */
+    public function getQueuesAllDaysDataFromOldCrm()
+    {
+        CrmRequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
 
                 if (!isset($this->data[$row->ip]['queuesAll']))
                     $this->data[$row->ip]['queuesAll'] = 0;
@@ -413,6 +468,23 @@ class Statistics extends Controller
             ->map(function ($row) {
                 $this->blocked[] = $row->host;
                 $this->blockedData[$row->host] = $row->block == 1 ? true : false;
+            });
+
+        return $this;
+    }
+
+    /**
+     * Информация об ip адресах
+     * 
+     * @return $this
+     */
+    public function getIpInfo()
+    {
+        IpInfo::select('ip', 'country_code', 'region_name', 'city')
+            ->whereIn('ip', $this->ips)
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['info'] = $row->toArray();
             });
 
         return $this;
