@@ -33,7 +33,7 @@ class Statistics extends Controller
     public function __construct(
         protected Request $request,
         protected array $data = [],
-        protected array $sites = []
+        public array $sites = []
     ) {
         $this->date = $request->date ?: date("Y-m-d");
         $this->ips = [];
@@ -42,13 +42,17 @@ class Statistics extends Controller
     /**
      * Подсчет статистики
      * 
+     * @param null|string $ip
      * @return array
      */
-    public function getStatistic()
+    public function getStatistic($ip = null)
     {
         /** Подсчет данных за текущий день */
         StatVisitSite::selectRaw('sum(count) as count, sum(count_block) as count_block, sum(requests) as requests, ip')
             ->whereDate('date', $this->date)
+            ->when(is_string($ip), function ($query) use ($ip) {
+                $query->where('ip', $ip);
+            })
             ->when(count($this->sites) > 0, function ($query) {
                 $query->whereIn('site', $this->sites);
             })

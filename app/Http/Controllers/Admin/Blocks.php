@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Admin\Blocks\BlockList;
 use App\Http\Controllers\Admin\Blocks\IpInfos;
 use App\Http\Controllers\Admin\Blocks\Statistics;
-use App\Http\Controllers\Admin\Blocks\StatisticsAll;
 use App\Http\Controllers\Admin\Blocks\Views;
 use App\Models\Company\BlockHost;
 use Illuminate\Http\Request;

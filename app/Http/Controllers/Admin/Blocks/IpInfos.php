@@ -6,8 +6,10 @@ use App\Exceptions\Exceptions;
 use App\Http\Controllers\Controller;
 use App\Models\IpInfo;
 use App\Models\Company\BlockHost;
+use App\Models\Company\StatVisitSite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+// use Illuminate\Support\Str;
 
 class IpInfos extends Controller
 {
@@ -49,7 +51,7 @@ class IpInfos extends Controller
     {
         if (!$ip = ($ip ?: $this->request->ip))
             throw new Exceptions("IP адрес не определен");
-        
+
         return $this->checkInfoData($ip);
     }
 
@@ -66,13 +68,52 @@ class IpInfos extends Controller
 
         $info = $this->checkInfoData($ip);
 
+        $this->statistics = new Statistics($this->request);
+        $general_stats = $this->statistics->getStatistic($ip)[0] ?? [];
+
+        $sites_stats = $this->sitesStatsFromIp($ip);
+
         return [
             'ip' => $ip,
             'ipinfo' => $info,
-            'stats' => (new Statistics($this->request))->getStatisticIp($ip),
+            'generalStats' => $general_stats,
+            'sitesStats' => $sites_stats,
+            // 'stats' => (new Statistics($this->request))->getStatisticIp($ip),
+            'stats' => [],
             'textInfo' => $this->getTextIpInfo(),
             'block' => BlockHost::where('host', $ip)->first(),
         ];
+    }
+
+    /**
+     * Раздельная статистика посещений по сайтам
+     * 
+     * @param string $ip
+     * @return array
+     */
+    public function sitesStatsFromIp($ip)
+    {
+        $sites = StatVisitSite::select('site')
+            ->where('ip', $ip)
+            ->where('site', '!=', null)
+            ->distinct()
+            ->get()
+            ->map(function ($row) {
+                return $row->site;
+            });
+
+        foreach ($sites as $site) {
+
+            $this->statistics->sites = [$site];
+
+            // if (!Str::substrCount($site, 'www.'))
+            //     $this->statistics->sites[] = "www." . $site;
+
+            if ($row = $this->statistics->getStatistic($ip)[0] ?? null)
+                $data[] = array_merge($row, ['site' => $site]);
+        }
+
+        return collect($data ?? [])->sortByDesc('visitsAll')->values()->all();
     }
 
     /**
@@ -247,8 +288,7 @@ class IpInfos extends Controller
                 } else {
                     $string .= $this->arrayToString($list);
                 }
-            }
-            else {
+            } else {
                 $string .= "{$key}: {$list}\r\n";
             }
         }
