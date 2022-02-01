@@ -105,6 +105,8 @@ class IpInfos extends Controller
         foreach ($sites as $site) {
 
             $this->statistics->sites = [$site];
+            $this->statistics->data = [];
+            $this->statistics->ips = [$ip];
 
             // if (!Str::substrCount($site, 'www.'))
             //     $this->statistics->sites[] = "www." . $site;

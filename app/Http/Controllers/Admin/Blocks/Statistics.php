@@ -32,7 +32,7 @@ class Statistics extends Controller
      */
     public function __construct(
         protected Request $request,
-        protected array $data = [],
+        public array $data = [],
         public array $sites = []
     ) {
         $this->date = $request->date ?: date("Y-m-d");
