@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Exceptions\ExceptionsJsonResponse;
+use App\Http\Controllers\Admin\Blocks\Statistics;
 use App\Http\Controllers\Controller;
 use App\Models\Company\AllVisit;
 use App\Models\Company\AutoBlockHost;
@@ -111,113 +112,115 @@ class Sites extends Controller
             "www." . $request->site
         ];
 
-        // Посещения за текущий день
-        AllVisit::selectRaw('count(*) as count, ip')
-            ->whereIn('site', $this->sites)
-            ->whereDate('created_at', now())
-            ->groupBy('ip')
-            ->get()
-            ->each(function ($row) {
-                $this->ips[] = $row->ip;
+        return (new Statistics($request, sites: $this->sites))->getStatistic();
 
-                $this->data[md5($row->ip)] = [
-                    'ip' => $row->ip,
-                    'visits' => $row->count,
-                ];
-            });
+        // // Посещения за текущий день
+        // AllVisit::selectRaw('count(*) as count, ip')
+        //     ->whereIn('site', $this->sites)
+        //     ->whereDate('created_at', now())
+        //     ->groupBy('ip')
+        //     ->get()
+        //     ->each(function ($row) {
+        //         $this->ips[] = $row->ip;
 
-        // Общее количество посещений
-        AllVisit::selectRaw('count(*) as count, ip')
-            ->whereIn('ip', $this->ips)
-            ->whereIn('site', $this->sites)
-            ->groupBy('ip')
-            ->get()
-            ->each(function ($row) {
-                $this->data[md5($row->ip)]['visitsAll'] = $row->count;
-            });
+        //         $this->data[md5($row->ip)] = [
+        //             'ip' => $row->ip,
+        //             'visits' => $row->count,
+        //         ];
+        //     });
 
-        // Количество оставленных заявок
-        StatVisitSite::whereIn('ip', $this->ips)
-            ->whereDate('date', now())
-            ->whereIn('site', $this->sites)
-            ->get()
-            ->each(function ($row) {
-                $this->data[md5($row->ip)]['requests'] = $row->requests;
-            });
+        // // Общее количество посещений
+        // AllVisit::selectRaw('count(*) as count, ip')
+        //     ->whereIn('ip', $this->ips)
+        //     ->whereIn('site', $this->sites)
+        //     ->groupBy('ip')
+        //     ->get()
+        //     ->each(function ($row) {
+        //         $this->data[md5($row->ip)]['visitsAll'] = $row->count;
+        //     });
 
-        // Количество оставленных заявок за все время
-        StatVisitSite::selectRaw('sum(requests) as count, ip')
-            ->whereIn('ip', $this->ips)
-            ->whereIn('site', $this->sites)
-            ->groupBy('ip')
-            ->get()
-            ->each(function ($row) {
-                $this->data[md5($row->ip)]['requestsAll'] = (int) $row->count;
-            });
+        // // Количество оставленных заявок
+        // StatVisitSite::whereIn('ip', $this->ips)
+        //     ->whereDate('date', now())
+        //     ->whereIn('site', $this->sites)
+        //     ->get()
+        //     ->each(function ($row) {
+        //         $this->data[md5($row->ip)]['requests'] = $row->requests;
+        //     });
 
-        // Статистика по очередям
-        $this->getQueuesData();
+        // // Количество оставленных заявок за все время
+        // StatVisitSite::selectRaw('sum(requests) as count, ip')
+        //     ->whereIn('ip', $this->ips)
+        //     ->whereIn('site', $this->sites)
+        //     ->groupBy('ip')
+        //     ->get()
+        //     ->each(function ($row) {
+        //         $this->data[md5($row->ip)]['requestsAll'] = (int) $row->count;
+        //     });
 
-        // Поиск имени хоста
-        StatVisit::whereIn('ip', $this->ips)
-            ->whereDate('date', now())
-            ->get()
-            ->each(function ($row) {
-                $this->data[md5($row->ip)]['host'] = $row->host;
-            });
+        // // Статистика по очередям
+        // $this->getQueuesData();
 
-        // Информация о блокировках
-        BlockHost::whereIn('host', $this->ips)
-            ->whereIsHostname(0)
-            ->whereBlock(1)
-            ->get()
-            ->each(function ($row) {
-                $this->data[md5($row->host)]['blocked_on'] = true;
-            });
+        // // Поиск имени хоста
+        // StatVisit::whereIn('ip', $this->ips)
+        //     ->whereDate('date', now())
+        //     ->get()
+        //     ->each(function ($row) {
+        //         $this->data[md5($row->ip)]['host'] = $row->host;
+        //     });
 
-        // Автоматические блокировки
-        AutoBlockHost::whereIn('ip', $this->ips)
-            ->whereDate('date', now())
-            ->distinct()
-            ->get()
-            ->each(function ($row) {
-                $this->data[md5($row->ip)]['autoblock'] = true;
-            });
+        // // Информация о блокировках
+        // BlockHost::whereIn('host', $this->ips)
+        //     ->whereIsHostname(0)
+        //     ->whereBlock(1)
+        //     ->get()
+        //     ->each(function ($row) {
+        //         $this->data[md5($row->host)]['blocked_on'] = true;
+        //     });
 
-        // Информация об IP
-        IpInfo::select('ip', 'country_code', 'region_name', 'city')
-            ->whereIn('ip', $this->ips)
-            ->get()
-            ->each(function ($row) {
-                $this->data[md5($row->ip)]['info'] = $row->toArray();
-            });
+        // // Автоматические блокировки
+        // AutoBlockHost::whereIn('ip', $this->ips)
+        //     ->whereDate('date', now())
+        //     ->distinct()
+        //     ->get()
+        //     ->each(function ($row) {
+        //         $this->data[md5($row->ip)]['autoblock'] = true;
+        //     });
 
-        $this->data = collect($this->data)
-            ->map(function ($row) {
-                return array_merge($row, [
-                    'autoblock' => $row['autoblock'] ?? false,
-                    'blocked_on' => $row['blocked_on'] ?? false,
-                    'requests' => $row['requests'] ?? 0,
-                    'requestsAll' => $row['requestsAll'] ?? 0,
-                    'visits' => $row['visits'] ?? 0,
-                    'visitsAll' => $row['visitsAll'] ?? 0,
-                    'queues' => $row['queues'] ?? 0,
-                    'queuesAll' => $row['queuesAll'] ?? 0,
-                ]);
-            })
-            ->values()
-            ->all();
+        // // Информация об IP
+        // IpInfo::select('ip', 'country_code', 'region_name', 'city')
+        //     ->whereIn('ip', $this->ips)
+        //     ->get()
+        //     ->each(function ($row) {
+        //         $this->data[md5($row->ip)]['info'] = $row->toArray();
+        //     });
 
-        usort($this->data, function ($a, $b) {
-            $c = (int) $b['blocked_on'] - (int) $a['blocked_on'];
-            $c .= (int) $b['autoblock'] - (int) $a['autoblock'];
-            $c .= $b['requests'] - $a['requests'];
-            $c .= $b['queues'] - $a['queues'];
-            $c .= $b['visits'] - $a['visits'];
-            return $c;
-        });
+        // $this->data = collect($this->data)
+        //     ->map(function ($row) {
+        //         return array_merge($row, [
+        //             'autoblock' => $row['autoblock'] ?? false,
+        //             'blocked_on' => $row['blocked_on'] ?? false,
+        //             'requests' => $row['requests'] ?? 0,
+        //             'requestsAll' => $row['requestsAll'] ?? 0,
+        //             'visits' => $row['visits'] ?? 0,
+        //             'visitsAll' => $row['visitsAll'] ?? 0,
+        //             'queues' => $row['queues'] ?? 0,
+        //             'queuesAll' => $row['queuesAll'] ?? 0,
+        //         ]);
+        //     })
+        //     ->values()
+        //     ->all();
 
-        return $this->data;
+        // usort($this->data, function ($a, $b) {
+        //     $c = (int) $b['blocked_on'] - (int) $a['blocked_on'];
+        //     $c .= (int) $b['autoblock'] - (int) $a['autoblock'];
+        //     $c .= $b['requests'] - $a['requests'];
+        //     $c .= $b['queues'] - $a['queues'];
+        //     $c .= $b['visits'] - $a['visits'];
+        //     return $c;
+        // });
+
+        // return $this->data;
     }
 
     /**

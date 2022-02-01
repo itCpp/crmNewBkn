@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Admin\Blocks\BlockList;
 use App\Http\Controllers\Admin\Blocks\IpInfos;
 use App\Http\Controllers\Admin\Blocks\Statistics;
+use App\Http\Controllers\Admin\Blocks\StatisticsAll;
 use App\Http\Controllers\Admin\Blocks\Views;
 use App\Models\Company\BlockHost;
 use Illuminate\Http\Request;
@@ -20,9 +21,9 @@ class Blocks extends Controller
      */
     public static function statistic(Request $request)
     {
-        return response()->json(
-            (new Statistics($request))->getStatistic()
-        );
+        return response()->json([
+            'rows' => (new Statistics($request))->getStatistic(),
+        ]);
     }
 
     /**

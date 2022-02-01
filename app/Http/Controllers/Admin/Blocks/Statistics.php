@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Blocks;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company\AllVisit;
 use App\Models\RequestsQueue;
 use App\Models\Company\BlockHost;
 use App\Models\Company\DropCount;
@@ -31,10 +32,194 @@ class Statistics extends Controller
      */
     public function __construct(
         protected Request $request,
-        protected array $data = []
+        protected array $data = [],
+        protected array $sites = []
     ) {
-        $this->date = $request->date ?? date("Y-m-d");
+        $this->date = $request->date ?: date("Y-m-d");
         $this->ips = [];
+    }
+
+    /**
+     * Подсчет статистики
+     * 
+     * @return array
+     */
+    public function getStatistic()
+    {
+        /** Подсчет данных за текущий день */
+        StatVisitSite::selectRaw('sum(count) as count, sum(count_block) as count_block, sum(requests) as requests, ip')
+            ->whereDate('date', $this->date)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->ips[] = $row->ip;
+                $this->data[$row->ip] = [
+                    'ip' => $row->ip,
+                    'visits' => (int) $row->count,
+                    'requests' => (int) $row->requests,
+                    'visitsBlock' => (int) $row->count_block,
+                ];
+            });
+
+        $this->ips = array_unique($this->ips);
+
+        /** Общие цифры */
+        StatVisitSite::selectRaw('sum(count) as count, sum(count_block) as count_block, sum(requests) as requests, ip')
+            ->whereIn('ip', $this->ips)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['all'] = (int) $row->count;
+                $this->data[$row->ip]['requestsAll'] = (int) $row->requests;
+                $this->data[$row->ip]['drops'] = (int) $row->count_block;
+            });
+
+        $this->getQueuesData();
+
+        /** Информация о блокировках */
+        BlockHost::whereIn('host', $this->ips)
+            ->whereIsHostname(0)
+            ->whereBlock(1)
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->host]['blocked'] = true;
+                $this->data[$row->host]['blocked_on'] = $row->block === 1;
+            });
+
+        /** Автоматические блокировки */
+        AutoBlockHost::whereIn('ip', $this->ips)
+            ->whereDate('date', now())
+            ->distinct()
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['autoblock'] = true;
+            });
+
+        /** Поиск имени хоста */
+        StatVisit::whereIn('ip', $this->ips)
+            ->whereDate('date', $this->date)
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['host'] = $row->host;
+            });
+
+        /** Информация об IP */
+        IpInfo::select('ip', 'country_code', 'region_name', 'city')
+            ->whereIn('ip', $this->ips)
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['city'] = $row->city;
+                $this->data[$row->ip]['country_code'] = $row->country_code;
+                $this->data[$row->ip]['region_name'] = $row->region_name;
+                $this->data[$row->ip]['info'] = $row->toArray();
+            });
+
+        return collect($this->data)->map(function ($row) {
+            return array_merge([
+                'all' => $row['all'] ?? 0,
+                'autoblock' => $row['autoblock'] ?? false,
+                'blocked' => $row['blocked'] ?? false,
+                'blocked_on' => $row['blocked_on'] ?? false,
+                'blocked_sort' => (int) (($row['blocked'] ?? false) || ($row['autoblock'] ?? false)),
+                'city' => $row['city'] ?? null,
+                'country_code' => $row['country_code'] ?? null,
+                'drops' => $row['drops'] ?? 0,
+                'host' => $row['host'] ?? null,
+                'info' => $row['info'] ?? null,
+                'queues' => $row['queues'] ?? 0,
+                'queuesAll' => $row['queuesAll'] ?? 0,
+                'region_name' => $row['region_name'] ?? null,
+                'requests' => $row['requests'] ?? 0,
+                'requestsAll' => $row['requestsAll'] ?? 0,
+                'visits' => $row['visits'] ?? 0,
+                'visitsAll' => $row['all'] ?? 0,
+                'visitsBlock' => $row['drops'] ?? 0,
+            ], $row);
+        })
+            ->sortBy([
+                ['blocked_sort', 'desc'],
+                ['visits', 'desc'],
+                ['drops', 'desc'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Статистика по очередям
+     * 
+     * @return $this
+     * 
+     * @todo Добавить миграцию на создание индексов в таблице очередей
+     */
+    public function getQueuesData()
+    {
+        if (env("NEW_CRM_OFF", true))
+            return $this->getQueuesFromOldCrm();
+
+        RequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->whereDate('created_at', $this->date)
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->data[md5($row->ip)]['queues'] = (int) $row->count;
+            });
+
+        RequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->data[md5($row->ip)]['queuesAll'] = (int) $row->count;
+            });
+
+        return $this;
+    }
+
+    /**
+     * Статистические данные по очередям из старых таблиц
+     * 
+     * @return $this
+     */
+    public function getQueuesFromOldCrm()
+    {
+        CrmRequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->whereDate('created_at', $this->date)
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['queues'] = (int) $row->count;
+            });
+
+        CrmRequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['queuesAll'] = (int) $row->count;
+            });
+
+        return $this;
     }
 
     /**
@@ -43,7 +228,7 @@ class Statistics extends Controller
      * @param null|string $ip
      * @return array
      */
-    public function getStatistic($ip = null)
+    public function getStatisticOld($ip = null)
     {
         $this->getDrops()
             ->getVisits()
@@ -246,6 +431,21 @@ class Statistics extends Controller
      */
     public function getVisits()
     {
+        // AllVisit::selectRaw('count(*) as count, ip')
+        //     ->whereDate('created_at', $this->date)
+        //     ->groupBy('ip')
+        //     ->get()
+        //     ->each(function ($row) {
+
+        //         if (!in_array($row->ip, $this->ips))
+        //             $this->ips[] = $row->ip;
+
+        //         if (!isset($this->data[$row->ip]['visits']))
+        //             $this->data[$row->ip]['visits'] = 0;
+
+        //         $this->data[$row->ip]['visits'] += $row->count;
+        //     });
+
         StatVisit::selectRaw('SUM(count) as count, ip, host')
             ->where('date', $this->date)
             ->groupBy(['ip', 'host'])
@@ -267,12 +467,24 @@ class Statistics extends Controller
     }
 
     /**
-     * Информация о блокированных посещениях за все время
+     * Информация о посещениях за все время
      * 
      * @return $this
      */
     public function getVisitsAllDays()
     {
+        // AllVisit::selectRaw('count(*) as count, ip')
+        //     ->whereIn('ip', $this->ips)
+        //     ->groupBy('ip')
+        //     ->get()
+        //     ->each(function ($row) {
+
+        //         if (!isset($this->data[$row->ip]['all']))
+        //             $this->data[$row->ip]['all'] = 0;
+
+        //         $this->data[$row->ip]['all'] += $row->count;
+        //     });
+
         StatVisit::selectRaw('SUM(count) as count, ip')
             ->whereIn('ip', $this->ips)
             ->groupBy('ip')
