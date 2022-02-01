@@ -19,11 +19,16 @@ class UserToken
      */
     public function handle(Request $request, Closure $next)
     {
-        if ($request->header('X-Old-Token') == $request->bearerToken())
+        if ($request->header('X-Old-Token') and $request->header('X-Old-Token') == $request->bearerToken())
             return (new AuthOldToken)->handle($request, $next);
 
-        if (!$user = Users::checkToken($request->bearerToken()))
+        if (!$user = Users::checkToken($request->bearerToken())) {
+
+            if ($request->header('X-Automatic-Auth'))
+                return Users::checkAutomaticAuthToken($request);
+
             return response()->json(['message' => "Ошибка авторизации"], 401);
+        }
 
         if ($request->header('X-God-Mode'))
             $user = Users::checkGodMode($user, $request->header('X-God-Mode'));
@@ -38,6 +43,5 @@ class UserToken
         });
 
         return $next($request);
-
     }
 }

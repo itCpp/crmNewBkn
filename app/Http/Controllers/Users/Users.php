@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UsersSession;
 use App\Models\UserWorkTime;
 use App\Models\CrmMka\CrmUser;
+use App\Models\UserAutomaticAuth;
 use Illuminate\Http\Request;
 
 class Users extends Controller
@@ -166,5 +167,38 @@ class Users extends Controller
             return null;
 
         return new UderOldCrm((object) $user->toArray());
+    }
+
+    /**
+     * Проверка автоматической авторизации пользователя
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function checkAutomaticAuthToken(Request $request)
+    {
+        $token = UserAutomaticAuth::whereToken($request->header('X-Automatic-Auth'))
+            ->whereDate('created_at', now())
+            ->first();
+
+        if ($token->auth_at)
+            return response()->json(['message' => "Токен авторизации недействительный"], 401);
+
+        if ((time() - 60) > strtotime($token->created_at))
+            return response()->json(['message' => "Токен авторизации просрочен"], 401);
+
+        if (!$user = User::where('old_pin', $token->pin)->first())
+            return response()->json(['message' => "Ошибка авторизации"], 401);
+
+        $token->auth_at = now();
+        $token->save();
+
+        $request->__user = new UserData($user);
+
+        $request->setUserResolver(function () use ($request) {
+            return $request->__user;
+        });
+
+        return Auth::createSession($request);
     }
 }

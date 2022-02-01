@@ -144,7 +144,7 @@ class Auth extends Controller
     }
 
     /**
-     * Создание сесии
+     * Создание сессии
      * 
      * @param \Illuminate\Http\Request $request
      * @return response
