@@ -284,6 +284,9 @@ class IpInfos extends Controller
             if (is_array($list)) {
 
                 if ($this->is_array_list($list)) {
+
+                    $list = array_unique($list);
+
                     foreach ($list as $str) {
                         $string .= "{$key}: {$str}\r\n";
                     }
