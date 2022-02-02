@@ -34,6 +34,9 @@ class Views extends Controller
             ->when((bool) $this->request->ip, function ($query) {
                 $query->where('ip', $this->request->ip);
             })
+            ->when((bool) $this->request->site, function ($query) {
+                $query->where('site', $this->request->site);
+            })
             ->orderBy('id', "DESC")
             ->paginate(50);
 
