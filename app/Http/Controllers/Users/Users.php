@@ -185,10 +185,11 @@ class Users extends Controller
     /**
      * Автоматическая авторизация
      * 
+     * @param \Illuminate\Http\Request $request
      * @param \App\Models\UserAutomaticAuth $token
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function automaticUserAuth(UserAutomaticAuth $token)
+    public static function automaticUserAuth(Request $request, UserAutomaticAuth $token)
     {
         if ($token->auth_at)
             return response()->json(['message' => "Токен авторизации недействительный"], 401);

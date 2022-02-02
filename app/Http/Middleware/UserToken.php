@@ -26,7 +26,7 @@ class UserToken
 
             if ($request->header('X-Automatic-Auth')) {
                 if ($token = Users::checkAutomaticAuthToken($request))
-                    return Users::automaticUserAuth($token);
+                    return Users::automaticUserAuth($request, $token);
             }
 
             return response()->json(['message' => "Ошибка авторизации"], 401);
