@@ -173,14 +173,23 @@ class Users extends Controller
      * Проверка автоматической авторизации пользователя
      * 
      * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \App\Models\UserAutomaticAuth|null
      */
     public static function checkAutomaticAuthToken(Request $request)
     {
-        $token = UserAutomaticAuth::whereToken($request->header('X-Automatic-Auth'))
+        return UserAutomaticAuth::whereToken($request->header('X-Automatic-Auth'))
             ->whereDate('created_at', now())
             ->first();
+    }
 
+    /**
+     * Автоматическая авторизация
+     * 
+     * @param \App\Models\UserAutomaticAuth $token
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function automaticUserAuth(UserAutomaticAuth $token)
+    {
         if ($token->auth_at)
             return response()->json(['message' => "Токен авторизации недействительный"], 401);
 
