@@ -156,6 +156,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Вывод временной шкалы */
         Route::post('getWorktimeTape', 'Users\UserMainData@getTapeTimes')->name('api.users.getworktimetape');
+
+        /** Выводит список пройденных тестирований */
+        Route::post('mytests', 'Testing\MyTests@mytests')->name('api.users.mytests');
     });
 
     /** Маршрутизация админпанели */
