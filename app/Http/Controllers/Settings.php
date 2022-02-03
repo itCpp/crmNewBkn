@@ -12,7 +12,7 @@ class Settings
      * 
      * @var array
      */
-    protected $types = [
+    public static $types = [
         "boolean", "bool",
         "integer", "int",
         "float", "double",
