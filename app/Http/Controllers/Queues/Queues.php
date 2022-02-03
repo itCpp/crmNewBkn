@@ -9,10 +9,72 @@ use App\Http\Controllers\Users\Users;
 use App\Models\IpInfo;
 use App\Models\RequestsQueue;
 use App\Models\Company\BlockHost;
+use App\Models\Company\StatVisit;
 use Illuminate\Http\Request;
 
 class Queues extends Controller
 {
+    /** Количество строк на страницу @var int */
+    const LIMIT = 50;
+
+    /**
+     * Вывод очереди
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getQueuesManualPaginate(Request $request)
+    {
+        $done = (bool) $request->done;
+
+        if ($done)
+            return $this->getQueues($request);
+
+        $request->page = $request->page ?: 1;
+        $offset = self::LIMIT * $request->page - self::LIMIT;
+
+        $query = (new RequestsQueue)
+            ->when($request->last === null, function ($query) {
+                $query->where('done_type', null);
+            })
+            ->when($request->last !== null, function ($query) use ($request, $offset) {
+                $query->where('id', '>=', $request->first)
+                    ->where(function ($query) {
+                        $query->where('done_pin', '!=', "AUTO")
+                            ->orWhere('done_pin', null);
+                    })
+                    ->offset($offset);
+            })
+            ->limit(self::LIMIT);
+
+        $total = (new RequestsQueue)
+            ->when($request->first === null, function ($query) {
+                $query->where('done_type', null);
+            })
+            ->when($request->first !== null, function ($query) use ($request) {
+                $query->where('id', '>=', $request->first)
+                    ->where(function ($query) {
+                        $query->where('done_pin', '!=', "AUTO")
+                            ->orWhere('done_pin', null);
+                    });
+            })
+            ->count();
+
+        $queues = $query->get()
+            ->map(function ($row) {
+                return $this->modifyRow($row);
+            })
+            ->toArray();
+
+        return response()->json([
+            'queues' => $queues ?? [],
+            'current' => $request->page,
+            'next' => $request->page + 1,
+            'total' => $total,
+            'pages' => ceil($total / self::LIMIT),
+        ]);
+    }
+
     /**
      * Вывод очереди
      * 
@@ -21,18 +83,21 @@ class Queues extends Controller
      */
     public function getQueues(Request $request)
     {
-        $show_phone = $request->user()->can('clients_show_phone');
         $done = (bool) $request->done;
 
-        $data = RequestsQueue::where('done_type', $done ? '!=' : '=', null)
-            ->orderBy(
-                $done ? 'done_at' : 'id',
-                $done ? "DESC" : "ASC"
-            )
-            ->paginate(30);
+        $data = (new RequestsQueue)
+            ->when($done, function ($query) {
+                $query->where('done_type', '!=', null)
+                    ->orderBy('done_at', 'DESC');
+            })
+            ->when(!$done, function ($query) {
+                $query->where('done_type', null)
+                    ->orderBy('id');
+            })
+            ->paginate(self::LIMIT);
 
         foreach ($data as $row) {
-            $queues[] = $this->modifyRow($row, $show_phone);
+            $queues[] = $this->modifyRow($row);
         }
 
         return response()->json([
@@ -48,12 +113,14 @@ class Queues extends Controller
      * Преобразование строки очереди
      * 
      * @param \App\Models\RequestsQueue $row
-     * @param boolean $show_phone
      * @return array
      */
-    public function modifyRow($row, $show_phone = false)
+    public function modifyRow($row)
     {
+        $show_phone = request()->user()->can('clients_show_phone');
         $request_data = (array) parent::decrypt($row->request_data);
+
+        $row->key = (request()->page ?: 1) . "_" . $row->id;
 
         if (isset($request_data['phone']))
             $request_data['phone'] = parent::displayPhoneNumber($request_data['phone'], $show_phone);
@@ -95,13 +162,21 @@ class Queues extends Controller
 
         $row->save();
 
-        $queue = $this->modifyRow($row, $request->user()->can('clients_show_phone'));
+        $queue = $this->modifyRow($row);
+
+        $append_row = RequestsQueue::where('done_type', null)
+            ->offset(self::LIMIT - 1)
+            ->first();
+
+        if ($append_row)
+            $append = $this->modifyRow($append_row);
 
         broadcast(new QueueUpdateRow($queue))->toOthers();
 
         return response()->json([
             'queue' => $queue,
             'added' => $added ?? null,
+            'append' => $append ?? null,
         ]);
     }
 
@@ -135,7 +210,17 @@ class Queues extends Controller
         if (!empty($this->hostnames[$ip]))
             return $this->hostnames[$ip];
 
-        return $this->hostnames[$ip] = gethostbyaddr($ip);
+        $row = StatVisit::where('ip', $ip)
+            ->where('host', '!=', null)
+            ->orderBy('id', "DESC")
+            ->first();
+
+        if ($row)
+            $name = $row->host;
+
+        // gethostbyaddr($ip);
+
+        return $this->hostnames[$ip] = $name ?? null;
     }
 
     /**
