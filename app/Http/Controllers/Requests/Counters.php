@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Requests;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\SecondCalls\SecondCalls;
 use App\Http\Controllers\Sms\Sms;
+use App\Http\Controllers\Testing\MyTests;
 use App\Models\RequestsQueue;
 use Illuminate\Http\Request;
 
@@ -65,6 +66,9 @@ class Counters extends Controller
 
         if ($permits->second_calls_access)
             $counter['secondcalls'] = SecondCalls::getCounterNewSecondCalls($request);
+
+        /** Счетчик незавершенных тестирований сотрудника */
+        $counter['tests'] = MyTests::countTestings($request->user()->pin, $request->user()->old_pin);
 
         return $counter;
     }

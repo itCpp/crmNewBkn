@@ -42,7 +42,7 @@ class RequestStart extends Controller
     /**
      * Подготовка данных для вывода страницы заявок
      * 
-     * @param \Iluminate\Http\Request $request
+     * @param \Illuminate\Http\Request $request
      * @return response
      */
     public static function start(Request $request)
