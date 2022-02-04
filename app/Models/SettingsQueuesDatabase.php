@@ -17,6 +17,7 @@ class SettingsQueuesDatabase extends Model
      */
     protected $fillable = [
         'name',
+        'active',
         'host',
         'port',
         'user',
@@ -26,13 +27,31 @@ class SettingsQueuesDatabase extends Model
     ];
 
     /**
+     * Атрибуты, которые необходимо скрыть
+     * 
+     * @var array
+     */
+    protected $hidden = [
+        'password',
+    ];
+
+    /**
+     * Преобразование данных
+     * 
+     * @var array
+     */
+    protected $casts = [
+        'active' => "boolean",
+    ];
+
+    /**
      * Вывод всех подключений
      * 
      * @return array
      */
     public static function getAllDecrypt()
     {
-        return static::all()->map(function ($row) {
+        return static::where('active', 1)->get()->map(function ($row) {
             $row->host = $row->host ? Crypt::decryptString($row->host) : null;
             $row->port = $row->port ? Crypt::decryptString($row->port) : null;
             $row->user = $row->user ? Crypt::decryptString($row->user) : null;

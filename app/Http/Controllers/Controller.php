@@ -25,12 +25,13 @@ class Controller extends BaseController
 	 * 
 	 * @param \Illuminate\Http\Request $request
 	 * @param mixed $model Экземпляр затрагиваемой модели
+	 * @param boolean $crypt Необходимо зашифровать данные
 	 * @return \App\Models\Log
 	 */
-	public static function logData($request, $model)
+	public static function logData($request, $model, $crypt = false)
 	{
 		try {
-			return Log::log($request, $model);
+			return Log::log($request, $model, $crypt);
 		} catch (Exception $e) {
 			return new Log;
 		}

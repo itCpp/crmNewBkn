@@ -20,7 +20,18 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('/', 'Admin\Settings@index');
         /** Применение настройки */
         Route::post('/set', 'Admin\Settings@set');
-    });    
+    });
+
+    /** Маршрутизация настроек баз данных сайтов */
+    Route::group(['prefix' => "databases"], function () {
+
+        /** Вывод всех баз данных */
+        Route::post('/', 'Admin\Databases@index');
+        /** Вывод данных одной строки */
+        Route::post('/get', 'Admin\Databases@get');
+        /** Применение настройки */
+        Route::post('/set', 'Admin\Databases@set');
+    });
 
     /** Настройка разрешений */
     Route::group(['middleware' => "user.can:dev_permits"], function () {
