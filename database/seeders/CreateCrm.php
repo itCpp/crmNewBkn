@@ -6,6 +6,7 @@ use App\Http\Controllers\Settings;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Illuminate\Support\Str;
 
 class CreateCrm extends Seeder
 {
@@ -16,6 +17,8 @@ class CreateCrm extends Seeder
      */
     public function run()
     {
+        $this->uuid = Str::orderedUuid();
+
         $this->call([
             SettingsGlobalSeeder::class, // Глобальные настройки ЦРМ
             OfficeSeeder::class, // Список офисов
