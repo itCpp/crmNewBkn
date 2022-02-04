@@ -29,10 +29,20 @@ class Log extends Model
         'row_id',
         'row_data',
         'request_data',
+        'to_crypt',
         'user_id',
         'created_at',
         'ip',
         'user_agent',
+    ];
+
+    /**
+     * Атрибуты, которые будут преобразованы
+     *
+     * @var array
+     */
+    protected $casts = [
+        'to_crypt' => 'boolean',
     ];
 
     /**
@@ -49,10 +59,7 @@ class Log extends Model
         $db = config("database.connections.{$connection}.database");
         $table = $data?->getTable() ?? null;
 
-        $request_data = $request->all();
-
-        if ($crypt)
-            $request_data = Controller::encrypt($request_data);
+        $request_data = $crypt ? Controller::encrypt($request->all()) : $request->all();
 
         return static::create([
             'connection_name' => $connection,
@@ -61,6 +68,7 @@ class Log extends Model
             'row_id' => is_int($data->id ?? null) ? $data->id : null,
             'row_data' => json_encode($data, JSON_UNESCAPED_UNICODE),
             'request_data' => json_encode($request_data, JSON_UNESCAPED_UNICODE),
+            'to_crypt' => $crypt,
             'user_id' => $request->__user->id,
             'created_at' => date("Y-m-d H:i:s"),
             'ip' => $request->ip(),
