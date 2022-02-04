@@ -52,13 +52,17 @@ class SettingsQueuesDatabase extends Model
     public static function getAllDecrypt()
     {
         return static::where('active', 1)->get()->map(function ($row) {
+
             $row->host = $row->host ? Crypt::decryptString($row->host) : null;
             $row->port = $row->port ? Crypt::decryptString($row->port) : null;
             $row->user = $row->user ? Crypt::decryptString($row->user) : null;
-            $row->password = $row->password ? Crypt::decryptString($row->password) : null;
             $row->database = $row->database ? Crypt::decryptString($row->database) : null;
             $row->table_name = $row->table_name ? Crypt::decryptString($row->table_name) : null;
-            return $row;
+            $password = $row->password ? Crypt::decryptString($row->password) : null;
+
+            return array_merge($row->toArray(), [
+                'password' => $password,
+            ]);
         })->toArray();
     }
 }

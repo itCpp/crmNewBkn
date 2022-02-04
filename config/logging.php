@@ -114,6 +114,13 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 30,
         ],
+
+        'check_queues' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/requests/check_queue_site.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
     ],
 
 ];

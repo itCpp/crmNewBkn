@@ -12,6 +12,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class GetRequestsQueuesFromSitesCommand extends Command
 {
@@ -64,12 +65,15 @@ class GetRequestsQueuesFromSitesCommand extends Command
      */
     public function handle()
     {
+        $this->log = Log::channel('check_queues');
+
         $this->start = $this->last = microtime(1);
 
         $this->databases = SettingsQueuesDatabase::getAllDecrypt();
         $this->settings = new Settings('TEXT_REQUEST_AUTO_ADD');
 
         if (!count($this->databases)) {
+            $this->log->warning("Подключения к базам данных не настроены");
             $this->line(date("[Y-m-d H:i:s]") . " <error>Подключения к базам данных не настроены</error>");
             return 0;
         }
@@ -133,9 +137,11 @@ class GetRequestsQueuesFromSitesCommand extends Command
 
             $data = ($where ?? $table)->get();
 
+            $this->log->info("[{$connection}] " . count($data) . " {$db['name']}");
             $this->line(date("[Y-m-d H:i:s]") . "[{$connection}][" . count($data) . "][<info>{$db['name']}</info>]");
         } catch (\Illuminate\Database\QueryException $e) {
 
+            $this->log->error("[{$connection}] Ошибка: {$e->getMessage()}");
             $this->line(date("[Y-m-d H:i:s]") . "[{$connection}] Ошибка: <error>{$e->getMessage()}</error>");
 
             return $this;
@@ -176,6 +182,7 @@ class GetRequestsQueuesFromSitesCommand extends Command
                 (new QueueProcessings($queue))->add();
             }
 
+            $this->log->notice("[{$connection}][{$row->id}][{$deleted}][{$queue->id}][{$added}][{$queue->ip}][{$queue->site}]");
             $this->line("[{$connection}][{$row->id}][{$deleted}][{$queue->id}][{$added}][{$queue->ip}][{$queue->site}]");
         }
 
