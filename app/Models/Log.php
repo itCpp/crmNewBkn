@@ -61,11 +61,13 @@ class Log extends Model
 
         $request_data = $crypt ? Controller::encrypt($request->all()) : $request->all();
 
+        $id = $data->getKeyName();
+
         return static::create([
             'connection_name' => $connection,
             'database_name' => $db,
             'table_name' => $table,
-            'row_id' => is_int($data->id ?? null) ? $data->id : null,
+            'row_id' => $data->$id ?? null,
             'row_data' => json_encode($data, JSON_UNESCAPED_UNICODE),
             'request_data' => json_encode($request_data, JSON_UNESCAPED_UNICODE),
             'to_crypt' => $crypt,
