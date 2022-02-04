@@ -13,8 +13,14 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
     /** Вывод всех маршрутов */
     Route::post('getRoutes', 'Dev\Routes')->name('api.dev.getRoutes');
 
-    /** Вывод глобальных настроек */
-    Route::post('settings', 'Admin\Settings@index');
+    /** Маршрутизация настроек */
+    Route::group(['prefix' => "settings"], function () {
+
+        /** Вывод глобальных настроек */
+        Route::post('/', 'Admin\Settings@index');
+        /** Применение настройки */
+        Route::post('/set', 'Admin\Settings@set');
+    });    
 
     /** Настройка разрешений */
     Route::group(['middleware' => "user.can:dev_permits"], function () {

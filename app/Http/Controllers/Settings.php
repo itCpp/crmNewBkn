@@ -66,7 +66,7 @@ class Settings
      */
     public function getType($type = null)
     {
-        return in_array($type, $this->types) ? $type : "boolean";
+        return in_array($type, self::$types) ? $type : "boolean";
     }
 
     /**

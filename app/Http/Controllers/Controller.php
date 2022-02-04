@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Log;
+use Exception;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -22,12 +24,16 @@ class Controller extends BaseController
 	 * Логирование изменения данных
 	 * 
 	 * @param \Illuminate\Http\Request $request
-	 * @param $model Экземпляр затрагиваемой модели
+	 * @param mixed $model Экземпляр затрагиваемой модели
 	 * @return \App\Models\Log
 	 */
 	public static function logData($request, $model)
 	{
-		return \App\Models\Log::log($request, $model);
+		try {
+			return Log::log($request, $model);
+		} catch (Exception $e) {
+			return new Log;
+		}
 	}
 
 	/**
