@@ -66,6 +66,10 @@ class UsersMergeFromOld extends Command
         $this->question(" Кольщики... ");
         $this->createUsers($this->users->getcallers(), position: 3);
 
+        $this->newLine();
+        $this->line("<bg=blue;options=bold>   Сотрудники успешно перенесены   </>");
+        $this->newLine();
+
         return 0;
     }
 
@@ -75,7 +79,7 @@ class UsersMergeFromOld extends Command
      * @param \Illuminate\Database\Eloquent\Collection $users
      * @param string $auth Способ авторизации
      * @param null|int $position Должность сотрудника
-     *          Начальный список должностей представлен в соответсвующей фабрики
+     *          Начальный список должностей представлен в соответсвующей фабрике
      *          `\Database\Factories\UsersPositionFactory::class`
      * @return null
      */
@@ -85,12 +89,12 @@ class UsersMergeFromOld extends Command
 
             $user->position_id = $position;
 
-            $message = trim("{$user->pin} {$user->username} {$user->fullName}");
+            $message = trim("<fg=green;options=bold>{$user->pin}</> <options=bold>{$user->username}</> {$user->fullName}");
 
             try {
                 $created = $this->users->createUser($user, $auth);
                 $roles = $created->roles->map(fn ($role) => $role->role)->toArray();
-                $this->info(" " . trim($message . " ". implode(" ", $roles)) . " ");
+                $this->line("\t" . trim($message . " <fg=yellow>". implode(" ", $roles)) . "</> ");
             } catch (\Illuminate\Database\QueryException) {
                 $this->error(" " . $message . " ");
             } catch (\App\Exceptions\CreateNewUser $e) {

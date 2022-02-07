@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Exceptions;
 use App\Models\SettingsGlobal;
+use Exception;
 
 class Settings
 {
@@ -30,10 +31,16 @@ class Settings
     {
         $rows = new SettingsGlobal;
 
-        if ($settings)
+        if (count($settings))
             $rows = $rows->whereIn('id', $settings);
 
-        foreach ($rows->get() as $row) {
+        try {
+            $rows = $rows->get();
+        } catch (Exception) {
+            return null;
+        }
+
+        foreach ($rows as $row) {
 
             $value = $row->value;
             $type = $this->getType($row->type);
@@ -84,12 +91,12 @@ class Settings
         $settings = new static($key);
 
         $type = $settings->getType($setting->type);
-        
+
         if (gettype($value) != $type)
             throw new Exceptions("Передан неправильный тип переменной, должен быть {$type}");
 
         settype($value, $type);
-        
+
         $setting->value = $value;
         $setting->save();
 

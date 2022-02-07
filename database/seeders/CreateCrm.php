@@ -2,11 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Http\Controllers\Settings;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Artisan;
-use Symfony\Component\Console\Output\ConsoleOutput;
-use Illuminate\Support\Str;
 
 class CreateCrm extends Seeder
 {
@@ -17,8 +13,6 @@ class CreateCrm extends Seeder
      */
     public function run()
     {
-        $this->uuid = Str::orderedUuid();
-
         $this->call([
             SettingsGlobalSeeder::class, // Глобальные настройки ЦРМ
             OfficeSeeder::class, // Список офисов
@@ -34,14 +28,6 @@ class CreateCrm extends Seeder
             TestingQuestionSeeder::class, // Вопросы тестирования
             UsersPositionSeeder::class, // Создание должностей
         ]);
-
-        $output = new ConsoleOutput; // Вывод в консоль
-
-        Artisan::call('old:users', [], $output); // Перенос сотрудников
-        Artisan::call('old:requests', [], $output); // Перенос старых заявок
-
-        Settings::set('DROP_ADD_REQUEST', false); // Отключение блокировки добавления новых заявок
-        Settings::set('CRONTAB_SMS_INCOMINGS_CHECK', true); // Включение проверки СМС на шлюзах
     }
 
     /**

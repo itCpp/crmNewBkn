@@ -2,26 +2,27 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 
-class DumpData extends Command
+class DataDump extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'dump:data
-                {--name= : Имя файла без расширения}';
+    protected $signature = 'data:dump
+                            {--name= : Имя файла без расширения}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Dump data before refresh CRM';
+    protected $description = 'Сохранение данных при переносе ЦРМ';
 
     /**
      * Create a new command instance.
@@ -41,6 +42,8 @@ class DumpData extends Command
     public function handle()
     {
         $models = [
+            \App\Models\ChatFile::class,
+            \App\Models\ChatMessage::class,
             \App\Models\ChatRoom::class,
             \App\Models\ChatRoomsUser::class,
             \App\Models\ChatRoomsViewTime::class,
@@ -63,6 +66,10 @@ class DumpData extends Command
         $data = json_encode($this->data, JSON_UNESCAPED_UNICODE);
         file_put_contents($path, $data);
 
+        $this->info("Копия данных для переноса создана:");
+        $this->question(Str::replace("\\", "/", $path));
+        $this->newLine();
+
         return 0;
     }
 
@@ -79,7 +86,13 @@ class DumpData extends Command
             'rows' => [],
         ];
 
-        foreach ((new $class)->all() as $row) {
+        try {
+            $rows = (new $class)->all();
+        } catch (Exception) {
+            return null;
+        }
+
+        foreach ($rows as $row) {
             $data['rows'][] = $row->toArray();
         }
 
