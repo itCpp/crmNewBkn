@@ -25,7 +25,10 @@ class PermissionFactory extends Factory
         ['admin_user_set_permission', 'Может устанавливать личные права сотрудникам'],
         ['admin_user_set_role', 'Может менять роли сотрудникам'],
         ['admin_users', 'Доступ администратора к созданию и редактированию данных сотрудников'],
+        ['clients_agreements_access', 'Доступ к договорным клиентам'],
         ['clients_show_phone', 'Может видеть номера телефонов клиента'],
+        ['rating_access', 'Доступ к рейтингу'],
+        ['rating_show_admins', 'Может видеть рейтинг руководителей'],
         ['requests_access', 'Доступ к заявкам'],
         ['requests_add', 'Может создавать новые заявки вручную'],
         ['requests_addr_change', 'Может менять адрес записи'],
@@ -51,7 +54,6 @@ class PermissionFactory extends Factory
         ['sms_access', 'Доступ к чтению смс сообщений'],
         ['sms_access_system', 'Доступ к сообщениям без заявки'],
         ['second_calls_access', 'Доступ ко вторичным звонкам'],
-        ['rating_show_admins', 'Может видеть рейтинг руководителей'],
     ];
 
     /**

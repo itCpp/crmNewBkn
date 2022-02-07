@@ -52,14 +52,14 @@ Route::group(['middleware' => 'user.token'], function () {
     /** Первоначальная загрузка страницы со всеми данными */
     Route::post('check', 'Users\Users@check')->name('api.check');
 
+    /** Запуск ЦРМ */
+    Route::post('requests/start', 'Crm\Start@start')->name('api.start');
+
     /** Маршрутизация по заявкам */
     Route::group([
         'prefix' => "requests",
         'middleware' => "user.can:requests_access",
     ], function () {
-
-        /** Запуск заявок */
-        Route::post('start', 'Requests\RequestStart@start')->name('api.requests.start');
 
         /** Вывод заявок */
         Route::post('get', 'Requests\Requests@get')->name('api.requests.get');
@@ -105,7 +105,7 @@ Route::group(['middleware' => 'user.token'], function () {
     });
 
     /** Маршрутизация различных рейтингов */
-    Route::group(['prefix' => 'ratings'], function () {
+    Route::group(['prefix' => 'ratings', 'middleware' => 'user.can:rating_access'], function () {
 
         /** Вывод основного рейтинга колл-центров */
         Route::post('callcenter', 'Ratings\Ratings@getCallCenters')->name('api.ratings.callcenter');
