@@ -27,8 +27,8 @@ class Statuses extends Controller
      */
     public static function getStatuses(Request $request)
     {
-
-        $statuses = Status::orderBy('id', "DESC")->get();
+        $statuses = Status::orderBy('name')
+            ->get();
 
         foreach ($statuses as &$status) {
             $status->zeroing_data = json_decode($status->zeroing_data);
@@ -47,7 +47,6 @@ class Statuses extends Controller
      */
     public static function getListStatuses(Request $request)
     {
-
         $rows = Status::orderBy('name');
 
         foreach ($rows->get() as $status) {
@@ -69,7 +68,6 @@ class Statuses extends Controller
      */
     public static function createStatus(Request $request)
     {
-
         $errors = [];
 
         if (!$request->name)
@@ -112,6 +110,7 @@ class Statuses extends Controller
             $request->__status->zeroing = $request->zeroing ? 1 : 0;
             $request->__status->event_time = $request->event_time ? 1 : 0;
             $request->__status->zeroing_data = $request->zeroing_data;
+            $request->__status->theme = $request->theme;
 
             $request->__status->save();
             $status = $request->__status;
@@ -119,6 +118,7 @@ class Statuses extends Controller
             $status = Status::create([
                 'name' => $request->name,
                 'zeroing' => $request->zeroing ? 1 : 0,
+                'theme' => $request->theme,
                 'event_time' => $request->event_time ? 1 : 0,
                 'zeroing_data' => $request->zeroing_data,
             ]);
@@ -139,7 +139,6 @@ class Statuses extends Controller
      */
     public static function getStatusData(Request $request)
     {
-
         if (!$status = Status::find($request->id))
             return response()->json(['message' => "Данные о статусе не найдены"], 400);
 
@@ -158,7 +157,6 @@ class Statuses extends Controller
      */
     public static function saveStatus(Request $request)
     {
-
         if (!$status = Status::find($request->id))
             return response()->json(['message' => "Данные о статусе не найдены"], 400);
 
@@ -175,7 +173,6 @@ class Statuses extends Controller
      */
     public static function findAlgorithm($name = "")
     {
-
         foreach (self::$algorithms as $algorithm) {
             if ($algorithm['name'] == $name)
                 return $algorithm;
@@ -192,7 +189,6 @@ class Statuses extends Controller
      */
     public static function setStatuseTheme(Request $request)
     {
-
         if (!$status = Status::find($request->id))
             return response()->json(['message' => "Данные о статусе не найдены"], 400);
 
