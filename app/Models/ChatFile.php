@@ -23,5 +23,7 @@ class ChatFile extends Model
         'mime_type',
         'size',
         'duration',
+        'created_at',
+        'updated_at',
     ];
 }

@@ -19,6 +19,10 @@ class TestingProcess extends Model
         'pin',
         'questions_id',
         'answer_process',
+        'created_at',
+        'start_at',
+        'done_at',
+        'updated_at',
     ];
 
     /**

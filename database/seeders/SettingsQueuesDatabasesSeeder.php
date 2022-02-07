@@ -88,7 +88,6 @@ class SettingsQueuesDatabasesSeeder extends Seeder
         ],
         [
             'name' => 'Желтый сайт - Новый',
-            'active' => 0,
             'host' => 'eyJpdiI6IkduYnVGdXNkU25xUVEyNFQ1Mm9NNUE9PSIsInZhbHVlIjoiSlcwcWZtSk55Y2JQZy8ybnB2eEpYQT09IiwibWFjIjoiMzRiM2E1ZTU1NzcxNDUwZGE0YTYyOGYxYmE2MzJlZWRmN2EwYzFiMzdmZWU2ZTk2ZGM2MTJmYzI0MTEzN2MyNCIsInRhZyI6IiJ9',
             'port' => NULL,
             'user' => 'eyJpdiI6IlhyZFVQUktoSHhMaHJFSzdDZmxjOUE9PSIsInZhbHVlIjoiRXdONlVWeXpjajlwdE05bmdxdGk1am5lYnVlcW9wbXk4NUlBRFBSUThuND0iLCJtYWMiOiJjY2Y5Yzg5MDFiMGNmNGJlMTA5ZGI5MDI5MmRlMTE4Y2ZmNGM1ZWFiNzFlMTZkMzY4MTFkNTMyNzY0YTM1NjQ0IiwidGFnIjoiIn0=',

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
@@ -93,7 +94,23 @@ class DataDump extends Command
         }
 
         foreach ($rows as $row) {
-            $data['rows'][] = $row->toArray();
+
+            foreach ($row->getCasts() as $key => $value) {
+                if ($value == "datetime")
+                    $datetime[] = $key;
+            }
+
+           $dates = array_unique(array_merge($row->getDates(), $datetime ?? []));
+
+           $row_array = $row->toArray();
+
+            foreach ($dates as $key) {
+                if ($row->$key and $row->$key instanceof \Illuminate\Support\Carbon) {
+                    $row_array[$key] = $row->$key->format("Y-m-d H:i:s");
+                }
+            }
+
+            $data['rows'][] = $row_array;
         }
 
         $this->data[] = $data;

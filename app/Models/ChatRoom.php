@@ -19,6 +19,9 @@ class ChatRoom extends Model
     protected $fillable = [
         'user_id',
         'user_to_user',
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
 
     /**

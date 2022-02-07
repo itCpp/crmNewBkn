@@ -21,6 +21,9 @@ class ChatMessage extends Model
         'type',
         'message',
         'body',
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
 
     /**
