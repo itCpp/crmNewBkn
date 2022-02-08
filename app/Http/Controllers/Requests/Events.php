@@ -14,6 +14,7 @@ use App\Models\Incomings\SipInternalExtension;
 use App\Jobs\IncomingCallAsteriskJob;
 use App\Jobs\IncomingRequestCallJob;
 use App\Jobs\IncomingRequestTextJob;
+use App\Models\CallDetailRecord;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -54,6 +55,8 @@ class Events extends Controller
         if ($type == "call_asterisk") {
             $response['_JOB'] = $date;
             IncomingCallAsteriskJob::dispatch($request->call_id);
+        } else if ($type == "callDetailRecord") {
+            $response = $this->writeCallDetailRecord($request);
         } else if ($request->text and $text = IncomingTextRequest::find($request->text)) {
             $response['_JOB'] = $date;
             IncomingRequestTextJob::dispatch($text);
@@ -430,5 +433,27 @@ class Events extends Controller
         ]);
 
         return null;
+    }
+
+    /**
+     * Запись информации о звонке
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function writeCallDetailRecord(Request $request)
+    {
+        $row = CallDetailRecord::create([
+            'event_id' => $request->event_id,
+            'phone' => $this->encrypt($request->phone),
+            'phone_hash' => AddRequest::getHashPhone($request->phone),
+            'extension' => $request->extension,
+            'path' => $request->path,
+            'call_at' => $request->call_at,
+            'type' => $request->type,
+            'duration' => $request->duration,
+        ]);
+
+        return $row->toArray();
     }
 }
