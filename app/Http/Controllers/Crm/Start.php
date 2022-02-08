@@ -13,7 +13,7 @@ class Start extends Controller
      * 
      * @var array
      */
-    protected $permitsList = [
+    public static $permitsList = [
         'clients_agreements_access', # Доступ к договорным клиентам
         'clients_show_phone', # Может видеть номера телефонов клиента
         'rating_access', # Доступ к рейтингу
@@ -54,7 +54,7 @@ class Start extends Controller
         $menu = [];
 
         // Проверка прав пользователя
-        $permits = $request->user()->getListPermits($this->permitsList);
+        $permits = $request->user()->getListPermits(self::$permitsList);
 
         // Список всех вкладок, доступных пользователю
         $request->tabs = $request->user()->getAllTabs();

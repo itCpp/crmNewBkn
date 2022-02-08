@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Crm\Start;
 use App\Http\Controllers\Dates;
 use App\Models\Office;
 use App\Models\RequestsRow;
@@ -36,7 +37,7 @@ class Requests extends Controller
             return response()->json(['message' => "Доступ к вкладке ограничен"], 403);
 
         // Разрешения для пользователя
-        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
+        RequestStart::$permits = $request->user()->getListPermits(Start::$permitsList);
 
         $dates = new Dates($request->period[0] ?? null, $request->period[1] ?? null);
         $request->start = $dates->start;

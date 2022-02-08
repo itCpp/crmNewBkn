@@ -102,6 +102,9 @@ Route::group(['middleware' => 'user.token'], function () {
         Route::post('sendSms', 'Callcenter\Sms@sendSms')->middleware('user.can:requests_send_sms')->name('api.requests.sendSms');
         /** Проверка обновлений в сообщениях */
         Route::post('getSmsUpdates', 'Callcenter\Sms@getSmsUpdates')->name('api.requests.getSmsUpdates');
+
+        /** Список аудиозаписей */
+        Route::post('calls', 'Crm\Calls');
     });
 
     /** Маршрутизация различных рейтингов */

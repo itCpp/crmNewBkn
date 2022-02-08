@@ -67,6 +67,7 @@ class CallDetailRecordsMigrateCommand extends Command
 
         Settings::set('CALL_DETAIL_RECORDS_SAVE', true);
 
+        $this->newLine(2);
         $this->info("Перенос детализции завершен");
 
         $count = CallDetailRecord::count();
