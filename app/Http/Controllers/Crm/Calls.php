@@ -28,7 +28,7 @@ class Calls extends Controller
         $rows = CallDetailRecord::whereIn('phone_hash', $phones)
             ->orderBy('call_at', "DESC")
             ->get()
-            ->map(function ($row) {
+            ->map(function ($row) use ($request) {
 
                 $url = Str::finish(env('CALL_DETAIL_RECORDS_SERVER', 'http://localhost:8000'), '/');
 
@@ -37,10 +37,14 @@ class Calls extends Controller
 
                 $url .= $row->path;
 
+                $type = $request->user()->can() ? 2 : 5;
+                $phone = $this->decrypt($row->phone);
+
                 return [
                     'id' => $row->id,
                     'call_at' => $row->call_at,
                     'duration' => (int) $row->duration,
+                    'phone' => $this->checkPhone($phone, $type) ?: $phone,
                     'extension' => $row->extension,
                     'url' => $url ?? null,
                     'type' => $row->type,
