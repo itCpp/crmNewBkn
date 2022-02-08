@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 class Operators extends Controller
 {
-    use OperatorsColumns;
+    use OperatorsColumns, OperatorsOld;
 
     /**
      * Данные по статистике
@@ -79,6 +79,9 @@ class Operators extends Controller
      */
     public function operators(Request $request)
     {
+        if (env('NEW_CRM_OFF', true))
+            return $this->operatorsOld($request);
+
         $this->getRequests()
             ->getComings()
             ->getRecords()
@@ -338,13 +341,13 @@ class Operators extends Controller
 
         RequestsRow::selectRaw('count(*) as count, pin')
             ->whereDate('created_at', $this->now)
-            ->whereDate('event_at', $this->now->addDay(1))
+            ->whereDate('event_at', $this->now->copy()->addDay(1))
             ->whereIn('status_id', $status)
             ->whereIn('pin', $this->operators->keys())
             ->groupBy('pin')
             ->get()
             ->each(function ($row) {
-                $this->append($row->pin, 'recordsInDay', $row->count);
+                $this->append($row->pin, 'recordsNextDay', $row->count);
             });
 
         return $this;
@@ -361,13 +364,13 @@ class Operators extends Controller
             return $this;
 
         RequestsRow::selectRaw('count(*) as count, pin')
-            ->whereDate('event_at', $this->now->addDay(1))
+            ->whereDate('event_at', $this->now->copy()->addDay(1))
             ->whereIn('status_id', $status)
             ->whereIn('pin', $this->operators->keys())
             ->groupBy('pin')
             ->get()
             ->each(function ($row) {
-                $this->append($row->pin, 'recordsInDay', $row->count);
+                $this->append($row->pin, 'recordsToDay', $row->count);
             });
 
         return $this;

@@ -42,7 +42,7 @@ class Calls extends Controller
 
                 return [
                     'id' => $row->id,
-                    'call_at' => $row->call_at,
+                    'call_at' => $row->call_at ?: $row->created_at,
                     'duration' => (int) $row->duration,
                     'phone' => $this->checkPhone($phone, $type) ?: $phone,
                     'extension' => $row->extension,
