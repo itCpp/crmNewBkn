@@ -9,6 +9,13 @@ use Exception;
 class Settings
 {
     /**
+     * Используемые ключи настроек
+     * 
+     * @var array
+     */
+    protected $items = [];
+
+    /**
      * Допустимые типы переменных
      * 
      * @var array
@@ -29,26 +36,26 @@ class Settings
      */
     public function __construct(...$settings)
     {
-        $rows = new SettingsGlobal;
+        // $rows = new SettingsGlobal;
 
-        if (count($settings))
-            $rows = $rows->whereIn('id', $settings);
+        // if (count($settings))
+        //     $rows = $rows->whereIn('id', $settings);
 
-        try {
-            $rows = $rows->get();
-        } catch (Exception) {
-            return null;
-        }
+        // try {
+        //     $rows = $rows->get();
+        // } catch (Exception) {
+        //     return null;
+        // }
 
-        foreach ($rows as $row) {
+        // foreach ($rows as $row) {
 
-            $value = $row->value;
-            $type = $this->getType($row->type);
+        //     $value = $row->value;
+        //     $type = $this->getType($row->type);
 
-            settype($value, $type);
+        //     settype($value, $type);
 
-            $this->{$row->id} = $value;
-        }
+        //     $this->{$row->id} = $value;
+        // }
     }
 
     /**
@@ -59,10 +66,20 @@ class Settings
      */
     public function __get($name)
     {
-        if (isset($this->$name) === true)
-            return $this->$name;
+        if (!empty($this->items[$name]))
+            return $this->items[$name];
 
-        return null;
+        if ($row = SettingsGlobal::find($name)) {
+
+            $value = $row->value;
+            $type = $this->getType($row->type);
+
+            settype($value, $type);
+
+            return $this->items[$name] = $value;
+        }
+
+        return $this->items[$name] = null;
     }
 
     /**

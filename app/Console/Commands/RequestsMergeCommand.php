@@ -39,8 +39,6 @@ class RequestsMergeCommand extends Command
     public function __construct()
     {
         parent::__construct();
-
-        $this->merge = new RequestsMerge;
     }
 
     /**
@@ -50,6 +48,8 @@ class RequestsMergeCommand extends Command
      */
     public function handle()
     {
+        $this->merge = new RequestsMerge;
+
         $this->title("Миграция старых заявок в новую базу");
 
         $start = microtime(1);

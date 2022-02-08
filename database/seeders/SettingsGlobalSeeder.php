@@ -29,7 +29,13 @@ class SettingsGlobalSeeder extends Seeder
             'id' => "CRONTAB_SMS_INCOMINGS_CHECK",
             'value' => 0,
             'type' => null,
-            'comment' => "Првоерка входящих смс на шлюзах",
+            'comment' => "Проверка входящих смс на шлюзах",
+        ],
+        [
+            'id' => "CALL_DETAIL_RECORDS_SAVE",
+            'value' => 0,
+            'type' => null,
+            'comment' => "Сохранять информацию о звонках",
         ]
     ];
     /**

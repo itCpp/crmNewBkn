@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Settings;
 use App\Models\RequestsClient;
 use App\Models\IncomingCall;
 use App\Models\IncomingCallsToSource;
@@ -443,6 +444,12 @@ class Events extends Controller
      */
     public function writeCallDetailRecord(Request $request)
     {
+        if (!(new Settings())->CALL_DETAIL_RECORDS_SAVE)
+            return ['message' => "Запись истории отключена в настройках"];
+
+        // if (!$request->duration)
+        //     return ['mesage' => "Запись отброшена, так как длительность файла нулевая"];
+
         $row = CallDetailRecord::create([
             'event_id' => $request->event_id,
             'phone' => $this->encrypt($request->phone),

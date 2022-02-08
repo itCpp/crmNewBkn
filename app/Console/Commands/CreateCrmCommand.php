@@ -66,11 +66,16 @@ class CreateCrmCommand extends Command
         /** Восстановление ранее сохраненных данных */
         $this->call('data:restore', ['--name' => $this->uuid]);
 
+        /** Перенос детализации вызовов */
+        if ($this->cdr_merge)
+            $this->call('data:cdr');
+
         /** Отключение блокировки добавления новых заявок */
         Settings::set('DROP_ADD_REQUEST', false);
-
-        // /** Включение проверки СМС на шлюзах */
+        /** Включение проверки СМС на шлюзах */
         Settings::set('CRONTAB_SMS_INCOMINGS_CHECK', true);
+        /** Включение приёма детализции вызовов */
+        Settings::set('CALL_DETAIL_RECORDS_SAVE', true);
 
         return 0;
     }
@@ -103,6 +108,10 @@ class CreateCrmCommand extends Command
 
         if ($this->confirm('Перенести все заявки?', true)) {
             $this->requests_merge = true;
+        }
+
+        if ($this->confirm('Перенести детализацию вызовов?', true)) {
+            $this->cdr_merge = true;
         }
 
         return true;
