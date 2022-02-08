@@ -88,10 +88,12 @@ class CallDetailRecordsMigrateCommand extends Command
         if (!$row->duration)
             return null;
 
+        $phone = Controller::checkPhone($row->phone) ?: $row->phone;
+
         CallDetailRecord::create([
             'event_id' => $row->event_id,
-            'phone' => Controller::encrypt($row->phone),
-            'phone_hash' => AddRequest::getHashPhone($row->phone),
+            'phone' => Controller::encrypt($phone),
+            'phone_hash' => AddRequest::getHashPhone($phone),
             'extension' => $row->extension,
             'path' => $row->path,
             'call_at' => $row->call_at,

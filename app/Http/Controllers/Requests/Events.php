@@ -450,10 +450,12 @@ class Events extends Controller
         // if (!$request->duration)
         //     return ['mesage' => "Запись отброшена, так как длительность файла нулевая"];
 
+        $phone = $this->checkPhone($request->phone) ?: $request->phone;
+
         $row = CallDetailRecord::create([
             'event_id' => $request->event_id,
-            'phone' => $this->encrypt($request->phone),
-            'phone_hash' => AddRequest::getHashPhone($request->phone),
+            'phone' => $this->encrypt($phone),
+            'phone_hash' => AddRequest::getHashPhone($phone),
             'extension' => $request->extension,
             'path' => $request->path,
             'call_at' => $request->call_at,
