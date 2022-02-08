@@ -28,15 +28,30 @@ class Statuses extends Controller
     public static function getStatuses(Request $request)
     {
         $statuses = Status::orderBy('name')
-            ->get();
-
-        foreach ($statuses as &$status) {
-            $status->zeroing_data = json_decode($status->zeroing_data);
-        }
+            ->get()
+            ->map(function ($row) {
+                return self::serializeRow($row);
+            })
+            ->toArray();
 
         return response()->json([
-            'statuses' => $statuses ?? [],
+            'statuses' => $statuses,
         ]);
+    }
+
+    /**
+     * Подготовка строки со статусом для вывода
+     * 
+     * @param \App\Models\Status
+     * @return array
+     */
+    public static function serializeRow(Status $row)
+    {
+        $row->zeroing_data = !is_array($row->zeroing_data)
+            ? json_decode($row->zeroing_data, true)
+            : $row->zeroing_data;
+
+        return $row->toArray();
     }
 
     /**
@@ -47,33 +62,44 @@ class Statuses extends Controller
      */
     public static function getListStatuses(Request $request)
     {
-        $rows = Status::orderBy('name');
-
-        foreach ($rows->get() as $status) {
-            $statuses[] = [
-                'key' => $status->id,
-                'value' => $status->id,
-                'text' => $status->name,
-            ];
-        }
-
-        return $statuses ?? [];
+        return Status::orderBy('name')
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'key' => $row->id,
+                    'value' => $row->id,
+                    'text' => $row->name,
+                ];
+            });
     }
 
     /**
-     * Создание нового статуса
+     * Изменение данных статуса
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param \Illuminate\Http\Request
      * @return response
      */
-    public static function createStatus(Request $request)
+    public static function saveStatus(Request $request)
     {
-        $errors = [];
+        $request->validate([
+            'name' => "required|max:50",
+        ]);
 
-        if (!$request->name)
-            $errors['name'][] = "Необходимо указать наименование статуса";
+        if (!$status = Status::find($request->id)) {
+
+            if ($request->id)
+                return response()->json(['message' => "Данные о статусе не найдены"], 400);
+
+            $request->validate([
+                'name' => "required|unique:statuses|max:50",
+            ]);
+
+            $status = new Status;
+        }
 
         if ($request->zeroing == 1) {
+
+            $errors = [];
 
             $zeroing = $request->zeroing_data ?? [];
 
@@ -92,43 +118,37 @@ class Statuses extends Controller
 
             if (!$time_created and !$time_event and !$time_updated)
                 $errors['time'][] = "Необходимо выбрать время учета";
+
+            if (count($errors)) {
+                return response()->json([
+                    'message' => "Имеются ошибки при заполнении данных",
+                    'errors' => $errors,
+                ], 422);
+            }
         }
 
-        if (!$request->id and Status::where('name', $request->name)->count())
-            $errors['name'][] = "Это наименование уже используется";
+        $status->name = $request->name;
+        $status->zeroing = $request->zeroing ? 1 : 0;
+        $status->event_time = $request->event_time ? 1 : 0;
+        $status->zeroing_data = is_array($zeroing ?? null) ? json_encode($zeroing) : null;
+        $status->theme = $request->theme;
 
-        if (count($errors)) {
-            return response()->json([
-                'message' => "Имеются ошибки при заполнении данных",
-                'errors' => $errors,
-            ], 422);
-        }
-
-        if ($request->__status) {
-
-            $request->__status->name = $request->name;
-            $request->__status->zeroing = $request->zeroing ? 1 : 0;
-            $request->__status->event_time = $request->event_time ? 1 : 0;
-            $request->__status->zeroing_data = $request->zeroing_data;
-            $request->__status->theme = $request->theme;
-
-            $request->__status->save();
-            $status = $request->__status;
-        } else {
-            $status = Status::create([
-                'name' => $request->name,
-                'zeroing' => $request->zeroing ? 1 : 0,
-                'theme' => $request->theme,
-                'event_time' => $request->event_time ? 1 : 0,
-                'zeroing_data' => $request->zeroing_data,
-            ]);
-        }
-
-        parent::logData($request, $status);
+        $status->save();
 
         return response()->json([
-            'status' => $status,
+            'status' => self::serializeRow($status),
         ]);
+    }
+
+    /**
+     * Создание нового статуса
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return response
+     */
+    public static function createStatus(Request $request)
+    {
+        return self::saveStatus($request);
     }
 
     /**
@@ -142,27 +162,9 @@ class Statuses extends Controller
         if (!$status = Status::find($request->id))
             return response()->json(['message' => "Данные о статусе не найдены"], 400);
 
-        $status->zeroing_data = json_decode($status->zeroing_data);
-
         return response()->json([
-            'status' => $status,
+            'status' => self::serializeRow($status),
         ]);
-    }
-
-    /**
-     * Изменение данных статуса
-     * 
-     * @param \Illuminate\Http\Request
-     * @return response
-     */
-    public static function saveStatus(Request $request)
-    {
-        if (!$status = Status::find($request->id))
-            return response()->json(['message' => "Данные о статусе не найдены"], 400);
-
-        $request->__status = $status;
-
-        return self::createStatus($request);
     }
 
     /**
@@ -195,12 +197,10 @@ class Statuses extends Controller
         $status->theme = $request->theme;
         $status->save();
 
-        $status->zeroing_data = json_decode($status->zeroing_data);
-
         parent::logData($request, $status);
 
         return response()->json([
-            'status' => $status,
+            'status' => self::serializeRow($status),
         ]);
     }
 }
