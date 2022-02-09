@@ -31,10 +31,10 @@ class StatusSeeder extends Seeder
         [7, 'Приход', 7, 0, 1, NULL],
         [8, 'Слив', 2, 1, 1, '{"algorithm": "xDays", "time_created": 1, "time_updated": 1, "algorithm_option": "7"}'],
         [9, 'Промо', NULL, 0, 0, NULL],
-        [10, 'Онлайн', NULL, 0, 0, NULL],
+        [10, 'Онлайн', 8, 0, 0, '{"algorithm": "nextDay","time_created": 1}'],
         [11, 'Договор', NULL, 0, 0, NULL],
         [12, 'Промо с цветом', NULL, 0, 0, NULL],
-        [13, 'Вторичка', NULL, 0, 0, NULL],
+        [13, 'Вторичка', 11, 0, 0, NULL],
         [14, 'Доставка подарка', NULL, 0, 0, NULL],
     ];
 

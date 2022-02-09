@@ -180,4 +180,15 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         /** Вывод данных графика */
         Route::post('getChartSite', 'Admin\Sites@getChartSite')->name('api.dev.block.getChartSite');
     });
+
+    /** Маршрутизация шлюзов */
+    Route::group(['prefix' => 'gates'], function () {
+
+        /** Вывод шлюзов */
+        Route::post('/', 'Admin\Gates@index')->name('api.dev.gates');
+        /** Вывод шлюза */
+        Route::post('/get', 'Admin\Gates@get')->name('api.dev.gates.get');
+        /** Сохранение шлюза */
+        Route::post('/save', 'Admin\Gates@save')->name('api.dev.gates.save');
+    });
 });
