@@ -98,7 +98,7 @@ class Gates extends Controller
 
         $row->save();
 
-        $this->logData($request, $row);
+        $this->logData($request, $row, true);
 
         return response()->json([
             'row' => $this->serializeRow($row),
