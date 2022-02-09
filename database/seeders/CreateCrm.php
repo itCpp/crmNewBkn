@@ -27,6 +27,7 @@ class CreateCrm extends Seeder
             SettingsQueuesDatabasesSeeder::class, // Настройки внешних бд для очередей
             TestingQuestionSeeder::class, // Вопросы тестирования
             UsersPositionSeeder::class, // Создание должностей
+            GatesSeeder::class, // Создание шлюзов
         ]);
     }
 
