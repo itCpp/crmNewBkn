@@ -116,10 +116,13 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
 
         /** Вывод данных одной вкладки */
         Route::post('getTab', 'Dev\Tabs@getTab')->name('api.dev.getTab');
+        Route::post('tabs/get', 'Dev\Tabs@getTab')->name('api.dev.tabs.get');
         /** Изменение данных вкладки */
         Route::post('saveTab', 'Dev\Tabs@saveTab')->name('api.dev.saveTab');
+        Route::post('tabs/save', 'Dev\Tabs@saveTab')->name('api.dev.tabs.save');
         /** Вывод сформированного запроса */
-        Route::post('getSql', 'Dev\Tabs@getSql')->name('api.dev.getSql');
+        // Route::post('getSql', 'Dev\Tabs@getSql')->name('api.dev.getSql');
+        Route::post('tabs/sql', 'Dev\Tabs@getSql')->name('api.dev.tabs.sql');
 
         /** Вывод списка значений для конструктора запросов */
         Route::post('getListWhereIn', 'Dev\Tabs@getListWhereIn')->name('api.dev.getListWhereIn');

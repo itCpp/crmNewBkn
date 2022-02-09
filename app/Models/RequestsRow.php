@@ -120,13 +120,20 @@ class RequestsRow extends Model
     {
         $model = new static;
 
+        $connection = $model->getConnection()->getName() ?? null;
+        $database = config("database.connections.{$connection}.database");
+
         return DB::table('INFORMATION_SCHEMA.COLUMNS')
             ->select(
                 'COLUMN_NAME as name',
                 'COLUMN_TYPE as type',
                 'COLUMN_COMMENT as comment'
             )
-            ->where('table_name', $model->getTable())
+            ->where('TABLE_NAME', $model->getTable())
+            ->when((bool) $database, function ($query) use ($database) {
+                $query->where('TABLE_SCHEMA', $database);
+            })
+            ->distinct()
             ->get();
     }
 

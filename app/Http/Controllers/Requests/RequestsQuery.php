@@ -122,6 +122,16 @@ class RequestsQuery extends Controller
     }
 
     /**
+     * Вывод сформированного запроса
+     * 
+     * @return string
+     */
+    public function toSql()
+    {
+        return $this->setWhere()->setOrderBy()->model->toSql();
+    }
+
+    /**
      * Формирование запроса и применение фильтров
      * 
      * @param array $params

@@ -3,31 +3,72 @@
 namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Requests\RequestsQuery;
 use App\Models\RequestsRow;
 use App\Models\Status;
 use App\Models\Tab;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class Tabs extends Controller
 {
+    /**
+     * Список разрешенных выражений для запроса
+     * 
+     * @var array
+     */
+    protected static $whereList = [
+        "where",
+        "orWhere",
+        "whereNotBetween",
+        "whereBetween",
+        "whereIn",
+        "whereNotIn",
+        "whereNull",
+        "whereNotNull",
+        "orWhereNull",
+        "orWhereNotNull",
+        "whereDate",
+        "whereMonth",
+        "whereDay",
+        "whereYear",
+        "whereTime",
+        "whereColumn",
+    ];
+
     /**
      * Вывод всех вкладок
      * 
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getTabs(Request $request)
+    public function getTabs(Request $request)
     {
-        foreach (Tab::orderBy('position')->get() as $tab) {
-
-            // $tab->where_settings = json_decode($tab->where_settings);
-
-            $tabs[] = $tab;
-        }
+        $rows = Tab::orderBy('position')
+            ->get()
+            ->map(function ($row) {
+                return $this->serializeRow($row);
+            })
+            ->toArray();
 
         return response()->json([
-            'tabs' => $tabs ?? [],
+            'tabs' => $rows,
         ]);
+    }
+
+    /**
+     * Обработка строки
+     * 
+     * @param \App\Models\Tab $row
+     * @return array
+     */
+    public function serializeRow(Tab $row)
+    {
+        $row->date_types = $row->date_types ?: [];
+        $row->request_all = $row->request_all ?: "my";
+        $row->statuses = $row->statuses ?: [];
+
+        return $row->toArray();
     }
 
     /**
@@ -67,9 +108,9 @@ class Tabs extends Controller
      * Вывод данных одной вкладки
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public static function getTab(Request $request)
+    public function getTab(Request $request)
     {
         if (!$tab = Tab::find($request->id))
             return response()->json(['message' => "Данные по вкладке не найдены"], 400);
@@ -81,46 +122,22 @@ class Tabs extends Controller
             $statuses = Status::all();
 
         return response()->json([
-            'tab' => $tab,
+            'tab' => $this->serializeRow($tab),
             'columns' => $columns ?? null,
             'statuses' => $statuses ?? null,
         ]);
     }
 
     /**
-     * Список разрешенных выражений для запроса
-     * 
-     * @var array
-     */
-    protected static $whereList = [
-        "where",
-        "orWhere",
-        "whereNotBetween",
-        "whereBetween",
-        "whereIn",
-        "whereNotIn",
-        "whereNull",
-        "whereNotNull",
-        "orWhereNull",
-        "orWhereNotNull",
-        "whereDate",
-        "whereMonth",
-        "whereDay",
-        "whereYear",
-        "whereTime",
-        "whereColumn",
-    ];
-
-    /**
      * Изменение данных вкладки
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public static function saveTab(Request $request)
+    public function saveTab(Request $request)
     {
         if (!$tab = Tab::find($request->id))
-            return response()->json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
+            return response()->json(['message' => "Вкладка не найдена"], 400);
 
         // Проверка допустимых выражений
         if ($request->where_settings) {
@@ -151,10 +168,10 @@ class Tabs extends Controller
 
         $tab->save();
 
-        parent::logData($request, $tab);
+        $this->logData($request, $tab);
 
         return response()->json([
-            'tab' => $tab,
+            'tab' => $this->serializeRow($tab),
         ]);
     }
 
@@ -164,33 +181,26 @@ class Tabs extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function getSql(Request $request)
+    public function getSql(Request $request)
     {
-        if (!$tab = Tab::find($request->id))
-            return response()->json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
+        if (!$request->tab = Tab::find($request->id))
+            return response()->json(['message' => "Вкладка не найдена"], 400);
 
-        // $tab->where_settings = json_decode($tab->where_settings, true);
+        $creator = new RequestsQuery($request);
+        $litle = $creator->toSql();
 
-        // \DB::enableQueryLog();
+        $creator = (new RequestsQuery($request))->where();
+        $query = $creator->toSql();
+        $bindings = collect($creator->getBindings())->map(function ($row) {
+            return is_string($row) ? "'{$row}'" : $row;
+        })->toArray();
 
-        $request->where = $request->where ?? $tab->where_settings;
-        $request->orderBy = $request->orderBy ?? $tab->order_by_settings;
-
-        $params = array_merge(
-            $request->where ?? [],
-            $request->orderBy ?? []
-        );
-
-        $model = RequestsRow::setWhere($params);
-        $query = $model->toSql();
-
-        // $model->limit(1)->get();
+        $full = Str::replaceArray('?', $bindings, $query);
 
         return response()->json([
-            'message' => $query,
-            // 'where_settings' => $tab->where_settings,
-            // 'log' => \DB::getQueryLog()[0] ?? null,
-            'tab' => $tab,
+            'message' => $litle,
+            'full' => $full,
+            'tab' => $this->serializeRow($request->tab),
         ]);
     }
 
