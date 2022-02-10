@@ -239,12 +239,14 @@ class RequestsQuery extends Controller
                     // Обход аргументов
                     foreach ($attrts as $attr) {
 
-                        $column = $attr['column'] ?? null; // Наименование колонки
-                        $operator = $attr['operator'] ?? null; // Оператор условия
+                        $keys = array_keys($attr);
 
-                        $value = $attr['value'] ?? null; // Строчное значение
-                        $between = $attr['between'] ?? null; // Период значений от и до
-                        $list = $attr['list'] ?? null; // Список значений
+                        $column = in_array('column', $keys) ? $attr['column'] : null; // Наименование колонки
+                        $operator = in_array('operator', $keys) ? $attr['operator'] : null; // Оператор условия
+
+                        $value = in_array('value', $keys) ? $attr['value'] : null; // Строчное значение
+                        $between = in_array('between', $keys) ? $attr['between'] : null; // Период значений от и до
+                        $list = in_array('list', $keys) ? $attr['list'] : null; // Список значений
 
                         // Необходимо наименование колонки
                         if ($column) {
@@ -254,8 +256,10 @@ class RequestsQuery extends Controller
                             // Разделение на типы аргументов
                             if (in_array($method, $this->whereOneArguments))
                                 $row = [$column];
-                            elseif ($value)
-                                $row = [$column, $operator ?? $value, $operator ? $value : null];
+                            elseif ($value !== null and $operator)
+                                $row = [$column, $operator, $value];
+                            elseif ($value !== null)
+                                $row = [$column, $value];
                             elseif (is_array($between) and count($between) == 2)
                                 $row = [$column, $between];
                             elseif (is_array($list))

@@ -155,7 +155,7 @@ class Tabs extends Controller
 
         $tab->name = $request->name;
         $tab->name_title = $request->name_title;
-        $tab->where_settings = $request->where_settings;
+        $tab->where_settings = $this->fixNullValueWhere($request->where_settings ?: []);
         $tab->order_by_settings = $request->order_by_settings;
         $tab->request_all = $request->request_all;
         $tab->request_all_permit = $request->request_all_permit;
@@ -171,6 +171,32 @@ class Tabs extends Controller
         return response()->json([
             'tab' => $this->serializeRow($tab),
         ]);
+    }
+
+    /**
+     * Изменяет нулевое значение на пустую строку
+     * 
+     * @param array $data
+     * @return array
+     */
+    public function fixNullValueWhere($data = [])
+    {
+        foreach ($data as &$row) {
+
+            if (is_array($row['attr'] ?? null)) {
+
+                foreach ($row['attr'] as &$attr) {
+
+                    if (in_array('value', array_keys(is_array($attr) ? $attr : []))) {
+
+                        if ($attr['value'] === null)
+                            $attr['value'] = "";
+                    }
+                }
+            }
+        }
+
+        return $data;
     }
 
     /**
