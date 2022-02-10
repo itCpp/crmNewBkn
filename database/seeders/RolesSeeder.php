@@ -22,7 +22,7 @@ class RolesSeeder extends Seeder
                 'requests_set_null_status', 'user_auth_query', 'user_auth_query_all_sectors'
             ],
             'statuses' => [1, 2, 3, 4, 5, 6, 7, 8],
-            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         ],
         'admin' => [
             'permissions' => [
@@ -32,14 +32,14 @@ class RolesSeeder extends Seeder
                 'requests_set_null_status', 'user_auth_query'
             ],
             'statuses' => [1, 2, 3, 4, 5, 6, 8],
-            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         ],
         'caller' => [
             'permissions' => [
                 'requests_access', 'requests_edit', 'requests_pin_for_appointment',
             ],
             'statuses' => [1, 2, 3, 4, 5],
-            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         ],
     ];
 
