@@ -383,12 +383,17 @@ class RequestsQuery extends Controller
      */
     public function setOptionsTabFilterForUserPermits()
     {
+        // $my = $this->tab->request_all == "my" or $this->tab->request_all === null;
+        $mySector = $this->tab->request_all == "sector";
+        $myCallcenter = $this->tab->request_all == "callcenter";
+        $myAll = $this->tab->request_all == "all";
+
         // Вывод всех заявок
-        if ($this->user->can('requests_all_callcenters'))
+        if ($myAll or $this->user->can('requests_all_callcenters'))
             return $this;
 
         // Ввывод заявок всего коллцентра
-        if ($this->user->can('requests_all_sectors')) {
+        if ($myCallcenter or $this->user->can('requests_all_sectors')) {
 
             $this->model = $this->model->where(function ($query) {
                 $query->when(count($this->user->getAllSectors()) > 0, function ($query) {
@@ -403,7 +408,7 @@ class RequestsQuery extends Controller
         }
 
         // Вывод всех заявок сектора
-        if ($this->user->can('requests_all_my_sector')) {
+        if ($mySector or $this->user->can('requests_all_my_sector')) {
             $this->model = $this->model->where(function ($query) {
                 $query->when($this->user->callcenter_sector_id !== null, function ($query) {
                     $query->where([
@@ -411,55 +416,6 @@ class RequestsQuery extends Controller
                         ['callcenter_sector', '!=', null],
                     ])->orWhere('pin', $this->user->pin);
                 });
-            });
-
-            return $this;
-        }
-
-        $this->model = $this->model->where('pin', $this->user->pin);
-
-        return $this;
-    }
-
-    /**
-     * Применение фильтра с учетом разрешений сотрудника
-     * 
-     * @return $this
-     */
-    public function setOptionsTabFilterForUserPermitsOld()
-    {
-        $my = $this->tab->request_all == "my" or $this->tab->request_all === null;
-        $mySector = $this->tab->request_all == "sector";
-        $myCallcenter = $this->tab->request_all == "callcenter";
-        $myAll = $this->tab->request_all == "all";
-
-        // Вывод всех заявок
-        if ($myAll or $this->user->can('requests_all_callcenters'))
-            return $this;
-
-        // Ввывод заявок всего коллцентра
-        if ($myCallcenter or $this->user->can('requests_all_sectors')) {
-
-            $this->model = $this->model->where(function ($query) {
-                $query->where(function ($query) {
-                    $query->whereIn('callcenter_sector', $this->user->getAllSectors())
-                        ->whereNotNull('callcenter_sector');
-                })
-                    ->orWhere('pin', $this->user->pin);
-            });
-
-            return $this;
-        }
-
-        // Вывод всех заявок сектора
-        if ($mySector or $this->user->can('requests_all_my_sector')) {
-            $this->model = $this->model->where(function ($query) {
-                $query->when($this->user->callcenter_sector_id !== null, function ($query) {
-                    $query->where([
-                        ['callcenter_sector', $this->user->callcenter_sector_id],
-                        ['callcenter_sector', '!=', null],
-                    ]);
-                })->orWhere('pin', $this->user->pin);
             });
 
             return $this;
