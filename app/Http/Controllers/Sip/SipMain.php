@@ -47,7 +47,10 @@ class SipMain extends Controller
         if ($request->start)
             $this->first = $request->start;
 
-        $sipTimeEvent->whereDate('event_at', now())
+        $sipTimeEvent->whereBetween('event_at', [
+            now()->format("Y-m-d 09:00:00"),
+            now()->toDateTimeString()
+        ])
             ->orderBy('event_at')
             ->orderBy('extension')
             ->chunk(100, function ($rows) {
