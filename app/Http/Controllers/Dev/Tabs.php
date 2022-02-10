@@ -67,6 +67,7 @@ class Tabs extends Controller
         $row->date_types = $row->date_types ?: [];
         $row->request_all = $row->request_all ?: "my";
         $row->statuses = $row->statuses ?: [];
+        $row->statuses_not = $row->statuses_not ?: [];
 
         return $row->toArray();
     }
@@ -77,30 +78,25 @@ class Tabs extends Controller
      * @param \Illuminate\Http\Request $request
      * @return response
      */
-    public static function createTab(Request $request)
+    public function createTab(Request $request)
     {
-        $errors = [];
-
-        if (!$request->name)
-            $errors['name'][] = "Необходимо указать наименование вкладки";
-
-        if (count($errors)) {
-            return response()->json([
-                'message' => "Имеются ошибки данных",
-                'errors' => $errors,
-            ], 422);
-        }
+        $request->validate([
+            'name' => "required",
+        ], [
+            'name.required' => "Необходимо указать наименование вкладки",
+        ]);
 
         $tab = Tab::create([
             'name' => $request->name,
             'name_title' => $request->name_title,
+            'request_all_permit' => 1,
             'position' => Tab::count(),
         ]);
 
-        parent::logData($request, $tab);
+        $this->logData($request, $tab);
 
         return response()->json([
-            'tab' => $tab,
+            'tab' => $this->serializeRow($tab),
         ]);
     }
 
@@ -165,6 +161,8 @@ class Tabs extends Controller
         $tab->request_all_permit = $request->request_all_permit;
         $tab->date_view = $request->date_view;
         $tab->date_types = $request->date_types ?: null;
+        $tab->statuses = is_array($request->statuses) ? $request->statuses : [];
+        $tab->statuses_not = is_array($request->statuses_not) ? $request->statuses_not : [];
 
         $tab->save();
 

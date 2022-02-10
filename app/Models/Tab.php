@@ -19,6 +19,7 @@ class Tab extends Model
         'order_by_settings' => 'array',
         'date_types' => 'array',
         'statuses' => 'array',
+        'statuses_not' => 'array',
     ];
 
     /**
@@ -32,5 +33,6 @@ class Tab extends Model
         'name_title',
         'where_settings',
         'order_by_settings',
+        'request_all_permit'
     ];
 }
