@@ -357,6 +357,10 @@ class RequestsQuery extends Controller
         if ($this->tab->statuses)
             $this->model = $this->model->whereIn('status_id', $this->tab->statuses);
 
+        // Применение фильтра игнорирования статусов
+        if ($this->tab->statuses_not)
+            $this->model = $this->model->whereNotIn('status_id', $this->tab->statuses_not);
+
         // Фильтр по публичным правам вкладки
         if ($this->tab->request_all_permit == 1)
             return $this->setOptionsTabFilterForUserPermits();
