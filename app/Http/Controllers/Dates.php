@@ -10,6 +10,8 @@ use Carbon\Carbon;
  * 
  * @property    string              $start          Дата начала
  * @property    string              $stop           Дата окончания
+ * @property    string              $startDateTime  Дата и время начала (YYYY-MM-DD 00:00:00)
+ * @property    string              $stopDateTime   Дата и время окончания (YYYY-MM-DD 23:59:59)
  * @property    string              $startPeriod    Дата начала периода
  * @property    string              $stopPeriod     Дата окончания периода
  * @property    string              $startMonth     Дата начала месяца
@@ -107,6 +109,8 @@ class Dates
 
         $this->start = $this->first->format("Y-m-d");
         $this->stop = $this->second->format("Y-m-d");
+        $this->startDateTime = $this->start . " 00:00:00";
+        $this->stopDateTime = $this->stop . " 23:59:59";
 
         $this->diff = ($this->today < $this->second and $this->today > $this->first)
             ? $this->first->diffInDays($this->today) + 1

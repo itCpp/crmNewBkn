@@ -437,7 +437,8 @@ class UserData
             ->get()
             ->map(function ($row) {
                 return $row->id;
-            });
+            })
+            ->toArray();
 
         return $this->allSectors;
     }

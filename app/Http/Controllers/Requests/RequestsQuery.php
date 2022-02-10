@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Requests;
 
-use App\Http\Controllers\Controller;
 use App\Exceptions\CreateRequestsSqlQuery;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Dates;
 use App\Models\RequestsRow;
 use Illuminate\Http\Request;
 
@@ -85,11 +86,18 @@ class RequestsQuery extends Controller
     protected $tab;
 
     /**
-     * Экземпляр даннх пользователя
+     * Экземпляр данных пользователя
      * 
      * @var \App\Http\Controllers\Users\UserData
      */
     protected $user;
+
+    /**
+     * Обработчик дат
+     * 
+     * @var \App\Http\Controllers\Dates
+     */
+    protected $dates;
 
     /**
      * Данные поискового запроса
@@ -112,8 +120,10 @@ class RequestsQuery extends Controller
 
         $this->filter = (object) [];
 
-        $this->filter->start = $request->start ?? date("Y-m-d");
-        $this->filter->stop = $request->stop ?? date("Y-m-d");
+        $this->dates = new Dates($request->start, $request->stop);
+
+        $this->filter->start = $this->dates->startDateTime;
+        $this->filter->stop = $this->dates->stopDateTime;
 
         $this->tab = $request->tab;
 
@@ -302,10 +312,10 @@ class RequestsQuery extends Controller
 
                         $set = true; # Флаг примененного фильтра
 
-                        $query->orWhere(function ($query) use ($type) {
-                            $query->whereDate($type, '>=', $this->filter->start)
-                                ->whereDate($type, '<=', $this->filter->stop);
-                        });
+                        $query->orWhereBetween($type, [
+                            $this->filter->start,
+                            $this->filter->stop
+                        ]);
                     }
                 }
             });
@@ -325,8 +335,10 @@ class RequestsQuery extends Controller
      */
     public function setDefaultDatesFilter()
     {
-        $this->model = $this->model->whereDate('created_at', '>=', $this->filter->start)
-            ->whereDate('created_at', '<=', $this->filter->stop);
+        $this->model = $this->model->whereBetween('created_at', [
+            $this->filter->start,
+            $this->filter->stop
+        ]);
 
         return $this;
     }
@@ -371,21 +383,62 @@ class RequestsQuery extends Controller
      */
     public function setOptionsTabFilterForUserPermits()
     {
-        $sector = $this->user->checkedPermits()->requests_all_my_sector;
-        $sectors = $this->user->checkedPermits()->requests_all_sectors;
-        $callcenters = $this->user->checkedPermits()->requests_all_callcenters;
+        // Вывод всех заявок
+        if ($this->user->can('requests_all_callcenters'))
+            return $this;
 
+        // Ввывод заявок всего коллцентра
+        if ($this->user->can('requests_all_sectors')) {
+
+            $this->model = $this->model->where(function ($query) {
+                $query->when(count($this->user->getAllSectors()) > 0, function ($query) {
+                    $query->where(function ($query) {
+                        $query->whereIn('callcenter_sector', $this->user->getAllSectors())
+                            ->whereNotNull('callcenter_sector');
+                    })->orWhere('pin', $this->user->pin);
+                });
+            });
+
+            return $this;
+        }
+
+        // Вывод всех заявок сектора
+        if ($this->user->can('requests_all_my_sector')) {
+            $this->model = $this->model->where(function ($query) {
+                $query->when($this->user->callcenter_sector_id !== null, function ($query) {
+                    $query->where([
+                        ['callcenter_sector', $this->user->callcenter_sector_id],
+                        ['callcenter_sector', '!=', null],
+                    ])->orWhere('pin', $this->user->pin);
+                });
+            });
+
+            return $this;
+        }
+
+        $this->model = $this->model->where('pin', $this->user->pin);
+
+        return $this;
+    }
+
+    /**
+     * Применение фильтра с учетом разрешений сотрудника
+     * 
+     * @return $this
+     */
+    public function setOptionsTabFilterForUserPermitsOld()
+    {
         $my = $this->tab->request_all == "my" or $this->tab->request_all === null;
         $mySector = $this->tab->request_all == "sector";
         $myCallcenter = $this->tab->request_all == "callcenter";
         $myAll = $this->tab->request_all == "all";
 
         // Вывод всех заявок
-        if ($myAll or $callcenters)
+        if ($myAll or $this->user->can('requests_all_callcenters'))
             return $this;
 
         // Ввывод заявок всего коллцентра
-        if ($myCallcenter or $sectors) {
+        if ($myCallcenter or $this->user->can('requests_all_sectors')) {
 
             $this->model = $this->model->where(function ($query) {
                 $query->where(function ($query) {
@@ -399,13 +452,14 @@ class RequestsQuery extends Controller
         }
 
         // Вывод всех заявок сектора
-        if ($mySector or $sector) {
+        if ($mySector or $this->user->can('requests_all_my_sector')) {
             $this->model = $this->model->where(function ($query) {
-                $query->where([
-                    ['callcenter_sector', $this->user->callcenter_sector_id],
-                    ['callcenter_sector', '!=', null],
-                ])
-                    ->orWhere('pin', $this->user->pin);
+                $query->when($this->user->callcenter_sector_id !== null, function ($query) {
+                    $query->where([
+                        ['callcenter_sector', $this->user->callcenter_sector_id],
+                        ['callcenter_sector', '!=', null],
+                    ]);
+                })->orWhere('pin', $this->user->pin);
             });
 
             return $this;
@@ -436,11 +490,12 @@ class RequestsQuery extends Controller
     public function setOptionsTabFilterMySector()
     {
         $this->model = $this->model->where(function ($query) {
-            $query->where([
-                ['callcenter_sector', $this->user->callcenter_sector_id],
-                ['callcenter_sector', '!=', null],
-            ])
-                ->orWhere('pin', $this->user->pin);
+            $query->when($this->user->callcenter_sector_id !== null, function ($query) {
+                $query->where([
+                    ['callcenter_sector', $this->user->callcenter_sector_id],
+                    ['callcenter_sector', '!=', null],
+                ])->orWhere('pin', $this->user->pin);
+            });
         });
 
         return $this;
@@ -454,11 +509,12 @@ class RequestsQuery extends Controller
     public function setOptionsTabFilterMyCallcenter()
     {
         $this->model = $this->model->where(function ($query) {
-            $query->where(function ($query) {
-                $query->whereIn('callcenter_sector', $this->user->getAllSectors())
-                    ->whereNotNull('callcenter_sector');
-            })
-                ->orWhere('pin', $this->user->pin);
+            $query->when(count($this->user->getAllSectors()) > 0, function ($query) {
+                $query->where(function ($query) {
+                    $query->whereIn('callcenter_sector', $this->user->getAllSectors())
+                        ->whereNotNull('callcenter_sector');
+                })->orWhere('pin', $this->user->pin);
+            });
         });
 
         return $this;
