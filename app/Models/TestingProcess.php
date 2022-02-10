@@ -17,6 +17,7 @@ class TestingProcess extends Model
     protected $fillable = [
         'uuid',
         'pin',
+        'pin_old',
         'questions_id',
         'answer_process',
         'created_at',

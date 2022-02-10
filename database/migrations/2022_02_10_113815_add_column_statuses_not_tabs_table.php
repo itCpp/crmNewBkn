@@ -15,7 +15,7 @@ class AddColumnStatusesNotTabsTable extends Migration
     public function up()
     {
         Schema::table('tabs', function (Blueprint $table) {
-            $table->json('statuses_not')->comment('Статусы заявок, скрытые от вывода во вкладке')->default(new Expression('(JSON_ARRAY())'));
+            $table->json('statuses_not')->comment('Статусы заявок, скрытые от вывода во вкладке')->default(new Expression('(JSON_ARRAY())'))->after('statuses');
         });
     }
 
