@@ -110,6 +110,7 @@ class Charts
         return $this->setEmptyDay(
             RequestsStoryPin::selectRaw('count(*) as count, date(created_at) as date')
                 ->whereBetween('created_at', [$this->start, $this->stop])
+                ->where('new_pin', $this->pin)
                 ->groupBy('date')
                 ->get()
                 ->toArray()

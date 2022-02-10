@@ -40,7 +40,7 @@ class Tabs extends Controller
      * Вывод всех вкладок
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getTabs(Request $request)
     {
@@ -76,7 +76,7 @@ class Tabs extends Controller
      * Создание новой вкладки
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createTab(Request $request)
     {
@@ -203,7 +203,7 @@ class Tabs extends Controller
      * Вывод сформированного запроса по динамическому конструктору
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getSql(Request $request)
     {
@@ -232,7 +232,7 @@ class Tabs extends Controller
      * Вывод списка значений для конструктора запросов
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getListWhereIn(Request $request)
     {
@@ -253,7 +253,7 @@ class Tabs extends Controller
      * Установка порядка вывода вкладок
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function tabsPosition(Request $request)
     {
@@ -271,7 +271,7 @@ class Tabs extends Controller
      * Формирование массива выбранных статусов
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setTabStatus(Request $request)
     {
