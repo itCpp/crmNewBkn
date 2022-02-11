@@ -18,19 +18,39 @@ use Illuminate\Support\Facades\Crypt;
 
 class RequestsMerge extends Controller
 {
-    /** Идентификатор последней првоерки @var int */
+    /**
+     * Идентификатор последней проверки
+     * 
+     * @var int
+     */
     protected $lastId;
 
-    /** Количество заявок в старой базе @var int */
+    /**
+     * Количество заявок в старой базе
+     * 
+     * @var int
+     */
     public $count;
 
-    /** Максимальный идентификатор заявки @var int */
+    /**
+     * Максимальный идентификатор заявки
+     * 
+     * @var int
+     */
     public $max;
 
-    /** Экземпляр объекта создания заявки @var AddRequest */
+    /**
+     * Экземпляр объекта создания заявки
+     * 
+     * @var \App\Http\Controllers\Requests\AddRequest
+     */
     protected $add;
 
-    /** Массив сопоставления идентификаторов источников @var array */
+    /**
+     * Массив сопоставления идентификаторов источников
+     * 
+     * @var array
+     */
     public $sourceToSource = [
         [2, 'БАСМАНКА'],
         [14, 'БЗБ'],
@@ -55,7 +75,53 @@ class RequestsMerge extends Controller
         [21, 'ЮРСЛУЖБА'],
     ];
 
-    /** Соотношение статуса старой заявки к идентификтору нового статуса */
+    /**
+     * Сопостовление ресурсов источника
+     * 
+     * @var array
+     */
+    public $sourceResourceToRecource = [
+        [3, '84951978661'],
+        [4, '88005002096'],
+        [5, '88005002489'],
+        [1, 'gosyurist.ru'],
+        [2, 'ros-yuristy.ru'],
+        [7, '84951978120'],
+        [8, '84952331264'],
+        [9, '88002503210'],
+        [10, '88003333404'],
+        [6, 'yuris-konsult.ru'],
+        [12, '88005000380'],
+        [11, 'xn--g1acavabdidhea6a9gxb.xn--p1ai'],
+        [13, 'профсоюзыроссии.рф'],
+        [14, 'dostoinaya-zhizn.ru'],
+        [16, '89167324970'],
+        [15, 'hudyakovroman.ru'],
+        [18, '84995509611'],
+        [19, 'm.эксперты-права.рф'],
+        [17, 'xn----8sbahm3a9achcfp1jva.xn--p1ai'],
+        [20, 'эксперты-права.рф'],
+        [23, '84951233027'],
+        [24, '84952270665'],
+        [25, '88005001573'],
+        [21, 'xn----8sbf5ajmeav8b.xn--p1ai'],
+        [22, 'xn--o1aat.xn--p1ai'],
+        [26, 'цпп-москва.рф'],
+        [27, 'цпп.рф'],
+        [29, '84951980812'],
+        [28, 'yur-experts.ru'],
+        [31, '84952212706'],
+        [32, '84996732340'],
+        [30, 'civil-right.ru'],
+        [34, '84996733020'],
+        [33, 'yurcentre.ru'],
+    ];
+
+    /**
+     * Соотношение статуса старой заявки к идентификтору нового статуса
+     * 
+     * @var array
+     */
     public $stateToStatusId = [
         'bk' => 5,
         'brak' => 6,
@@ -74,7 +140,11 @@ class RequestsMerge extends Controller
         'zapis' => 3,
     ];
 
-    /** Проверяемые сотрудники @var array */
+    /**
+     * Проверяемые сотрудники
+     * 
+     * @var array
+     */
     protected $users = [];
 
     /**
@@ -138,6 +208,7 @@ class RequestsMerge extends Controller
         $new->callcenter_sector = $this->getSectorId($row);
         $new->pin = $this->getNewPin($row);
         $new->source_id = $this->getSourceId($row);
+        $new->sourse_resource = $this->getResourceId($row);
         $new->client_name = $row->name != "" ? $row->name : null;
         $new->theme = $row->theme != "" ? $row->theme : null;
         $new->region = ($row->region != "" and $row->region != "Неизвестно") ? $row->region : null;
@@ -260,6 +331,22 @@ class RequestsMerge extends Controller
         foreach ($this->sourceToSource as $source) {
             if ($row->type == $source[1])
                 return $source[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * Определение ресурса источника заявки
+     * 
+     * @param CrmRequest
+     * @return null|int
+     */
+    public function getResourceId($row)
+    {
+        foreach ($this->sourceResourceToRecource as $resource) {
+            if ($row->typeSiteLink === $resource[1] or $this->checkPhone($row->myPhone, 3) === $resource[1])
+                return $resource[0];
         }
 
         return null;

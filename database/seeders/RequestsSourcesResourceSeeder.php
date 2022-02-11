@@ -55,6 +55,7 @@ class RequestsSourcesResourceSeeder extends Seeder
         [31, 8, 'phone', '74952212706'],
         [32, 8, 'phone', '74996732340'],
         [33, 11, 'site', 'yurcentre.ru'],
+        [34, 11, 'phone', '74996733020'],
     ];
 
     /**
