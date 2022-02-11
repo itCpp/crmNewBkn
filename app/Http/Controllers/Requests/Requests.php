@@ -74,12 +74,12 @@ class Requests extends Controller
             return response()->json(['message' => "Заявка не найдена"], 400);
 
         // Поиск разрешений для заявок
-        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
 
         $row = Requests::getRequestRow($row); // Полные данные по заявке
 
         $addstatus = true; // Добавить в список недоступный статус
-        $statusList = $request->__user->getStatusesList(); // Список доступных статусов
+        $statusList = $request->user()->getStatusesList(); // Список доступных статусов
 
         // Преобразование списка для вывода
         $statuses = $statusList->map(function ($status) use (&$addstatus, $row) {
@@ -126,6 +126,9 @@ class Requests extends Controller
 
         if ($request->getComments)
             $response['comments'] = Comments::getComments($request);
+
+        if ($request->getStatistics)
+            $response['statistic'] = RequestRowStatistic::get($row);
 
         return response()->json($response);
     }
