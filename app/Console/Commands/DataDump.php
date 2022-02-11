@@ -48,6 +48,7 @@ class DataDump extends Command
             \App\Models\ChatRoom::class,
             \App\Models\ChatRoomsUser::class,
             \App\Models\ChatRoomsViewTime::class,
+            \App\Models\IpInfo::class,
             \App\Models\TestingProcess::class,
         ];
 

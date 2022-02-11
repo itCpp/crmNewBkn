@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Users\UsersMerge;
+use App\Models\CrmMka\CrmNewRequestsState;
+use App\Models\CrmMka\CrmNewRequestsStory;
 use App\Models\RequestsClient;
 use App\Models\RequestsComment;
 use App\Models\RequestsRow;
@@ -148,6 +150,13 @@ class RequestsMerge extends Controller
     protected $users = [];
 
     /**
+     * Проверенные персональне номера сотрудников
+     * 
+     * @var array
+     */
+    protected $new_pins = [];
+
+    /**
      * Объвление нового экзкмпляра
      * 
      * @return void
@@ -206,7 +215,7 @@ class RequestsMerge extends Controller
         $new->id = $row->id;
         $new->query_type = $this->getQueryType($row);
         $new->callcenter_sector = $this->getSectorId($row);
-        $new->pin = $this->getNewPin($row);
+        $new->pin = $this->getNewPin($row->pin);
         $new->source_id = $this->getSourceId($row);
         $new->sourse_resource = $this->getResourceId($row);
         $new->client_name = $row->name != "" ? $row->name : null;
@@ -235,6 +244,9 @@ class RequestsMerge extends Controller
 
         // Поиск и добавление комментариев по заявке
         $data->comments = $this->getAndCreateAllComments($new->id);
+
+        // Поиск истории изменений заявки
+        $this->findAndWriteRequestsStory($new->id);
 
         return $new;
     }
@@ -355,32 +367,40 @@ class RequestsMerge extends Controller
     /**
      * Поиск нового пина сотрудника
      * 
-     * @param CrmRequest
+     * @param string $pin
      * @return int|string
      */
-    public function getNewPin($row)
+    public function getNewPin($pin)
     {
-        if (!$row->pin)
-            return null;
+        $key = md5($pin);
 
-        if (!$user = User::where('old_pin', $row->pin)->first())
-            return $this->getFiredAndCreateNewUser($row->pin);
+        if (!empty($this->new_pins[$key]))
+            return $this->new_pins[$key];
 
-        return $user->pin;
+        if (!$pin)
+            return $this->new_pins[$key] = null;
+
+        if (!$user = User::where('old_pin', $pin)->first())
+            return $this->getFiredAndCreateNewUser($pin, $key);
+
+        return $this->new_pins[$key] = $user->pin;
     }
 
     /**
      * Создание уволенного сотрудника
      * 
      * @param string $pin
+     * @param null|string $key
      * @return int
      */
-    public function getFiredAndCreateNewUser($pin)
+    public function getFiredAndCreateNewUser($pin, $key = null)
     {
-        if (!$user = $this->usersMerge->createFiredUser($pin))
-            return $pin;
+        $key = $key ?: md5($pin);
 
-        return $user->pin;
+        if (!$user = $this->usersMerge->createFiredUser($pin))
+            return $this->new_pins[$key] = $pin;
+
+        return $this->new_pins[$key] = $user->pin;
     }
 
     /**
@@ -553,5 +573,88 @@ class RequestsMerge extends Controller
             $this->users[$pin] = $this->getFiredAndCreateNewUser($pin);
 
         return $this->users[$pin]->pin ?? $pin;
+    }
+
+    /**
+     * Поиск и запись истории изменения заявки
+     * 
+     * @param int $id
+     * @return array
+     */
+    public function findAndWriteRequestsStory($id)
+    {
+        $state = null; // Отслеживание смены статуса
+        $change_pin = null; // Отслеживание смены оператора
+
+        return CrmNewRequestsStory::where('id_request', $id)
+            ->get()
+            ->map(function ($row) use (&$state, &$change_pin) {
+
+                $new = new RequestsRow;
+
+                $new->id = $row->id_request;
+                $new->pin = $this->getNewPin($row->pin);
+
+                if ($row->state = CrmNewRequestsState::where('idStory', $row->id)->first()) {
+                    $new->status_id = $this->getStatusId($row->state);
+                    $new->event_at = $row->state->date;
+                }
+
+                $new->client_name = $row->name != "" ? $row->name : null;
+                $new->theme = $row->theme != "" ? $row->theme : null;
+                $new->region = ($row->region != "" and $row->region != "Неизвестно") ? $row->region : null;
+                $new->check_moscow = $new->region ? RequestChange::checkRegion($new->region) : null;
+                $new->comment = $row->comment != "" ? $row->comment : null;
+                $new->comment_urist = $row->uristComment != "" ? $row->uristComment : null;
+                $new->address = $row->address ?: null;
+
+                if ($row->newRequest) {
+                    $new->uplift = 1;
+                    $new->uplift_at = $row->create_at;
+                }
+
+                $new->updated_at = $row->create_at;
+
+                $new->old_story = $row->id;
+
+                $created_pin = $row->pinEdited ? $this->getNewPin($row->pinEdited) : null;
+
+                $create['requests_stories'] = [
+                    'request_id' => $row->id_request,
+                    'request_data' => $new->toArray(),
+                    'created_pin' => $created_pin,
+                    'created_at' => $row->create_at,
+                    // '__' => $row
+                ];
+
+                if ($row->state) {
+                    $create['requests_story_statuses'] = [
+                        'story_id' => $story->id ?? null,
+                        'request_id' => $row->id_request,
+                        'status_old' => $state,
+                        'status_new' => $new->status_id,
+                        'created_pin' => $row->id_request,
+                        'created_at' => $row->create_at,
+                    ];
+
+                    $state = $new->status_id;
+                }
+
+                if ($new->pin != $change_pin) {
+                    $create['requests_story_pins'] = [
+                        'story_id' => $story->id ?? null,
+                        'request_id' => $row->id_request,
+                        'old_pin' => $change_pin,
+                        'new_pin' => $new->pin,
+                        'created_at' => $row->create_at,
+                    ];
+                }
+
+                if ((!$change_pin and $new->pin) or ($new->pin and $change_pin))
+                    $change_pin = $new->pin;
+
+                return $create;
+            })
+            ->toArray();
     }
 }
