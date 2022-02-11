@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Http\Controllers\Controller;
+use App\Models\Base\CrmAgreement;
 use App\Models\Base\CrmComing;
 use App\Models\Base\Office;
 use App\Models\RequestsClient;
 
-class RequestRowStatistic
+class RequestRowStatistic extends Controller
 {
     /**
      * Создание экземпляра объекта
@@ -18,7 +20,9 @@ class RequestRowStatistic
     {
         $this->row = $row;
 
-        $this->offices = [];
+        $this->offices = []; // Проверенные офисы
+
+        $this->phones = collect([]); // Номера телефонов клиента
     }
 
     /**
@@ -33,6 +37,7 @@ class RequestRowStatistic
 
         return [
             'coming' => array_merge($data->getComingInfo(), $data->getAllComings()),
+            'agreements' => $data->getAgreements(),
         ];
     }
 
@@ -117,6 +122,9 @@ class RequestRowStatistic
         RequestsClient::whereIn('id', $clients)
             ->get()
             ->each(function ($row) use (&$requests) {
+
+                $this->phones[] = $this->decrypt($row->phone);
+
                 foreach ($row->requests()->select('id')->get() as $request) {
                     $requests[] = $request->id;
                 }
@@ -127,7 +135,7 @@ class RequestRowStatistic
 
         $comings = CrmComing::select('unicIdClient', 'company', 'collPin', 'time', 'date')
             ->whereIn('unicIdClient', $requests)
-            // ->where('unicIdClient', '!=', $this->row->id)
+            ->where('unicIdClient', '!=', $this->row->id)
             ->get()
             ->map(function ($row) {
                 return $this->serializeComingRow($row);
@@ -138,5 +146,30 @@ class RequestRowStatistic
             'comings' => $comings,
             'count' => count($comings),
         ];
+    }
+
+    /**
+     * Проверка наличия договора
+     * 
+     * @return array
+     */
+    public function getAgreements()
+    {
+        $phones = $this->phones->map(function ($row) {
+            return substr($row, 1);
+        })->toArray();
+
+        return CrmAgreement::select('nomerDogovora', 'date', 'company')
+            ->where(function ($query) use ($phones) {
+                foreach ($phones as $phone) {
+                    $query->orWhere('phone', 'LIKE', "%{$phone}%");
+                }
+            })
+            ->get()
+            ->map(function ($row) {
+                $row->company = $this->findOffice($row->company);
+
+                return $row->toArray();
+            });
     }
 }
