@@ -11,6 +11,7 @@ use App\Http\Controllers\Settings;
 use App\Http\Controllers\Dev\Statuses;
 use App\Models\IncomingQuery;
 use App\Models\RequestsClient;
+use App\Models\RequestsClientsQuery;
 use App\Models\RequestsComment;
 use App\Models\RequestsRow;
 use App\Models\RequestsSource;
@@ -18,6 +19,7 @@ use App\Models\RequestsSourcesResource;
 use App\Models\RequestsStory;
 use App\Models\Status;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
@@ -166,7 +168,7 @@ class AddRequest extends Controller
     /**
      * Вывод результата
      * 
-     * @return array|response
+     * @return array|\Illuminate\Http\JsonResponse
      */
     public function response()
     {
@@ -185,7 +187,7 @@ class AddRequest extends Controller
     /**
      * Вывод плохого запроса
      * 
-     * @return array|response
+     * @return array|\Illuminate\Http\JsonResponse
      */
     public function badRequest()
     {
@@ -308,11 +310,11 @@ class AddRequest extends Controller
 
         $query = RequestsSourcesResource::query();
 
-        $query->when($this->myPhone, function ($query) {
+        $query->when($this->myPhone !== null, function ($query) {
             return $query->where('val', $this->myPhone);
         });
 
-        $query->when($this->site, function ($query) {
+        $query->when($this->site !== null, function ($query) {
             return $query->where('val', $this->site);
         });
 
@@ -471,6 +473,15 @@ class AddRequest extends Controller
 
         // Логирование изменений заявки
         RequestsStory::write($this->request, $this->data);
+
+        // Логирование обращений
+        RequestsClientsQuery::create([
+            'client_id' => $this->client->id ?? null,
+            'request_id' => $this->data->id ?? null,
+            'source_id' => $this->data->source_id ?? null,
+            'resource_id' => $this->data->sourse_resource ?? null,
+            'created_at' => now(),
+        ]);
 
         // $row = Requests::getRequestRow($this->data); // Полные данные по заявке
 

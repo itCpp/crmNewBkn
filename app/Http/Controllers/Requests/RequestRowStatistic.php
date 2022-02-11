@@ -7,6 +7,7 @@ use App\Models\Base\CrmAgreement;
 use App\Models\Base\CrmComing;
 use App\Models\Base\Office;
 use App\Models\RequestsClient;
+use App\Models\RequestsClientsQuery;
 
 class RequestRowStatistic extends Controller
 {
@@ -21,6 +22,8 @@ class RequestRowStatistic extends Controller
         $this->row = $row;
 
         $this->offices = []; // Проверенные офисы
+
+        $this->clients = []; // Идентификаторы клиента
 
         $this->phones = collect([]); // Номера телефонов клиента
     }
@@ -38,6 +41,7 @@ class RequestRowStatistic extends Controller
         return [
             'coming' => array_merge($data->getComingInfo(), $data->getAllComings()),
             'agreements' => $data->getAgreements(),
+            'queries' => $data->getQueriesInfo(),
         ];
     }
 
@@ -119,6 +123,8 @@ class RequestRowStatistic extends Controller
         if (!count($clients ?? []))
             return [];
 
+        $this->clients = $clients;
+
         RequestsClient::whereIn('id', $clients)
             ->get()
             ->each(function ($row) use (&$requests) {
@@ -171,5 +177,34 @@ class RequestRowStatistic extends Controller
 
                 return $row->toArray();
             });
+    }
+
+    /**
+     * Информация о количестве обращений
+     * 
+     * @return array
+     */
+    public function getQueriesInfo()
+    {
+        $all = $source = 0;
+
+        RequestsClientsQuery::selectRaw('count(*) as count, source_id')
+            ->whereIn('client_id', $this->clients)
+            ->groupBy('source_id')
+            ->get()
+            ->each(function ($row) use (&$all, &$source) {
+                $all += $row->count;
+                $source++;
+            });
+
+        $last = RequestsClientsQuery::whereIn('client_id', $this->clients)
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        return [
+            'all' => $all,
+            'source' => $source,
+            'last' => $last->created_at ?? null,
+        ];
     }
 }
