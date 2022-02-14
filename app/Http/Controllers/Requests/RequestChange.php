@@ -18,7 +18,7 @@ class RequestChange extends Controller
      * Изменение данных заявки
      * 
      * @param \Illuminate\Http\Request
-     * @return response
+     * @return \Illuminage\Http\JsonResponse
      */
     public static function save(Request $request)
     {
@@ -136,10 +136,45 @@ class RequestChange extends Controller
     }
 
     /**
+     * Скрытие заявки из поднятых со статусом
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminage\Http\JsonResponse
+     */
+    public static function hideUplift(Request $request)
+    {
+        if (!$row = RequestsRow::find($request->id))
+            return response()->json(['message' => "Заявка не найдена"], 400);
+
+        if (!$row->status_id)
+            return response()->json(['message' => "Нельзя скрыть необработанную заявку"], 400);
+
+        // Поиск разрешений для заявок
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
+
+        $row->uplift = 0;
+        $row->save();
+
+        // Логирование изменений
+        RequestsStory::write($request, $row);
+
+        // Полные данные по заявке
+        $row = Requests::getRequestRow($row);
+
+        // Отправка события об изменении заявки
+        broadcast(new UpdateRequestEvent($row));
+
+        return response()->json([
+            'request' => $row,
+            'dropOutTab' => self::checkDropOutTab($request),
+        ]);
+    }
+
+    /**
      * Сохранение данных заявки из отдельной ячейки на странице
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminage\Http\JsonResponse
      */
     public static function saveCell(Request $request)
     {

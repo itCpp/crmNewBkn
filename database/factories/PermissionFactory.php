@@ -37,6 +37,7 @@ class PermissionFactory extends Factory
         ['requests_all_sectors', 'Видит заявки и операторов всех секторов своего колл-центра'],
         ['requests_comment_first', 'Может оставлять первичный комментарий'],
         ['requests_edit', 'Может вносить изменения в заявку'],
+        ['requests_hide_uplift_rows', 'Может скрывать поднятую заявку со статусом из необработанных'],
         ['requests_pin_change', 'Может менять оператора на заявке'],
         ['requests_pin_for_appointment', 'Может быть назначенным на заявку'],
         ['requests_pin_set', 'Может устанавливать оператора на заявку'],

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Crm;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Infos\Themes;
 use App\Http\Controllers\Requests\Counters;
 use Illuminate\Http\Request;
 
@@ -66,12 +67,23 @@ class Start extends Controller
                 ];
             });
 
+        $statuses = $request->user()->getStatusesList()
+            ->map(function ($row) {
+                return [
+                    'id' => $row->id,
+                    'name' => $row->name,
+                    'theme' => $row->theme,
+                ];
+            });
+
         return response()->json([
             'tabs' => $tabs,
             'permits' => $permits,
             'topMenu' => $menu,
             'intervalCounter' => self::getCounterUpdateInterval(),
             'counter' => Counters::getCounterData($request),
+            'themes' => Themes::$data,
+            'statuses' => $statuses,
         ]);
     }
 

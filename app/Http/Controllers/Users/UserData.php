@@ -376,7 +376,7 @@ class UserData
     /**
      * Список статусов заявки, доступных для выбора сотруднику
      * 
-     * @return collect
+     * @return \Illuminate\Support\Collection
      */
     public function getStatusesList()
     {
@@ -399,7 +399,7 @@ class UserData
     /**
      * Выдача идентификтаор пользователя
      * 
-     * @return true
+     * @return int|null
      */
     public function getAuthIdentifier()
     {

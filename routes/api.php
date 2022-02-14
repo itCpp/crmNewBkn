@@ -53,7 +53,8 @@ Route::group(['middleware' => 'user.token'], function () {
     Route::post('check', 'Users\Users@check')->name('api.check');
 
     /** Запуск ЦРМ */
-    Route::post('requests/start', 'Crm\Start@start')->name('api.start');
+    Route::post('crm/start', 'Crm\Start@start')->name('api.crm.start');
+    Route::post('requests/start', 'Crm\Start@start')->name('api.requests.start');
 
     /** Маршрутизация по заявкам */
     Route::group([
@@ -71,6 +72,8 @@ Route::group(['middleware' => 'user.token'], function () {
         Route::post('save', 'Requests\RequestChange@save')->name('api.requests.save');
         /** Изменение данных заявки отдельно в ячейке */
         Route::post('saveCell', 'Requests\RequestChange@saveCell')->name('api.requests.saveCell');
+        /** Скрытие заявки из поднятых */
+        Route::post('hideUplift', 'Requests\RequestChange@hideUplift')->name('api.requests.hideUplift')->middleware('user.can:requests_hide_uplift_rows');
 
         /** Вывод списка доступных операторов для назначения на заявку */
         Route::post('changePinShow', 'Requests\RequestPins@changePinShow')->name('api.requests.changePinShow');

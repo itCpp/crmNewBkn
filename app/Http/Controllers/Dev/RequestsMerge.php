@@ -246,7 +246,7 @@ class RequestsMerge extends Controller
         $data->comments = $this->getAndCreateAllComments($new->id);
 
         // Поиск истории изменений заявки
-        $this->findAndWriteRequestsStory($new->id);
+        // $this->findAndWriteRequestsStory($new->id);
 
         return $new;
     }

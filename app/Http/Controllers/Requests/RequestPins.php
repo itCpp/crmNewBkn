@@ -135,7 +135,6 @@ class RequestPins extends Controller
 
             if (count($actives) == 1)
                 $row->address = $actives[0];
-
         }
 
         return response()->json([

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Requests;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Crm\Start;
 use App\Http\Controllers\Dates;
+use App\Http\Controllers\Infos\Cities;
+use App\Http\Controllers\Infos\Themes;
 use App\Models\Office;
 use App\Models\RequestsRow;
 use App\Models\RequestsRowsView;
@@ -120,8 +122,8 @@ class Requests extends Controller
             'permits' => RequestStart::$permits,
             'statuses' => $statuses,
             'offices' => Office::orderBy('active', 'DESC')->orderBy('name')->get(),
-            'cities' => \App\Http\Controllers\Infos\Cities::$data, // Список городов
-            'themes' => \App\Http\Controllers\Infos\Themes::$data, // Список тем
+            'cities' => Cities::$data, // Список городов
+            'themes' => Themes::$data, // Список тем
         ];
 
         if ($request->getComments)
@@ -203,6 +205,9 @@ class Requests extends Controller
         $row->status; # Вывод данных о статусе
         $row->office; # Вывод данных по офису
         $row->sector; # Вывод данных по сектору
+
+        // Флаг вывода пункта меню для скрытия
+        $row->uplift_hide_access = ($row->uplift == 1 and $row->status_id !== null and request()->user()->can('requests_hide_uplift_rows'));
 
         $row->view_at = RequestsRowsView::where([
             'user_id' => request()->user()->id,
