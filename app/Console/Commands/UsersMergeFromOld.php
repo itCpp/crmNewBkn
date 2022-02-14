@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Console\MyOutput;
 use App\Http\Controllers\Users\UsersMerge;
+use Exception;
 use Illuminate\Console\Command;
 
 /**
@@ -44,8 +45,6 @@ class UsersMergeFromOld extends Command
     public function __construct()
     {
         parent::__construct();
-
-        $this->users = new UsersMerge;
     }
 
     /**
@@ -55,6 +54,8 @@ class UsersMergeFromOld extends Command
      */
     public function handle()
     {
+        $this->users = new UsersMerge;
+
         $this->title('Перенос сотрудников');
 
         $this->question(" Разработчики, руководители и тд... ");
@@ -94,11 +95,9 @@ class UsersMergeFromOld extends Command
             try {
                 $created = $this->users->createUser($user, $auth);
                 $roles = $created->roles->map(fn ($role) => $role->role)->toArray();
-                $this->line("\t" . trim($message . " <fg=yellow>". implode(" ", $roles)) . "</> ");
-            } catch (\Illuminate\Database\QueryException) {
-                $this->error(" " . $message . " ");
-            } catch (\App\Exceptions\CreateNewUser $e) {
-                $this->line("<fg=red;options=bold> " . $message . "</> <bg=red;fg=white>" . $e->getMessage() . "</>");
+                $this->line("\t" . trim($message . " <fg=yellow>" . implode(" ", $roles)) . "</> ");
+            } catch (Exception $e) {
+                $this->line("\t<fg=red;options=bold>" . $message . "</> <bg=red;fg=white>" . $e->getMessage() . "</>");
             }
         }
 

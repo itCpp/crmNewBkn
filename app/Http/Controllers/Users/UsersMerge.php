@@ -6,6 +6,7 @@ use App\Exceptions\CreateNewUser;
 use App\Http\Controllers\Controller;
 use App\Models\CrmMka\CrmUser;
 use App\Models\User;
+use App\Models\UsersPositionsStory;
 use Illuminate\Http\Request;
 
 class UsersMerge extends Controller
@@ -60,7 +61,7 @@ class UsersMerge extends Controller
     protected $developers = [
         401 => ['developer'],
         424 => ['developer'],
-        866 => ['developer'],
+        // 866 => ['developer'],
     ];
 
     /**
@@ -80,7 +81,7 @@ class UsersMerge extends Controller
      * @var array
      */
     protected $sectorClear = [
-        1, 132, 401, 402, 424, 666, 813, 866, 890, 920,
+        1, 132, 401, 402, 424, 497, 666, 813, 866, 890, 920,
     ];
 
     /**
@@ -89,7 +90,9 @@ class UsersMerge extends Controller
      * @var array
      */
     protected $firedUser = [
-        195, 403, 411, 428, 443, 475, 40002, 4900, 4901, 4902, 4903, 4908, 40909
+        195, 403, 411, 428, 443, 475, 4900, 4901, 4902, 4903, 4908,
+        40001, 40002, 40003, 40004, 40005, 40006, 40011, 40012, 40013, 40014,
+        40015, 40016, 40017, 40018, 40019, 40020, 40021, 40909
     ];
 
     /**
@@ -141,6 +144,18 @@ class UsersMerge extends Controller
      */
     public function createUser($user, $auth = "admin", $fired = false)
     {
+        $request = new Request(
+            query: [
+                'user' => $user->toArray(),
+                'auth' => $auth,
+                'fired' => $fired,
+            ],
+            server: [
+                'REMOTE_ADDR' => '127.0.0.1',
+                'HTTP_USER_AGENT' => env('APP_NAME') . ' ' . env('APP_URL'),
+            ]
+        );
+
         // Определение пина
         $max = null;
         $pinStart = $this->sectorsPin[$user->{'call-center'}] ?? null;
@@ -155,11 +170,13 @@ class UsersMerge extends Controller
         else
             $pin = $user->pin;
 
-        if (in_array($user->pin, [890, 866, 813]))
-            $pin = $user->pin;
-
         if ($user->pin == 813)
             $user->username = "abrik";
+
+        if (in_array($user->pin, $this->sectorClear)) {
+            $pin = $user->pin;
+            $user->position_id = null;
+        }
 
         // ФИО
         $user->fullName = preg_replace('/\s/', ' ', $user->fullName);
@@ -209,6 +226,17 @@ class UsersMerge extends Controller
 
             foreach (array_unique($roles) as $role) {
                 $new->roles()->attach($role);
+            }
+
+            if ($new->position_id) {
+                $log = $this->logData($request, $new);
+
+                UsersPositionsStory::create([
+                    'log_id' => $log->id,
+                    'user_id' => $new->id,
+                    'position_new' => $new->position_id,
+                    'created_at' => now(),
+                ]);
             }
         }
 

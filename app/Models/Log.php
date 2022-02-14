@@ -71,7 +71,7 @@ class Log extends Model
             'row_data' => json_encode($data, JSON_UNESCAPED_UNICODE),
             'request_data' => json_encode($request_data, JSON_UNESCAPED_UNICODE),
             'to_crypt' => $crypt,
-            'user_id' => $request->__user->id,
+            'user_id' => optional($request->user())->id,
             'created_at' => date("Y-m-d H:i:s"),
             'ip' => $request->ip(),
             'user_agent' => $request->header('User-Agent'),

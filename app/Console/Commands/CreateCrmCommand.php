@@ -18,7 +18,8 @@ class CreateCrmCommand extends Command
      */
     protected $signature = 'createcrm
                             {--users : Перенести данные сотрудников}
-                            {--requests : Перенести заявки}';
+                            {--requests : Перенести заявки}
+                            {--cdr : Перенести детализацию звоков}';
 
     /**
      * The console command description.
@@ -91,6 +92,7 @@ class CreateCrmCommand extends Command
 
         $this->users_merge = $this->option('users');
         $this->requests_merge = $this->option('requests');
+        $this->cdr_merge = $this->option('cdr');
 
         $this->line("При запуске этой комманды вся текущая база данных будет удалена");
 
@@ -102,15 +104,15 @@ class CreateCrmCommand extends Command
             return false;
         }
 
-        if ($this->confirm('Перенести всех сотрудников?', true)) {
+        if (!$this->users_merge and $this->confirm('Перенести всех сотрудников?', true)) {
             $this->users_merge = true;
         }
 
-        if ($this->confirm('Перенести все заявки?', true)) {
+        if (!$this->requests_merge and $this->confirm('Перенести все заявки?', true)) {
             $this->requests_merge = true;
         }
 
-        if ($this->confirm('Перенести детализацию вызовов?', true)) {
+        if (!$this->cdr_merge and $this->confirm('Перенести детализацию вызовов?', true)) {
             $this->cdr_merge = true;
         }
 

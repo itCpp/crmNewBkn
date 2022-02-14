@@ -361,10 +361,8 @@ class TabSeeder extends Seeder
 
             foreach ($row->getCasts() as $column => $type) {
 
-                if ($type != "array" and $type != "object")
-                    continue;
-
-                $tab[$column] = json_decode($tab[$column], $type == "array");
+                // if ($type == "array" or $type == "object")
+                //     $tab[$column] = json_decode($tab[$column], $type == "array");
             }
 
             foreach ($tab as $key => $value)
