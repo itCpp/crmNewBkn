@@ -120,11 +120,29 @@ class RequestPins extends Controller
         // Время последней активности пользователя
         $sessions = self::getLastAtiveTime($pins_searched);
 
+        // Список офисов
+        $offices =  Office::orderBy('active', 'DESC')->orderBy('name')->get();
+
+        // Автоматическое применение адреса, если имется только один активный офис
+        if (!$row->address) {
+
+            $actives = [];
+
+            foreach ($offices as $office) {
+                if ($office->active == 1)
+                    $actives[] = $office->id;
+            }
+
+            if (count($actives) == 1)
+                $row->address = $actives[0];
+
+        }
+
         return response()->json([
             'offline' => $permits->requests_pin_set_offline,
             'pins' => self::getWorkTimeAndStatusUsers($pins ?? [], $sessions),
             'clear' => $permits->requests_pin_clear,
-            'offices' => Office::orderBy('active', 'DESC')->orderBy('name')->get(),
+            'offices' => $offices,
             'address' => $row->address,
         ]);
     }
@@ -135,7 +153,7 @@ class RequestPins extends Controller
      * @param \Illuminate\Database\Eloquent\Relations\BelongsToMany $rows
      * @param \App\Http\Controllers\Users\Permissions $permits
      * @param array $pins Уже найденные операторы
-     * @return array
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     public static function findUsers($rows, $permits, $pins = [])
     {
@@ -150,7 +168,7 @@ class RequestPins extends Controller
         if (count($pins))
             $rows = $rows->whereNotIn('pin', $pins);
 
-        return $rows->get();
+        return $rows->where('deleted_at', null)->get();
     }
 
     /**
