@@ -22,32 +22,35 @@ class AdminUsers extends Controller
      */
     public static function getUsers(Request $request)
     {
-        $data = User::select(
+        $users = User::select(
             'users.*',
             'callcenters.name as callcenter',
             'callcenter_sectors.name as sector'
         )
             ->leftjoin('callcenters', 'callcenters.id', '=', 'users.callcenter_id')
-            ->leftjoin('callcenter_sectors', 'callcenter_sectors.id', '=', 'users.callcenter_sector_id');
-
-        if ($request->search) {
-            $data = $data->orderBy('users.deleted_at')
-                ->orderBy('users.surname')
-                ->orderBy('users.name')
-                ->orderBy('users.patronymic')
-                ->where(function ($query) use ($request) {
+            ->leftjoin('callcenter_sectors', 'callcenter_sectors.id', '=', 'users.callcenter_sector_id')
+            ->when((bool) $request->search, function ($query) use ($request) {
+                $query->where(function ($query) use ($request) {
                     $query->where('users.surname', 'LIKE', "%{$request->search}%")
                         ->orWhere('users.name', 'LIKE', "%{$request->search}%")
                         ->orWhere('users.patronymic', 'LIKE', "%{$request->search}%")
                         ->orWhere('users.pin', 'LIKE', "%{$request->search}%")
                         ->orWhere('users.login', 'LIKE', "%{$request->search}%");
-                });
-        } else {
-            $data = $data->orderBy('users.id', "DESC");
-        }
-
-        foreach ($data->limit(30)->get() as $row)
-            $users[] = new UserData($row);
+                })
+                    ->orderBy('users.deleted_at')
+                    ->orderBy('users.surname')
+                    ->orderBy('users.name')
+                    ->orderBy('users.patronymic');
+            })
+            ->when(!(bool) $request->search, function ($query) {
+                $query->where('deleted_at', null)
+                    ->orderBy('users.created_at', "DESC");
+            })
+            ->limit(33)
+            ->get()
+            ->map(function ($row) {
+                return new UserData($row);
+            });
 
         return response()->json([
             'users' => $users ?? []
