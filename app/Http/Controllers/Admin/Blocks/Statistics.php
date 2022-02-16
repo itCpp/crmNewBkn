@@ -11,6 +11,7 @@ use App\Models\Company\StatVisit;
 use App\Models\Company\StatVisitSite;
 use App\Models\Company\StatRequest;
 use App\Models\Company\AutoBlockHost;
+use App\Models\Company\BlockIdSite;
 use App\Models\CrmMka\CrmRequestsQueue;
 use App\Models\IpInfo;
 use Illuminate\Http\Request;
@@ -103,6 +104,14 @@ class Statistics extends Controller
             ->each(function ($row) {
                 $this->data[$row->host]['blocked'] = true;
                 $this->data[$row->host]['blocked_on'] = $row->block === 1;
+            });
+
+        /** Информация о блокировках по ID */
+        BlockIdSite::whereIn('ip', $this->ips)
+            ->where('deleted_at', null)
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['blocked_client_id'] = $row->deleted_at === null;
             });
 
         /** Автоматические блокировки */
