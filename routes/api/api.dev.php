@@ -182,6 +182,11 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('sitesStats', 'Admin\Sites@sitesStats')->name('api.dev.block.sitesStats');
         /** Вывод данных графика */
         Route::post('getChartSite', 'Admin\Sites@getChartSite')->name('api.dev.block.getChartSite');
+
+        /** Вывод информации об IP для блокировки по ID */
+        Route::post('ip', 'Admin\Blocks\ClientId@ip')->name('api.dev.block.ip');
+        /** Сохранение информации об IP для блокировки по ID */
+        Route::post('ip/save', 'Admin\Blocks\ClientId@ipSave')->name('api.dev.block.ip.save');
     });
 
     /** Маршрутизация шлюзов */
