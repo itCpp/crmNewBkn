@@ -37,6 +37,9 @@ class Statistics extends Controller
     ) {
         $this->date = $request->date ?: date("Y-m-d");
         $this->ips = [];
+
+        $this->our_ips = explode(",", env("OUR_IP_ADDRESSES_LIST", ""));
+        $this->not_in_sites = explode(",", env("SITES_NOT_IN_BLOCK_STATS", ""));
     }
 
     /**
@@ -55,6 +58,9 @@ class Statistics extends Controller
             })
             ->when(count($this->sites) > 0, function ($query) {
                 $query->whereIn('site', $this->sites);
+            })
+            ->when((count($this->sites) === 0 and count($this->not_in_sites) > 0), function ($query) {
+                $query->whereNotIn('site', $this->not_in_sites);
             })
             ->groupBy('ip')
             ->get()
@@ -75,6 +81,9 @@ class Statistics extends Controller
             ->whereIn('ip', $this->ips)
             ->when(count($this->sites) > 0, function ($query) {
                 $query->whereIn('site', $this->sites);
+            })
+            ->when((count($this->sites) === 0 and count($this->not_in_sites) > 0), function ($query) {
+                $query->whereNotIn('site', $this->not_in_sites);
             })
             ->groupBy('ip')
             ->get()
@@ -144,6 +153,7 @@ class Statistics extends Controller
                 'visits' => $row['visits'] ?? 0,
                 'visitsAll' => $row['all'] ?? 0,
                 'visitsBlock' => $row['drops'] ?? 0,
+                'our_ip' => in_array($row['ip'] ?? null, $this->our_ips),
             ], $row);
         })
             ->sortBy([
