@@ -41,7 +41,7 @@ class DataRestore extends Command
      */
     public function handle()
     {
-        $this->info("Восстановление сохраненных данных:");
+        $this->info("\n\nВосстановление сохраненных данных:\n");
 
         $name = Str::finish($this->option('name') ?: Str::orderedUuid(), '.json');
         $path = storage_path("app/dumps/{$name}");

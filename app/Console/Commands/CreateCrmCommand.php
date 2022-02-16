@@ -45,6 +45,7 @@ class CreateCrmCommand extends Command
      */
     public function handle()
     {
+        $start = microtime(1);
         $this->uuid = Str::orderedUuid();
 
         if (!$this->questionnaire())
@@ -77,6 +78,13 @@ class CreateCrmCommand extends Command
         Settings::set('CRONTAB_SMS_INCOMINGS_CHECK', true);
         /** Включение приёма детализции вызовов */
         Settings::set('CALL_DETAIL_RECORDS_SAVE', true);
+
+        $time = microtime(1) - $start;
+
+        $this->newLine(3);
+        $this->line("Время начала переноса: <fg=green;options=bold>" . date("Y-m-d H:i:s", $start) . "</>");
+        $this->line("Время окончания переноса: <fg=green;options=bold>" . date("Y-m-d H:i:s") . "</>");
+        $this->line("Время работы: <fg=green;options=bold>" . date("H:i:s", $time) . "</>");
 
         return 0;
     }
