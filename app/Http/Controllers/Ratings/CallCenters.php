@@ -92,12 +92,14 @@ class CallCenters extends Controller
             ->getRequests()
             ->getCashboxData()
             ->findUsers()
-            ->getResult();
+            ->getResult()
+            ->setFilterPermit();
 
         if ($this->full_data)
             return $this->data;
 
         return (object) [
+            'dates' => $this->data->dates,
             'users' => $this->data->users,
         ];
     }
@@ -143,5 +145,45 @@ class CallCenters extends Controller
             $row->sectors = [];
 
         return $row;
+    }
+
+    /**
+     * Применение фильтра по правам и разрешениям
+     * 
+     * @return $this
+     */
+    public function setFilterPermit()
+    {
+        $users = [];
+        $user = $this->request->user();
+
+        /** Фильтрация по колл-центру */
+        if ($this->request->callcenter) {
+
+            $callcenter = $this->request->callcenter;
+
+            /** Проверка доступа к чужим коллцентрам */
+            if ($callcenter != $user->callcenter_id and !$user->can('rating_all_callcenters'))
+                throw new ExceptionsJsonResponse("Доступ к другому колл-центру ограничен");
+
+            if (!$callcenter)
+                return $this;
+
+            foreach ($this->data->users as $row) {
+                if ($callcenter == $row->callcenter_id)
+                    $users[] = $row;
+            }
+
+            $this->data->users = $users;
+
+            $stats = $this->data->stats;
+
+            if (isset($stats[$callcenter]))
+                $this->data->stats = [$callcenter => $this->data->stats[$callcenter]];
+            else
+                $this->data->stats = [];
+        }
+
+        return $this;
     }
 }

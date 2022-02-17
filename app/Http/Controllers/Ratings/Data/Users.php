@@ -32,19 +32,19 @@ trait Users
     /**
      * Массив руководителей колл-центров
      * 
-     * @var array
+     * @var array<int>
      */
     protected $сhiefs = [];
 
     /**
      * Массив руководителей секторов
      * 
-     * @var array
+     * @var array<int>
      */
     protected $admins = [];
 
     /**
-     * Поиск руководителей и админов секторов
+     * Поиск руководителей колл-центров
      * 
      * @return $this
      */
@@ -310,6 +310,12 @@ trait Users
                     'old' => $row->position_old,
                 ];
             });
+
+        // /** Добавление сотрудников, пониженных в должности */
+        // if (request()->user()->can('rating_show_chiefs')) {
+        //     foreach ($this->data->stories->position as $position) {
+        //     }
+        // }
 
         return $this;
     }

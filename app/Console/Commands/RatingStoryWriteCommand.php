@@ -58,10 +58,12 @@ class RatingStoryWriteCommand extends Command
         $rating = (new CallCenters($request))->get();
         $write = [];
 
+        $to_old = env("NEW_CRM_OFF", true);
+
         foreach ($rating->users as $user) {
             $write[] = RatingStory::create([
                 'to_day' => $request->start,
-                'pin' => $user->pin,
+                'pin' => $to_old ? ($user->pinOld ?: $user->pin) : $user->pin,
                 'rating_data' => $user,
             ]);
         }
@@ -81,7 +83,7 @@ class RatingStoryWriteCommand extends Command
         foreach ($rating->users as $user) {
             $write[] = RatingStory::create([
                 'to_period' => $request->start,
-                'pin' => $user->pin,
+                'pin' => $to_old ? ($user->pinOld ?: $user->pin) : $user->pin,
                 'rating_data' => $user,
             ]);
         }

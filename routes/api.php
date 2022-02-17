@@ -113,6 +113,8 @@ Route::group(['middleware' => 'user.token'], function () {
     /** Маршрутизация различных рейтингов */
     Route::group(['prefix' => 'ratings', 'middleware' => 'user.can:rating_access'], function () {
 
+        /** Загрузка настроек пользователя для рейтинга */
+        Route::post('callcenter/start', 'Ratings\Ratings@ratingStart')->name('api.ratings.callcenter.start');
         /** Вывод основного рейтинга колл-центров */
         Route::post('callcenter', 'Ratings\Ratings@getCallCenters')->name('api.ratings.callcenter');
 

@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Callcenter extends Model
 {
-
     use HasFactory;
 
     /**
@@ -15,10 +14,8 @@ class Callcenter extends Model
      * 
      * @return \Illuminate\Database\Eloquent\Relations\hasMany
      */
-    public function sectors() {
-
+    public function sectors()
+    {
         return $this->hasMany(CallcenterSector::class);
-
     }
-
 }

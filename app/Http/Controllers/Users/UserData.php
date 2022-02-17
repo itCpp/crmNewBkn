@@ -6,6 +6,29 @@ use App\Http\Controllers\Controller;
 use App\Models\CallcenterSector;
 use App\Models\Role;
 
+/**
+ * @property null|string auth_type              Тип авторизации
+ * @property null|int callcenter_id             Идентификтаор колл-центра
+ * @property null|int callcenter_sector_id      Идентификтаор сектора
+ * @property string created_at                  Дата создания "2019-05-21T21:00:00.000000Z"
+ * @property string date                        Дата создания "22.05.2019 00:00:00"
+ * @property null|string deleted_at             Дата удаления сотрудника
+ * @property int id                             Идентификатор сотрудника
+ * @property string login                       Логин сотрудника
+ * @property null|string name                   Имя сотруднкиа
+ * @property string name_fio                    ФИО сотрудника "Иванов И.И."
+ * @property string name_full                   Полное ФИО сотрудника
+ * @property string name_io                     Полное имя и отчество сотрудника
+ * @property null|string old_pin                Старый персональный номер
+ * @property null|string patronymic             Отчество сотрудника
+ * @property int pin                            Персональный номер сотрудника
+ * @property null|int position_id               Идентификатор должности
+ * @property array<string> roles                Список ролей сотрудника
+ * @property bool superadmin                    Флаг суперадмина (полный доступ)
+ * @property string surname                     Фамилия сотрудника
+ * @property null|string telegram_id            Идентификатор Телеграма
+ * @property string updated_at                  Дата и время обновления
+ */
 class UserData
 {
     /**

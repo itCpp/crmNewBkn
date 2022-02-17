@@ -370,8 +370,10 @@ trait CallCenterResult
         // Расчет зарплаты
         $row->salary = $row->comings_sum;
 
-        if ($row->oklad > 0)
+        if ($row->oklad > 0) {
+            $row->oklad_period = $row->oklad / 2;
             $row->salary = 0;
+        }
 
         return $this;
     }
