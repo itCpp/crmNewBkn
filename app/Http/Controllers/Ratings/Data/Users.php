@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Ratings\Data;
 
+use App\Models\Saratov\Personal;
 use App\Models\Saratov\PersonalOkladStory;
 use App\Models\User;
 use App\Models\UsersPosition;
@@ -279,6 +280,13 @@ trait Users
         $ids = $this->data->pins->map(function ($row) {
             return $row->id;
         })->toArray();
+
+        /** Информация о сотрудниках */
+        Personal::whereIn('pin', $pins)
+            ->get()
+            ->each(function ($row) {
+                $this->data->stories->personal[$row->pin] = $row;
+            });
 
         /** История смены оклада */
         PersonalOkladStory::whereIn('pin', $pins)

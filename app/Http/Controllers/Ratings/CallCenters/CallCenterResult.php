@@ -139,7 +139,8 @@ trait CallCenterResult
         $this->callcenter_id = $row->callcenter_id;
         $this->sector_id = $row->callcenter_sector_id;
 
-        $this->checkStatsRow()
+        $this->setPersonalData()
+            ->checkStatsRow()
             ->setComings()
             ->setRequests()
             ->setCashbox()
@@ -510,6 +511,42 @@ trait CallCenterResult
         $crm->comings_in_day = round($crm->comings / $this->dates->diff, 1);
 
         $this->data->crm = $crm;
+
+        return $this;
+    }
+
+    /**
+     * Применение информации из таблицы сотрудников
+     * 
+     * @return $this
+     */
+    public function setPersonalData()
+    {
+        $this->row->personal = $this->data->stories->personal[$this->row->pin] ?? null;
+
+        if (!$this->row->personal)
+            $this->row->personal = $this->data->stories->personal[$this->row->pinOld] ?? null;
+
+        if (!$this->row->personal)
+            return $this;
+
+        if (!$this->row->id) {
+            $this->row->name = $this->row->personal->fio;
+            $this->row->fio = preg_replace(
+                '~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u',
+                '$1 $2.$3.',
+                trim($this->row->name)
+            );
+        }
+
+        if ($this->row->oklad == 0 and $this->row->personal->oklad)
+            $this->row->oklad = $this->row->personal->oklad;
+
+        if (!$this->row->position)
+            $this->row->position = $this->row->personal->doljnost;
+
+        if (!$this->row->working)
+            $this->row->working = $this->row->personal->state == "Работает";
 
         return $this;
     }
