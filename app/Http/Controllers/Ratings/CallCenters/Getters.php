@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Ratings\CallCenters;
 
+use App\Models\UsersPosition;
+
 /**
  * ТРЕЙТ для определения различных ставок и процентов
  * 
@@ -252,6 +254,9 @@ trait Getters
      */
     public function getColorAdmin($row)
     {
+        if (!$row->working)
+            return $row->color;
+
         if (in_array($row->pin, $this->admins))
             return "blue";
         else if (in_array($row->pin, $this->сhiefs))

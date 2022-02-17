@@ -106,6 +106,34 @@ trait CallCenterResult
      */
     public function getResultRow($row)
     {
+        $row->oklads = [];
+
+        /** История изменений оклада */
+        if (isset($this->data->stories->oklad[$row->pin]))
+            $row->oklads = $this->data->stories->oklad[$row->pin];
+        else if (isset($this->data->stories->oklad[$row->pinOld]))
+            $row->oklads = $this->data->stories->oklad[$row->pinOld];
+
+        $row->oklads = $row->oklads ?? [];
+        $row->oklad_start = null;
+
+        foreach ($row->oklads as $oklad) {
+            $row->oklad = $oklad->new;
+            $row->oklad_start = $oklad->date;
+        }
+
+        /** История смены должности */
+        $row->positions = $this->data->stories->position[$row->id] ?? [];
+        $row->position_id = null;
+        $row->position_start = null;
+
+        foreach ($row->positions as $position) {
+            $row->position_id = $position->new;
+            $row->position_start = $position->date;
+        }
+
+        $row->position = $this->getPositionName($row->position_id);
+
         $this->row = $row;
 
         $this->callcenter_id = $row->callcenter_id;
@@ -193,7 +221,12 @@ trait CallCenterResult
      */
     public function setRequests()
     {
-        if (!$requests = ($this->data->requests[$this->row->pin] ?? null))
+        $requests = ($this->data->requests[$this->row->pin] ?? null);
+
+        if (!$requests)
+            $requests = ($this->data->requests[$this->row->pinOld] ?? null);
+
+        if (!$requests)
             return $this;
 
         $stat = &$this->data->stats[$this->callcenter_id]->sectors[$this->sector_id];
@@ -335,6 +368,9 @@ trait CallCenterResult
 
         // Расчет зарплаты
         $row->salary = $row->comings_sum;
+
+        if ($row->oklad > 0)
+            $row->salary = 0;
 
         return $this;
     }

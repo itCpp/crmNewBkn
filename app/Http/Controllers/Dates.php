@@ -153,6 +153,8 @@ class Dates
             $this->first->setDay(1);
         }
 
+        $this->second = $this->first->copy();
+
         if ($this->second->day >= 16) {
             $this->second->endOfMonth();
         } else {

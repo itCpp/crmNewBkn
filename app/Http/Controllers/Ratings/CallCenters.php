@@ -66,7 +66,7 @@ class CallCenters extends Controller
 
         $this->full_data = $request->user()->can('rating_callcenter_full_data') ?: $full_data;
 
-        $this->positions_admin = $this->envExplode("RATING_ADMIN_POSITION_ID", 2);
+        $this->positions_admin = $this->envExplode("RATING_ADMIN_POSITION_ID");
     }
 
     /**

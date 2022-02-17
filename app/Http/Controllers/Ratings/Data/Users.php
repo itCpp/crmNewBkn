@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Ratings\Data;
 
+use App\Models\Saratov\PersonalOkladStory;
 use App\Models\User;
 use App\Models\UsersPosition;
+use App\Models\UsersPositionsStory;
 
 /**
  * @method findUsers()
@@ -52,6 +54,10 @@ trait Users
 
         $this->сhiefs = User::select('pin')
             ->whereIn('position_id', $this->envExplode('RATING_CHIEF_POSITION_ID'))
+            ->where(function ($query) {
+                $query->where('deleted_at', null)
+                    ->orWhere('deleted_at', '>', $this->dates->start . " 00:00:00");
+            })
             ->get()
             ->map(function ($row) {
                 return $row->pin;
@@ -73,6 +79,10 @@ trait Users
 
         $this->admins = User::select('pin')
             ->whereIn('position_id', $this->envExplode('RATING_ADMIN_POSITION_ID'))
+            ->where(function ($query) {
+                $query->where('deleted_at', null)
+                    ->orWhere('deleted_at', '>', $this->dates->start . " 00:00:00");
+            })
             ->get()
             ->map(function ($row) {
                 return $row->pin;
@@ -124,8 +134,7 @@ trait Users
 
             if (isset($rows[$pin])) {
                 $row = $rows[$pin] ?? null;
-            }
-            else if ($key = array_search($pin, $this->data->newToOld)) {
+            } else if ($key = array_search($pin, $this->data->newToOld)) {
                 $pin = $key;
                 $row = $rows[$pin] ?? null;
             }
@@ -145,6 +154,8 @@ trait Users
 
         $this->data->pins = collect($users ?? []);
 
+        $this->getStory();
+
         return $this;
     }
 
@@ -161,6 +172,7 @@ trait Users
         $name .= " " . $row->patronymic;
 
         $template = [
+            'id' => $row->id,
             'bonuses' => 0, # Общая сумма бонусов
             'bonus_cahsbox' => 0, # Бонус кассы
             'bonus_comings' => 0, # Сумма бонусов за приходы
@@ -251,5 +263,46 @@ trait Users
             'requestsAll' => 0,
             'efficiency' => 0, # КПД
         ];
+    }
+
+    /**
+     * Поиск истории сотрудников
+     * 
+     * @return $this
+     */
+    public function getStory()
+    {
+        $pins = $this->data->pins->map(function ($row) {
+            return $row->pinOld ?: $row->pin;
+        })->toArray();
+
+        $ids = $this->data->pins->map(function ($row) {
+            return $row->id;
+        })->toArray();
+
+        /** История смены оклада */
+        PersonalOkladStory::whereIn('pin', $pins)
+            ->where('delDate', null)
+            ->get()
+            ->each(function ($row) {
+                $this->data->stories->oklad[$row->pin][] = (object) [
+                    'date' => $row->date,
+                    'new' => $row->oklad,
+                    'old' => $row->okladOld,
+                ];
+            });
+
+        /** История смены должности */
+        UsersPositionsStory::whereIn('user_id', $ids)
+            ->get()
+            ->each(function ($row) {
+                $this->data->stories->position[$row->user_id][] = (object) [
+                    'date' => date("Y-m-d", strtotime($row->created_at)),
+                    'new' => $row->position_new,
+                    'old' => $row->position_old,
+                ];
+            });
+
+        return $this;
     }
 }
