@@ -33,6 +33,7 @@ class Ratings extends Controller
 
         return response()->json([
             'all_access' => $all,
+            'callcenter' => $all ? null : $request->user()->callcenter_id,
             'centers' => $centers ?? [],
         ]);
     }
