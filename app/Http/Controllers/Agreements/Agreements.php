@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Agreements;
 use App\Http\Controllers\Controller;
 use App\Models\Base\CrmAgreement;
 use App\Models\Base\CrmAgreementComment;
+use App\Models\Base\CrmKassa;
 use App\Models\Base\Office;
 use App\Models\Base\Personal;
 use Illuminate\Http\Request;
@@ -79,7 +80,7 @@ class Agreements extends Controller
             if (trim($oristFio) == "")
                 continue;
 
-            $oristFioArr[] = trim($oristFio);
+            $oristFioArr[] = $this->getPersonalData(trim($oristFio));
         }
 
         $row->oristFioArr = $oristFioArr ?: [];
@@ -150,12 +151,15 @@ class Agreements extends Controller
         $comments = []; // Дополнительные данные
         $predstavs = []; // Писок представителей
         $odIspolnitel = null; // Текущий исполнитель
+        $predmet = null; // Предмет договора
 
         foreach ($this->comment_types as $type) {
             $comments[$type] = [];
         }
 
         foreach ($comments_rows as $comment) {
+
+            $comment->text = htmlspecialchars_decode($comment->text);
 
             // Обработка данных акта
             if ($comment->type == "act") {
@@ -174,6 +178,12 @@ class Agreements extends Controller
                             break;
                     }
                 }
+            }
+
+            if ($comment->type == "predmetDogovora") {
+
+                if (!$predmet)
+                    $predmet = $comment->text;
             }
 
             // Добавление представителей
@@ -201,7 +211,15 @@ class Agreements extends Controller
 
         $row->odIspolnitel = $odIspolnitel;
 
-        return $row->toArray();
+        if ($predmet)
+            $row->predmetDogovora = $predmet;
+
+        return array_merge($row->toArray(), [
+            'avans' => (int) $row->avans,
+            'summa' => (int) $row->summa,
+            'ostatok' => (int) $row->ostatok,
+            'predstavRashod' => $this->getPredstavRashodSumm($row->nomerDogovora),
+        ]);
     }
 
     /**
@@ -242,5 +260,19 @@ class Agreements extends Controller
             'fio' => $personal->fio ?? null,
             'doljnost' => $personal->doljnost ?? null,
         ];
+    }
+
+    /**
+     * Подсчет суммы представильских расходов
+     * 
+     * @param array $numbers Номера договоров
+     * @return array
+     */
+    public function getPredstavRashodSumm($number)
+    {
+        return CrmKassa::selectRaw('sum(predstavRashod) as sum')
+            ->where('nomerDogovora', $number)
+            ->where('predstavRashod', '!=', "")
+            ->sum('predstavRashod');
     }
 }
