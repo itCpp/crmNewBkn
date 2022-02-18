@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Ratings;
 use App\Exceptions\ExceptionsJsonResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Dates;
+use App\Models\RatingCallcenterSelected;
+use Exception;
 use Illuminate\Http\Request;
 
 class CallCenters extends Controller
@@ -95,6 +97,8 @@ class CallCenters extends Controller
             ->getResult()
             ->setFilterPermit();
 
+        $this->writeSelectedId();
+
         if ($this->full_data)
             return $this->data;
 
@@ -164,7 +168,7 @@ class CallCenters extends Controller
 
             /** Проверка доступа к чужим коллцентрам */
             if ($callcenter != $user->callcenter_id and !$user->can('rating_all_callcenters'))
-                throw new ExceptionsJsonResponse("Доступ к другому колл-центру ограничен");
+                throw new ExceptionsJsonResponse("Доступ к рейтингу другого колл-центра ограничен");
 
             if (!$callcenter)
                 return $this;
@@ -182,6 +186,27 @@ class CallCenters extends Controller
                 $this->data->stats = [$callcenter => $this->data->stats[$callcenter]];
             else
                 $this->data->stats = [];
+        }
+
+        return $this;
+    }
+
+    /**
+     * Запись фильтра выбранного коллцентра в базу данных
+     * 
+     * @return $this
+     */
+    public function writeSelectedId()
+    {
+        try {
+            $selected = RatingCallcenterSelected::firstOrNew([
+                'user_id' => request()->user()->id
+            ]);
+
+            $selected->callcenter_id = request()->callcenter;
+            $selected->save();
+        } catch (Exception $e) {
+            return $this;
         }
 
         return $this;

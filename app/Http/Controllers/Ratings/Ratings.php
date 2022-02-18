@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Ratings;
 
 use App\Http\Controllers\Controller;
 use App\Models\Callcenter;
+use App\Models\RatingCallcenterSelected;
 use Illuminate\Http\Request;
 
 class Ratings extends Controller
@@ -31,9 +32,16 @@ class Ratings extends Controller
                 ->toArray();
         }
 
+        $selected = $request->user()->callcenter_id;
+
+        if ($all) {
+            $callcenter_selected = RatingCallcenterSelected::where('user_id', $request->user()->id)->first();
+            $selected = $callcenter_selected->callcenter_id ?? null;
+        }
+
         return response()->json([
             'all_access' => $all,
-            'callcenter' => $all ? null : $request->user()->callcenter_id,
+            'callcenter' => $selected,
             'centers' => $centers ?? [],
         ]);
     }
