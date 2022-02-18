@@ -169,6 +169,16 @@ Route::group(['middleware' => 'user.token'], function () {
         Route::post('mytests', 'Testing\MyTests@mytests')->name('api.users.mytests');
     });
 
+    /** Маршрутищация работы с договорными клиентами */
+    Route::group([
+        'prefix' => "agreements",
+        'middleware' => 'user.can:clients_agreements_access'
+    ], function () {
+
+        /** Список договоров */
+        Route::post('/', 'Agreements\Agreements@index')->name('api.agreements');
+    });
+
     /** Маршрутизация админпанели */
     Route::group(['prefix' => "admin", 'middleware' => "user.can:admin_access"], function () {
 
