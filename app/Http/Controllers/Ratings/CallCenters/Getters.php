@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\Ratings\CallCenters;
 
-use App\Models\UsersPosition;
-
 /**
  * ТРЕЙТ для определения различных ставок и процентов
  * 

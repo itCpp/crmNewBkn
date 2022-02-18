@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Users;
 use App\Exceptions\CreateNewUser;
 use App\Http\Controllers\Controller;
 use App\Models\CrmMka\CrmUser;
+use App\Models\Saratov\Personal;
 use App\Models\User;
 use App\Models\UsersPositionsStory;
 use Illuminate\Http\Request;
@@ -209,6 +210,15 @@ class UsersMerge extends Controller
 
         if ($fired or in_array($user->pin, $this->firedUser)) {
             $create['deleted_at'] = now();
+        }
+
+        if ($personal = Personal::where('pin', $user->pin)->first()) {
+
+            if ($personal->workStop)
+                $create['deleted_at'] = $personal->workStop;
+
+            if ($personal->telegram > 0)
+                $create['telegram'] = $personal->telegram;
         }
 
         if (User::where('pin', $create['pin'])->orWhere('login', $create['login'])->count())

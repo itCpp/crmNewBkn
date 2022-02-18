@@ -15,7 +15,7 @@ class RolesSeeder extends Seeder
     public $rolesTo = [
         'callCenterManager' => [
             'permissions' => [
-                'requests_access', 'requests_add', 'requests_addr_change',
+                'rating_access', 'requests_access', 'requests_add', 'requests_addr_change',
                 'requests_all_sectors', 'requests_comment_first', 'requests_edit',
                 'requests_pin_change', 'requests_pin_for_appointment', 'requests_pin_set',
                 'requests_pin_set_offline', 'requests_sector_change', 'requests_sector_set',
@@ -26,7 +26,7 @@ class RolesSeeder extends Seeder
         ],
         'admin' => [
             'permissions' => [
-                'requests_access', 'requests_add', 'requests_addr_change',
+                'rating_access', 'requests_access', 'requests_add', 'requests_addr_change',
                 'requests_all_my_sector', 'requests_comment_first', 'requests_edit',
                 'requests_pin_change', 'requests_pin_for_appointment', 'requests_pin_set',
                 'requests_set_null_status', 'user_auth_query'
@@ -36,7 +36,7 @@ class RolesSeeder extends Seeder
         ],
         'caller' => [
             'permissions' => [
-                'requests_access', 'requests_edit', 'requests_pin_for_appointment',
+                'rating_access', 'requests_access', 'requests_edit', 'requests_pin_for_appointment',
             ],
             'statuses' => [1, 2, 3, 4, 5],
             'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],

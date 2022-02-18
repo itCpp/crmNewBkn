@@ -34,7 +34,9 @@ class AdminUsers extends Controller
                     $query->where('users.surname', 'LIKE', "%{$request->search}%")
                         ->orWhere('users.name', 'LIKE', "%{$request->search}%")
                         ->orWhere('users.patronymic', 'LIKE', "%{$request->search}%")
+                        ->orWhereRaw("concat(`users`.`surname`, ' ', `users`.`name`, ' ', `users`.`patronymic`) LIKE '%{$request->search}%'")
                         ->orWhere('users.pin', 'LIKE', "%{$request->search}%")
+                        ->orWhere('users.old_pin', 'LIKE', "%{$request->search}%")
                         ->orWhere('users.login', 'LIKE', "%{$request->search}%");
                 })
                     ->orderBy('users.deleted_at')
