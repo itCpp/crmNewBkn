@@ -385,6 +385,8 @@ class Agreements extends Controller
      * 
      * @param string $data JSON строка
      * @return array|string
+     * 
+     * @todo Взять идентификтаоры из раздела договоров и добавить в метод
      */
     public function getActData($data)
     {
