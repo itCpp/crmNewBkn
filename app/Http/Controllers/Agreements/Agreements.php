@@ -64,6 +64,9 @@ class Agreements extends Controller
         return response()->json([
             'rows' => $rows,
             'personals' => $this->personals,
+            'current_page' => $paginate->currentPage(),
+            'next_page' => $paginate->currentPage() + 1,
+            'pages' => $paginate->lastPage(),
         ]);
     }
 

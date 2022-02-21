@@ -41,6 +41,11 @@ class RoleFactory extends Factory
             'name' => "Оператор",
             'comment' => "Оператор колл-центра",
         ],
+        [
+            'role' => "administrative",
+            'name' => "Административный отдел",
+            'comment' => "Бухгалтерия, отдел кадров и тд...",
+        ],
         // [
         //     'role' => "secretar",
         //     'name' => "Секретарь",
