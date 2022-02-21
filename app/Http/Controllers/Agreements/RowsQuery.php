@@ -412,7 +412,7 @@ trait RowsQuery
 
         $phones = [];
 
-        foreach ($list ?? [] as $key => $phone) {
+        foreach (array_unique($list ?? []) as $key => $phone) {
             $phones[] = $this->serializePhoneRow($phone, "+{$row->id}d{$key}");
         }
 

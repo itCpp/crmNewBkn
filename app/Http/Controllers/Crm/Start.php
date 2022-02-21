@@ -81,7 +81,8 @@ class Start extends Controller
             'permits' => $permits,
             'topMenu' => $menu,
             'intervalCounter' => self::getCounterUpdateInterval(),
-            'counter' => Counters::getCounterData($request),
+            // 'counter' => Counters::getCounterData($request),
+            'counter' => [],
             'themes' => Themes::$data,
             'statuses' => $statuses,
         ]);
