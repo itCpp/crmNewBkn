@@ -15,38 +15,6 @@ class Agreements extends Controller
     use RowsQuery;
 
     /**
-     * Список иконок офиса
-     * 
-     * @var array<string, string>
-     */
-    protected $offices = [];
-
-    /**
-     * Список данных сотрудников
-     * 
-     * @var array<int, array>
-     */
-    protected $personals = [];
-
-    /**
-     * Типы комментариев для извлечения
-     * 
-     * @var array
-     */
-    protected $comment_types = [
-        'act',
-        'predmetDogovora',
-        'odIspolnitel',
-        'comment',
-        'commentOKK',
-        'epodComments',
-        'nachPredComment',
-        'sytRazgovora',
-        'uppComment',
-        'clientComment'
-    ];
-
-    /**
      * Вывод договоров
      * 
      * @param  \Illuminate\Http\Request  $request

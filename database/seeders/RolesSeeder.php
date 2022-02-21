@@ -71,6 +71,7 @@ class RolesSeeder extends Seeder
                 'sms_access',
                 'sms_access_system',
                 'clients_agreements_access',
+                'clients_agreements_all',
                 'admin_users',
             ],
         ],

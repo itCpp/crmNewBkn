@@ -17,6 +17,51 @@ use Illuminate\Http\Request;
 trait RowsQuery
 {
     /**
+     * Список иконок офиса
+     * 
+     * @var array<string, string>
+     */
+    protected $offices = [];
+
+    /**
+     * Список данных сотрудников
+     * 
+     * @var array<int, array>
+     */
+    protected $personals = [];
+
+    /**
+     * Типы комментариев для извлечения
+     * 
+     * @var array
+     */
+    protected $comment_types = [
+        'act',
+        'predmetDogovora',
+        'odIspolnitel',
+        'comment',
+        'commentOKK',
+        'epodComments',
+        'nachPredComment',
+        'sytRazgovora',
+        'uppComment',
+        'clientComment'
+    ];
+
+    /**
+     * Наименование статусов
+     * 
+     * @var array<int, string>
+     */
+    protected $statuses = [
+        0 => "Необработано",
+        1 => "Клиент доволен",
+        2 => "Отправлен на проверку",
+        3 => "Негатив",
+        4 => "Отказ от созвона",
+    ];
+
+    /**
      * Формирование запроса на вывод договоров
      * 
      * @param \Illuminate\Http\Request $request
@@ -94,10 +139,10 @@ trait RowsQuery
             'c.unicIdClient',
             'crm_clients_unical.phone as phones',
             'crm_agreement.phone',
-            'coll.status AS collStatus',
+            'coll.status as collStatus',
             'coll.comment',
             'coll.commentOkk',
-            'coll.date AS collDate'
+            'coll.date as collDate'
         )
             ->leftjoin('crm_dogovor_coll_center as coll', function ($join) {
                 $join->on('coll.nomerDogovora', '=', 'crm_agreement.nomerDogovora')
@@ -128,10 +173,30 @@ trait RowsQuery
                 $query = $query->where('coll.status', 4);
             })
             ->when(($request->type == "search" and (bool) $request->search), function ($query) use ($request) {
+
+                $search = (object) $request->search;
+
+                if ($search->number ?? null)
+                    $query = $query->where('crm_agreement.nomerDogovora', $search->number);
+
+                if ($search->name ?? null)
+                    $query = $query->where('crm_agreement.FullNameClient', 'LIKE', "%{$search->name}%");
+
+                if ($search->date ?? null)
+                    $query = $query->where('crm_agreement.date', $search->date);
+
+                if ($search->pin ?? null) {
+                    $query = $query->where(function ($sql) use ($search) {
+                        $sql->where('crm_agreement.oristFio', 'LIKE', "%{$search->pin}%")
+                            ->orWhere('crm_agreement.odIspolnitel', 'LIKE', "%&gt;{$search->pin}%");
+                    });
+                }
             });
 
-        if (in_array($request->type, ["all", "search"]) || $request->user()->can('clients_agree_all'))
-            return $query->orderBy('crm_agreement.id', 'DESC')->orderBy('crm_agreement.nomerDogovora', 'DESC');
+        if (in_array($request->type, ["all", "search"]) || $request->user()->can('clients_agreements_all')) {
+            return $query->orderBy('crm_agreement.id', 'DESC')
+                ->orderBy('crm_agreement.nomerDogovora', 'DESC');
+        }
 
         return $query->where(function ($query) use ($request) {
             $query->where('c.collPin', $request->user()->pin)
@@ -158,6 +223,9 @@ trait RowsQuery
 
         // Определение цвета строки
         $row->color = $this->getRowColor($row->collStatus);
+
+        $row->collStatusName = !empty($this->statuses[$row->collStatus])
+            ? $this->statuses[$row->collStatus] : null;
 
         // Идентификаторы заявок
         $row->unicIdClient = (int) $row->unicIdClient;
