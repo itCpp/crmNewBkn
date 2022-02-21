@@ -104,7 +104,7 @@ class Agreements extends Controller
             $notif->date = date("Y-m-d H:i:s");
             $notif->paramSearch = $row->nomerDogovora;
 
-            // $notif->save();
+            $notif->save();
         }
 
         $date = date("d.m.Y H:i:s");
@@ -133,14 +133,14 @@ class Agreements extends Controller
         $status->status = (int) $request->status;
         $status->pin = $pin;
 
-        // $status->save();
+        $status->save();
 
         $comment = new CrmDogovorCollCenterComment;
         $comment->id_row = $status->id;
         $comment->pin = $pin;
         $comment->comment = $request->comment;
 
-        // $comment->save();
+        $comment->save();
 
         $row->collStatus = $status->status;
 
