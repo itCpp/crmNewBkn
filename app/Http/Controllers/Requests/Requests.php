@@ -10,6 +10,8 @@ use App\Http\Controllers\Infos\Themes;
 use App\Models\Office;
 use App\Models\RequestsRow;
 use App\Models\RequestsRowsView;
+use App\Models\RequestsSource;
+use App\Models\RequestsSourcesResource;
 use App\Models\RequestsStoryPin;
 use App\Models\Status;
 use App\Models\Tab;
@@ -18,6 +20,13 @@ use Illuminate\Support\Facades\Crypt;
 
 class Requests extends Controller
 {
+    /**
+     * Список проверенных ресурсов источников
+     * 
+     * @var array
+     */
+    protected static $resources = [];
+
     /**
      * Вывод заявок
      * 
@@ -183,8 +192,6 @@ class Requests extends Controller
      */
     public static function getRequestRow(RequestsRow $row)
     {
-        $row->permits = RequestStart::$permits; // Разрешения пользователя
-
         $row->date_create = date("d.m.Y H:i", strtotime($row->created_at));
         $row->date_uplift = $row->uplift_at ? date("d.m.Y H:i", strtotime($row->uplift_at)) : null;
         $row->date_event = $row->event_at ? date("d.m.Y H:i", strtotime($row->event_at)) : null;
@@ -198,15 +205,25 @@ class Requests extends Controller
         $row->event_datetime = $row->event_date && $row->event_time
             ? "{$row->event_date}T{$row->event_time}" : null;
 
-        // Данные по номерам телефона
+        /** Данные по номерам телефона */
         $row->clients = self::getClientPhones($row, request()->user()->can('clients_show_phone'));
 
-        $row->source; # Источник заявки
-        $row->status; # Вывод данных о статусе
-        $row->office; # Вывод данных по офису
-        $row->sector; # Вывод данных по сектору
+        /** Источник заявки */
+        $row->source;
 
-        // Флаг вывода пункта меню для скрытия
+        /** Ресурс источника заявки */
+        $row->resource = self::getRequestReourceSourceData($row->sourse_resource);
+
+        /** Адрес офиса для заявки */
+        $row->office;
+
+        /** Вывод данных по сектору */
+        $row->sector;
+
+        /** Вывод данных о статусе */
+        $row->status = self::getRequestStatusData($row);
+
+        /** Флаг вывода пункта меню для скрытия */
         $row->uplift_hide_access = ($row->uplift == 1 and $row->status_id !== null and request()->user()->can('requests_hide_uplift_rows'));
 
         $row->view_at = RequestsRowsView::where([
@@ -216,7 +233,47 @@ class Requests extends Controller
 
         $row->updated = $row->view_at < $row->updated_at;
 
+        /** Проверенные разрешения пользователя */
+        $row->permits = RequestStart::$permits;
+
         return (object) $row->toArray();
+    }
+
+    /**
+     * Вывод данных о статусе
+     * 
+     * @param \App\Models\RequestsRow $row
+     * @return null|array
+     */
+    public static function getRequestStatusData($row)
+    {
+        if (!$status = $row->status()->first())
+            return null;
+
+        return $status->only('id', 'name', 'theme');
+    }
+
+    /**
+     * Вывод данных ресурса источника заявки
+     * 
+     * @param int $id
+     * @return null|array
+     */
+    public static function getRequestReourceSourceData($id)
+    {
+        if (!request()->user()->can('requests_show_resource'))
+            return null;
+
+        if (!empty(self::$resources[$id]))
+            return self::$resources[$id];
+
+        if (!$resource = RequestsSourcesResource::find($id))
+            return self::$resources[$id] = null;
+
+        return self::$resources[$id] = [
+            'type' => $resource->type,
+            'val' => $resource->val,
+        ];
     }
 
     /**

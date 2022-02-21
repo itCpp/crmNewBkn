@@ -45,7 +45,7 @@ class Agreements extends Controller
      */
     public function get(Request $request)
     {
-        $row = CrmAgreement::select('crm_agreement.*', 'coll.status AS collStatus')
+        $row = CrmAgreement::select('crm_agreement.*', 'coll.status as collStatus')
             ->where([
                 ['crm_agreement.id', $request->id],
                 ['crm_agreement.styles', 'NOT LIKE', '%ff0000%'],
