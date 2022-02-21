@@ -4,11 +4,10 @@ namespace App\Http\Controllers\Agreements;
 
 use App\Http\Controllers\Controller;
 use App\Models\Base\CrmAgreement;
-use App\Models\Base\CrmAgreementComment;
-use App\Models\Base\CrmKassa;
-use App\Models\Base\Office;
-use App\Models\Base\Personal;
-use App\Models\RequestsRow;
+use App\Models\Base\CrmComing;
+use App\Models\Base\CrmDogovorCollCenter;
+use App\Models\Base\CrmDogovorCollCenterComment;
+use App\Models\Base\CrmNotif;
 use Illuminate\Http\Request;
 
 class Agreements extends Controller
@@ -25,7 +24,7 @@ class Agreements extends Controller
     /**
      * Список данных сотрудников
      * 
-     * @var array<int, \App\Models\Base\Personal>
+     * @var array<int, array>
      */
     protected $personals = [];
 
@@ -71,338 +70,117 @@ class Agreements extends Controller
     }
 
     /**
-     * Сбор данных строки
+     * Вывод данных одного договора для окна редактирования
      * 
-     * @param \App\Models\Base\CrmAgreement $row
-     * @return array
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function serialize(CrmAgreement $row)
+    public function get(Request $request)
     {
-        // Список персональных номеров ЮПП
-        $row->oristFioArr = $this->getLawyerList($row->oristFio);
+        $row = CrmAgreement::select('crm_agreement.*', 'coll.status AS collStatus')
+            ->where([
+                ['crm_agreement.id', $request->id],
+                ['crm_agreement.styles', 'NOT LIKE', '%ff0000%'],
+                ['crm_agreement.nomerDogovora', '!=', '-'],
+                ['crm_agreement.vidUslugi', 'NOT LIKE', '%Юр. консультация%'],
+                ['crm_agreement.arhiv', 'NOT LIKE', '%Архив%'],
+            ])
+            ->leftjoin('crm_dogovor_coll_center as coll', function ($join) {
+                $join->on('coll.nomerDogovora', '=', 'crm_agreement.nomerDogovora')
+                    ->where('coll.last', 1);
+            })
+            ->first();
 
-        // Добавление иконки офиса
-        $row->icon = $this->getOfficeIcon($row->company);
+        if (!$row)
+            return response()->json(['message' => "Договор не найден"], 400);
 
-        // Определение цвета строки
-        $row->color = $this->getRowColor($row->colStatus);
-
-        // Идентификаторы заявок
-        $row->unicIdClient = (int) $row->unicIdClient;
-
-        // Список номеров телефона клиента
-        $row->phones = $this->getPhones($row);
-
-        $row->avans = (int) $row->avans;
-        $row->summa = (int) $row->summa;
-        $row->ostatok = (int) $row->ostatok;
-        $row->predstavRashod = $this->getPredstavRashodSumm($row->nomerDogovora);
-
-        // Объект расходов
-        $row->predstavRashodJson = json_decode($row->predstavRashodJson) ?: [];
-
-        $this->getComments($row);
-
-        return collect($row->toArray())->only([
-            'FullNameClient',
-            'avans',
-            'colStatus',
-            'collDate',
-            'color',
-            'coming_date',
-            'coming_time',
-            'comment',
-            'commentOkk',
-            'comments',
-            'date',
-            'icon',
-            'id',
-            'nomerDogovora',
-            'odIspolnitel',
-            'oristFioArr',
-            'ostatok',
-            'phones',
-            'predmetDogovora',
-            'predstavRashod',
-            'predstavRashodJson',
-            'rashodPoDogovory',
-            'status',
-            'summa',
-            'tematika',
-            'unicIdClient',
-        ])->all();
+        return response()->json([
+            'id' => $row->id,
+            'row' => $this->serialize($row),
+            'status' => (int) $row->collStatus,
+        ]);
     }
 
     /**
-     * Поиск икноки офиса
+     * Сохраняет статус и комментарий по договору
      * 
-     * @param string $id
-     * @return null|string
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function getOfficeIcon($id)
+    public function save(Request $request)
     {
-        $key = md5($id);
+        if (!$request->comment)
+            return response()->json(['message' => "Укажите комментарий"], 400);
 
-        if (!empty($this->office[$key]))
-            return $this->office[$key];
+        if (!$row = CrmAgreement::find($request->id))
+            return response()->json(['message' => "Договор не найден"], 400);
 
-        $office = Office::where('oldId', $id)->first();
+        $dateNotif = date("d.m.Y в H:i");
+        $dateAgree = date("d.m.Y", strtotime($row->date));
+        $pin = $request->user()->old_pin ?: $request->user()->pin;
 
-        return $this->office[$key] = ($office->icon ?? null);
-    }
+        // Создание уведомления в БАЗЫ для ОКК
+        if (in_array($request->status, [2, 3, 4])) {
 
-    /**
-     * Поиск икноки офиса
-     * 
-     * @param string $id
-     * @return null|string
-     */
-    public function getPersonalData($pin)
-    {
-        $pin = (int) $pin;
+            // Текст уведомления в БАЗЫ
+            $message = "{$dateNotif} - PIN:{$pin}: ";
+            $message .= "Договор №{$row->nomerDogovora} от {$dateAgree} г.; ";
+            $message .= $request->comment;
 
-        if (!empty($this->personals[$pin]))
-            return $this->personals[$pin];
+            // Сохранение уведомления
+            $notif = new CrmNotif;
+            $notif->pin = $pin;
+            $notif->seen = 0;
+            $notif->nameNotif = "Коментарий колл-центра!";
+            $notif->text = $message;
+            $notif->date = date("Y-m-d H:i:s");
+            $notif->paramSearch = $row->nomerDogovora;
 
-        $personal = Personal::where('pin', $pin)->first();
-
-        return $this->personals[$pin] = [
-            'pin' => $pin,
-            'fio' => $personal->fio ?? null,
-            'doljnost' => $personal->doljnost ?? null,
-        ];
-    }
-
-    /**
-     * Подсчет суммы представильских расходов
-     * 
-     * @param array $numbers Номера договоров
-     * @return array
-     */
-    public function getPredstavRashodSumm($number)
-    {
-        return CrmKassa::selectRaw('sum(predstavRashod) as sum')
-            ->where('nomerDogovora', $number)
-            ->where('predstavRashod', '!=', "")
-            ->sum('predstavRashod');
-    }
-
-    /**
-     * Определение цвета строки
-     * 
-     * @param string|int $status
-     * @return string
-     */
-    public function getRowColor($status)
-    {
-        if ($status == 0)
-            return "status-neobr";
-
-        if ($status == 1)
-            return "status-good";
-
-        if ($status == 2)
-            return "status-check";
-
-        if ($status == 3)
-            return "nstatus-bad";
-
-        if ($status == 4)
-            return "status-nocall";
-
-        return "status-no";
-    }
-
-    /**
-     * Определение списка ЮПП
-     * 
-     * @param string $upp
-     * @return array
-     */
-    public function getLawyerList($upp)
-    {
-        foreach (explode("/", $upp ?? "") as $row) {
-
-            if (trim($row) == "")
-                continue;
-
-            $list[] = $this->getPersonalData(trim($row));
+            // $notif->save();
         }
 
-        return $list ?? [];
-    }
+        $date = date("d.m.Y H:i:s");
+        $message = "{$pin} {$date}\n{$request->comment}";
 
-    /**
-     * Поиск номеров телефона клинта
-     * 
-     * @param object $row
-     * @return array
-     */
-    public function getPhones($row)
-    {
-        if ($row->unicIdClient)
-            return $this->getPhonesFromRequest($row->unicIdClient);
+        $status = CrmDogovorCollCenter::where([
+            ['nomerDogovora', $row->nomerDogovora],
+            ['last', 1],
+        ])->orderBy('id', 'DESC')->first();
 
-        $phones = json_decode($row->phones, true) ?: [];
-        $list = [];
+        if (!$status) {
 
-        // Поиск номеров из таблицы клиента
-        foreach ($phones as $phone) {
+            $zapis = null;
+            if ($coming = CrmComing::find($row->synchronizationId))
+                $zapis = date("d.m.Yг.", strtotime($coming->date)) . " " . $coming->time;
 
-            $phone = $this->checkPhone($phone, 3);
-
-            if ($phone and !in_array($phone, $list))
-                $list[] = $phone;
+            $status = new CrmDogovorCollCenter;
+            $status->nomerDogovora = $row->nomerDogovora;
+            $status->date = $date;
+            $status->zapis = $zapis;
+            $status->dateZakDog = $dateAgree . "г.";
+            $status->last = 1;
         }
 
-        // Поиск номеров из таблицы договора
-        $phones = explode(" ", $row->phone);
+        $status->comment = $status->comment ? ($status->comment . "\n\n" . $message) : $message;
+        $status->status = (int) $request->status;
+        $status->pin = $pin;
 
-        foreach ($phones as $phone) {
+        // $status->save();
 
-            $phone = $this->checkPhone($phone, 3);
+        $comment = new CrmDogovorCollCenterComment;
+        $comment->id_row = $status->id;
+        $comment->pin = $pin;
+        $comment->comment = $request->comment;
 
-            if ($phone and !in_array($phone, $list))
-                $list[] = $phone;
-        }
+        // $comment->save();
 
-        $phones = [];
+        $row->collStatus = $status->status;
 
-        foreach ($list ?? [] as $key => $phone) {
-            $phones[] = $this->serializePhoneRow($phone, "+{$row->id}d{$key}");
-        }
-
-        return $phones;
-    }
-
-    /**
-     * Номера телефона из заявки
-     * 
-     * @param int $id
-     * @return array
-     */
-    public function getPhonesFromRequest($id)
-    {
-        if (!$row = RequestsRow::find($id))
-            return [];
-
-        foreach ($row->clients as $client) {
-
-            $phone = $this->decrypt($client->phone);
-
-            $phones[] = $this->serializePhoneRow($phone, "+{$id}s{$client->id}");
-        }
-
-        return $phones ?? [];
-    }
-
-    /**
-     * Формирование строки с номером телефона
-     * 
-     * @param string $phone
-     * @param string id
-     * @return array
-     */
-    public static function serializePhoneRow($phone, $id)
-    {
-        $show = request()->user()->can('clients_show_phone');
-        $type = $show ? parent::KEY_PHONE_SHOW : parent::KEY_PHONE_HIDDEN;
-
-        return [
-            'number' => $show ? parent::checkPhone($phone, 3) : $id,
-            'phone' => parent::checkPhone($phone, $type),
-        ];
-    }
-
-    /**
-     * Вывод всех комментариев по договору
-     * 
-     * @param  \App\Models\Base\CrmAgreement  $row
-     * @return \App\Models\Base\CrmAgreement
-     */
-    public function getComments(&$row)
-    {
-        $rows = CrmAgreementComment::where('del', 0)
-            ->where('idAgreement', $row->id)
-            ->whereIn('type', $this->comment_types)
-            ->orderBy('date', 'DESC')
-            ->get();
-
-        $comments = []; // Все комментарии
-        $predstavs = []; // Список всех представителей
-
-        $odIspolnitel = null; // Текущий исполнитель
-        $predmet = null; // Предмет договора
-
-        /** Создание пустых контейнеров */
-        foreach ($this->comment_types as $type) {
-            $comments[$type] = [];
-        }
-
-        foreach ($rows as $comment) {
-
-            if ($comment->type == "act")
-                $comment->text = $this->getActData($comment->text);
-            else
-                $comment->text = htmlspecialchars_decode($comment->text);
-
-            if ($comment->type == "predmetDogovora") {
-
-                if (!$predmet)
-                    $predmet = $comment->text;
-            }
-
-            // Добавление представителей
-            if ($comment->type == "odIspolnitel") {
-
-                $comment->textPin = $this->getPersonalData($comment->text);
-
-                if (!$odIspolnitel)
-                    $odIspolnitel = $comment->textPin;
-
-                $predstavs[] = $comment->textPin;
-            }
-
-            // Запись данных
-            $comments[$comment->type][] = (object) [
-                'id' => $comment->id,
-                'created_at' => $comment->date,
-                'text' => $comment->text,
-                'textPin' => $comment->textPin,
-                'author' => $this->getPersonalData($comment->pin),
-            ];
-        }
-
-        $row->comments = $comments;
-
-        $row->odIspolnitel = $odIspolnitel;
-
-        if ($predmet)
-            $row->predmetDogovora = $predmet;
-
-        return $row;
-    }
-
-    /**
-     * Данные акта
-     * 
-     * @param string $data JSON строка
-     * @return array|string
-     * 
-     * @todo Взять идентификтаоры из раздела договоров и добавить в метод
-     */
-    public function getActData($data)
-    {
-        if ($response = json_decode($data, true)) {
-
-            if ($response['type'] == '0')
-                $response['type'] = 'Акт';
-            else if ($response['type'] == '1')
-                $response['type'] = 'Промакт';
-            else if ($response['type'] == '2')
-                $response['type'] = 'Акт с объяснительной';
-        }
-
-        return $response ?: $data;
+        return response()->json([
+            'comment' => $comment,
+            'status' => $status,
+            'row' => $this->serialize($row),
+            'notification' => $notif ?? null,
+        ]);
     }
 }

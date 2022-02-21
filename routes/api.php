@@ -177,6 +177,10 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Список договоров */
         Route::post('/', 'Agreements\Agreements@index')->name('api.agreements');
+        /** Вывод данных одного договора для окна редактирования */
+        Route::post('/get', 'Agreements\Agreements@get')->name('api.agreemetns.get');
+        /** Сохраняет статус и комментарий по договору */
+        Route::post('/save', 'Agreements\Agreements@save')->name('api.agreemetns.save');
     });
 
     /** Маршрутизация админпанели */
