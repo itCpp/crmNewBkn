@@ -7,6 +7,7 @@ use App\Http\Controllers\Crm\Start;
 use App\Http\Controllers\Dates;
 use App\Http\Controllers\Infos\Cities;
 use App\Http\Controllers\Infos\Themes;
+use App\Models\CallcenterSector;
 use App\Models\Office;
 use App\Models\RequestsRow;
 use App\Models\RequestsRowsView;
@@ -21,11 +22,39 @@ use Illuminate\Support\Facades\Crypt;
 class Requests extends Controller
 {
     /**
+     * Список проверенных источников
+     * 
+     * @var array
+     */
+    protected static $sources = [];
+
+    /**
      * Список проверенных ресурсов источников
      * 
      * @var array
      */
     protected static $resources = [];
+
+    /**
+     * Список проверенных адресов
+     * 
+     * @var array
+     */
+    protected static $offices = [];
+
+    /**
+     * Список проверенных секторов
+     * 
+     * @var array
+     */
+    protected static $sectors = [];
+
+    /**
+     * Список проверенных статусов заявки
+     * 
+     * @var array
+     */
+    protected static $statuses = [];
 
     /**
      * Вывод заявок
@@ -209,19 +238,19 @@ class Requests extends Controller
         $row->clients = self::getClientPhones($row, request()->user()->can('clients_show_phone'));
 
         /** Источник заявки */
-        $row->source;
+        $row->source = self::getReqoustRowSourceData($row->source_id);
 
         /** Ресурс источника заявки */
-        $row->resource = self::getRequestReourceSourceData($row->sourse_resource);
+        $row->resource = self::getRequestRowReourceSourceData($row->sourse_resource);
 
         /** Адрес офиса для заявки */
-        $row->office;
+        $row->office = self::getRequestRowOfficeData($row->address);
 
         /** Вывод данных по сектору */
-        $row->sector;
+        $row->sector = self::getRequestRowSectorData($row->callcenter_sector);
 
         /** Вывод данных о статусе */
-        $row->status = self::getRequestStatusData($row);
+        $row->status = self::getRequestRowStatusData($row);
 
         /** Флаг вывода пункта меню для скрытия */
         $row->uplift_hide_access = ($row->uplift == 1 and $row->status_id !== null and request()->user()->can('requests_hide_uplift_rows'));
@@ -240,17 +269,20 @@ class Requests extends Controller
     }
 
     /**
-     * Вывод данных о статусе
+     * Вывод данных источника заявки
      * 
-     * @param \App\Models\RequestsRow $row
+     * @param int $id
      * @return null|array
      */
-    public static function getRequestStatusData($row)
+    public static function getReqoustRowSourceData($id)
     {
-        if (!$status = $row->status()->first())
-            return null;
+        if (!empty(self::$sources[$id]))
+            return self::$sources[$id];
 
-        return $status->only('id', 'name', 'theme');
+        if (!$source = RequestsSource::find($id))
+            return self::$sources[$id] = null;
+
+        return self::$statuses[$id] = $source->only('id', 'name', 'comment');
     }
 
     /**
@@ -259,7 +291,7 @@ class Requests extends Controller
      * @param int $id
      * @return null|array
      */
-    public static function getRequestReourceSourceData($id)
+    public static function getRequestRowReourceSourceData($id)
     {
         if (!request()->user()->can('requests_show_resource'))
             return null;
@@ -270,10 +302,72 @@ class Requests extends Controller
         if (!$resource = RequestsSourcesResource::find($id))
             return self::$resources[$id] = null;
 
-        return self::$resources[$id] = [
-            'type' => $resource->type,
-            'val' => $resource->val,
-        ];
+        return self::$resources[$id] = $resource->only('type', 'val');
+    }
+
+    /**
+     * Вывод данных об офисе
+     * 
+     * @param null|int $id
+     * @return null|array
+     */
+    public static function getRequestRowOfficeData($id)
+    {
+        if (!$id)
+            return null;
+
+        if (!empty(self::$offices[$id]))
+            return self::$offices[$id];
+
+        if (!$office = Office::find($id))
+            return self::$offices[$id] = null;
+
+        return self::$offices[$id] = $office->only('id', 'name', 'base_id', 'active');
+    }
+
+    /**
+     * Поиск данных сектора
+     * 
+     * @param null|int $id
+     * @return null|array
+     */
+    public static function getRequestRowSectorData($id)
+    {
+        if (!$id)
+            return null;
+
+        if (!empty(self::$sectors[$id]))
+            return self::$sectors[$id];
+
+        if (!$sector = CallcenterSector::find($id))
+            return self::$sectors[$id] = null;
+
+        return self::$sectors[$id] = $sector->only(
+            'active',
+            'callcenter_id',
+            'comment',
+            'id',
+            'name'
+        );
+    }
+
+    /**
+     * Вывод данных о статусе
+     * 
+     * @param \App\Models\RequestsRow $row
+     * @return null|array
+     */
+    public static function getRequestRowStatusData($row)
+    {
+        $id = $row->status_id;
+
+        if (!empty(self::$statuses[$id]))
+            return self::$statuses[$id];
+
+        if (!$status = Status::find($id))
+            return self::$statuses[$id] = null;
+
+        return self::$statuses[$id] = $status->only('id', 'name', 'theme', 'comment');
     }
 
     /**
