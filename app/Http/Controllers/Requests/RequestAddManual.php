@@ -69,9 +69,9 @@ class RequestAddManual extends Controller
                 'comment_first' => $request->comment_first,
                 'theme' => $request->theme,
                 'city' => $request->region,
+                'REMOTE_ADDR' => $request->ip(),
             ],
             server: [
-                'REMOTE_ADDR' => $request->ip(),
                 'HTTP_USER_AGENT' => $request->userAgent(),
             ]
         );

@@ -56,6 +56,10 @@ class Ad extends Controller
             'queries' => $queries,
             'calls' => $this->getCallsInfo($phones),
             'texts' => $this->getTextsInfo($phones),
+            'ips' => $this->getIpsInfo($row->id),
+            'counts' => [
+                'ips' => $this->getIpsInfo($row->id, true),
+            ],
         ]);
     }
 
@@ -210,5 +214,65 @@ class Ad extends Controller
                 ];
             })
             ->toArray();
+    }
+
+    /**
+     * Информация об IP адресах
+     * 
+     * Антон Суханов, [17.11.2021 17:56]
+     * [ Фотография ]
+     * вот тут изменения, выводиться должен ip адрес, выборка его идет не через телефон
+     * а конкретная заявка ip и аты с выводом предыдущих этого же ip`
+     *
+     * @param int $id
+     * @param boolean $count Флаг вывода счетчика
+     * @return array|int
+     */
+    public function getIpsInfo($id, $count = false)
+    {
+        $ips = IncomingQuery::select('ip')
+            ->where([
+                ['ip', '!=', null],
+                ['request_id', $id],
+            ])
+            ->distinct()
+            ->get()
+            ->map(function ($row) {
+                return $row->ip;
+            });
+
+        $data = IncomingQuery::whereIn('ip', $ips)->orderBy('id', 'DESC');
+
+        if ($count)
+            return $data->count();
+
+        return $data->limit(100)->get()->map(function ($row) {
+
+            $phone = $this->decryptPhone($row->hash_phone, $row->query_data->phone ?? null);
+
+            return [
+                'id' => $row->request_id,
+                'ip' => $row->ip,
+                'ad_source' => $row->ad_source,
+                'date' => $row->created_at,
+                'manual' => $row->query_data->manual ?? null,
+                'phone' => $this->displayPhoneNumber($phone, $this->show_phones, 2),
+                'sourse_resource' => $this->getSourceResourceData($row->request_data->sourse_resource ?? null),
+                'source' => $this->getSourceData($row->request_data->source_id ?? null),
+                'query' => collect((array) $row->query_data ?? [])->only(
+                    'page',
+                    'site',
+                    'device',
+                    'region',
+                    'comment',
+                    'client_name',
+                    'utm_term',
+                    'utm_medium',
+                    'utm_source',
+                    'utm_content',
+                    'utm_campaign'
+                ),
+            ];
+        })->toArray();
     }
 }
