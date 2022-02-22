@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\IncomingCallsToSource;
 use App\Models\IncomingQuery;
 use App\Models\RequestsRow;
+use App\Models\RequestsSource;
 use Illuminate\Http\Request;
 
 class Ad extends Controller
@@ -16,6 +17,13 @@ class Ad extends Controller
      * @var array
      */
     protected $phones = [];
+
+    /**
+     * Список проверенных источников
+     * 
+     * @var array
+     */
+    protected $sources = [];
 
     /**
      * Список проверенных рекламных источников по ресурсам
@@ -59,23 +67,25 @@ class Ad extends Controller
     {
         return IncomingQuery::whereIn('hash_phone', $phones)
             ->where('type', 'call')
+            ->orderBy('id', 'DESC')
             ->get()
             ->map(function ($row) {
-                $arr = [
+
+                $resource = $row->hash_phone_resource ? $this->decryptPhone(
+                    $row->hash_phone_resource,
+                    $row->query_data->myPhone ?? null
+                ) : null;
+
+                $phone = $this->decryptPhone($row->hash_phone, $row->query_data->phone ?? null);
+
+                return [
+                    'ad_source' => $row->ad_source ?: $this->findAdSource($resource),
+                    'date' => $row->created_at,
                     'manual' => $row->query_data->manual ?? null,
-                    'phone' => $this->decryptPhone(
-                        $row->hash_phone,
-                        $row->query_data->phone ?? null
-                    ),
-                    'resource' => $row->hash_phone_resource ? $this->decryptPhone(
-                        $row->hash_phone_resource,
-                        $row->query_data->myPhone ?? null
-                    ) : null,
+                    'phone' => $phone,
+                    'resource' => $resource,
+                    'source' => $this->getSourceData($row->request_data->source_id ?? null),
                 ];
-
-                $arr['ad_source'] = $row->ad_source ?: $this->findAdSource($row['resource']);
-
-                return $arr;
             })
             ->toArray();
     }
@@ -117,5 +127,25 @@ class Ad extends Controller
             $this->resources[$resource] = $source->ad_place;
 
         return $this->resources[$resource];
+    }
+
+    /**
+     * Поиск источников
+     * 
+     * @param null|int $id
+     * @return null|array
+     */
+    public function getSourceData($id)
+    {
+        if (!$id)
+            return null;
+
+        if (!empty($this->sources[$id]))
+            return $this->sources[$id];
+
+        if (!$source = RequestsSource::find($id))
+            return $this->sources[$id] = null;
+
+        return $this->sources[$id] = $source->only('id', 'name');
     }
 }
