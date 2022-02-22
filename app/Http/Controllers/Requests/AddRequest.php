@@ -143,7 +143,8 @@ class AddRequest extends Controller
         $this->queryLog = new IncomingQuery;
         $this->queryLog->ip = $this->request->ip();
         $this->queryLog->user_agent = $this->request->header('User-Agent');
-        $this->queryLog->utm_source = $this->request->utm_source;
+        $this->queryLog->source = $this->request->utm_source;
+        $this->queryLog->type = $this->query_type;
 
         $this->response = [];
 
