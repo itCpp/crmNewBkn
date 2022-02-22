@@ -302,7 +302,12 @@ class Requests extends Controller
         if (!$resource = RequestsSourcesResource::find($id))
             return self::$resources[$id] = null;
 
-        return self::$resources[$id] = $resource->only('type', 'val');
+        $resource = $resource->only('type', 'val');
+
+        if ($resource['type'] == "phone")
+            $resource['val'] = parent::checkPhone($resource['val'], 7);
+
+        return self::$resources[$id] = $resource;
     }
 
     /**

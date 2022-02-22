@@ -18,6 +18,7 @@ class IncomingQuery extends Model
         'query_data',
         'client_id',
         'request_id',
+        'utm_source',
         'request_data',
         'response_data',
         'ip',
