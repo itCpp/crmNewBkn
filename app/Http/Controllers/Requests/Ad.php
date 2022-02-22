@@ -7,6 +7,7 @@ use App\Models\IncomingCallsToSource;
 use App\Models\IncomingQuery;
 use App\Models\RequestsRow;
 use App\Models\RequestsSource;
+use App\Models\RequestsSourcesResource;
 use Illuminate\Http\Request;
 
 class Ad extends Controller
@@ -54,6 +55,7 @@ class Ad extends Controller
         return response()->json([
             'queries' => $queries,
             'calls' => $this->getCallsInfo($phones),
+            'texts' => $this->getTextsInfo($phones),
         ]);
     }
 
@@ -147,5 +149,66 @@ class Ad extends Controller
             return $this->sources[$id] = null;
 
         return $this->sources[$id] = $source->only('id', 'name');
+    }
+
+    /**
+     * Поиск источников
+     * 
+     * @param null|int $id
+     * @return null|array
+     */
+    public function getSourceResourceData($id)
+    {
+        if (!$id)
+            return null;
+
+        if (!empty($this->resources[$id]))
+            return $this->resources[$id];
+
+        if (!$source = RequestsSourcesResource::find($id))
+            return $this->resources[$id] = null;
+
+        return $this->resources[$id] = $source->only('id', 'val', 'type');
+    }
+
+    /**
+     * Информация о тестовых заявках
+     * 
+     * @param array $phones
+     * @return array
+     */
+    public function getTextsInfo($phones)
+    {
+        return IncomingQuery::whereIn('hash_phone', $phones)
+            ->where('type', 'text')
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->map(function ($row) {
+
+                $phone = $this->decryptPhone($row->hash_phone, $row->query_data->phone ?? null);
+
+                return [
+                    'ad_source' => $row->ad_source,
+                    'date' => $row->created_at,
+                    'manual' => $row->query_data->manual ?? null,
+                    'phone' => $this->displayPhoneNumber($phone, $this->show_phones, 2),
+                    'sourse_resource' => $this->getSourceResourceData($row->request_data->sourse_resource ?? null),
+                    'source' => $this->getSourceData($row->request_data->source_id ?? null),
+                    'query' => collect((array) $row->query_data ?? [])->only(
+                        'page',
+                        'site',
+                        'device',
+                        'region',
+                        'comment',
+                        'client_name',
+                        'utm_term',
+                        'utm_medium',
+                        'utm_source',
+                        'utm_content',
+                        'utm_campaign'
+                    ),
+                ];
+            })
+            ->toArray();
     }
 }
