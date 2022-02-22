@@ -43,7 +43,7 @@ class Ad extends Controller
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
-        // $show_phones = $request->user()->can('clients_show_phone');
+        $this->show_phones = $request->user()->can('clients_show_phone');
 
         $phones = $row->clients->map(function ($row) {
             return $this->hashPhone($this->decrypt($row->phone));
@@ -82,8 +82,8 @@ class Ad extends Controller
                     'ad_source' => $row->ad_source ?: $this->findAdSource($resource),
                     'date' => $row->created_at,
                     'manual' => $row->query_data->manual ?? null,
-                    'phone' => $phone,
-                    'resource' => $resource,
+                    'phone' => $this->displayPhoneNumber($phone, $this->show_phones, 2),
+                    'resource' => $this->displayPhoneNumber($resource, $this->show_phones, 2),
                     'source' => $this->getSourceData($row->request_data->source_id ?? null),
                 ];
             })
