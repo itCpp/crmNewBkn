@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddColumnUtmSourceIncomingQueriesTable extends Migration
+class AddColumnsSourceTypeIncomingQueriesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,8 @@ class AddColumnUtmSourceIncomingQueriesTable extends Migration
     public function up()
     {
         Schema::table('incoming_queries', function (Blueprint $table) {
-            $table->string('utm_source', 100)->nullable()->after('request_id')->index();
+            $table->string('source', 100)->nullable()->after('request_id')->index();
+            $table->string('type', 100)->nullable()->after('source')->index();
         });
     }
 
@@ -26,7 +27,7 @@ class AddColumnUtmSourceIncomingQueriesTable extends Migration
     public function down()
     {
         Schema::table('incoming_queries', function (Blueprint $table) {
-            $table->dropColumn('utm_source');
+            $table->dropColumn(['source', 'type']);
         });
     }
 }

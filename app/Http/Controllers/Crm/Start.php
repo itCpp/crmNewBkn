@@ -31,6 +31,7 @@ class Start extends Controller
         'requests_sector_change', # Может менять сектор в заявке
         'requests_sector_set', # Может назначать заявку для сектора
         'requests_set_null_status', # Может устанавливать заявке статус "Не обработано"
+        'requests_show_resource', # Может просматривать статистику обращений
         'queues_access', # Доступ к очередям
         'second_calls_access', # Доступ ко вторичным звонкам
         'sms_access', # Доступ к смс сообщениям

@@ -108,6 +108,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Список аудиозаписей */
         Route::post('calls', 'Crm\Calls');
+
+        /** Данные для модального окна обращений по рекламе */
+        Route::post('ad/get', 'Requests\Ad@get')->name('api.requests.ad.get')->middleware('user.can:requests_show_resource');
     });
 
     /** Маршрутизация различных рейтингов */
