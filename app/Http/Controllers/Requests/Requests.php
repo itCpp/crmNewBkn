@@ -282,7 +282,7 @@ class Requests extends Controller
         if (!$source = RequestsSource::find($id))
             return self::$sources[$id] = null;
 
-        return self::$statuses[$id] = $source->only('id', 'name', 'comment');
+        return self::$sources[$id] = $source->only('id', 'name', 'comment');
     }
 
     /**

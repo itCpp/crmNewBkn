@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,8 +24,11 @@ class RequestsStory extends Model
      */
     protected $fillable = [
         'request_id',
+        'row_data',
         'request_data',
+        'created',
         'created_pin',
+        'ip',
         'created_at',
     ];
 
@@ -43,7 +47,9 @@ class RequestsStory extends Model
      * @var array
      */
     protected $casts = [
+        'row_data' => 'array',
         'request_data' => 'array',
+        'created' => 'boolean',
     ];
 
     /**
@@ -51,18 +57,24 @@ class RequestsStory extends Model
      * 
      * @param \Illuminate\Http\Request $request
      * @param \Illuminate\Database\Eloquent\Model $data
+     * @param boolean $created
      * @return \App\Models\RequestsStory
      */
-    public static function write($request, $data)
+    public static function write($request, $data, $created = false)
     {
-
         return static::create([
             'request_id' => $data->id ?? null,
-            'request_data' => $data,
-            'created_pin' => $request->__user->pin ?? null,
+            'row_data' => $data->toArray(),
+            'request_data' => Controller::encrypt([
+                'all' => $request->all(),
+                'user_agent' => $request->userAgent(),
+                'ip' => $request->ip(),
+                'headers' => $request->header()
+            ]),
+            'created' => $created,
+            'created_pin' => optional($request->user())->pin,
+            'ip' => $request->ip(),
             'created_at' => date("Y-m-d H:i:s"),
         ]);
-
     }
-
 }

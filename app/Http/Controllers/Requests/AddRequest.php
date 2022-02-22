@@ -472,7 +472,7 @@ class AddRequest extends Controller
         $this->data->save();
 
         // Логирование изменений заявки
-        RequestsStory::write($this->request, $this->data);
+        RequestsStory::write($this->request, $this->data, true);
 
         // Логирование обращений
         RequestsClientsQuery::create([
