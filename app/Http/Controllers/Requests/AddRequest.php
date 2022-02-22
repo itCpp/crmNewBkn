@@ -143,8 +143,12 @@ class AddRequest extends Controller
         $this->queryLog = new IncomingQuery;
         $this->queryLog->ip = $this->request->ip();
         $this->queryLog->user_agent = $this->request->header('User-Agent');
-        $this->queryLog->source = $this->request->utm_source;
+        $this->queryLog->ad_source = $this->request->utm_source;
         $this->queryLog->type = $this->query_type;
+        $this->queryLog->hash_phone = parent::hashPhone($this->phone);
+
+        if ($this->query_type == "call" and $this->myPhone)
+            $this->queryLog->hash_phone_resource = parent::hashPhone($this->myPhone);
 
         $this->response = [];
 

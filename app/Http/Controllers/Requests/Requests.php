@@ -380,7 +380,7 @@ class Requests extends Controller
      * 
      * @param \App\Models\RequestsRow $row
      * @param null|bool $permit Флаг разрешения на вывод номера
-     * @return array
+     * @return array<object>
      */
     public static function getClientPhones(RequestsRow $row, $permit = false)
     {
