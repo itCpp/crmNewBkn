@@ -51,11 +51,13 @@ class RecryptExternalEvents extends Command
      */
     public function handle()
     {
-        try {
-            if ($id = $this->eventRecrypt())
-                Log::channel('eventsrecrypt')->debug('Rewriting external events id: ' . $id);
-        } catch (\Exception $e) {
-            Log::channel('eventsrecrypt')->emergency($e->getMessage());
+        for ($i = 0; $i <= 10; $i++) {
+            try {
+                if ($id = $this->eventRecrypt())
+                    Log::channel('eventsrecrypt')->debug('Rewriting external events id: ' . $id);
+            } catch (\Exception $e) {
+                Log::channel('eventsrecrypt')->emergency($e->getMessage());
+            }
         }
 
         return 0;
