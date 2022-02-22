@@ -241,7 +241,7 @@ class Ad extends Controller
                 return $row->ip;
             });
 
-        $data = IncomingQuery::whereIn('ip', $ips)->orderBy('id', 'DESC');
+        $data = IncomingQuery::whereIn('ip', $ips)->where('type', 'text')->orderBy('id', 'DESC');
 
         if ($count)
             return $data->count();
