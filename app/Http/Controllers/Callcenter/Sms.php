@@ -35,7 +35,7 @@ class Sms extends Controller
         if (!$message and !$request->user()->can('requests_send_sms_no_limit'))
             $alert = "Шаблон сообщения не сформирован, доступ к отправке сообщений с собственным текстом ограничен";
         else if (!$message)
-            $alert = "Шиблон сообщения не сформирован";
+            $alert = "Шаблон сообщения не сформирован";
 
         if (!$message)
 
@@ -45,7 +45,7 @@ class Sms extends Controller
             'phones' => $phones,
             'message' => $message,
             'request' => $row,
-            'messages' => self::getMessages($request),
+            'messages' => self::getMessages($row),
             'now' => date("Y-m-d H:i:s"),
             'permits' => $request->user()->getListPermits([
                 'requests_send_sms',
@@ -250,16 +250,23 @@ class Sms extends Controller
     /**
      * Вывод списка СМС
      * 
-     * @param Request $request
+     * @param RequestsRow|Request $request
      * @param array $where Массив условий запроса
      * @return array
      */
-    public static function getMessages(Request $request, $where = [])
+    public static function getMessages($request, $where = [])
     {
-        if (!$request->row)
+        if ($request instanceof RequestsRow) {
+            $row = $request;
+        }
+        else if ($request instanceof Requests) {
+            $row = $request->row;
+        }
+
+        if (!($row ?? null))
             throw new CrmException("Отсутствует экземпляр модели заявки");
 
-        $messages = $request->row->sms()->orderBy('created_at', 'DESC');
+        $messages = $row->sms()->orderBy('created_at', 'DESC');
 
         if ($where)
             $messages = $messages->where($where);

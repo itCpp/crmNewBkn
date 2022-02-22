@@ -28,6 +28,7 @@ class RolesSeeder extends Seeder
                 'requests_pin_set_offline',
                 'requests_sector_change',
                 'requests_sector_set',
+                'requests_send_sms',
                 'requests_set_null_status',
                 'user_auth_query',
                 'user_auth_query_all_sectors'
@@ -47,6 +48,7 @@ class RolesSeeder extends Seeder
                 'requests_pin_change',
                 'requests_pin_for_appointment',
                 'requests_pin_set',
+                'requests_send_sms',
                 'requests_set_null_status',
                 'user_auth_query'
             ],
@@ -58,6 +60,7 @@ class RolesSeeder extends Seeder
                 'rating_access',
                 'requests_access',
                 'requests_edit',
+                'requests_send_sms',
                 'requests_pin_for_appointment',
             ],
             'statuses' => [1, 2, 3, 4, 5],
