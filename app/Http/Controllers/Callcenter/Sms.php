@@ -33,7 +33,11 @@ class Sms extends Controller
         $message = self::getSmsTemplate($row);
 
         if (!$message and !$request->user()->can('requests_send_sms_no_limit'))
-            return response()->json(['message' => "Шаблон сообщения не сформирован, доступ к отправке сообщений с собственным текстом ограничен"], 403);
+            $alert = "Шаблон сообщения не сформирован, доступ к отправке сообщений с собственным текстом ограничен";
+        else if (!$message)
+            $alert = "Шиблон сообщения не сформирован";
+
+        if (!$message)
 
         $request->row = $row;
 
@@ -47,6 +51,7 @@ class Sms extends Controller
                 'requests_send_sms',
                 'requests_send_sms_no_limit',
             ]),
+            'alert' => $alert ?? null,
         ]);
     }
 
