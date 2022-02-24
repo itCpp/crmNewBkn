@@ -16,7 +16,7 @@ class CallDetailRecordsMigrateCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'data:cdr';
+    protected $signature = 'old:cdr';
 
     /**
      * The console command description.

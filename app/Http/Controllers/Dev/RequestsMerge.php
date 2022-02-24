@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Users\UsersMerge;
+use App\Models\CrmMka\CrmNewIncomingQuery;
 use App\Models\CrmMka\CrmNewRequestsState;
 use App\Models\CrmMka\CrmNewRequestsStory;
 use App\Models\RequestsClient;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Models\CrmMka\CrmRequest;
 use App\Models\CrmMka\CrmRequestsRemark;
 use App\Models\CrmMka\CrmRequestsSbComment;
+use App\Models\IncomingQuery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
@@ -257,6 +259,9 @@ class RequestsMerge extends Controller
 
         // Поиск истории изменений заявки
         // $this->findAndWriteRequestsStory($new->id);
+
+        // Перенос истории обращений
+        $this->findAndRequestQueries($new);
 
         return $new;
     }
@@ -666,5 +671,96 @@ class RequestsMerge extends Controller
                 return $create;
             })
             ->toArray();
+    }
+
+    /**
+     * Поиск и перенос истории обращений
+     * 
+     * @param \App\Models\RequestsRow $row
+     * @return null
+     */
+    public function findAndRequestQueries($row)
+    {
+        CrmNewIncomingQuery::where('id_request', $row->id)
+            ->orderBy('created_at')
+            ->get()
+            ->each(function ($item) {
+
+                $query_data = is_array($item->request) ? $item->request : [];
+
+                $hash_phone = isset($query_data['phone'])
+                    ? $this->hashPhone($query_data['phone'])
+                    : null;
+
+                if (!$hash_phone and $item->phone) {
+                    $query_data['phone'] = $item->phone;
+                    $hash_phone = $this->hashPhone($item->phone);
+                }
+
+                $client_id = optional(RequestsClient::where('hash', $hash_phone)->first())->id;
+
+                $hash_phone_resource = isset($query_data['myPhone'])
+                    ? $this->hashPhone($query_data['myPhone'])
+                    : null;
+
+                if (!$hash_phone_resource and $item->myPhone) {
+                    $query_data['myPhone'] = $item->myPhone;
+                    $hash_phone_resource = $this->hashPhone($item->myPhone);
+                }
+
+                $ad_source = isset($query_data['utm_source'])
+                    ? $query_data['utm_source'] : null;
+
+                if (isset($query_data['phone']))
+                    $query_data['phone'] = $this->encrypt($query_data['phone']);
+
+                if ($item->typeReq == "Звонок")
+                    $type = "call";
+                else if ($item->typeReq == "Текст")
+                    $type = "text";
+
+                $query_data['hash_gate'] = $item->hash_gate;
+                $query_data['xml_cdr_uuid'] = $item->xml_cdr_uuid;
+                $query_data['cdr_date'] = $item->cdr_date;
+
+                $request_data = [
+                    'id' => $item->id_request,
+                ];
+
+                foreach ($this->sourceToSource as $source) {
+                    if ($source[1] == $item->type) {
+                        $request_data['source_id'] = $source[0];
+                        break;
+                    }
+                }
+
+                $phone = $this->checkPhone($item->myPhone, 3);
+                $site = isset($query_data['site']) ? $query_data['site'] : null;
+
+                foreach ($this->sourceResourceToRecource as $source) {
+                    if ($source[1] == $phone or $source[1] == $site) {
+                        $request_data['sourse_resource'] = $source[0];
+                        break;
+                    }
+                }
+
+                $create = [
+                    'query_data' => $query_data,
+                    'client_id' => $client_id,
+                    'request_id' => $item->id_request,
+                    'ad_source' => $ad_source,
+                    'type' => $type ?? null,
+                    'hash_phone' => $hash_phone,
+                    'hash_phone_resource' => $hash_phone_resource,
+                    'request_data' => $request_data,
+                    'ip' => $item->ip,
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                ];
+
+                IncomingQuery::create($create);
+            });
+
+        return null;
     }
 }

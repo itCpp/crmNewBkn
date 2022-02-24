@@ -70,7 +70,7 @@ class CreateCrmCommand extends Command
 
         /** Перенос детализации вызовов */
         if ($this->cdr_merge)
-            $this->call('data:cdr');
+            $this->call('old:cdr');
 
         /** Отключение блокировки добавления новых заявок */
         Settings::set('DROP_ADD_REQUEST', false);

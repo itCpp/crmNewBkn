@@ -26,6 +26,8 @@ class IncomingQuery extends Model
         'response_data',
         'ip',
         'user_agent',
+        'created_at',
+        'updated_at',
     ];
 
     /**
