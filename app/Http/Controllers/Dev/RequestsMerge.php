@@ -632,6 +632,11 @@ class RequestsMerge extends Controller
                 if (isset($query_data['number']))
                     $query_data['number'] = $this->encrypt($query_data['number']);
 
+                if (isset($query_data['ip'])) {
+                    $item->ip = $query_data['ip'];
+                    $query_data['ip_from_item'] = $item->ip;
+                }
+
                 if ($item->typeReq == "Звонок")
                     $type = "call";
                 else if ($item->typeReq == "Текст")
