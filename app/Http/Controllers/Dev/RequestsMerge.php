@@ -688,6 +688,9 @@ class RequestsMerge extends Controller
 
                 $query_data = is_array($item->request) ? $item->request : [];
 
+                if (isset($query_data['number']))
+                    $query_data['phone'] = $query_data['number'];
+
                 $hash_phone = isset($query_data['phone'])
                     ? $this->hashPhone($query_data['phone'])
                     : null;
@@ -713,6 +716,9 @@ class RequestsMerge extends Controller
 
                 if (isset($query_data['phone']))
                     $query_data['phone'] = $this->encrypt($query_data['phone']);
+
+                if (isset($query_data['number']))
+                    $query_data['number'] = $this->encrypt($query_data['number']);
 
                 if ($item->typeReq == "Звонок")
                     $type = "call";
