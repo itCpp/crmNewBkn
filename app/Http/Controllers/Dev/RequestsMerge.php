@@ -235,6 +235,16 @@ class RequestsMerge extends Controller
         $new->deleted_at = $this->getDeletedAt($row, $new);
         $new->updated_at = $this->getUpdatedAt($new);
 
+        if ($new->uplift == 1) {
+
+            /** Обнуление подъема со статусом */
+            if ($new->status_id)
+                $new->uplift = 0;
+            /** Обнуление заявок с необарботанным статусом для определенных источников */
+            else if (!$new->status_id and in_array($new->source_id, [3, 4, 5, 6, 17]))
+                $new->uplift = 0;
+        }
+
         $new->save();
 
         // Привязка клиента к заявке
