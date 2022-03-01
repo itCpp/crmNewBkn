@@ -150,8 +150,8 @@ class RequestsMergeIncomingHistoryCommand extends Command
                     'created_pin' => $created_pin,
                     'created_at' => $row->create_at,
                 ];
-                // $story = RequestsStory::create($create);
-                dump($create);
+                $story = RequestsStory::create($create);
+                // dump($create);
 
                 if ($row->state) {
 
@@ -164,8 +164,8 @@ class RequestsMergeIncomingHistoryCommand extends Command
                         'created_at' => $row->create_at,
                     ];
 
-                    // RequestsStoryStatus::create($create_status);
-                    dump($create_status);
+                    RequestsStoryStatus::create($create_status);
+                    // dump($create_status);
                 }
 
                 if ($new->pin != $change_pin) {
@@ -178,8 +178,8 @@ class RequestsMergeIncomingHistoryCommand extends Command
                         'created_at' => $row->create_at,
                     ];
 
-                    // RequestsStoryPin::create($create_pin);
-                    dump($create_pin);
+                    RequestsStoryPin::create($create_pin);
+                    // dump($create_pin);
                 }
 
                 if ((!$change_pin and $new->pin) or ($new->pin and $change_pin))
@@ -188,6 +188,11 @@ class RequestsMergeIncomingHistoryCommand extends Command
                 return $create;
             })
             ->toArray();
+
+        $row = new RequestsRow;
+        $row->id = $crm_request->id;
+
+        $this->merge->findAndRequestQueries($row);
 
         return true;
     }

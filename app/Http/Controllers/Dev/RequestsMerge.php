@@ -256,7 +256,7 @@ class RequestsMerge extends Controller
         $data->comments = $this->getAndCreateAllComments($new->id);
 
         // Перенос истории обращений
-        $this->findAndRequestQueries($new);
+        // $this->findAndRequestQueries($new);
 
         return $new;
     }
@@ -439,7 +439,7 @@ class RequestsMerge extends Controller
         $date = trim($row->rdate . " " . $row->time);
         $time = strtotime($date);
 
-        if (!$time or $time > 1640995200 or $time < 1420070400)
+        if (!$time or $time > 1735678800 or $time < 1420070400)
             return null;
 
         return $date;
