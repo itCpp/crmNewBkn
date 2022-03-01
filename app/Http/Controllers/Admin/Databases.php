@@ -32,48 +32,39 @@ class Databases extends Controller
     }
 
     /**
-     * Преобразование строки для вывода
+     * Примениение настроек внешних баз данных
      * 
-     * @param \App\Models\SettingsQueuesDatabase $row
      * @return array
      */
-    public function serializeRow(SettingsQueuesDatabase $row)
+    public static function setConfigs()
     {
-        $row->host = $this->decrypt($row->host);
-        $row->user = $this->decrypt($row->user);
-        $row->database = $this->decrypt($row->database);
-        $row->table_name = $this->decrypt($row->table_name);
+        return SettingsQueuesDatabase::where('active', 1)
+            ->get()
+            ->map(function ($row) {
 
-        $row->connected = null;
+                self::setConfig([
+                    'id' => $row->id,
+                    'host' => $row->host,
+                    'port' => $row->port ? parent::decrypt($row->port) : $row->port,
+                    'database' => $row->database,
+                    'user' => $row->user,
+                    'password' => $row->password ? parent::decrypt($row->password) : $row->password,
+                ]);
 
-        if ($row->active) {
-
-            $check = $this->checkConnection([
-                'id' => $row->id,
-                'host' => $row->host,
-                'port' => $row->port ? $this->decrypt($row->port) : $row->port,
-                'database' => $row->database,
-                'user' => $row->user,
-                'password' => $row->password ? $this->decrypt($row->password) : $row->password,
-            ]);
-
-            $row->connected = $check['connected'] ?? false;
-            $row->stats = $check['stats'] ?? null;
-            $row->connected_error = $check['error'] ?? null;
-        }
-
-        return array_merge($row->toArray(), $check ?? []);
+                return "mysql_check_connect_{$row->id}";
+            })
+            ->toArray();
     }
 
     /**
-     * Проверка подключения к базе данных
+     * Создание настроек подключения к базам данных
      * 
-     * @param array $config
-     * @return array
+     * @param string $connection
+     * @return null
      */
-    public function checkConnection($config)
+    public static function setConfig($config)
     {
-        $connection = "mysql_check_connect_{$config['id']}";
+        $connection = "mysql_check_connect_" . ($config['id'] ?? 0);
 
         Config::set("database.connections.{$connection}", [
             'driver' => 'mysql',
@@ -95,6 +86,53 @@ class Databases extends Controller
             ]) : [],
         ]);
 
+        return null;
+    }
+
+    /**
+     * Преобразование строки для вывода
+     * 
+     * @param \App\Models\SettingsQueuesDatabase $row
+     * @return array
+     */
+    public function serializeRow(SettingsQueuesDatabase $row)
+    {
+        $row->host = $this->decrypt($row->host);
+        $row->user = $this->decrypt($row->user);
+        $row->database = $this->decrypt($row->database);
+        $row->table_name = $this->decrypt($row->table_name);
+
+        $row->connected = null;
+
+        if ($row->active) {
+
+            $this->setConfig([
+                'id' => $row->id,
+                'host' => $row->host,
+                'port' => $row->port ? $this->decrypt($row->port) : $row->port,
+                'database' => $row->database,
+                'user' => $row->user,
+                'password' => $row->password ? $this->decrypt($row->password) : $row->password,
+            ]);
+
+            $check = $this->checkConnection("mysql_check_connect_" . $row->id);
+
+            $row->connected = $check['connected'] ?? false;
+            $row->stats = $check['stats'] ?? null;
+            $row->connected_error = $check['error'] ?? null;
+        }
+
+        return array_merge($row->toArray(), $check ?? []);
+    }
+
+    /**
+     * Проверка подключения к базе данных
+     * 
+     * @param string $config
+     * @return array
+     */
+    public function checkConnection($connection)
+    {
         try {
             DB::connection($connection)->getPdo();
 

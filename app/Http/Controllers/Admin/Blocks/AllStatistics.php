@@ -2,11 +2,19 @@
 
 namespace App\Http\Controllers\Admin\Blocks;
 
+use App\Http\Controllers\Admin\Databases;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class AllStatistics extends Controller
 {
+    /**
+     * Доступные подключения
+     * 
+     * @var array
+     */
+    protected $connections = [];
+
     /**
      * Создание экземпляра объекта
      * 
@@ -16,6 +24,8 @@ class AllStatistics extends Controller
     public function __construct(Request $request)
     {
         $this->request = $request;
+
+        $this->connections = Databases::setConfigs();
     }
 
     /**
@@ -41,6 +51,8 @@ class AllStatistics extends Controller
      */
     public function getData(Request $request)
     {
-        return [];
+        return [
+            'connections' => $this->connections,
+        ];
     }
 }
