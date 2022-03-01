@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class Databases extends Controller
 {
@@ -57,6 +58,7 @@ class Databases extends Controller
             ]);
 
             $row->connected = $check['connected'] ?? false;
+            $row->stats = $check['stats'] ?? null;
             $row->connected_error = $check['error'] ?? null;
         }
 
@@ -95,6 +97,7 @@ class Databases extends Controller
             DB::connection("mysql_check_connect_{$config['id']}")->getPdo();
 
             return [
+                'stats' => $this->checkAvailabilityStats("mysql_check_connect_{$config['id']}"),
                 'connected' => true
             ];
         } catch (Exception $e) {
@@ -103,6 +106,17 @@ class Databases extends Controller
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Проверка наличия подключенной статистики на сайте
+     * 
+     * @param string $connection
+     * @return bool
+     */
+    public function checkAvailabilityStats($connection)
+    {
+        return Schema::connection($connection)->hasTable("block_configs");
     }
 
     /**
