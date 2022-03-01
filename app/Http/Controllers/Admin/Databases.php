@@ -62,7 +62,7 @@ class Databases extends Controller
             $row->connected_error = $check['error'] ?? null;
         }
 
-        return $row->toArray();
+        return array_merge($row->toArray(), $check ?? []);
     }
 
     /**
@@ -73,7 +73,9 @@ class Databases extends Controller
      */
     public function checkConnection($config)
     {
-        Config::set("database.connections.mysql_check_connect_{$config['id']}", [
+        $connection = "mysql_check_connect_{$config['id']}";
+
+        Config::set("database.connections.{$connection}", [
             'driver' => 'mysql',
             'host' => $config['host'] ?? '127.0.0.1',
             'port' => $config['port'] ?? '3306',
@@ -94,10 +96,15 @@ class Databases extends Controller
         ]);
 
         try {
-            DB::connection("mysql_check_connect_{$config['id']}")->getPdo();
+            DB::connection($connection)->getPdo();
+
+            if ($stats = $this->checkAvailabilityStats($connection)) {
+                $stats_visits = $this->countAllVisits($connection);
+            }
 
             return [
-                'stats' => $this->checkAvailabilityStats("mysql_check_connect_{$config['id']}"),
+                'stats' => $stats,
+                'stats_visits' => $stats_visits ?? null,
                 'connected' => true
             ];
         } catch (Exception $e) {
@@ -117,6 +124,23 @@ class Databases extends Controller
     public function checkAvailabilityStats($connection)
     {
         return Schema::connection($connection)->hasTable("block_configs");
+    }
+
+    /**
+     * Количество всех посещений
+     * 
+     * @param string $connection
+     * @return bool
+     */
+    public function countAllVisits($connection)
+    {
+        try {
+            return DB::connection($connection)
+                ->table('visits')
+                ->count();
+        } catch (Exception $e) {
+            return null;
+        }
     }
 
     /**
