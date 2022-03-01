@@ -143,6 +143,7 @@ trait CallCenterResult
             ->checkStatsRow()
             ->setComings()
             ->setRequests()
+            ->setAgreements()
             ->setCashbox()
             ->setResult();
 
@@ -166,6 +167,43 @@ trait CallCenterResult
 
         if (empty($stats[$callcenter]->sectors[$sector]))
             $stats[$callcenter]->sectors[$sector] = $this->getTemplateStatsRow(false);
+
+        return $this;
+    }
+
+    /**
+     * Подсчет договоров
+     * 
+     * @return $this
+     */
+    public function setAgreements()
+    {
+        $this->row->agreements = [
+            'firsts' => 0,
+            'seconds' => 0,
+            'all' => 0,
+        ];
+
+        $this->findAgreementsData($this->row->pin)
+            ->findAgreementsData($this->row->pinOld);
+
+        return $this;
+    }
+
+    /**
+     * Поиск информации о количетсве договоров
+     * 
+     * @param string|int|null $pin
+     * @return $this
+     */
+    public function findAgreementsData($pin = null)
+    {
+        if (!isset($this->data->agreements[$pin]))
+            return $this;
+
+        $this->row->agreements['firsts'] += $this->data->agreements[$pin]['firsts'] ?? 0;
+        $this->row->agreements['seconds'] += $this->data->agreements[$pin]['seconds'] ?? 0;
+        $this->row->agreements['all'] += $this->data->agreements[$pin]['all'] ?? 0;
 
         return $this;
     }
@@ -333,6 +371,11 @@ trait CallCenterResult
         // Расчет КПД
         if ($row->requests)
             $row->efficiency = round(($row->comings / $row->requests) * 100, 2);
+
+        // Расчет КПД договоров
+        if (($row->agreements['firsts'] ?? 0) > 0) {
+            $row->efficiency_agreement = round(($row->agreements['firsts'] / $row->comings) * 100, 2);
+        }
 
         // Количество приходов в день
         if ($this->dates->diff > 0)

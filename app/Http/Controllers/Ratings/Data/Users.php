@@ -187,6 +187,7 @@ trait Users
             'comings_sum' => 0, # Сумма за приходы
             'dates' => [], # Подробные данные по кажому дню
             'efficiency' => 0, # КПД
+            'efficiency_agreement' => 0, # КПД договора
             'fio' => preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', trim($name)),
             'load' => 0, # Нагрузка
             'name' => trim($name),

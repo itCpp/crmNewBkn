@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 class CallCenters extends Controller
 {
     use CallCenters\CallCenterResult,
+        Data\Agreements,
         Data\Cashbox,
         Data\Comings,
         Data\Requests,
@@ -93,6 +94,7 @@ class CallCenters extends Controller
         $this->getComings()
             ->getRequests()
             ->getCashboxData()
+            ->getAgreementsData()
             ->findUsers()
             ->getResult()
             ->setFilterPermit();
