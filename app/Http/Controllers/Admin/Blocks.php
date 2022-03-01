@@ -109,4 +109,15 @@ class Blocks extends Controller
             Views::get($request)
         );
     }
+
+    /**
+     * Вывод статистики по сайтам из индивидуальных баз
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function allstatistics(Request $request)
+    {
+        return Blocks\AllStatistics::get($request);
+    }
 }
