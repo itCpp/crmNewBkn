@@ -174,6 +174,8 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('getBlockData', 'Admin\Blocks@getBlockData')->name('api.dev.block.getBlockData');
         /** Вывод статистики по сайтам из индивидуальных баз */
         Route::post('allstatistics', 'Admin\Blocks@allstatistics')->name('api.dev.block.allstatistics');
+        /** Вывод информации об IP для блокировки по сайтам */
+        Route::post('getip', 'Admin\Blocks\OwnStatistics@getip');
 
         /** Вывод данных о просмотрах */
         Route::post('getViews', 'Admin\Blocks@getViews')->name('api.dev.block.getViews');

@@ -10,7 +10,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class AllStatistics extends Controller
+class OwnStatistics extends Controller
 {
     /**
      * Доступные подключения
@@ -58,6 +58,50 @@ class AllStatistics extends Controller
         return response()->json(
             $allstatistics->getData($request),
         );
+    }
+
+    /**
+     * Вывод информации об IP для блокировки по сайтам
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getip(Request $request)
+    {
+        if (!$request->ip)
+            return response()->json(['message' => "Ошибка в IP адресе"], 400);
+
+        foreach ($this->connections as $connection) {
+
+            try {
+                $block = DB::connection($connection)
+                    ->table('blocks')
+                    ->where('host', $request->ip)
+                    ->where('is_hostname', 0)
+                    ->first();
+
+                $autoblock = DB::connection($connection)
+                    ->table('automatic_blocks')
+                    ->where('ip', $request->ip)
+                    ->where('date', $this->date)
+                    ->first();
+
+                $site = config("database.connections.{$connection}.site_domain");
+                $id = config("database.connections.{$connection}.connection_id");
+
+                $sites[] = [
+                    'id' => $id,
+                    'site' => $site ?: "Сайт #{$id}",
+                    'is_block' => (bool) ($block->is_block ?? null),
+                    'is_autoblock' => (bool) $autoblock,
+                ];
+            } catch (Exception) {
+            }
+        }
+
+        return response()->json([
+            'sites' => $sites ?? [],
+        ]);
     }
 
     /**

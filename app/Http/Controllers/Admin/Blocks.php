@@ -118,6 +118,6 @@ class Blocks extends Controller
      */
     public function allstatistics(Request $request)
     {
-        return Blocks\AllStatistics::get($request);
+        return Blocks\OwnStatistics::get($request);
     }
 }
