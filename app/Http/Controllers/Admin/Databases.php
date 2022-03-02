@@ -215,8 +215,24 @@ class Databases extends Controller
             'password' => "required",
             'database' => "required",
             'table_name' => "nullable",
-            'domain' => "nullable|active_url",
+            // 'domain' => "nullable|active_url",
         ]);
+
+        $domain = parse_url($request->domain);
+
+        if ($domain['host'] ?? null)
+            $url = idn_to_ascii($domain['host']);
+        else if ($domain['path'] ?? null)
+            $url = idn_to_ascii($domain['path']);
+
+        if ($request->domain and !$url) {
+            return response()->json([
+                'message' => "Ошибка в домене",
+                'errors' => [
+                    'domain' => true,
+                ],
+            ], 422);
+        }
 
         $row = SettingsQueuesDatabase::whereId($request->id)->firstOrNew();
 
@@ -228,7 +244,7 @@ class Databases extends Controller
         $row->password = $this->encrypt($request->password);
         $row->database = $this->encrypt($request->database);
         $row->table_name = $this->encrypt($request->table_name);
-        $row->domain = $request->domain;
+        $row->domain = idn_to_utf8($url ?? null) ?: null;
 
         $row->save();
 

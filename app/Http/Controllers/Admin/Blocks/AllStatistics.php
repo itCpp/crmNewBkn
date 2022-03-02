@@ -40,6 +40,8 @@ class AllStatistics extends Controller
 
         $this->date = date("Y-m-d");
 
+        $this->sites = [];
+
         $this->our_ips = explode(",", env("OUR_IP_ADDRESSES_LIST", ""));
     }
 
@@ -66,9 +68,25 @@ class AllStatistics extends Controller
      */
     public function getData(Request $request)
     {
+        $rows = $this->getRows();
+
+        foreach ($this->connection_active ?? [] as $connection) {
+
+            $id = config("database.connections.{$connection}.connection_id");
+
+            $site = config("database.connections.{$connection}.site_domain");
+            $text = $site ? parse_url($site, PHP_URL_HOST) : null;
+
+            $sites[] = [
+                'key' => $id,
+                'text' => $text ?: "Сайт #{$id}",
+                'value' => $id,
+            ];
+        }
+
         return [
-            'rows' => $this->getRows(),
-            // 'connections' => $this->connections,
+            'rows' => $rows,
+            'sites' => $sites ?? [],
             'errors' => $this->errors ?? null,
         ];
     }
@@ -194,7 +212,7 @@ class AllStatistics extends Controller
         foreach ($connections as $connection => $ips) {
             $this->checkBlockSiteDataBase($connection);
         }
-        
+
         $this->getQueuesData();
 
         return null;
