@@ -373,7 +373,7 @@ trait CallCenterResult
             $row->efficiency = round(($row->comings / $row->requests) * 100, 2);
 
         // Расчет КПД договоров
-        if (($row->agreements['firsts'] ?? 0) > 0) {
+        if (($row->agreements['firsts'] ?? 0) > 0 and $row->comings > 0) {
             $row->efficiency_agreement = round(($row->agreements['firsts'] / $row->comings) * 100, 2);
         }
 

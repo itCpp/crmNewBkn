@@ -18,6 +18,7 @@ class SettingsQueuesDatabase extends Model
     protected $fillable = [
         'name',
         'active',
+        'domain',
         'host',
         'port',
         'user',

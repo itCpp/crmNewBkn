@@ -38,20 +38,10 @@ class Databases extends Controller
      */
     public static function setConfigs()
     {
-        return SettingsQueuesDatabase::where('active', 1)
-            ->get()
+        return collect(SettingsQueuesDatabase::getAllDecrypt())
             ->map(function ($row) {
-
-                self::setConfig([
-                    'id' => $row->id,
-                    'host' => $row->host,
-                    'port' => $row->port ? parent::decrypt($row->port) : $row->port,
-                    'database' => $row->database,
-                    'user' => $row->user,
-                    'password' => $row->password ? parent::decrypt($row->password) : $row->password,
-                ]);
-
-                return "mysql_check_connect_{$row->id}";
+                self::setConfig($row);
+                return "mysql_check_connect_{$row['id']}";
             })
             ->toArray();
     }
