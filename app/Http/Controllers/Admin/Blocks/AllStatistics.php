@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin\Blocks;
 
 use App\Http\Controllers\Admin\Databases;
 use App\Http\Controllers\Controller;
+use App\Models\CrmMka\CrmRequestsQueue;
+use App\Models\RequestsQueue;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +39,8 @@ class AllStatistics extends Controller
         $this->connections = Databases::setConfigs();
 
         $this->date = date("Y-m-d");
+
+        $this->our_ips = explode(",", env("OUR_IP_ADDRESSES_LIST", ""));
     }
 
     /**
@@ -80,16 +84,31 @@ class AllStatistics extends Controller
             $this->getStatSite($connection);
         }
 
-        $this->checkBlock();
+        $this->getOtherData();
 
-        $active = count($this->connection_active);
-
-        return collect($this->rows)->map(function ($row) use ($active) {
-            $row['blocks_all'] = ($active == count($row['block_connections']));
-            return $row;
+        return collect($this->rows)->map(function ($row) {
+            return $this->serializeRow($row);
         })
             ->values()
             ->all();
+    }
+
+    /**
+     * Формирование строки статистики
+     * 
+     * @param array $row
+     * @return array
+     */
+    public function serializeRow($row)
+    {
+        /** Наш IP */
+        $row['our_ip'] = in_array($row['ip'], $this->our_ips);
+
+        /** Полная блокировка */
+        $blocks_all = (count($this->connection_active) == count($row['block_connections']));
+        $row['blocks_all'] = $blocks_all;
+
+        return $row;
     }
 
     /**
@@ -107,15 +126,16 @@ class AllStatistics extends Controller
                 ->get()
                 ->each(function ($row) use ($connection) {
 
-                    $key = md5($row->ip);
+                    if (!isset($this->rows[$row->ip]))
+                        $this->rows[$row->ip] = $this->createIpRow($row, $connection);
 
-                    if (!isset($this->rows[$key]))
-                        $this->rows[$key] = $this->createIpRow($row, $connection);
-
-                    $this->rows[$key]['visits'] += $row->visits;
-                    $this->rows[$key]['visits_drops'] += $row->visits_drops;
-                    $this->rows[$key]['visits_all'] += ($row->visits + $row->visits_drops);
+                    $this->rows[$row->ip]['visits'] += $row->visits;
+                    $this->rows[$row->ip]['visits_drops'] += $row->visits_drops;
+                    $this->rows[$row->ip]['requests'] += $row->requests;
                 });
+
+            // if ($site = config("database.connections.{$connection}.site_domain"))
+            //     $this->sites[] = parse_url($site, PHP_URL_HOST);
 
             $this->connection_active[] = $connection;
         } catch (Exception $e) {
@@ -134,7 +154,10 @@ class AllStatistics extends Controller
      */
     public function createIpRow($row, $connection = null)
     {
+        $domain = config("database.connections.{$connection}.site_domain") ?: config("database.connections.{$connection}.connection_id");
+
         return [
+            'domain' => $domain ? parse_url($domain, PHP_URL_HOST) : null,
             'connection' => $connection,
             'ip' => $row->ip ?? null,
             'host' => $row->hostname ?? null,
@@ -142,7 +165,9 @@ class AllStatistics extends Controller
             'visits_drops' => 0,
             'visits_all' => 0,
             'requests' => 0,
+            'requests_all' => 0,
             'queues' => 0,
+            'queues_all' => 0,
             'is_blocked' => null,
             'is_autoblock' => null,
             'block_connections' => [],
@@ -154,7 +179,7 @@ class AllStatistics extends Controller
      * 
      * @return null
      */
-    public function checkBlock()
+    public function getOtherData()
     {
         $this->ips = [];
         $connections = [];
@@ -169,6 +194,8 @@ class AllStatistics extends Controller
         foreach ($connections as $connection => $ips) {
             $this->checkBlockSiteDataBase($connection);
         }
+        
+        $this->getQueuesData();
 
         return null;
     }
@@ -181,6 +208,18 @@ class AllStatistics extends Controller
      */
     public function checkBlockSiteDataBase($connection)
     {
+        /** Подсчет всех посещений */
+        DB::connection($connection)
+            ->table('statistics')
+            ->selectRaw('sum(visits + visits_drops) as visits_all, sum(requests) as requests_all, ip')
+            ->whereIn('ip', $this->ips ?? [])
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->rows[$row->ip]['visits_all'] += $row->visits_all;
+                $this->rows[$row->ip]['requests_all'] += $row->requests_all;
+            });
+
         /** Проверка жестких блокировок */
         DB::connection($connection)
             ->table('blocks')
@@ -188,11 +227,8 @@ class AllStatistics extends Controller
             ->where('is_block', 1)
             ->get()
             ->each(function ($row) use ($connection) {
-
-                $key = md5($row->host);
-
-                $this->rows[$key]['block_connections'][] = $connection;
-                $this->rows[$key]['is_blocked'] = true;
+                $this->rows[$row->host]['block_connections'][] = $connection;
+                $this->rows[$row->host]['is_blocked'] = true;
             });
 
         /** Проверка автоматических блокировок */
@@ -202,11 +238,87 @@ class AllStatistics extends Controller
             ->where('date', $this->date)
             ->get()
             ->each(function ($row) {
-
-                $key = md5($row->ip);
-
-                $this->rows[$key]['is_autoblock'] = true;
-                $this->rows[$key]['is_blocked'] = true;
+                $this->rows[$row->ip]['is_autoblock'] = true;
+                $this->rows[$row->ip]['is_blocked'] = true;
             });
+
+        return null;
+    }
+
+    /**
+     * Статистика по очередям
+     * 
+     * @return $this
+     * 
+     * @todo Добавить миграцию на создание индексов в таблице очередей
+     */
+    public function getQueuesData()
+    {
+        if (env("NEW_CRM_OFF", true))
+            return $this->getQueuesFromOldCrm();
+
+        RequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->whereBetween('created_at', [
+                $this->date . " 00:00:00",
+                $this->date . " 23:59:59"
+            ])
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['queues'] = (int) $row->count;
+            });
+
+        RequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->data[$row->ip]['queues_all'] = (int) $row->count;
+            });
+
+        return $this;
+    }
+
+    /**
+     * Статистические данные по очередям из старых таблиц
+     * 
+     * @return $this
+     */
+    public function getQueuesFromOldCrm()
+    {
+        CrmRequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->whereBetween('created_at', [
+                $this->date . " 00:00:00",
+                $this->date . " 23:59:59"
+            ])
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->rows[$row->ip]['queues'] = (int) $row->count;
+            });
+
+        CrmRequestsQueue::selectRaw('count(*) as count, ip')
+            ->whereIn('ip', $this->ips)
+            ->when(count($this->sites) > 0, function ($query) {
+                $query->whereIn('site', $this->sites);
+            })
+            ->groupBy('ip')
+            ->get()
+            ->each(function ($row) {
+                $this->rows[$row->ip]['queues_all'] = (int) $row->count;
+            });
+
+        return $this;
     }
 }

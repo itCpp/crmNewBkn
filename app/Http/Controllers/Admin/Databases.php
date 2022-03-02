@@ -57,6 +57,8 @@ class Databases extends Controller
         $connection = "mysql_check_connect_" . ($config['id'] ?? 0);
 
         Config::set("database.connections.{$connection}", [
+            'site_domain' => $config['domain'] ?? null,
+            'connection_id' => $config['id'] ?? null,
             'driver' => 'mysql',
             'host' => $config['host'] ?? '127.0.0.1',
             'port' => $config['port'] ?? '3306',
@@ -213,6 +215,7 @@ class Databases extends Controller
             'password' => "required",
             'database' => "required",
             'table_name' => "nullable",
+            'domain' => "nullable|active_url",
         ]);
 
         $row = SettingsQueuesDatabase::whereId($request->id)->firstOrNew();
@@ -225,6 +228,7 @@ class Databases extends Controller
         $row->password = $this->encrypt($request->password);
         $row->database = $this->encrypt($request->database);
         $row->table_name = $this->encrypt($request->table_name);
+        $row->domain = $request->domain;
 
         $row->save();
 
