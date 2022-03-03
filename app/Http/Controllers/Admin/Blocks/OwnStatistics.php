@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Blocks;
 use App\Http\Controllers\Admin\Databases;
 use App\Http\Controllers\Controller;
 use App\Models\CrmMka\CrmRequestsQueue;
+use App\Models\IpInfo;
 use App\Models\RequestsQueue;
 use App\Models\SettingsQueuesDatabase;
 use Exception;
@@ -149,9 +150,15 @@ class OwnStatistics extends Controller
 
         $this->getOtherData();
 
-        return collect($this->rows)->map(function ($row) {
-            return $this->serializeRow($row);
-        })
+        return collect($this->rows)
+            ->map(function ($row) {
+                return $this->serializeRow($row);
+            })
+            ->sortBy([
+                ['blocked_sort', 'desc'],
+                ['visits', 'desc'],
+                ['drops', 'desc'],
+            ])
             ->values()
             ->all();
     }
@@ -170,6 +177,8 @@ class OwnStatistics extends Controller
         /** Полная блокировка */
         $blocks_all = (count($this->connection_active) == count($row['block_connections']));
         $row['blocks_all'] = $blocks_all;
+
+        $row['blocked_sort'] = (int) ($row['is_autoblock'] || $row['is_blocked']);
 
         return $row;
     }
@@ -259,6 +268,17 @@ class OwnStatistics extends Controller
         }
 
         $this->getQueuesData();
+
+        /** Информация об IP */
+        IpInfo::select('ip', 'country_code', 'region_name', 'city')
+            ->whereIn('ip', $this->ips)
+            ->get()
+            ->each(function ($row) {
+                $this->rows[$row->ip]['city'] = $row->city;
+                $this->rows[$row->ip]['country_code'] = $row->country_code;
+                $this->rows[$row->ip]['region_name'] = $row->region_name;
+                $this->rows[$row->ip]['info'] = $row->toArray();
+            });
 
         return null;
     }
@@ -433,6 +453,7 @@ class OwnStatistics extends Controller
             return response()->json([
                 'message' => $request->ip,
                 'is_block' => (bool) $request->checked,
+                'connection' => $connection,
             ]);
         } catch (Exception $e) {
             return response()->json([
