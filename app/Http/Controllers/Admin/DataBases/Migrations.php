@@ -19,7 +19,7 @@ class Migrations extends Controller
      * 
      * @var array
      */
-    protected $migrations = [
+    protected static $migrations = [
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateAutomaticBlocksTable::class,
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateBlockConfigsTable::class,
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateBlocksTable::class,
@@ -139,6 +139,16 @@ class Migrations extends Controller
                 return $row->migration;
             })
             ->toArray();
+    }
+
+    /**
+     * Возвращает список миграций
+     * 
+     * @return array
+     */
+    public static function getMigrationsList()
+    {
+        return self::$migrations;
     }
 
     /**

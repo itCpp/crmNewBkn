@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\DataBases\Migrations;
 use App\Http\Controllers\Controller;
 use App\Models\SettingsQueuesDatabase;
 use Exception;
@@ -208,6 +209,7 @@ class Databases extends Controller
         $row = $this->serializeRow($row);
 
         $row['password'] = $password;
+        $row['migration_update'] = $this->checkUpdateMigrations($row['id']);
 
         return response()->json([
             'row' => $row,
@@ -357,5 +359,27 @@ class Databases extends Controller
         } catch (Exception $e) {
             return $e->getMessage();
         }
+    }
+
+    /**
+     * Флаг новых обновлений в миграциях
+     * 
+     * @param int $id
+     * @return bool
+     */
+    public function checkUpdateMigrations($id)
+    {
+        $connection = $this->getConnectionName($id);
+
+        try {
+            $migrated = Migrations::getMigrations(DB::connection($connection));
+        } catch (Exception) {
+            return false;
+        }
+
+        if (count(Migrations::getMigrationsList()) > count($migrated))
+            return true;
+
+        return false;
     }
 }
