@@ -19,7 +19,7 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         /** Вывод глобальных настроек */
         Route::post('/', 'Admin\Settings@index');
         /** Применение настройки */
-        Route::post('/set', 'Admin\Settings@set');
+        Route::post('set', 'Admin\Settings@set');
     });
 
     /** Маршрутизация настроек баз данных сайтов */
@@ -28,9 +28,11 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         /** Вывод всех баз данных */
         Route::post('/', 'Admin\Databases@index');
         /** Вывод данных одной строки */
-        Route::post('/get', 'Admin\Databases@get');
+        Route::post('get', 'Admin\Databases@get');
         /** Применение настройки */
-        Route::post('/set', 'Admin\Databases@set');
+        Route::post('set', 'Admin\Databases@set');
+        /** Миграция базы данных сайта */
+        Route::post('migrate', 'Admin\DataBases\Migrations@migrate');
     });
 
     /** Настройка разрешений */
@@ -172,6 +174,7 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('ipInfo', 'Admin\Blocks@ipInfo')->name('api.dev.block.ipInfo');
         /** Вывод заблокированных адресов */
         Route::post('getBlockData', 'Admin\Blocks@getBlockData')->name('api.dev.block.getBlockData');
+
         /** Вывод статистики по сайтам из индивидуальных баз */
         Route::post('allstatistics', 'Admin\Blocks@allstatistics')->name('api.dev.block.allstatistics');
         /** Вывод информации об IP для блокировки по сайтам */
