@@ -21,6 +21,10 @@ class Migrations extends Controller
      */
     protected $migrations = [
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateAutomaticBlocksTable::class,
+        \App\Http\Controllers\Admin\DataBases\Migrations\CreateBlockConfigsTable::class,
+        \App\Http\Controllers\Admin\DataBases\Migrations\CreateBlocksTable::class,
+        \App\Http\Controllers\Admin\DataBases\Migrations\CreateStatisticsTable::class,
+        \App\Http\Controllers\Admin\DataBases\Migrations\CreateVisitsTable::class,
     ];
 
     /**
@@ -132,7 +136,7 @@ class Migrations extends Controller
         return $database->table('migrations')
             ->get()
             ->map(function ($row) {
-                return $row->migrate;
+                return $row->migration;
             })
             ->toArray();
     }
