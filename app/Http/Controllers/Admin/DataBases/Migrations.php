@@ -19,7 +19,7 @@ class Migrations extends Controller
      * 
      * @var array
      */
-    protected static $migrations = [
+    static $migrations = [
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateAutomaticBlocksTable::class,
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateBlockConfigsTable::class,
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateBlocksTable::class,
@@ -82,16 +82,15 @@ class Migrations extends Controller
         }
 
         $this->lastMigrate = $this->getLastIdMigration();
+        $count = 0;
 
-        foreach ($this->migrations as $migrate) {
-            $this->setMigrations($migrate);
+        foreach (self::$migrations as $migrate) {
+            if ($this->setMigrations($migrate))
+                $count++;
         }
 
         return response()->json([
-            $this->migrations,
-            $this->migrated,
-            $this->lastMigrate,
-            $s ?? [],
+            'message' => "Выполнено миграций: $count",
         ]);
     }
 
