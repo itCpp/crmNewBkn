@@ -47,6 +47,17 @@ class Databases extends Controller
     }
 
     /**
+     * Формирование наименования подключения
+     * 
+     * @param int $id
+     * @return string
+     */
+    public static function getConnectionName($id)
+    {
+        return "mysql_check_connect_" . ($id ?? 0);
+    }
+
+    /**
      * Создание настроек подключения к базам данных
      * 
      * @param string $connection

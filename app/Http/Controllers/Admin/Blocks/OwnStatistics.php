@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Databases;
 use App\Http\Controllers\Controller;
 use App\Models\CrmMka\CrmRequestsQueue;
 use App\Models\RequestsQueue;
+use App\Models\SettingsQueuesDatabase;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -382,5 +383,61 @@ class OwnStatistics extends Controller
             });
 
         return $this;
+    }
+
+    /**
+     * Блокировка ip на сайте
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setBlockIp(Request $request)
+    {
+        if (!$row = SettingsQueuesDatabase::find($request->id)) {
+            return response()->json([
+                'message' => "Настройки базы данных сайта не найдена",
+            ]);
+        }
+
+        Databases::setConfig([
+            'id' => $row->id,
+            'host' => $this->decrypt($row->host),
+            'port' => $row->port ? $this->decrypt($row->port) : $row->port,
+            'database' => $this->decrypt($row->database),
+            'user' => $this->decrypt($row->user),
+            'password' => $row->password ? $this->decrypt($row->password) : $row->password,
+        ]);
+
+        $connection = Databases::getConnectionName($row->id);
+
+        try {
+            $model = DB::connection($connection)->table('blocks');
+            $block = $model->where('host', $request->ip)->first();
+
+            $date = date("Y-m-d H:i:s");
+
+            if (!$block) {
+                $block = $model->insert([
+                    'host' => $request->ip,
+                    'created_at' => $date,
+                    'updated_at' => $date,
+                ]);
+            }
+
+            $model->where('host', $request->ip)
+                ->update([
+                    'is_block' => (bool) $request->checked,
+                    'updated_at' => $date,
+                ]);
+
+            return response()->json([
+                'message' => $request->ip,
+                'is_block' => (bool) $request->checked,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 }
