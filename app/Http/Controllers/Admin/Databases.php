@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SettingsQueuesDatabase;
 use Exception;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,13 @@ use Illuminate\Support\Facades\Schema;
 
 class Databases extends Controller
 {
+    /**
+     * Стандартное наименование таблицы очереди
+     * 
+     * @var string
+     */
+    protected $table_name = "queue_requests";
+
     /**
      * Вывод всех баз данных
      * 
@@ -195,14 +203,9 @@ class Databases extends Controller
         if (!$row = SettingsQueuesDatabase::find($request->id))
             return response(['message' => "Настройки базы данных не найндены"], 400);
 
-        $row->host = $row->host ? $this->decrypt($row->host) : null;
-        $row->port = $row->port ? $this->decrypt($row->port) : null;
-        $row->user = $row->user ? $this->decrypt($row->user) : null;
-        $row->database = $row->database ? $this->decrypt($row->database) : null;
-        $row->table_name = $row->table_name ? $this->decrypt($row->table_name) : null;
         $password = $row->password ? $this->decrypt($row->password) : null;
 
-        $row = $row->toArray();
+        $row = $this->serializeRow($row);
 
         $row['password'] = $password;
 
@@ -212,7 +215,7 @@ class Databases extends Controller
     }
 
     /**
-     * Созранение данных
+     * Сохранение данных
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -247,6 +250,8 @@ class Databases extends Controller
 
         $row = SettingsQueuesDatabase::whereId($request->id)->firstOrNew();
 
+        $table = $this->decrypt($row->table_name);
+
         $row->name = $request->name;
         $row->active = $request->active;
         $row->host = $this->encrypt($request->host);
@@ -261,8 +266,96 @@ class Databases extends Controller
 
         $this->logData($request, $row, true);
 
+        $row = $this->serializeRow($row);
+
+        if (!$request->id)
+            $error = $this->createQueueTable($row);
+        else if ($table != $row['table_name'])
+            $error = $this->renameQueueTable($row['id'], $table, $row['table_name']);
+
         return response()->json([
-            'row' => $this->serializeRow($row),
+            'row' => $row,
+            'error' => $error ?? null,
         ]);
+    }
+
+    /**
+     * Создание таблицы заявок
+     * 
+     * @param array $row
+     * @return null|string
+     */
+    public function createQueueTable($row)
+    {
+        try {
+            $connection = $this->getConnectionName($row['id']);
+            $schema = Schema::connection($connection);
+            $table = $row['table_name'] ?? $this->table_name;
+
+            if (!$schema->hasTable($table)) {
+
+                $schema->create($table, function (Blueprint $table) {
+                    $table->id();
+                    $table->string('number', 100)->nullable()->comment('Номер телефона');
+                    $table->string('name')->nullable()->comment('Имя клиента');
+                    $table->text('comment')->nullable()->comment('Комментарий');
+                    $table->string('ip')->nullable()->comment('IP адрес клиента');
+                    $table->string('site')->nullable()->comment('Сайт обращения');
+                    $table->text('page')->nullable()->comment('Страница сайта обращения');
+                    $table->text('user_agent')->nullable();
+                    $table->string('utm_source')->nullable();
+                    $table->string('utm_medium')->nullable();
+                    $table->string('utm_campaign')->nullable();
+                    $table->string('utm_content')->nullable();
+                    $table->string('utm_term')->nullable();
+                    $table->string('device')->nullable();
+                    $table->string('region')->nullable();
+                    $table->tinyInteger('locked')->default(0)->comment('Блокировка строки')->index();
+                    $table->tinyInteger('brak')->default(0)->comment('Бракованная строка')->index();
+                    $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
+                });
+            }
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
+
+        return null;
+    }
+
+    /**
+     * Смена наименования таблицы
+     * 
+     * @param string $id
+     * @param string $from
+     * @param string $to
+     * @return null|string
+     */
+    public function renameQueueTable($id, $from, $to)
+    {
+        $from = $from ?: $this->table_name;
+        $to = $to ?: $this->table_name;
+
+        try {
+            $connection = $this->getConnectionName($id);
+            $schema = Schema::connection($connection);
+
+            if ($schema->hasTable($to))
+                return "Таблица с таким именем уже существует";
+
+            if (!$schema->hasTable($from)) {
+
+                $error = $this->createQueueTable([
+                    'id' => $id,
+                    'table_name' => $from,
+                ]);
+
+                if ($error)
+                    return $error;
+            }
+
+            $schema->rename($from, $to);
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
 }
