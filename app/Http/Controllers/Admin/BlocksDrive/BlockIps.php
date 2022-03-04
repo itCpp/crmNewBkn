@@ -44,6 +44,12 @@ class BlockIps extends Drive
     public function getBlocks(Request $request)
     {
         $this->ips = BlockIp::orderBy('id', 'DESC')
+            ->when((bool) $request->ipv4, function ($query) use ($request) {
+                $query->where('ip', 'NOT LIKE', "%:%");
+            })
+            ->when((bool) $request->ipv6, function ($query) use ($request) {
+                $query->where('ip', 'LIKE', "%:%");
+            })
             ->limit(40)
             ->get()
             ->map(function ($row) {
