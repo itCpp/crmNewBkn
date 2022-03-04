@@ -200,6 +200,11 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('ip', 'Admin\Blocks\ClientId@ip')->name('api.dev.block.ip');
         /** Сохранение информации об IP для блокировки по ID */
         Route::post('ip/save', 'Admin\Blocks\ClientId@ipSave')->name('api.dev.block.ip.save');
+
+        /** Вывод заблокированных IP */
+        Route::post('drive/ip', 'Admin\BlocksDrive\BlockIp@index')->name('api.dev.block.drive.ip');
+        /** Вывод заблокированных Хостов */
+        Route::post('drive/host', 'Admin\BlocksDrive\BlockHosts@index')->name('api.dev.block.drive.host');
     });
 
     /** Маршрутизация шлюзов */

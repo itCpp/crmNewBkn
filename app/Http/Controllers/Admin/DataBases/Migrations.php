@@ -25,6 +25,7 @@ class Migrations extends Controller
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateBlocksTable::class,
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateStatisticsTable::class,
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateVisitsTable::class,
+        \App\Http\Controllers\Admin\DataBases\Migrations\CreateCounterTrigger::class,
     ];
 
     /**
@@ -91,6 +92,7 @@ class Migrations extends Controller
 
         return response()->json([
             'message' => "Выполнено миграций: $count",
+            'errors' => $this->migrations_errors ?? null,
         ]);
     }
 
@@ -161,13 +163,19 @@ class Migrations extends Controller
         if (in_array($migrate, $this->migrated))
             return false;
 
-        (new $migrate($this->connection))->up();
+        try {
+            (new $migrate($this->connection))->up();
 
-        $this->database->table('migrations')->insert([
-            'migration' => $migrate,
-            'batch' => $this->lastMigrate + 1,
-        ]);
+            $this->database->table('migrations')->insert([
+                'migration' => $migrate,
+                'batch' => $this->lastMigrate + 1,
+            ]);
 
-        return true;
+            return true;
+        } catch (Exception $e) {
+            $this->migrations_errors[] = $e->getMessage();
+        }
+
+        return false;
     }
 }
