@@ -26,7 +26,7 @@ class CreateCounterTrigger
      */
     public function up()
     {
-        $database = config("database.connections.{$this->connections}.database");
+        $database = config("database.connections.{$this->connection}.database");
 
         $count = DB::connection($this->connection)
             ->table('INFORMATION_SCHEMA.TRIGGERS')
