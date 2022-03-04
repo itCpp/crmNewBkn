@@ -127,10 +127,9 @@ class Databases extends Controller
                 'password' => $row->password ? $this->decrypt($row->password) : $row->password,
             ]);
 
-            $check = $this->checkConnection("mysql_check_connect_" . $row->id);
+            $connection = "mysql_check_connect_" . $row->id;
 
-            $row->connected = $check['connected'] ?? false;
-            $row->stats = $check['stats'] ?? null;
+            $check = $this->checkConnection($connection);
             $row->connected_error = $check['error'] ?? null;
         }
 
@@ -173,7 +172,26 @@ class Databases extends Controller
      */
     public function checkAvailabilityStats($connection)
     {
-        return Schema::connection($connection)->hasTable("block_configs");
+        try {
+            return Schema::connection($connection)->hasTable("block_configs");
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Проверка наличия таблицы миграции
+     * 
+     * @param string $connection
+     * @return bool
+     */
+    public function checkMigrationTable($connection)
+    {
+        try {
+            return Schema::connection($connection)->hasTable("migrations");
+        } catch (Exception $e) {
+            return null;
+        }
     }
 
     /**
@@ -185,9 +203,7 @@ class Databases extends Controller
     public function countAllVisits($connection)
     {
         try {
-            return DB::connection($connection)
-                ->table('visits')
-                ->count();
+            return DB::connection($connection)->table('visits')->count();
         } catch (Exception $e) {
             return null;
         }
@@ -210,6 +226,7 @@ class Databases extends Controller
 
         $row['password'] = $password;
         $row['migration_update'] = $this->checkUpdateMigrations($row['id']);
+        $row['migration_has'] = $this->checkMigrationTable($this->getConnectionName($row['id']));
 
         return response()->json([
             'row' => $row,
