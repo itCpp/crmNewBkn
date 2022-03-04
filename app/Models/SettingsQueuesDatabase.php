@@ -53,7 +53,7 @@ class SettingsQueuesDatabase extends Model
      */
     public static function getAllDecrypt($id = null)
     {
-        return static::when((bool) $id, function ($query) {
+        return static::when((bool) $id === false, function ($query) {
             $query->where('active', 1);
         })
             ->when((bool) $id, function ($query) use ($id) {
