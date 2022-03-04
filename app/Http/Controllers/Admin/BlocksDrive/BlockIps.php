@@ -47,6 +47,7 @@ class BlockIps extends Drive
             ->limit(40)
             ->get()
             ->map(function ($row) {
+                $this->pushIpRow($row->ip);
                 return $row->ip;
             })
             ->toArray();
@@ -95,6 +96,26 @@ class BlockIps extends Drive
     }
 
     /**
+     * Создание строки c IP сдресом
+     * 
+     * @param string $ip
+     * @return array
+     */
+    public function pushIpRow($ip)
+    {
+        if (empty($this->rows[$ip])) {
+            $this->rows[$ip] = [
+                'ip' => $ip,
+                'blocks' => [],
+                'isBlock' => false,
+                'isAllBlock' => false,
+            ];
+        }
+
+        return $this->rows[$ip];
+    }
+
+    /**
      * Примение строки с адрсеом
      * 
      * @param object $row
@@ -103,14 +124,7 @@ class BlockIps extends Drive
      */
     public function setRow($row, $database)
     {
-        if (empty($this->rows[$row->host])) {
-            $this->rows[$row->host] = [
-                'ip' => $row->host,
-                'blocks' => [],
-                'isBlock' => false,
-                'isAllBlock' => false,
-            ];
-        }
+        $this->pushIpRow($row->host);
 
         if ($row->is_block == 1)
             $this->rows[$row->host]['isBlock'] = true;
