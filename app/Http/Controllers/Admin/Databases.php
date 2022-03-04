@@ -43,11 +43,12 @@ class Databases extends Controller
     /**
      * Примениение настроек внешних баз данных
      * 
+     * @param null|int $id
      * @return array
      */
-    public static function setConfigs()
+    public static function setConfigs($id = null)
     {
-        return collect(SettingsQueuesDatabase::getAllDecrypt())
+        return collect(SettingsQueuesDatabase::getAllDecrypt($id))
             ->map(function ($row) {
                 self::setConfig($row);
                 return "mysql_check_connect_{$row['id']}";
@@ -180,6 +181,22 @@ class Databases extends Controller
     }
 
     /**
+     * Проверка наличия таблицы с очередями
+     * 
+     * @param string $connection
+     * @param string|null $table
+     * @return bool
+     */
+    public function checkQueueTable($connection, $table)
+    {
+        try {
+            return Schema::connection($connection)->hasTable($table ?: $this->table_name);
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
      * Проверка наличия таблицы миграции
      * 
      * @param string $connection
@@ -221,12 +238,14 @@ class Databases extends Controller
             return response(['message' => "Настройки базы данных не найндены"], 400);
 
         $password = $row->password ? $this->decrypt($row->password) : null;
+        $connection = $this->getConnectionName($row->id);
 
         $row = $this->serializeRow($row);
 
         $row['password'] = $password;
         $row['migration_update'] = $this->checkUpdateMigrations($row['id']);
-        $row['migration_has'] = $this->checkMigrationTable($this->getConnectionName($row['id']));
+        $row['migration_has'] = $this->checkMigrationTable($connection);
+        $row['queue_table_has'] = $this->checkQueueTable($connection, $row['table_name']);
 
         return response()->json([
             'row' => $row,
@@ -398,5 +417,38 @@ class Databases extends Controller
             return true;
 
         return false;
+    }
+
+    /**
+     * Список сайтов, доступных для просмотра
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sites()
+    {
+        $sites = [];
+
+        SettingsQueuesDatabase::where('active', 1)
+            ->get()
+            ->map(function ($row) {
+                return $this->serializeRow($row);
+            })
+            ->each(function ($row) use (&$sites) {
+
+                if ($row['stats'] ?? null) {
+
+                    $name = $row['domain'] ?: "Сайт #" . $row['id'];
+
+                    $sites[] = [
+                        'key' => $row['id'],
+                        'value' => $row['id'],
+                        'text' => $name,
+                    ];
+                }
+            });
+
+        return response()->json([
+            'sites' => $sites,
+        ]);
     }
 }

@@ -33,6 +33,9 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('set', 'Admin\Databases@set');
         /** Миграция базы данных сайта */
         Route::post('migrate', 'Admin\DataBases\Migrations@migrate');
+
+        /** Список сайтов с индивидуальной статистикой */
+        Route::post('sites', 'Admin\Databases@sites');
     });
 
     /** Настройка разрешений */
@@ -191,6 +194,7 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('sitesStats', 'Admin\Sites@sitesStats')->name('api.dev.block.sitesStats');
         /** Вывод данных графика */
         Route::post('getChartSite', 'Admin\Sites@getChartSite')->name('api.dev.block.getChartSite');
+        Route::post('getChartSiteOwnStat', 'Admin\Sites@getChartSiteOwnStat')->name('api.dev.block.getChartSiteOwnStat');
 
         /** Вывод информации об IP для блокировки по ID */
         Route::post('ip', 'Admin\Blocks\ClientId@ip')->name('api.dev.block.ip');

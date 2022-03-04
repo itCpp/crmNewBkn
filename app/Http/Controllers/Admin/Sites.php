@@ -6,7 +6,9 @@ use App\Exceptions\ExceptionsJsonResponse;
 use App\Http\Controllers\Admin\Blocks\Statistics;
 use App\Http\Controllers\Controller;
 use App\Models\Company\StatVisitSite;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Sites extends Controller
@@ -159,5 +161,81 @@ class Sites extends Controller
             });
 
         return collect($data)->sortBy('date')->values()->all();
+    }
+
+    /**
+     * Вывод данных графика
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * 
+     * @throws \App\Exceptions\ExceptionsJsonResponse
+     */
+    public function getChartSiteOwnStat(Request $request)
+    {
+        if (!$request->site)
+            throw new ExceptionsJsonResponse("Адрес сайта не выбран");
+
+        Databases::setConfigs($request->site);
+
+        $date = $request->date ?: date("Y-m-d");
+        $connection = Databases::getConnectionName($request->site);
+        $database = DB::connection($connection);
+
+        $data = [];
+
+        try {
+            $database->table('statistics')
+                ->selectRaw('sum(visits + visits_drops) as count, date')
+                ->whereBetween('date', [
+                    date("Y-m-d", time() - 90 * 24 * 60 * 60),
+                    $date,
+                ])
+                ->groupBy('date')
+                ->get()
+                ->each(function ($row) use (&$data) {
+
+                    $key = $row->date . "-views";
+
+                    if (empty($data[$key])) {
+                        $data[$key] = [
+                            'date' => $row->date,
+                            'name' => "views",
+                            'value' => 0,
+                        ];
+                    }
+
+                    $data[$key]['value'] += $row->count;
+                });
+
+            $database->table('statistics')
+                ->selectRaw('count(*) as count, ip, date')
+                ->whereBetween('date', [
+                    date("Y-m-d", time() - 90 * 24 * 60 * 60),
+                    $date,
+                ])
+                ->groupBy(['ip', 'date'])
+                ->get()
+                ->each(function ($row) use (&$data) {
+
+                    $key = $row->date . "-hosts";
+
+                    if (empty($data[$key])) {
+                        $data[$key] = [
+                            'date' => $row->date,
+                            'name' => "hosts",
+                            'value' => 0,
+                        ];
+                    }
+
+                    $data[$key]['value'] += $row->count;
+                });
+
+            return response()->json([
+                'chart' => collect($data)->sortBy('date')->values()->all()
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 }

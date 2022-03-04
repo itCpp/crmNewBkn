@@ -38,7 +38,7 @@ class OwnStatistics extends Controller
     {
         $this->request = $request;
 
-        $this->connections = Databases::setConfigs();
+        $this->connections = Databases::setConfigs($request->site);
 
         $this->date = date("Y-m-d");
 
