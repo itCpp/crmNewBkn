@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Blocks;
 
 use App\Http\Controllers\Admin\Databases;
 use App\Http\Controllers\Controller;
+use App\Models\BlockIp;
 use App\Models\CrmMka\CrmRequestsQueue;
 use App\Models\IpInfo;
 use App\Models\RequestsQueue;
@@ -449,16 +450,28 @@ class OwnStatistics extends Controller
                     'is_block' => (bool) $request->checked,
                     'updated_at' => $date,
                 ]);
-
-            return response()->json([
-                'message' => $request->ip,
-                'is_block' => (bool) $request->checked,
-                'connection' => $connection,
-            ]);
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
             ], 400);
         }
+
+        $block_ip = BlockIp::firstOrNew(
+            ['ip' => $request->ip],
+            ['hostname' => gethostbyaddr($request->ip)]
+        );
+
+        $sites["id-{$row->id}"] = (bool) $request->checked;
+
+        $block_ip->sites = array_merge($block_ip->sites, $sites);
+        $block_ip->save();
+
+        $this->logData($request, $block_ip);
+
+        return response()->json([
+            'message' => $request->ip,
+            'is_block' => (bool) $request->checked,
+            'connection' => $connection,
+        ]);
     }
 }

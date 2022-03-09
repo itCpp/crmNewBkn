@@ -44,16 +44,20 @@ class BlockIps extends Drive
     public function getBlocks(Request $request)
     {
         $this->ips = BlockIp::orderBy('id', 'DESC')
-            ->when((bool) $request->ipv4, function ($query) use ($request) {
+            ->when((bool) $request->search, function ($query) use ($request) {
+                $query->where('ip', 'LIKE', "%{$request->search}%");
+            })
+            ->when((bool) $request->ipv4, function ($query) {
                 $query->where('ip', 'NOT LIKE', "%:%");
             })
-            ->when((bool) $request->ipv6, function ($query) use ($request) {
+            ->when((bool) $request->ipv6, function ($query) {
                 $query->where('ip', 'LIKE', "%:%");
             })
             ->limit(40)
             ->get()
             ->map(function ($row) {
                 $this->pushIpRow($row->ip);
+                $this->rows[$row->ip]['hostname'] = $row->hostname;
                 return $row->ip;
             })
             ->toArray();
@@ -65,16 +69,24 @@ class BlockIps extends Drive
         return collect($this->rows)
             ->map(function ($row) {
 
-                if (count($this->connections) == count($row['blocks']))
-                    $row['isAllBlock'] = true;
+                $blocked = 0;
 
                 foreach ($this->databases as $database) {
+
+                    $is_block = $row['blocks'][$database['id']] ?? false;
+
+                    if ($is_block)
+                        $blocked++;
+
                     $blocks[] = [
                         'site' => $database['domain'] ?: "Сайт #" . $database['id'],
-                        'block' => $row['blocks'][$database['id']] ?? false,
+                        'block' => $is_block,
                         'id' => $database['id'],
                     ];
                 }
+
+                if (count($this->connections) == $blocked)
+                    $row['blocks_all'] = true;
 
                 $row['blocks'] = $blocks ?? [];
 
@@ -112,9 +124,10 @@ class BlockIps extends Drive
         if (empty($this->rows[$ip])) {
             $this->rows[$ip] = [
                 'ip' => $ip,
+                'hostname' => null,
                 'blocks' => [],
-                'isBlock' => false,
-                'isAllBlock' => false,
+                'is_blocked' => false,
+                'blocks_all' => false,
             ];
         }
 
@@ -133,7 +146,7 @@ class BlockIps extends Drive
         $this->pushIpRow($row->host);
 
         if ($row->is_block == 1)
-            $this->rows[$row->host]['isBlock'] = true;
+            $this->rows[$row->host]['is_blocked'] = true;
 
         $this->rows[$row->host]['blocks'][$database['id']] = $row->is_block == 1;
 

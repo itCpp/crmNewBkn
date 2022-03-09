@@ -17,6 +17,7 @@ class CreateBlockIpsTable extends Migration
         Schema::create('block_ips', function (Blueprint $table) {
             $table->id();
             $table->string('ip')->nullable();
+            $table->string('hostname')->nullable();
             $table->json('sites')->default(new Expression('(JSON_ARRAY())'));
             $table->timestamps();
         });
