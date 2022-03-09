@@ -13,7 +13,6 @@ use App\Models\SettingsQueuesDatabase;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class OwnStatistics extends Controller
 {
