@@ -50,6 +50,16 @@ class OwnStatistics extends Controller
     }
 
     /**
+     * Вывод подключений
+     * 
+     * @return array
+     */
+    public function connections()
+    {
+        return $this->connections;
+    }
+
+    /**
      * Вывод статистики по сайтам из индивидуальных баз
      * 
      * @param \Illuminate\Http\Request $request

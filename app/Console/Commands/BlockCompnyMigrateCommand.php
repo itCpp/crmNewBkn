@@ -65,13 +65,15 @@ class BlockCompnyMigrateCommand extends Command
         if ($row->is_hostname == 1)
             return $this->setBlockHostName($row);
 
-        $block = BlockIp::firstOrNew(['ip' => $row->host]);
-        $row->hostname = gethostbyaddr($row->ip);
+        $row_block = BlockIp::firstOrNew(['ip' => $row->host]);
+        $row_block->hostname = gethostbyaddr($row->host);
 
         if ($row->block == 1)
-            $block->sites = $this->setSitesBlock($row->ip, true);
+            $row_block->sites = $this->setSitesBlock($row_block->ip, true);
 
-        $row->save();
+        dump($row_block);
+
+        $row_block->save();
 
         return null;
     }
@@ -84,12 +86,12 @@ class BlockCompnyMigrateCommand extends Command
      */
     public function setBlockHostName(BlockHost $row)
     {
-        $block = ModelsBlockHost::firstOrNew(['host' => $row->host]);
+        $row_block = ModelsBlockHost::firstOrNew(['host' => $row->host]);
 
-        if ($row->block == 1)
-            $block->sites = $this->setSitesBlock($row->ip, true, true);
+        if ($row_block->block == 1)
+            $row_block->sites = $this->setSitesBlock($row_block->host, true, true);
 
-        $row->save();
+        $row_block->save();
 
         return null;
     }
@@ -106,32 +108,32 @@ class BlockCompnyMigrateCommand extends Command
     {
         $date = date("Y-m-d H:i:s");
 
-        foreach ($this->own->connections as $connection) {
+        foreach ($this->own->connections() as $connection) {
 
             try {
-                $table = DB::connection($connection)->table('blocks');
+                // $table = DB::connection($connection)->table('blocks');
 
-                $block = $table->where('host', $addr)
-                    ->where('is_hostname', (int) $is_hostname)
-                    ->first();
+                // $block = $table->where('host', $addr)
+                //     ->where('is_hostname', (int) $is_hostname)
+                //     ->first();
 
-                if (!$block) {
-                    $id = $table->insertGetId([
-                        'host' => $addr,
-                        'is_hostname' => (int) $is_hostname,
-                        'created_at' => $date,
-                        'updated_at' => $date,
-                    ]);
-                } else {
-                    $id = $block->id;
-                }
+                // if (!$block) {
+                //     $id = $table->insertGetId([
+                //         'host' => $addr,
+                //         'is_hostname' => (int) $is_hostname,
+                //         'created_at' => $date,
+                //         'updated_at' => $date,
+                //     ]);
+                // } else {
+                //     $id = $block->id;
+                // }
 
-                $table->where('id', $id)
-                    ->limit(1)
-                    ->update([
-                        'is_block' => (int) $is_block,
-                        'updated_at' => $date,
-                    ]);
+                // $table->where('id', $id)
+                //     ->limit(1)
+                //     ->update([
+                //         'is_block' => (int) $is_block,
+                //         'updated_at' => $date,
+                //     ]);
 
                 $id = config("database.connections.{$connection}.connection_id");
 
