@@ -63,4 +63,13 @@ class UderOldCrm
     {
         return $this->id;
     }
+
+    /**
+     * @param array $permits
+     * @return boolean
+     */
+    public function can(...$permits)
+    {
+        return true;
+    }
 }

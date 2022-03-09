@@ -17,7 +17,7 @@ class UserCan
     public function handle(Request $request, Closure $next, ...$permits)
     {
 
-        if (!$request->__user->can(...$permits))
+        if (!$request->user()->can(...$permits))
             return response()->json(['message' => "Доступ ограничен", 'permits' => $permits], 403);
         
         return $next($request);

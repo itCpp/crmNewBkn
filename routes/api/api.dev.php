@@ -184,6 +184,9 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('getip', 'Admin\Blocks\OwnStatistics@getip');
         /** Блокировка ip на сайте */
         Route::post('site/setblockip', 'Admin\Blocks\OwnStatistics@setBlockIp');
+        /** Блокировка на всех сайтах одновременно */
+        Route::put('site/setAllBlockIp', 'Admin\Blocks\OwnStatistics@setAllBlockIp');
+
         /** Вывод информации о блокировки по хосту */
         Route::post('gethost', 'Admin\Blocks\OwnStatistics@gethost');
         /** Изменение имени хоста */

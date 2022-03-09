@@ -13,6 +13,7 @@ use App\Models\SettingsQueuesDatabase;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OwnStatistics extends Controller
 {
@@ -629,6 +630,68 @@ class OwnStatistics extends Controller
             'message' => $request->host,
             'is_block' => (bool) $request->checked,
             'connection' => $connection,
+        ]);
+    }
+
+    /**
+     * Блокировка на всех сайтах одновременно
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setAllBlockIp(Request $request)
+    {
+        if (!$request->ip)
+            return response()->json(['message' => "IP адрес не найден"], 400);
+
+        $hostname = gethostbyaddr($request->ip);
+        $date = date("Y-m-d H:i:s");
+
+        foreach ($this->connections as $connection) {
+
+            try {
+                $table = DB::connection($connection)->table('blocks');
+
+                $block = $table->where('host', $request->ip)
+                    ->where('is_hostname', 0)
+                    ->first();
+
+                if (!$block) {
+                    $id = $table->insertGetId([
+                        'host' => $request->ip,
+                        'created_at' => $date,
+                        'updated_at' => $date,
+                    ]);
+                } else {
+                    $id = $block->id;
+                }
+
+                $table->where('id', $id)
+                    ->limit(1)
+                    ->update([
+                        'is_block' => (int) $request->block,
+                        'updated_at' => $date,
+                    ]);
+
+                $id = config("database.connections.{$connection}.connection_id");
+                $sites["id-" . $id] = (bool) $request->block;
+            } catch (Exception $e) {
+                $errors[] = $e->getMessage();
+            }
+        }
+
+        $row = BlockIp::firstOrNew(['ip' => $request->ip]);
+        $row->hostname = $hostname;
+        $row->sites = $sites ?? [];
+
+        $row->save();
+
+        $this->logData($request, $row);
+
+        return response()->json([
+            'row' => $row,
+            'sites' => $sites ?? [],
+            'errors' => $errors ?? [],
         ]);
     }
 }
