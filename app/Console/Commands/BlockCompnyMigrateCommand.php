@@ -71,8 +71,6 @@ class BlockCompnyMigrateCommand extends Command
         if ($row->block == 1)
             $row_block->sites = $this->setSitesBlock($row_block->ip, true);
 
-        dump($row_block);
-
         $row_block->save();
 
         return null;
@@ -111,29 +109,29 @@ class BlockCompnyMigrateCommand extends Command
         foreach ($this->own->connections() as $connection) {
 
             try {
-                // $table = DB::connection($connection)->table('blocks');
+                $table = DB::connection($connection)->table('blocks');
 
-                // $block = $table->where('host', $addr)
-                //     ->where('is_hostname', (int) $is_hostname)
-                //     ->first();
+                $block = $table->where('host', $addr)
+                    ->where('is_hostname', (int) $is_hostname)
+                    ->first();
 
-                // if (!$block) {
-                //     $id = $table->insertGetId([
-                //         'host' => $addr,
-                //         'is_hostname' => (int) $is_hostname,
-                //         'created_at' => $date,
-                //         'updated_at' => $date,
-                //     ]);
-                // } else {
-                //     $id = $block->id;
-                // }
+                if (!$block) {
+                    $id = $table->insertGetId([
+                        'host' => $addr,
+                        'is_hostname' => (int) $is_hostname,
+                        'created_at' => $date,
+                        'updated_at' => $date,
+                    ]);
+                } else {
+                    $id = $block->id;
+                }
 
-                // $table->where('id', $id)
-                //     ->limit(1)
-                //     ->update([
-                //         'is_block' => (int) $is_block,
-                //         'updated_at' => $date,
-                //     ]);
+                $table->where('id', $id)
+                    ->limit(1)
+                    ->update([
+                        'is_block' => (int) $is_block,
+                        'updated_at' => $date,
+                    ]);
 
                 $id = config("database.connections.{$connection}.connection_id");
 
