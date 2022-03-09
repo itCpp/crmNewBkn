@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Blocks;
 
 use App\Http\Controllers\Admin\Databases;
 use App\Http\Controllers\Controller;
+use App\Models\BlockHost;
 use App\Models\BlockIp;
 use App\Models\CrmMka\CrmRequestsQueue;
 use App\Models\IpInfo;
@@ -104,6 +105,90 @@ class OwnStatistics extends Controller
 
         return response()->json([
             'sites' => $sites ?? [],
+        ]);
+    }
+
+    /**
+     * Вывод информации об IP для блокировки по сайтам
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function gethost(Request $request)
+    {
+        if (!$request->host)
+            return response()->json(['message' => "Ошибка в имени хоста"], 400);
+
+        foreach ($this->connections as $connection) {
+
+            try {
+                $block = DB::connection($connection)
+                    ->table('blocks')
+                    ->where('host', $request->host)
+                    ->where('is_hostname', 1)
+                    ->first();
+
+                $site = config("database.connections.{$connection}.site_domain");
+                $id = config("database.connections.{$connection}.connection_id");
+
+                $sites[] = [
+                    'id' => $id,
+                    'site' => $site ?: "Сайт #{$id}",
+                    'is_block' => (bool) ($block->is_block ?? null),
+                ];
+            } catch (Exception $e) {
+                $errors[] = $e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'sites' => $sites ?? [],
+            'errors' => $errors ?? [],
+        ]);
+    }
+
+    /**
+     * Вывод информации об IP для блокировки по сайтам
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sethost(Request $request)
+    {
+        if (BlockHost::where('host', $request->hostname)->first())
+            return response()->json(['message' => "Данное имя хоста уже существует"], 400);
+
+        $request->validate([
+            'hostname' => "required|string",
+        ]);
+
+        $row = BlockHost::firstOrNew([
+            'host' => $request->host,
+        ]);
+
+        $row->host = $request->hostname;
+        $row->save();
+
+        $this->logData($request, $row);
+
+        foreach ($this->connections as $connection) {
+
+            try {
+                DB::connection($connection)
+                    ->table('blocks')
+                    ->where('host', $request->host)
+                    ->where('is_hostname', 1)
+                    ->update([
+                        'host' => $request->hostname,
+                    ]);
+            } catch (Exception $e) {
+                $errors[] = $e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'hostname' => $request->hostname,
+            'errors' => $errors ?? [],
         ]);
     }
 
@@ -447,7 +532,7 @@ class OwnStatistics extends Controller
 
             $model->where('host', $request->ip)
                 ->update([
-                    'is_block' => (bool) $request->checked,
+                    'is_block' => (int) $request->checked,
                     'updated_at' => $date,
                 ]);
         } catch (Exception $e) {
@@ -470,6 +555,78 @@ class OwnStatistics extends Controller
 
         return response()->json([
             'message' => $request->ip,
+            'is_block' => (bool) $request->checked,
+            'connection' => $connection,
+        ]);
+    }
+
+    /**
+     * Блокировка хоста на сайте
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setBlockHost(Request $request)
+    {
+        if (!$row = SettingsQueuesDatabase::find($request->id)) {
+            return response()->json([
+                'message' => "Настройки базы данных сайта не найдена",
+            ]);
+        }
+
+        Databases::setConfig([
+            'id' => $row->id,
+            'host' => $this->decrypt($row->host),
+            'port' => $row->port ? $this->decrypt($row->port) : $row->port,
+            'database' => $this->decrypt($row->database),
+            'user' => $this->decrypt($row->user),
+            'password' => $row->password ? $this->decrypt($row->password) : $row->password,
+        ]);
+
+        $connection = Databases::getConnectionName($row->id);
+
+        try {
+            $model = DB::connection($connection)->table('blocks');
+            $block = $model->where('host', $request->host)
+                ->where('is_hostname', 1)
+                ->first();
+
+            $date = date("Y-m-d H:i:s");
+
+            if (!$block) {
+                $block = $model->insert([
+                    'host' => $request->host,
+                    'is_hostname' => 1,
+                    'created_at' => $date,
+                    'updated_at' => $date,
+                ]);
+            }
+
+            $model->where('host', $request->host)
+                ->where('is_hostname', 1)
+                ->update([
+                    'is_block' => (int) $request->checked,
+                    'updated_at' => $date,
+                ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+
+        $block_hosts = BlockHost::firstOrNew(
+            ['host' => $request->host],
+        );
+
+        $sites["id-{$row->id}"] = (bool) $request->checked;
+
+        $block_hosts->sites = array_merge($block_hosts->sites ?? [], $sites);
+        $block_hosts->save();
+
+        $this->logData($request, $block_hosts);
+
+        return response()->json([
+            'message' => $request->host,
             'is_block' => (bool) $request->checked,
             'connection' => $connection,
         ]);
