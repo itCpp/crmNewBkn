@@ -30,9 +30,9 @@ class BlockIps extends Drive
      */
     public function index(Request $request)
     {
-        return response()->json([
+        return response()->json(array_merge([
             'rows' => $this->getBlocks($request),
-        ]);
+        ], $this->paginate ?? []));
     }
 
     /**
@@ -43,7 +43,7 @@ class BlockIps extends Drive
      */
     public function getBlocks(Request $request)
     {
-        $this->ips = BlockIp::orderBy('id', 'DESC')
+        $paginate = BlockIp::orderBy('id', 'DESC')
             ->when((bool) $request->search, function ($query) use ($request) {
                 $query->where('ip', 'LIKE', "%{$request->search}%");
             })
@@ -53,14 +53,19 @@ class BlockIps extends Drive
             ->when((bool) $request->ipv6, function ($query) {
                 $query->where('ip', 'LIKE', "%:%");
             })
-            ->limit(40)
-            ->get()
-            ->map(function ($row) {
-                $this->pushIpRow($row->ip);
-                $this->rows[$row->ip]['hostname'] = $row->hostname;
-                return $row->ip;
-            })
-            ->toArray();
+            ->paginate(40);
+
+        $this->paginate = [
+            'total' => $paginate->total(),
+            'page' => $paginate->currentPage(),
+            'pages' => $paginate->lastPage(),
+        ];
+
+        $this->ips = $paginate->map(function ($row) {
+            $this->pushIpRow($row->ip);
+            $this->rows[$row->ip]['hostname'] = $row->hostname;
+            return $row->ip;
+        })->toArray();
 
         foreach ($this->databases as $database) {
             $this->getBlock($database);
