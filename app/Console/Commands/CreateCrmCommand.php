@@ -61,12 +61,12 @@ class CreateCrmCommand extends Command
         if ($this->users_merge)
             $this->call('old:users');
 
+        /** Восстановление ранее сохраненных данных */
+        $this->call('data:restore', ['--name' => $this->uuid]);
+
         /** Перенос старых заявок */
         if ($this->requests_merge)
             $this->call('old:requests');
-
-        /** Восстановление ранее сохраненных данных */
-        $this->call('data:restore', ['--name' => $this->uuid]);
 
         /** Перенос детализации вызовов */
         if ($this->cdr_merge)

@@ -51,6 +51,8 @@ class DataDump extends Command
             \App\Models\IpInfo::class,
             \App\Models\TestingProcess::class,
             \App\Models\RatingStory::class,
+            \App\Models\BlockHost::class,
+            \App\Models\BlockIp::class,
         ];
 
         $this->data = [];
