@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin\DataBases\Migrations;
 
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Query\Expression;
+// use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -38,7 +38,7 @@ class CreateVisitsTable
             $table->string('method', 50)->nullable();
             $table->text('referer')->nullable();
             $table->text('user_agent')->nullable();
-            $table->json('request_data')->default(new Expression('(JSON_ARRAY())'));
+            $table->json('request_data')->nullable();
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
     }
