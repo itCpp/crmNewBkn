@@ -37,12 +37,12 @@ class Migrations extends Controller
      */
     public function __construct(Request $request)
     {
-        if (!$this->row = SettingsQueuesDatabase::find($request->id))
-            throw new ExceptionsJsonResponse("Информация о базе данных не найдена");
-
         $this->request = $request;
 
-        $this->setConfig();
+        if ($this->row = SettingsQueuesDatabase::find($request->id))
+            $this->setConfig();
+
+        // throw new ExceptionsJsonResponse("Информация о базе данных не найдена");
     }
 
     /**
