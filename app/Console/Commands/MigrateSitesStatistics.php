@@ -138,6 +138,8 @@ class MigrateSitesStatistics extends Command
         if (!$row = AllVisit::whereIn('site', $sites)->where('id', '>', $this->id)->first())
             return false;
 
+        $this->id = $row->id;
+
         try {
             DB::connection($connection)
                 ->table('visits')
@@ -166,6 +168,8 @@ class MigrateSitesStatistics extends Command
     {
         if (!$row = StatVisitSite::whereIn('site', $sites)->where('id', '>', $this->id)->first())
             return false;
+
+        $this->id = $row->id;
 
         try {
             DB::connection($connection)
