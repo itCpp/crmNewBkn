@@ -86,7 +86,7 @@ class MigrateSitesStatistics extends Command
             $this->info('Перенос истории посещений');
             $bar->start();
 
-            $stop = false;
+            $stop = true;
             $this->id = 0;
 
             while ($stop) {
@@ -107,7 +107,7 @@ class MigrateSitesStatistics extends Command
             $this->info('Перенос истории счетчиков');
             $bar->start();
 
-            $stop = false;
+            $stop = true;
             $this->id = 0;
 
             while ($stop) {
