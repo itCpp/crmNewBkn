@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Databases;
 use App\Http\Controllers\Controller;
 use App\Models\SettingsQueuesDatabase;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 

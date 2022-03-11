@@ -214,6 +214,9 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('drive/ip', 'Admin\BlocksDrive\BlockIps@index')->name('api.dev.block.drive.ip');
         /** Вывод заблокированных Хостов */
         Route::post('drive/host', 'Admin\BlocksDrive\BlockHosts@index')->name('api.dev.block.drive.host');
+
+        /** Создание блокировки */
+        Route::post('create', 'Admin\BlocksDrive\Create@create');
     });
 
     /** Маршрутизация шлюзов */

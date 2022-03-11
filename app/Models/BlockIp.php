@@ -19,6 +19,8 @@ class BlockIp extends Model
      */
     protected $fillable = [
         'ip',
+        'is_period',
+        'period_data',
         'sites',
         'created_at',
         'updated_at',
@@ -30,6 +32,7 @@ class BlockIp extends Model
      * @var array
      */
     protected $casts = [
-        'sites' => 'array'
+        'sites' => 'array',
+        'period_data' => 'array',
     ];
 }

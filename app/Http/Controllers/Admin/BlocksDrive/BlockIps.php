@@ -13,7 +13,7 @@ class BlockIps extends Drive
      * 
      * @var array
      */
-    protected $rows = [];
+    public $rows = [];
 
     /**
      * Список ip адресов
@@ -73,32 +73,42 @@ class BlockIps extends Drive
 
         return collect($this->rows)
             ->map(function ($row) {
-
-                $blocked = 0;
-
-                foreach ($this->databases as $database) {
-
-                    $is_block = $row['blocks'][$database['id']] ?? false;
-
-                    if ($is_block)
-                        $blocked++;
-
-                    $blocks[] = [
-                        'site' => $database['domain'] ?: "Сайт #" . $database['id'],
-                        'block' => $is_block,
-                        'id' => $database['id'],
-                    ];
-                }
-
-                if (count($this->connections) == $blocked)
-                    $row['blocks_all'] = true;
-
-                $row['blocks'] = $blocks ?? [];
-
-                return $row;
+                return $this->setResultRow($row);
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * Финальная обработка строки
+     * 
+     * @param array $row
+     * @return array
+     */
+    public function setResultRow($row)
+    {
+        $blocked = 0;
+
+        foreach ($this->databases as $database) {
+
+            $is_block = $row['blocks'][$database['id']] ?? false;
+
+            if ($is_block)
+                $blocked++;
+
+            $blocks[] = [
+                'site' => $database['domain'] ?: "Сайт #" . $database['id'],
+                'block' => $is_block,
+                'id' => $database['id'],
+            ];
+        }
+
+        if (count($this->connections) == $blocked)
+            $row['blocks_all'] = true;
+
+        $row['blocks'] = $blocks ?? [];
+
+        return $row;
     }
 
     /**
