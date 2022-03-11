@@ -32,6 +32,7 @@ class BlockIp extends Model
      * @var array
      */
     protected $casts = [
+        'is_period' => 'boolean',
         'sites' => 'array',
         'period_data' => 'array',
     ];

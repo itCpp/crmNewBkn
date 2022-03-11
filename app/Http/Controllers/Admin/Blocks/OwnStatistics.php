@@ -85,6 +85,8 @@ class OwnStatistics extends Controller
         if (!$request->ip)
             return response()->json(['message' => "Ошибка в IP адресе"], 400);
 
+        $row = BlockIp::where('ip', $request->ip)->first();
+
         foreach ($this->connections as $connection) {
 
             try {
@@ -114,6 +116,8 @@ class OwnStatistics extends Controller
         }
 
         return response()->json([
+            'row' => $row,
+            'is_period' => (bool) ($row->is_period ?? null),
             'sites' => $sites ?? [],
         ]);
     }
@@ -526,18 +530,41 @@ class OwnStatistics extends Controller
 
         $connection = Databases::getConnectionName($row->id);
 
+        if (!$block_ip = BlockIp::where('ip', $request->ip)->first()) {
+            $block_ip = new BlockIp;
+            $block_ip->ip = $request->ip;
+
+            if (filter_var($request->ip, FILTER_VALIDATE_IP))
+                $block_ip->hostname = gethostbyaddr($request->ip);
+        }
+
         try {
             $model = DB::connection($connection)->table('blocks');
-            $block = $model->where('host', $request->ip)->first();
+            $block = $model->where('host', $request->ip)
+                ->when($block_ip->is_period ?? false, function ($query) {
+                    $query->where('is_period', 1);
+                })
+                ->first();
 
             $date = date("Y-m-d H:i:s");
 
             if (!$block) {
-                $block = $model->insert([
+
+                $insert = [
                     'host' => $request->ip,
                     'created_at' => $date,
                     'updated_at' => $date,
-                ]);
+                ];
+
+                if ($block_ip->is_period) {
+                    $insert = array_merge($insert, [
+                        'is_period' => 1,
+                        'period_start' => $block_ip->period_data['startLong'] ?? 0,
+                        'period_stop' => $block_ip->period_data['stopLong'] ?? 0,
+                    ]);
+                }
+
+                $block = $model->insert($insert);
             }
 
             $model->where('host', $request->ip)
@@ -551,11 +578,6 @@ class OwnStatistics extends Controller
             ], 400);
         }
 
-        $block_ip = BlockIp::firstOrNew(
-            ['ip' => $request->ip],
-            ['hostname' => gethostbyaddr($request->ip)]
-        );
-
         $sites["id-{$row->id}"] = (bool) $request->checked;
 
         $block_ip->sites = array_merge($block_ip->sites, $sites);
@@ -564,6 +586,7 @@ class OwnStatistics extends Controller
         $this->logData($request, $block_ip);
 
         return response()->json([
+            'row' => $block_ip,
             'message' => $request->ip,
             'is_block' => (bool) $request->checked,
             'connection' => $connection,

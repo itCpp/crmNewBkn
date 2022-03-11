@@ -59,8 +59,7 @@ class Create extends Controller
         $this->logData($request, $row);
 
         $blockIps = new BlockIps;
-        $blockIps->pushIpRow($row->ip);
-        $blockIps->rows[$row->ip]['hostname'] = $row->hostname;
+        $blockIps->pushIpRow($row);
 
         return response()->json([
             'row' => $blockIps->setResultRow($blockIps->rows[$row->ip]),

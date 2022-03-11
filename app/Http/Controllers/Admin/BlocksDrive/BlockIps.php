@@ -62,8 +62,7 @@ class BlockIps extends Drive
         ];
 
         $this->ips = $paginate->map(function ($row) {
-            $this->pushIpRow($row->ip);
-            $this->rows[$row->ip]['hostname'] = $row->hostname;
+            $this->pushIpRow($row);
             return $row->ip;
         })->toArray();
 
@@ -131,18 +130,21 @@ class BlockIps extends Drive
     /**
      * Создание строки c IP сдресом
      * 
-     * @param string $ip
+     * @param string|BlockIp $row
      * @return array
      */
-    public function pushIpRow($ip)
+    public function pushIpRow($row)
     {
+        $ip = $row instanceof BlockIp ? $row->ip : $row;
+
         if (empty($this->rows[$ip])) {
             $this->rows[$ip] = [
                 'ip' => $ip,
-                'hostname' => null,
+                'hostname' => $row->hostname ?? null,
                 'blocks' => [],
                 'is_blocked' => false,
                 'blocks_all' => false,
+                'is_period' => isset($row->is_period) ? ($row->is_period == 1) : false,
             ];
         }
 
