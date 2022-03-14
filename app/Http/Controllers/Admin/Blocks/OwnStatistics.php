@@ -580,7 +580,7 @@ class OwnStatistics extends Controller
 
         $sites["id-{$row->id}"] = (bool) $request->checked;
 
-        $block_ip->sites = array_merge($block_ip->sites, $sites);
+        $block_ip->sites = array_merge($block_ip->sites ?: [], $sites ?: []);
         $block_ip->save();
 
         $this->logData($request, $block_ip);
