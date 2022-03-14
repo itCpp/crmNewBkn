@@ -81,6 +81,17 @@ class MigrateSitesStatistics extends Command
 
         if ($count = AllVisit::whereIn('site', $sites)->count()) {
 
+            try {
+                $start_date = DB::connection($connection)
+                    ->table('visits')
+                    ->where('created_at', '!=', null)
+                    ->first();
+
+                $this->start_date = $start_date->created_at ?? null;
+            } catch (Exception $e) {
+                $this->start_date = null;
+            }
+
             $bar = $this->output->createProgressBar($count);
 
             $this->info('Перенос истории посещений');
@@ -118,7 +129,7 @@ class MigrateSitesStatistics extends Command
             $bar->finish();
             $this->newLine();
         } else {
-            $this->error(" Исчтории счетчиков не найдено ");
+            $this->error(" Истории счетчиков не найдено ");
         }
 
         $this->newLine();
@@ -135,7 +146,14 @@ class MigrateSitesStatistics extends Command
      */
     public function writeVisits(string $connection, array $sites): bool
     {
-        if (!$row = AllVisit::whereIn('site', $sites)->where('id', '>', $this->id)->first())
+        $row = AllVisit::whereIn('site', $sites)
+            ->where('id', '>', $this->id)
+            ->when((bool) $this->start_date, function ($query) {
+                $query->where('created_at', '<', $this->start_date);
+            })
+            ->first();
+
+        if (!$row)
             return false;
 
         $this->id = $row->id;
