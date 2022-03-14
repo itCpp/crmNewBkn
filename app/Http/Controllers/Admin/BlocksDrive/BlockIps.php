@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\BlocksDrive;
 
 use App\Models\BlockIp;
+use App\Models\IpInfo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -70,6 +71,11 @@ class BlockIps extends Drive
             $this->getBlock($database);
         }
 
+        IpInfo::whereIn('ip', $this->ips)->get()
+            ->each(function ($row) {
+                $this->ip_infos[$row->ip] = $row;
+            });
+
         return collect($this->rows)
             ->map(function ($row) {
                 return $this->setResultRow($row);
@@ -106,6 +112,8 @@ class BlockIps extends Drive
             $row['blocks_all'] = true;
 
         $row['blocks'] = $blocks ?? [];
+
+        $row['info'] = $this->ip_infos[$row['ip']] ?? null;
 
         return $row;
     }
