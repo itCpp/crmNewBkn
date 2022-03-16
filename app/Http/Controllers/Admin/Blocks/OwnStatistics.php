@@ -233,6 +233,7 @@ class OwnStatistics extends Controller
         return [
             'rows' => $rows,
             'sites' => $sites ?? [],
+            'domains' => $this->getDomainsList(),
             'errors' => $this->errors ?? null,
         ];
     }
@@ -245,7 +246,8 @@ class OwnStatistics extends Controller
     public function getRows()
     {
         foreach ($this->connections as $connection) {
-            $this->getStatSite($connection);
+            $this->getStatSite($connection)
+                ->getDomains($connection);
         }
 
         $this->getOtherData();
@@ -287,7 +289,7 @@ class OwnStatistics extends Controller
      * Статистика одного сайта
      * 
      * @param string $connection
-     * @return null
+     * @return $this
      */
     public function getStatSite($connection)
     {
@@ -297,6 +299,8 @@ class OwnStatistics extends Controller
                 ->where('date', $this->date)
                 ->get()
                 ->each(function ($row) use ($connection) {
+
+                    $this->ips[] = $row->ip;
 
                     if (!isset($this->rows[$row->ip]))
                         $this->rows[$row->ip] = $this->createIpRow($row, $connection);
@@ -314,7 +318,7 @@ class OwnStatistics extends Controller
             $this->errors[] = $e->getMessage();
         }
 
-        return null;
+        return $this;
     }
 
     /**
@@ -725,5 +729,63 @@ class OwnStatistics extends Controller
             'sites' => $sites ?? [],
             'errors' => $errors ?? [],
         ]);
+    }
+
+    /**
+     * Поиск доменов, по которым был входя на страницу
+     * 
+     * @param string $connection
+     * @return $this
+     */
+    public function getDomains($connection)
+    {
+        try {
+            DB::connection($connection)
+                ->table('visits')
+                ->whereIn('ip', array_unique($this->ips ?? []))
+                ->whereBetween('created_at', [
+                    $this->date . " 00:00:00",
+                    $this->date . " 23:59:59"
+                ])
+                ->get()
+                ->each(function ($row) {
+
+                    $data = json_decode($row->request_data, true);
+
+                    if ($domain = ($data['headers']['Host'] ?? null)) {
+                        $this->domains[$row->ip][] = $domain;
+                    }
+                });
+        } catch (Exception $e) {
+            $this->errors[] = $e->getMessage();
+        }
+
+        return $this;
+    }
+
+    /**
+     * Вывод списка доменов
+     * 
+     * @return array
+     */
+    public function getDomainsList()
+    {
+        foreach ($this->domains ?? [] as $rows) {
+            if (is_array($rows)) {
+                foreach ($rows as $domain) {
+                    $domains[] = $domain;
+                }
+            }
+        }
+
+        $response = [];
+
+        foreach (array_unique($domains ?? []) as $domain) {
+            $response[] = idn_to_utf8($domain);
+        }
+
+        sort($response);
+
+        return $response;
     }
 }
