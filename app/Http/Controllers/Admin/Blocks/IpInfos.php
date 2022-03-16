@@ -313,6 +313,9 @@ class IpInfos extends Controller
      */
     public function getIpOwnStats($ip = null)
     {
+        if (!$ip = ($ip ?: $this->request->ip))
+            throw new Exceptions("IP адрес не определен");
+
         $request = new Request(query: [
             'ip' => $ip,
         ]);
