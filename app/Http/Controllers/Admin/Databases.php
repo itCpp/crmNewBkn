@@ -422,12 +422,11 @@ class Databases extends Controller
     /**
      * Список сайтов, доступных для просмотра
      * 
-     * @return \Illuminate\Http\JsonResponse
+     * @param bool $to_array
+     * @return \Illuminate\Http\JsonResponse|array
      */
-    public function sites()
+    public function sites($to_array = false)
     {
-        $sites = [];
-
         SettingsQueuesDatabase::where('active', 1)
             ->get()
             ->map(function ($row) {
@@ -447,8 +446,11 @@ class Databases extends Controller
                 }
             });
 
+        if ($to_array)
+            return $sites ?? [];
+
         return response()->json([
-            'sites' => $sites,
+            'sites' => $sites ?? [],
         ]);
     }
 }
