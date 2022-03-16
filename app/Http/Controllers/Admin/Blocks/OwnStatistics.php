@@ -28,7 +28,7 @@ class OwnStatistics extends Controller
      * 
      * @var mixed
      */
-    protected $rows = [];
+    public $rows = [];
 
     /**
      * Создание экземпляра объекта
@@ -456,7 +456,7 @@ class OwnStatistics extends Controller
             ->groupBy('ip')
             ->get()
             ->each(function ($row) {
-                $this->data[$row->ip]['queues'] = (int) $row->count;
+                $this->rows[$row->ip]['queues'] = (int) $row->count;
             });
 
         RequestsQueue::selectRaw('count(*) as count, ip')
@@ -467,7 +467,7 @@ class OwnStatistics extends Controller
             ->groupBy('ip')
             ->get()
             ->each(function ($row) {
-                $this->data[$row->ip]['queues_all'] = (int) $row->count;
+                $this->rows[$row->ip]['queues_all'] = (int) $row->count;
             });
 
         return $this;

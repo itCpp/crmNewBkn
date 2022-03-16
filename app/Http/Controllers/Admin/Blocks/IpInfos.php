@@ -340,8 +340,8 @@ class IpInfos extends Controller
         $visitsBlockAll = 0; // БЛОКИРОВННЫХ ВХОДОВ ВСЕГО
         $requests = 0; // ЗАЯВКИ СЕГОДНЯ
         $requestsAll = 0; // ВСЕГО ЗАЯВОК
-        $queues = 0; // ОЧЕРЕДЬ СЕГОДНЯ
-        $queuesAll = 0; // ВСЕГО ЗАЯВОК В ОЧЕРЕДИ
+
+        $ip = $this->own_statistics->request->ip;
 
         foreach ($this->own_statistics->connections() as $connection) {
 
@@ -349,7 +349,7 @@ class IpInfos extends Controller
                 DB::connection($connection)
                     ->table('statistics')
                     ->selectRaw('SUM(visits + visits_drops) as visitsAll, SUM(visits_drops) as visitsBlockAll, SUM(requests) as requestsAll')
-                    ->where('ip', $this->own_statistics->request->ip)
+                    ->where('ip', $ip)
                     ->get()
                     ->each(function ($row) use (&$visitsAll, &$requestsAll, &$visitsBlockAll) {
                         $visitsAll += $row->visitsAll;
@@ -364,7 +364,7 @@ class IpInfos extends Controller
                 DB::connection($connection)
                     ->table('statistics')
                     ->selectRaw('SUM(visits) as visits, SUM(visits_drops) as visitsBlock, SUM(requests) as requests')
-                    ->where('ip', $this->own_statistics->request->ip)
+                    ->where('ip', $ip)
                     ->where('date', $this->own_statistics->date)
                     ->get()
                     ->each(function ($row) use (&$visits, &$requests, &$visitsBlock) {
@@ -377,6 +377,9 @@ class IpInfos extends Controller
             }
         }
 
+        $this->own_statistics->ips = [$ip];
+        $this->own_statistics->getQueuesData();
+
         return [
             'visits' => $visits,
             'visitsAll' => $visitsAll,
@@ -384,8 +387,8 @@ class IpInfos extends Controller
             'visitsBlockAll' => $visitsBlockAll,
             'requests' => $requests,
             'requestsAll' => $requestsAll,
-            'queues' => $queues,
-            'queuesAll' => $queuesAll,
+            'queues' => $this->own_statistics->rows[$ip]['queues'] ?? 0,
+            'queuesAll' => $this->own_statistics->rows[$ip]['queues_all'] ?? 0,
         ];
     }
 }
