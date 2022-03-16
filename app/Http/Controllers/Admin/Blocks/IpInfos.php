@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Models\IpInfo;
 use App\Models\Company\BlockHost;
 use App\Models\Company\StatVisitSite;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 // use Illuminate\Support\Str;
 
@@ -66,23 +68,25 @@ class IpInfos extends Controller
         if (!$ip = ($ip ?: $this->request->ip))
             throw new Exceptions("IP адрес не определен");
 
-        $info = $this->checkInfoData($ip);
+        return $this->getIpOwnStats($ip);
 
-        $this->statistics = new Statistics($this->request);
-        $general_stats = $this->statistics->getStatistic($ip)[0] ?? [];
+        // $info = $this->checkInfoData($ip);
 
-        $sites_stats = $this->sitesStatsFromIp($ip);
+        // $this->statistics = new Statistics($this->request);
+        // $general_stats = $this->statistics->getStatistic($ip)[0] ?? [];
 
-        return [
-            'ip' => $ip,
-            'ipinfo' => $info,
-            'generalStats' => $general_stats,
-            'sitesStats' => $sites_stats,
-            // 'stats' => (new Statistics($this->request))->getStatisticIp($ip),
-            'stats' => [],
-            'textInfo' => $this->getTextIpInfo(),
-            'block' => BlockHost::where('host', $ip)->first(),
-        ];
+        // $sites_stats = $this->sitesStatsFromIp($ip);
+
+        // return [
+        //     'ip' => $ip,
+        //     'ipinfo' => $info,
+        //     'generalStats' => $general_stats,
+        //     'sitesStats' => $sites_stats,
+        //     // 'stats' => (new Statistics($this->request))->getStatisticIp($ip),
+        //     'stats' => [],
+        //     'textInfo' => $this->getTextIpInfo(),
+        //     'block' => BlockHost::where('host', $ip)->first(),
+        // ];
     }
 
     /**
@@ -299,5 +303,89 @@ class IpInfos extends Controller
         }
 
         return $string;
+    }
+
+    /**
+     * Статистика по отдельным базам данных
+     * 
+     * @param null|string $ip
+     * @return array
+     */
+    public function getIpOwnStats($ip = null)
+    {
+        $request = new Request(query: [
+            'ip' => $ip,
+        ]);
+
+        $this->own_statistics = new OwnStatistics($request);
+
+        return [
+            'ip' => $ip,
+            'ipinfo' => $this->checkInfoData($ip),
+            'generalStats' => $this->getOwnStatistics(),
+            'errors' => $this->errors ?? [],
+        ];
+    }
+
+    /**
+     * Подсчет цифр статистики
+     * 
+     * @return array
+     */
+    public function getOwnStatistics()
+    {
+        $visits = 0; // ПРОСМОТРЫ СЕГОДНЯ
+        $visitsAll = 0; // ВСЕГО ПРОСМОТРОВ
+        $visitsBlock = 0; // БЛОКИРОВННЫЕ ВХОДЫ
+        $visitsBlockAll = 0; // БЛОКИРОВННЫХ ВХОДОВ ВСЕГО
+        $requests = 0; // ЗАЯВКИ СЕГОДНЯ
+        $requestsAll = 0; // ВСЕГО ЗАЯВОК
+        $queues = 0; // ОЧЕРЕДЬ СЕГОДНЯ
+        $queuesAll = 0; // ВСЕГО ЗАЯВОК В ОЧЕРЕДИ
+
+        foreach ($this->own_statistics->connections() as $connection) {
+
+            try {
+                DB::connection($connection)
+                    ->table('statistics')
+                    ->selectRaw('SUM(visits + visits_drops) as visitsAll, SUM(visits_drops) as visitsBlockAll, SUM(requests) as requestsAll')
+                    ->where('ip', $this->own_statistics->request->ip)
+                    ->get()
+                    ->each(function ($row) use (&$visitsAll, &$requestsAll, &$visitsBlockAll) {
+                        $visitsAll += $row->visitsAll;
+                        $requestsAll += $row->requestsAll;
+                        $visitsBlockAll += $row->visitsBlockAll;
+                    });
+            } catch (Exception $e) {
+                $this->errors[] = $e->getMessage();
+            }
+
+            try {
+                DB::connection($connection)
+                    ->table('statistics')
+                    ->selectRaw('SUM(visits) as visits, SUM(visits_drops) as visitsBlock, SUM(requests) as requests')
+                    ->where('ip', $this->own_statistics->request->ip)
+                    ->where('date', $this->own_statistics->date)
+                    ->get()
+                    ->each(function ($row) use (&$visits, &$requests, &$visitsBlock) {
+                        $visits += $row->visits;
+                        $requests += $row->requests;
+                        $visitsBlock += $row->visitsBlock;
+                    });
+            } catch (Exception $e) {
+                $this->errors[] = $e->getMessage();
+            }
+        }
+
+        return [
+            'visits' => $visits,
+            'visitsAll' => $visitsAll,
+            'visitsBlock' => $visitsBlock,
+            'visitsBlockAll' => $visitsBlockAll,
+            'requests' => $requests,
+            'requestsAll' => $requestsAll,
+            'queues' => $queues,
+            'queuesAll' => $queuesAll,
+        ];
     }
 }
