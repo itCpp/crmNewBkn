@@ -322,6 +322,7 @@ class IpInfos extends Controller
         return [
             'ip' => $ip,
             'ipinfo' => $this->checkInfoData($ip),
+            'textInfo' => $this->getTextIpInfo(),
             'generalStats' => $this->getOwnStatistics(),
             'errors' => $this->errors ?? [],
         ];
