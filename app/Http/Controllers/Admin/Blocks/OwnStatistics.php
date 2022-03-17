@@ -85,9 +85,10 @@ class OwnStatistics extends Controller
      * Вывод информации об IP для блокировки по сайтам
      * 
      * @param \Illuminate\Http\Request $request
+     * @param bool $to_array Вернуть массив сайтов
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getip(Request $request)
+    public function getip(Request $request, $to_array = false)
     {
         if (!$request->ip)
             return response()->json(['message' => "Ошибка в IP адресе"], 400);
@@ -121,6 +122,9 @@ class OwnStatistics extends Controller
             } catch (Exception) {
             }
         }
+
+        if ($to_array)
+            return $sites ?? [];
 
         return response()->json([
             'row' => $row,
@@ -492,13 +496,8 @@ class OwnStatistics extends Controller
                     if (!isset($this->rows[$row->ip]))
                         $this->rows[$row->ip] = $this->createIpRow($row, $connection);
 
-                    if (!isset($this->site_stats[$connection]))
-                        $this->site_stats[$connection] = $this->createSiteRow($connection);
-
                     $this->rows[$row->host]['block_connections'][] = $connection;
                     $this->rows[$row->host]['is_blocked'] = true;
-
-                    $this->site_stats[$connection]['is_blocked'] = true;
                 });
         } catch (Exception $e) {
             $this->errors[] = [
@@ -520,14 +519,8 @@ class OwnStatistics extends Controller
                     if (!isset($this->rows[$row->ip]))
                         $this->rows[$row->ip] = $this->createIpRow($row, $connection);
 
-                    if (!isset($this->site_stats[$connection]))
-                        $this->site_stats[$connection] = $this->createSiteRow($connection);
-
                     $this->rows[$row->ip]['is_autoblock'] = true;
                     $this->rows[$row->ip]['is_blocked'] = true;
-
-                    $this->site_stats[$connection]['is_blocked'] = true;
-                    $this->site_stats[$connection]['is_autoblock'] = true;
                 });
         } catch (Exception $e) {
             $this->errors[] = [

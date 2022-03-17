@@ -322,13 +322,16 @@ class IpInfos extends Controller
 
         $this->own_statistics = new OwnStatistics($request);
 
+        $request->getip = $this->getip($request);
+
         return [
             'ip' => $ip,
             'ipinfo' => $this->checkInfoData($ip),
             'textInfo' => $this->getTextIpInfo(),
             'generalStats' => $this->getOwnStatistics(),
-            'errors' => $this->errors ?? [],
+            'errors' => $this->own_statistics->errors ?? [],
             'sitesStats' => $this->getSitesData($request),
+            'getip' => $request->getip,
         ];
     }
 
@@ -405,7 +408,7 @@ class IpInfos extends Controller
      */
     public function getSitesData($request)
     {
-        $datas = $this->own_statistics->getData($request);
+        $this->own_statistics->getData($request);
 
         foreach ($this->own_statistics->site_stats as $row) {
 
@@ -422,9 +425,28 @@ class IpInfos extends Controller
                 $domain = idn_to_utf8($domain);
             }
 
+            foreach ($request->getip ?? [] as $siteRow) {
+                if ($siteRow['id'] == $id) {
+                    $row['is_autoblock'] = $siteRow['is_autoblock'];
+                    $row['is_blocked'] = $siteRow['is_block'];
+                    break;
+                }
+            }
+
             $data[] = $row;
         }
 
         return $data ?? [];
+    }
+
+    /**
+     * Информация о блокировках
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function getip($request)
+    {
+        return $this->own_statistics->getip($request, true);
     }
 }
