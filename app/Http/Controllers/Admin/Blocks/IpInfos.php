@@ -328,6 +328,7 @@ class IpInfos extends Controller
             'textInfo' => $this->getTextIpInfo(),
             'generalStats' => $this->getOwnStatistics(),
             'errors' => $this->errors ?? [],
+            'sitesStats' => $this->getSitesData($request),
         ];
     }
 
@@ -394,5 +395,36 @@ class IpInfos extends Controller
             'queues' => $this->own_statistics->rows[$ip]['queues'] ?? 0,
             'queuesAll' => $this->own_statistics->rows[$ip]['queues_all'] ?? 0,
         ];
+    }
+
+    /**
+     * Статисика по сайтам
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function getSitesData($request)
+    {
+        $datas = $this->own_statistics->getData($request);
+
+        foreach ($this->own_statistics->site_stats as $row) {
+
+            $connection = $row['connection'];
+            $id = config("database.connections.{$connection}.connection_id");
+            $site = config("database.connections.{$connection}.site_domain");
+
+            $row['domain'] = $site ?: "Сайт #{$id}";
+            $row['domains'] = array_values(
+                array_unique($this->own_statistics->domains[$row['connection']] ?? [])
+            );
+
+            foreach ($row['domains'] as &$domain) {
+                $domain = idn_to_utf8($domain);
+            }
+
+            $data[] = $row;
+        }
+
+        return $data ?? [];
     }
 }

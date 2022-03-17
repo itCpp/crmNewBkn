@@ -31,6 +31,13 @@ class OwnStatistics extends Controller
     public $rows = [];
 
     /**
+     * Данные по статистики сайтов
+     * 
+     * @var array
+     */
+    public $site_stats = [];
+
+    /**
      * Создание экземпляра объекта
      * 
      * @param \Illuminate\Http\Request $request
@@ -151,7 +158,11 @@ class OwnStatistics extends Controller
                     'is_block' => (bool) ($block->is_block ?? null),
                 ];
             } catch (Exception $e) {
-                $errors[] = $e->getMessage();
+                $errors[] = [
+                    'message' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                    'file' => $e->getFile(),
+                ];
             }
         }
 
@@ -196,7 +207,11 @@ class OwnStatistics extends Controller
                         'host' => $request->hostname,
                     ]);
             } catch (Exception $e) {
-                $errors[] = $e->getMessage();
+                $errors[] = [
+                    'message' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                    'file' => $e->getFile(),
+                ];
             }
         }
 
@@ -219,8 +234,8 @@ class OwnStatistics extends Controller
         foreach ($this->connection_active ?? [] as $connection) {
 
             $id = config("database.connections.{$connection}.connection_id");
-
             $site = config("database.connections.{$connection}.site_domain");
+
             $text = $site ? parse_url($site, PHP_URL_HOST) : null;
 
             $sites[] = [
@@ -296,6 +311,9 @@ class OwnStatistics extends Controller
         try {
             DB::connection($connection)
                 ->table('statistics')
+                ->when((bool) $this->request->ip, function ($query) {
+                    $query->where('ip', $this->request->ip);
+                })
                 ->where('date', $this->date)
                 ->get()
                 ->each(function ($row) use ($connection) {
@@ -305,9 +323,16 @@ class OwnStatistics extends Controller
                     if (!isset($this->rows[$row->ip]))
                         $this->rows[$row->ip] = $this->createIpRow($row, $connection);
 
+                    if (!isset($this->site_stats[$connection]))
+                        $this->site_stats[$connection] = $this->createSiteRow($connection);
+
                     $this->rows[$row->ip]['visits'] += $row->visits;
                     $this->rows[$row->ip]['visits_drops'] += $row->visits_drops;
                     $this->rows[$row->ip]['requests'] += $row->requests;
+
+                    $this->site_stats[$connection]['visits'] += $row->visits;
+                    $this->site_stats[$connection]['requests'] += $row->requests;
+                    $this->site_stats[$connection]['visitsBlock'] += $row->visits_drops;
                 });
 
             // if ($site = config("database.connections.{$connection}.site_domain"))
@@ -315,7 +340,11 @@ class OwnStatistics extends Controller
 
             $this->connection_active[] = $connection;
         } catch (Exception $e) {
-            $this->errors[] = $e->getMessage();
+            $this->errors[] = [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
         }
 
         return $this;
@@ -351,6 +380,33 @@ class OwnStatistics extends Controller
     }
 
     /**
+     * Формирование строки статистики сайта
+     * 
+     * @param string $connection
+     * @return array
+     */
+    public function createSiteRow($connection)
+    {
+        $domain = config("database.connections.{$connection}.site_domain") ?: config("database.connections.{$connection}.connection_id");
+
+        return [
+            'domain' => $domain ? parse_url($domain, PHP_URL_HOST) : null,
+            'domains' => [],
+            'connection' => $connection,
+            'visits' => 0,
+            'visitsAll' => 0,
+            'visitsBlock' => 0,
+            'visitsBlockAll' => 0,
+            'requests' => 0,
+            'requestsAll' => 0,
+            'queues' => 0,
+            'queuesAll' => 0,
+            'is_blocked' => false,
+            'is_autoblock' => false,
+        ];
+    }
+
+    /**
      * Проверка блокировок
      * 
      * @return null
@@ -358,16 +414,14 @@ class OwnStatistics extends Controller
     public function getOtherData()
     {
         $this->ips = [];
-        $connections = [];
 
         foreach ($this->rows as $row) {
             $this->ips[] = $row['ip'];
-            $connections[$row['connection']][] = $row['ip'];
         }
 
         $this->ips = array_unique($this->ips);
 
-        foreach ($connections as $connection => $ips) {
+        foreach ($this->connections as $connection) {
             $this->checkBlockSiteDataBase($connection);
         }
 
@@ -396,38 +450,92 @@ class OwnStatistics extends Controller
     public function checkBlockSiteDataBase($connection)
     {
         /** Подсчет всех посещений */
-        DB::connection($connection)
-            ->table('statistics')
-            ->selectRaw('sum(visits + visits_drops) as visits_all, sum(requests) as requests_all, ip')
-            ->whereIn('ip', $this->ips ?? [])
-            ->groupBy('ip')
-            ->get()
-            ->each(function ($row) {
-                $this->rows[$row->ip]['visits_all'] += $row->visits_all;
-                $this->rows[$row->ip]['requests_all'] += $row->requests_all;
-            });
+        try {
+            DB::connection($connection)
+                ->table('statistics')
+                ->selectRaw('sum(visits + visits_drops) as visits_all, sum(requests) as requests_all, ip, sum(visits_drops) as visits_block_all')
+                ->whereIn('ip', $this->ips ?? [])
+                ->groupBy('ip')
+                ->get()
+                ->each(function ($row) use ($connection) {
+
+                    if (!isset($this->rows[$row->ip]))
+                        $this->rows[$row->ip] = $this->createIpRow($row, $connection);
+
+                    if (!isset($this->site_stats[$connection]))
+                        $this->site_stats[$connection] = $this->createSiteRow($connection);
+
+                    $this->rows[$row->ip]['visits_all'] += $row->visits_all;
+                    $this->rows[$row->ip]['requests_all'] += $row->requests_all;
+
+                    $this->site_stats[$connection]['visitsAll'] += $row->visits_all;
+                    $this->site_stats[$connection]['requestsAll'] += $row->requests_all;
+                    $this->site_stats[$connection]['visitsBlockAll'] += $row->visits_block_all;
+                });
+        } catch (Exception $e) {
+            $this->errors[] = [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
+        }
 
         /** Проверка жестких блокировок */
-        DB::connection($connection)
-            ->table('blocks')
-            ->whereIn('host', $this->ips ?? [])
-            ->where('is_block', 1)
-            ->get()
-            ->each(function ($row) use ($connection) {
-                $this->rows[$row->host]['block_connections'][] = $connection;
-                $this->rows[$row->host]['is_blocked'] = true;
-            });
+        try {
+            DB::connection($connection)
+                ->table('blocks')
+                ->whereIn('host', $this->ips ?? [])
+                ->where('is_block', 1)
+                ->get()
+                ->each(function ($row) use ($connection) {
+
+                    if (!isset($this->rows[$row->ip]))
+                        $this->rows[$row->ip] = $this->createIpRow($row, $connection);
+
+                    if (!isset($this->site_stats[$connection]))
+                        $this->site_stats[$connection] = $this->createSiteRow($connection);
+
+                    $this->rows[$row->host]['block_connections'][] = $connection;
+                    $this->rows[$row->host]['is_blocked'] = true;
+
+                    $this->site_stats[$connection]['is_blocked'] = true;
+                });
+        } catch (Exception $e) {
+            $this->errors[] = [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
+        }
 
         /** Проверка автоматических блокировок */
-        DB::connection($connection)
-            ->table('automatic_blocks')
-            ->whereIn('ip', $this->ips ?? [])
-            ->where('date', $this->date)
-            ->get()
-            ->each(function ($row) {
-                $this->rows[$row->ip]['is_autoblock'] = true;
-                $this->rows[$row->ip]['is_blocked'] = true;
-            });
+        try {
+            DB::connection($connection)
+                ->table('automatic_blocks')
+                ->whereIn('ip', $this->ips ?? [])
+                ->where('date', $this->date)
+                ->get()
+                ->each(function ($row) use ($connection) {
+
+                    if (!isset($this->rows[$row->ip]))
+                        $this->rows[$row->ip] = $this->createIpRow($row, $connection);
+
+                    if (!isset($this->site_stats[$connection]))
+                        $this->site_stats[$connection] = $this->createSiteRow($connection);
+
+                    $this->rows[$row->ip]['is_autoblock'] = true;
+                    $this->rows[$row->ip]['is_blocked'] = true;
+
+                    $this->site_stats[$connection]['is_blocked'] = true;
+                    $this->site_stats[$connection]['is_autoblock'] = true;
+                });
+        } catch (Exception $e) {
+            $this->errors[] = [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
+        }
 
         return null;
     }
@@ -456,6 +564,10 @@ class OwnStatistics extends Controller
             ->groupBy('ip')
             ->get()
             ->each(function ($row) {
+
+                if (!isset($this->rows[$row->ip]))
+                    $this->rows[$row->ip] = $this->createIpRow($row);
+
                 $this->rows[$row->ip]['queues'] = (int) $row->count;
             });
 
@@ -467,6 +579,10 @@ class OwnStatistics extends Controller
             ->groupBy('ip')
             ->get()
             ->each(function ($row) {
+
+                if (!isset($this->rows[$row->ip]))
+                    $this->rows[$row->ip] = $this->createIpRow($row);
+
                 $this->rows[$row->ip]['queues_all'] = (int) $row->count;
             });
 
@@ -492,6 +608,10 @@ class OwnStatistics extends Controller
             ->groupBy('ip')
             ->get()
             ->each(function ($row) {
+
+                if (!isset($this->rows[$row->ip]))
+                    $this->rows[$row->ip] = $this->createIpRow($row);
+
                 $this->rows[$row->ip]['queues'] = (int) $row->count;
             });
 
@@ -503,6 +623,10 @@ class OwnStatistics extends Controller
             ->groupBy('ip')
             ->get()
             ->each(function ($row) {
+
+                if (!isset($this->rows[$row->ip]))
+                    $this->rows[$row->ip] = $this->createIpRow($row);
+
                 $this->rows[$row->ip]['queues_all'] = (int) $row->count;
             });
 
@@ -712,7 +836,11 @@ class OwnStatistics extends Controller
                 $id = config("database.connections.{$connection}.connection_id");
                 $sites["id-" . $id] = (bool) $request->block;
             } catch (Exception $e) {
-                $errors[] = $e->getMessage();
+                $errors[] = [
+                    'message' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                    'file' => $e->getFile(),
+                ];
             }
         }
 
@@ -742,22 +870,44 @@ class OwnStatistics extends Controller
         try {
             DB::connection($connection)
                 ->table('visits')
+                ->select(
+                    'ip',
+                    'request_data->headers->host as host',
+                    'request_data->headers->Host as host'
+                )
                 ->whereIn('ip', array_unique($this->ips ?? []))
-                ->whereBetween('created_at', [
-                    $this->date . " 00:00:00",
-                    $this->date . " 23:59:59"
-                ])
+                // ->whereBetween('created_at', [
+                //     $this->date . " 00:00:00",
+                //     $this->date . " 23:59:59"
+                // ])
+                ->distinct()
                 ->get()
-                ->each(function ($row) {
+                ->each(function ($row) use ($connection) {
 
-                    $data = json_decode($row->request_data, true);
+                    // $data = json_decode($row->request_data, true);
 
-                    if ($domain = ($data['headers']['Host'] ?? null)) {
+                    $domain = null;
+
+                    if ($row->host ?? null)
+                        $domain = $row->host;
+                    else if ($row->Host ?? null)
+                        $domain = $row->Host;
+                    else if ($data['headers']['Host'] ?? null)
+                        $domain = $data['headers']['Host'];
+                    else if ($data['headers']['host'] ?? null)
+                        $domain = $data['headers']['host'];
+
+                    if ($domain) {
                         $this->domains[$row->ip][] = $domain;
+                        $this->domains[$connection][] = $domain;
                     }
                 });
         } catch (Exception $e) {
-            $this->errors[] = $e->getMessage();
+            $this->errors[] = [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
         }
 
         return $this;
