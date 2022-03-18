@@ -62,7 +62,7 @@ class UserMainData
      */
     public function getNotifications(Request $request)
     {
-        $notif = Notification::where('user_id', $request->user()->id)
+        $notif = Notification::where('user', $request->user()->pin)
             ->orderBy('id', "DESC");
 
         return [

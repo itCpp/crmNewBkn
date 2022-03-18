@@ -14,7 +14,7 @@ use App\Models\RequestsRow;
 use App\Models\RequestsStory;
 use App\Models\RequestsStoryPin;
 use App\Models\User;
-use App\Models\UserNotifications;
+use App\Models\Notification;
 use App\Models\UsersSession;
 use App\Models\UserWorkTime;
 
@@ -283,19 +283,23 @@ class RequestPins extends Controller
         Worktime::checkAndWriteWork($row->newPin);
 
         if ($row->newPin) {
-            UserNotifications::create([
-                'user_pin' => $row->newPin,
-                'message' => "Вам назначена заявка #{$row->id}",
+            Notification::create([
+                'user' => $row->newPin,
+                'notif_type' => "set_request",
+                'notification' => "Вам назначена заявка #{$row->id}",
                 'data' => [
                     'request_id' => $row->id,
                 ],
+                'user_by_id' => $request->user()->id,
             ]);
         }
 
         if ($row->oldPin) {
-            UserNotifications::create([
-                'user_pin' => $row->oldPin,
-                'message' => "Заявка #{$row->id} передана другому сотруднику",
+            Notification::create([
+                'user' => $row->oldPin,
+                'notif_type' => "set_request",
+                'notification' => "Заявка #{$row->id} передана другому сотруднику",
+                'user_by_id' => $request->user()->id,
             ]);
         }
 

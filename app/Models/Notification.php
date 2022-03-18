@@ -16,33 +16,36 @@ class Notification extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id',
+        'user',
         'notif_type',
         'notification',
+        'data',
         'readed_at',
+        'user_by_id',
     ];
 
     /**
-     * Атрибуты, которые преобразовываются в json
+     * Атрибуты, которые преобразовываются
      *
      * @var array
      */
     protected $casts = [
         'readed_at' => 'datetime',
+        'data' => 'array',
     ];
 
     /**
      * Создание уведомления
      * 
-     * @param int $user_id
+     * @param int $pin
      * @param string $text
      * @param string $type
      * @return \App\Models\Notification
      */
-    public static function add($user_id, $text, $type = null)
+    public static function add($pin, $text, $type = null)
     {
         self::create([
-            'user_id' => $user_id,
+            'user' => $pin,
             'notif_type' => $text,
             'notification' => $type,
         ]);
