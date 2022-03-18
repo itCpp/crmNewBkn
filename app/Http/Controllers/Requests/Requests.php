@@ -64,7 +64,7 @@ class Requests extends Controller
      */
     public static function get(Request $request)
     {
-        if ($request->tabId === null)
+        if ($request->tabId === null and !$request->search)
             return response()->json(['message' => "Выберите вкладку"], 400);
 
         if (!$request->tab = Tab::find($request->tabId))

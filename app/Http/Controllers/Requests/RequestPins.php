@@ -14,6 +14,7 @@ use App\Models\RequestsRow;
 use App\Models\RequestsStory;
 use App\Models\RequestsStoryPin;
 use App\Models\User;
+use App\Models\UserNotifications;
 use App\Models\UsersSession;
 use App\Models\UserWorkTime;
 
@@ -280,6 +281,23 @@ class RequestPins extends Controller
         // Установка статуса рабочего времени операторам
         Worktime::checkAndWriteWork($row->oldPin);
         Worktime::checkAndWriteWork($row->newPin);
+
+        if ($row->newPin) {
+            UserNotifications::create([
+                'user_pin' => $row->newPin,
+                'message' => "Вам назначена заявка #{$row->id}",
+                'data' => [
+                    'request_id' => $row->id,
+                ],
+            ]);
+        }
+
+        if ($row->oldPin) {
+            UserNotifications::create([
+                'user_pin' => $row->oldPin,
+                'message' => "Заявка #{$row->id} передана другому сотруднику",
+            ]);
+        }
 
         return response()->json([
             'request' => $row,
