@@ -353,6 +353,8 @@ class Worktime extends Controller
             ]);
         }
 
+        broadcast(new ChangeUserWorkTime($row, $request->user()->id));
+
         return response()->json([
             'worktime' => self::getDataForEvent($row),
             'timeoutLast' => $timeoutLast,

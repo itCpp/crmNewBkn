@@ -37,9 +37,9 @@ class ChangeUserWorkTime implements ShouldBroadcast
      * @param int $id
      * @return void
      */
-    public function __construct($wortime, $id)
+    public function __construct($worktime, $id)
     {
-        $this->worktime = Worktime::getDataForEvent($wortime);
+        $this->worktime = Worktime::getDataForEvent($worktime);
         $this->userId = $id;
     }
 
@@ -50,6 +50,9 @@ class ChangeUserWorkTime implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new PrivateChannel("App.User.{$this->userId}");
+        return [
+            new PrivateChannel("App.User.{$this->userId}"),
+            new PrivateChannel("App.User.Page.{$this->userId}"),
+        ];
     }
 }

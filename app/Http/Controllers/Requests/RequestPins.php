@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\Requests;
+use App\Http\Controllers\Users\Notifications;
 use App\Http\Controllers\Users\Worktime;
 use App\Models\Office;
 use App\Models\Permission;
@@ -282,26 +283,8 @@ class RequestPins extends Controller
         Worktime::checkAndWriteWork($row->oldPin);
         Worktime::checkAndWriteWork($row->newPin);
 
-        if ($row->newPin) {
-            Notification::create([
-                'user' => $row->newPin,
-                'notif_type' => "set_request",
-                'notification' => "Вам назначена заявка #{$row->id}",
-                'data' => [
-                    'request_id' => $row->id,
-                ],
-                'user_by_id' => $request->user()->id,
-            ]);
-        }
-
-        if ($row->oldPin) {
-            Notification::create([
-                'user' => $row->oldPin,
-                'notif_type' => "set_request",
-                'notification' => "Заявка #{$row->id} передана другому сотруднику",
-                'user_by_id' => $request->user()->id,
-            ]);
-        }
+        /** Рассылка уведомлений */
+        Notifications::changeRequestPin($row->id, $row->newPin, $row->oldPin);
 
         return response()->json([
             'request' => $row,

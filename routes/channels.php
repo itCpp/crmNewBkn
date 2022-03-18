@@ -24,6 +24,11 @@ Broadcast::channel('App.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
+/** Главная страница сотрудника */
+Broadcast::channel('App.User.Page.{id}', function ($user, $id) {
+    return (int) $user->id == (int) $id;
+});
+
 /** Запрос авторизации */
 Broadcast::channel('App.Admin.AuthQueries.{callcenter}.{sector}', AuthQueries::class);
 
@@ -68,4 +73,3 @@ Broadcast::channel('Chat', function ($user) {
 Broadcast::channel('Chat.Room.{id}', function ($user, $id) {
     return (int) $user->id == (int) $id;
 });
-

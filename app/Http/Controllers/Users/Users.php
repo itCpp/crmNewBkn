@@ -212,4 +212,18 @@ class Users extends Controller
 
         return Auth::createSession($request);
     }
+
+    /**
+     * Поиск идентификатор сотрудника по пину
+     * 
+     * @param int|string $pin
+     * @return null|int
+     */
+    public static function findUserId($pin)
+    {
+        if (!$user = User::where('pin', $pin)->first())
+            return null;
+
+        return $user->id;
+    }
 }
