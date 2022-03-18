@@ -333,7 +333,7 @@ class Worktime extends Controller
 
         return response()->json([
             'worktime' => self::getDataForEvent($row),
-            '$timeoutLast' => $timeoutLast,
+            'timeoutLast' => $timeoutLast,
         ]);
     }
 
@@ -345,56 +345,69 @@ class Worktime extends Controller
      */
     public static function getTapeTimes(Request $request)
     {
-        $start = null;
-        $stop = now()->format("Y-m-d") . " 18:00:00";
-        $last = null;
-        $login = null;
+        $start = now()->format("Y-m-d H:i:s"); // Время первого события
+        $stop = now()->format("Y-m-d 20:00:00"); // Окончание рабочего дня
+        $last = now()->format("Y-m-d H:i:s"); // Время последнего события
+        $login = null; // Время авторизации
 
-        $rows = UserWorkTime::whereUserPin($request->user()->pin)
+        $rows = UserWorkTime::select('event_type', 'created_at')
+            ->whereUserPin($request->user()->pin)
             ->where('date', now()->format('Y-m-d'))
             ->whereNotIn('event_type', self::$timeoutOf)
-            ->get();
+            ->get()
+            ->map(function ($row) use (&$start, &$stop, &$last, &$login) {
 
-        if (count($rows)) {
-            $rows[] = (object) [
-                'created_at' => now()->format("Y-m-d H:i:s"),
-                'event_type' => "last",
-            ];
-        }
+                $row->timestamp = strtotime($row->created_at);
 
-        foreach ($rows as &$row) {
+                if ($row->event_type == "login")
+                    $login = $row->created_at;
+                else if ($row->event_type == "logout")
+                    $login = null;
 
-            if ($row->event_type == "login")
-                $login = $row->created_at;
-            else if ($row->event_type == "logout")
-                $login = null;
+                if ($start > $row->created_at)
+                    $start = $row->created_at;
 
-            if (!$start)
-                $start = $row->created_at;
+                if ($row->created_at > $stop)
+                    $stop = $row->created_at;
 
-            if ($row->created_at > $stop)
-                $stop = $row->created_at;
+                $last = $row->created_at;
 
-            $last = $row->created_at;
+                $row->color = self::getColorButton($row->event_type);
+                $row->logined = $login !== null;
 
-            $row->color = self::getColorButton($row->event_type);
-            $row->logined = $login !== null;
-        }
+                return $row;
+            });
 
         $a = strtotime($start);
         $b = strtotime($stop);
-        $l = strtotime($last);
+        $l = time();
+        $count = count($rows) - 1;
 
-        foreach ($rows as &$row) {
-            $row->percent = ($l - $a) > 0
-                ? (strtotime($row->created_at) - $a) * 100 / ($l - $a)
-                : 0;
+        foreach ($rows as $key => &$row) {
+
+            $row->percent = ($b - $a) > 0
+                ? ($row->timestamp - $a) * 100 / ($b - $a) : 0;
+
+            $prev = $key - 1;
+
+            if ($key > 0)
+                $rows[$prev]->width = $row->percent - $rows[$prev]->percent;
+
+            if ($key === $count) {
+
+                $width = ($b - $a) > 0
+                    ? ($l - $a) * 100 / ($b - $a) : 0;
+
+                $row->width = $width > 0 ? $width - $row->percent : 0;
+            }
         }
 
         return [
             'start' => $start,
             'stop' => $stop,
-            'percent' => ($b - $a) > 0 ? ($l - $a) * 100 / ($b - $a) : 0,
+            'startTime' => $a,
+            'stopTime' => $b,
+            'time' => $l,
             'rows' => $rows->toArray(),
         ];
     }
