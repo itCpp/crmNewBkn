@@ -104,10 +104,32 @@ class Worktime extends Controller
             ->orderBy('id', 'DESC')
             ->first();
 
-        // Предотвращение записи одинакового события
+        /** Предотвращение записи одинакового события */
         if ($last) {
             if ($last->event_type == $type)
                 return $last;
+        }
+
+        /** Проверка события отдыха при авторизации */
+        if ($type == "login" and !in_array($last->event_type ?? null, self::$timeout)) {
+
+            $timeout = UserWorkTime::whereDate('date', $date)
+                ->whereUserPin($pin)
+                ->where('event_type', '!=', "logout")
+                ->orderBy('id', 'DESC')
+                ->first();
+
+            if (in_array($timeout->event_type ?? null, self::$timeout)) {
+
+                UserWorkTime::create([
+                    'user_pin' => $pin,
+                    'event_type' => $type,
+                    'date' => $date,
+                    'created_at' => $date,
+                ]);
+
+                $type = $timeout->event_type;
+            }
         }
 
         return UserWorkTime::create([

@@ -154,17 +154,17 @@ class Auth extends Controller
         $request->getResponseArray = true;
 
         $response = Users::check($request);
-        $response['token'] = self::createToken($request->__user);
+        $response['token'] = self::createToken($request->user());
 
         UsersSession::create([
             'token' => $response['token'],
-            'user_id' => $request->__user->id,
-            'user_pin' => $request->__user->pin,
+            'user_id' => $request->user()->id,
+            'user_pin' => $request->user()->pin,
             'ip' => $request->ip(),
             'user_agent' => $request->header("User-Agent"),
         ]);
 
-        $request->__user->writeWorkTime('login');
+        $request->user()->writeWorkTime('login');
 
         return response()->json($response);
     }
