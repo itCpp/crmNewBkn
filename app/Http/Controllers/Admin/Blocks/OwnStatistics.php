@@ -110,14 +110,27 @@ class OwnStatistics extends Controller
                     ->where('date', $this->date)
                     ->first();
 
+                if (!$autoblock) {
+                    $is_autoblock = false;
+                } else {
+                    if (!empty($autoblock->drop_block)) {
+                        $is_autoblock = ($autoblock->drop_block != 1);
+                    } else {
+                        $is_autoblock = true;
+                    }
+                }
+
                 $site = config("database.connections.{$connection}.site_domain");
                 $id = config("database.connections.{$connection}.connection_id");
+
+                if ($is_autoblock ?? false)
+                    $row->is_autoblock = true;
 
                 $sites[] = [
                     'id' => $id,
                     'site' => $site ?: "Сайт #{$id}",
                     'is_block' => (bool) ($block->is_block ?? null),
-                    'is_autoblock' => (bool) $autoblock,
+                    'is_autoblock' => $is_autoblock ?? false,
                 ];
             } catch (Exception) {
             }
@@ -129,6 +142,7 @@ class OwnStatistics extends Controller
         return response()->json([
             'row' => $row,
             'is_period' => (bool) ($row->is_period ?? null),
+            'is_autoblock' => $row->is_autoblock ?? false,
             'sites' => $sites ?? [],
         ]);
     }
@@ -636,7 +650,7 @@ class OwnStatistics extends Controller
     {
         if (!$row = SettingsQueuesDatabase::find($request->id)) {
             return response()->json([
-                'message' => "Настройки базы данных сайта не найдена",
+                'message' => "Настройки базы данных сайта не найдены",
             ]);
         }
 
@@ -715,6 +729,73 @@ class OwnStatistics extends Controller
     }
 
     /**
+     * Снфтие установка временной блокировки на сайте
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setAutoBlockIp(Request $request)
+    {
+        if (!$row = SettingsQueuesDatabase::find($request->id)) {
+            return response()->json([
+                'message' => "Настройки базы данных сайта не найдены",
+            ]);
+        }
+
+        Databases::setConfig([
+            'id' => $row->id,
+            'host' => $this->decrypt($row->host),
+            'port' => $row->port ? $this->decrypt($row->port) : $row->port,
+            'database' => $this->decrypt($row->database),
+            'user' => $this->decrypt($row->user),
+            'password' => $row->password ? $this->decrypt($row->password) : $row->password,
+        ]);
+
+        $connection = Databases::getConnectionName($row->id);
+
+        $date = date("Y-m-d");
+        $datetime = date("Y-m-d H:i:s");
+        $request->checked = (bool) $request->checked;
+
+        try {
+
+            $model = DB::connection($connection)->table('automatic_blocks');
+
+            $block = $model->where('ip', $request->ip)->where('date', $date)->first();
+
+            if ($request->checked and !$block) {
+                $id = $model->insertGetId([
+                    'ip' => $request->ip,
+                    'date' => $date,
+                    'created_at' => $datetime,
+                ]);
+
+                $block = $model->where('id', $id)->first();
+            } else if (!$request->checked and $block) {
+
+                $do = $model->where('ip', $request->ip)->where('date', $date);
+
+                /** Удаление при отсутствии колонки мягкого удаления */
+                if (empty($block->drop_block)) {
+                    $do->delete();
+                } else {
+                    $do->update([
+                        'drop_block' => 1,
+                    ]);
+                }
+            }
+        } catch (Exception) {
+        }
+
+        return response()->json([
+            'row' => $block ?? null,
+            'is_autoblock' => $request->checked,
+            'connection_id' => $request->id,
+            'message' => $request->ip,
+        ]);
+    }
+
+    /**
      * Блокировка хоста на сайте
      * 
      * @param \Illuminate\Http\Request $request
@@ -724,7 +805,7 @@ class OwnStatistics extends Controller
     {
         if (!$row = SettingsQueuesDatabase::find($request->id)) {
             return response()->json([
-                'message' => "Настройки базы данных сайта не найдена",
+                'message' => "Настройки базы данных сайта не найдены",
             ]);
         }
 

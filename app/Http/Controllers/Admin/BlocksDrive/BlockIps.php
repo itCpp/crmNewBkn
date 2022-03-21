@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\BlocksDrive;
 
 use App\Models\BlockIp;
 use App\Models\IpInfo;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -125,14 +126,22 @@ class BlockIps extends Drive
      */
     public function getBlock($database)
     {
-        DB::connection($database['connection'] ?? false)
-            ->table('blocks')
-            ->whereIn('host', $this->ips)
-            ->where('is_hostname', 0)
-            ->get()
-            ->each(function ($row) use ($database) {
-                $this->setRow($row, $database);
-            });
+        try {
+            DB::connection($database['connection'] ?? false)
+                ->table('blocks')
+                ->select('automatic_blocks.*', 'automatic_blocks.ip as autoblock', 'blocks.*')
+                ->leftJoin('automatic_blocks', function ($join) {
+                    $join->on('automatic_blocks.ip', '=', 'blocks.host')
+                        ->where('automatic_blocks.date', '=', date("Y-m-d"));
+                })
+                ->whereIn('host', $this->ips)
+                ->where('is_hostname', 0)
+                ->get()
+                ->each(function ($row) use ($database) {
+                    $this->setRow($row, $database);
+                });
+        } catch (Exception) {
+        }
     }
 
     /**
@@ -175,6 +184,12 @@ class BlockIps extends Drive
             $this->rows[$row->host]['is_blocked'] = true;
 
         $this->rows[$row->host]['blocks'][$database['id']] = $row->is_block == 1;
+
+        if (empty($row->drop_block)) {
+            $this->rows[$row->host]['is_autoblock'] = (bool) $row->autoblock;
+        } else if ($row->autoblock) {
+            $this->rows[$row->host]['is_autoblock'] = ($row->drop_block != 1);
+        }
 
         return $this->rows[$row->host];
     }
