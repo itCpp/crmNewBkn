@@ -50,6 +50,9 @@ class Notifications
                     'user' => $old,
                     'notif_type' => "set_request",
                     'notification' => "Заявка #{$id} передана другому сотруднику",
+                    'data' => [
+                        'drop_request_id' => $id,
+                    ],
                     'user_by_id' => optional(request()->user())->id,
                 ]),
                 Users::findUserId($old)

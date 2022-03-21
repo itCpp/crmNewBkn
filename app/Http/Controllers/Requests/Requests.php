@@ -409,28 +409,35 @@ class Requests extends Controller
     public static function getNewRequests($pin)
     {
         $sets = [];
+        $requests = [];
+        $steps = 0;
+        $rows = 10;
 
-        $requests = RequestsStoryPin::distinct()
-            ->select('request_id', 'requests_story_pins.created_at')
-            ->join('requests_rows', function ($join) use ($pin) {
-                $join->on('requests_rows.id', '=', 'requests_story_pins.request_id')
-                    ->where('requests_rows.pin', $pin);
-            })
-            ->where([
-                ['new_pin', $pin],
-                ['requests_rows.deleted_at', null],
-            ])
-            ->orderBy('requests_story_pins.created_at', 'DESC')
-            ->limit(15)
-            ->get()
-            ->map(function ($row) use (&$sets) {
-                $sets[$row->request_id] = $row->created_at;
+        while (count($sets) <= 15) {
 
-                return $row->request_id;
-            })
-            ->toArray();
+            RequestsStoryPin::distinct()
+                ->select('request_id', 'requests_story_pins.created_at')
+                ->join('requests_rows', function ($join) use ($pin) {
+                    $join->on('requests_rows.id', '=', 'requests_story_pins.request_id')
+                        ->where('requests_rows.pin', $pin);
+                })
+                ->where([
+                    ['new_pin', $pin],
+                    ['requests_rows.deleted_at', null],
+                ])
+                ->orderBy('requests_story_pins.created_at', 'DESC')
+                ->offset($steps * $rows)
+                ->limit($rows)
+                ->get()
+                ->each(function ($row) use (&$sets, &$requests) {
+                    $sets[$row->request_id] = $row->created_at;
+                    $requests[] = $row->request_id;
+                });
 
-        return RequestsRow::whereIn('id', $requests)
+            $steps++;
+        }
+
+        return RequestsRow::whereIn('id', array_unique($requests))
             ->get()
             ->map(function ($row) use ($sets) {
                 $row->set_at = $sets[$row->id] ?? null;

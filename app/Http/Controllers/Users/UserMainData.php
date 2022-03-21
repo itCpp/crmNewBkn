@@ -68,7 +68,9 @@ class UserMainData
         return [
             'count' => $notif->count(),
             'rows' => $notif->limit(50)->get(),
-            'recent' => Notification::where('readed_at', null)->count(),
+            'recent' => Notification::where('user', $request->user()->pin)
+                ->where('readed_at', null)
+                ->count(),
         ];
     }
 
