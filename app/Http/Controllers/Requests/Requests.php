@@ -410,10 +410,12 @@ class Requests extends Controller
     {
         $sets = [];
         $requests = [];
-        $steps = 0;
-        $rows = 10;
+        $requests_limit = 15;
 
-        while (count($sets) <= 15) {
+        $steps = 0;
+        $limit = 10;
+
+        while (count($sets) <= $requests_limit) {
 
             RequestsStoryPin::distinct()
                 ->select('request_id', 'requests_story_pins.created_at')
@@ -426,8 +428,8 @@ class Requests extends Controller
                     ['requests_rows.deleted_at', null],
                 ])
                 ->orderBy('requests_story_pins.created_at', 'DESC')
-                ->offset($steps * $rows)
-                ->limit($rows)
+                ->offset($steps * $limit)
+                ->limit($limit)
                 ->get()
                 ->each(function ($row) use (&$sets, &$requests) {
                     $sets[$row->request_id] = $row->created_at;
@@ -435,6 +437,9 @@ class Requests extends Controller
                 });
 
             $steps++;
+
+            if ($steps * $limit > count($requests))
+                break;
         }
 
         return RequestsRow::whereIn('id', array_unique($requests))
