@@ -19,6 +19,7 @@ class BlockIp extends Model
      */
     protected $fillable = [
         'ip',
+        'hostname',
         'is_period',
         'period_data',
         'sites',

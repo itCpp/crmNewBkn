@@ -152,6 +152,7 @@ class BlockIps extends Drive
                 'blocks' => [],
                 'is_blocked' => false,
                 'blocks_all' => false,
+                'period_data' => $row->period_data ?? null,
                 'is_period' => isset($row->is_period) ? ($row->is_period == 1) : false,
             ];
         }
@@ -160,7 +161,7 @@ class BlockIps extends Drive
     }
 
     /**
-     * Примение строки с адрсеом
+     * Примение строки с адрсом
      * 
      * @param object $row
      * @param array $database
@@ -176,5 +177,81 @@ class BlockIps extends Drive
         $this->rows[$row->host]['blocks'][$database['id']] = $row->is_block == 1;
 
         return $this->rows[$row->host];
+    }
+
+    /**
+     * Блокировка всех адресов
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setAll(Request $request)
+    {
+        $row = BlockIp::where('ip', $request->ip)
+            ->where('is_period', (int) $request->is_period)
+            ->first();
+
+        if (!$row) {
+            $row = new BlockIp;
+
+            $row->ip = $request->ip;
+            $row->is_period = (int) $request->is_period;
+
+            if ($request->is_period and is_array($request->period_data)) {
+                $row->period_data = $request->period_data;
+            }
+
+            if (filter_var($request->ip, FILTER_VALIDATE_IP))
+                $row->hostname = gethostbyaddr($request->ip);
+        }
+
+        $date = date("Y-m-d H:i:s");
+
+        foreach ($this->databases as $database) {
+
+            $databases[] = $database;
+
+            $model = DB::connection($database['connection'] ?? null)->table('blocks');
+
+            $block = $model->where('host', $request->ip)
+                ->where('is_period', $row->is_period)
+                ->first();
+
+            if (!$block) {
+
+                $insert = [
+                    'host' => $request->ip,
+                    'is_period' => $row->is_period,
+                    'period_start' => $row->period_data['startLong'] ?? null,
+                    'period_stop' => $row->period_data['stopLong'] ?? null,
+                    'created_at' => $date,
+                    'updated_at' => $date,
+                ];
+
+                $block = $model->insert($insert);
+            }
+
+            $model->where('host', $request->ip)
+                ->where('is_period', $row->is_period)
+                ->update([
+                    'is_block' => (int) $request->checked,
+                    'updated_at' => $date,
+                ]);
+
+            $sites["id-{$database['id']}"] = (bool) $request->checked;
+            $blokeds[$database['id']] = (bool) $request->checked;
+        }
+
+        $row->sites = array_merge($row->sites ?: [], $sites ?: []);
+        $row->save();
+
+        $this->logData($request, $row);
+
+        return response()->json([
+            'ip' => $row->ip,
+            'blocks_all' => (bool) $request->checked,
+            'blokeds' => $blokeds ?? [],
+            'errors' => $errors ?? null,
+        ]);
     }
 }
