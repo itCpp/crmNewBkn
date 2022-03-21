@@ -507,8 +507,8 @@ class OwnStatistics extends Controller
                 ->get()
                 ->each(function ($row) use ($connection) {
 
-                    if (!isset($this->rows[$row->ip]))
-                        $this->rows[$row->ip] = $this->createIpRow($row, $connection);
+                    if (!isset($this->rows[$row->host]))
+                        $this->rows[$row->host] = $this->createIpRow($row, $connection);
 
                     $this->rows[$row->host]['block_connections'][] = $connection;
                     $this->rows[$row->host]['is_blocked'] = true;
