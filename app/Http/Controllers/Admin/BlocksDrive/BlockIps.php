@@ -32,9 +32,13 @@ class BlockIps extends Drive
      */
     public function index(Request $request)
     {
-        return response()->json(array_merge([
-            'rows' => $this->getBlocks($request),
-        ], $this->paginate ?? []));
+        return response()->json(array_merge(
+            [
+                'rows' => $this->getBlocks($request),
+                'errors' => $this->errors ?? null,
+            ],
+            $this->paginate ?? []
+        ));
     }
 
     /**
@@ -127,20 +131,37 @@ class BlockIps extends Drive
     public function getBlock($database)
     {
         try {
-            DB::connection($database['connection'] ?? false)
+            DB::connection($database['connection'] ?? null)
                 ->table('blocks')
-                ->select('automatic_blocks.*', 'automatic_blocks.ip as autoblock', 'blocks.*')
-                ->leftJoin('automatic_blocks', function ($join) {
-                    $join->on('automatic_blocks.ip', '=', 'blocks.host')
-                        ->where('automatic_blocks.date', '=', date("Y-m-d"));
-                })
                 ->whereIn('host', $this->ips)
                 ->where('is_hostname', 0)
                 ->get()
                 ->each(function ($row) use ($database) {
                     $this->setRow($row, $database);
                 });
-        } catch (Exception) {
+        } catch (Exception $e) {
+            $this->errors[] = [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'message' => $e->getMessage(),
+            ];
+        }
+
+        try {
+            DB::connection($database['connection'] ?? null)
+                ->table('automatic_blocks')
+                ->whereIn('ip', $this->ips)
+                ->where('date', '=', date("Y-m-d"))
+                ->get()
+                ->each(function ($row) use ($database) {
+                    $this->setRowAutomatickBlock($row, $database);
+                });
+        } catch (Exception $e) {
+            $this->errors[] = [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'message' => $e->getMessage(),
+            ];
         }
     }
 
@@ -185,14 +206,27 @@ class BlockIps extends Drive
 
         $this->rows[$row->host]['blocks'][$database['id']] = $row->is_block == 1;
 
-        if (!is_integer($row->drop_block ?? null)) {
-            $this->rows[$row->host]['is_autoblock'] = (bool) $row->autoblock;
-        } else if ($row->autoblock) {
-            $this->rows[$row->host]['is_autoblock'] = ($row->drop_block != 1);
-            $this->rows[$row->host]['drop_autoblock'] = $row->drop_block;
-        }
-
         return $this->rows[$row->host];
+    }
+
+    /**
+     * Применение данных автоблокировки
+     * 
+     * @param object $row
+     * @param array $database
+     * @return array
+     */
+    public function setRowAutomatickBlock($row, $database)
+    {
+        $this->pushIpRow($row->ip);
+
+        if (!is_integer($row->drop_block ?? null)) {
+            $this->rows[$row->ip]['is_autoblock'] = true;
+        } else {
+            $this->rows[$row->ip]['is_autoblock'] = ($row->drop_block != 1);
+            $this->rows[$row->ip]['drop_autoblock'] = $row->drop_block;
+        }
+        return $this->rows[$row->ip];
     }
 
     /**
