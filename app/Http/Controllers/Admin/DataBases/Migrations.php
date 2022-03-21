@@ -27,6 +27,7 @@ class Migrations extends Controller
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateVisitsTable::class,
         \App\Http\Controllers\Admin\DataBases\Migrations\CreateCounterTrigger::class,
         \App\Http\Controllers\Admin\DataBases\Migrations\UpdateTableBlocks::class,
+        \App\Http\Controllers\Admin\DataBases\Migrations\UpdateAutomaticBlockTable::class,
     ];
 
     /**

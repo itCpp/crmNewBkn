@@ -533,8 +533,13 @@ class OwnStatistics extends Controller
                     if (!isset($this->rows[$row->ip]))
                         $this->rows[$row->ip] = $this->createIpRow($row, $connection);
 
-                    $this->rows[$row->ip]['is_autoblock'] = true;
-                    $this->rows[$row->ip]['is_blocked'] = true;
+                    if (empty($row->drop_block)) {
+                        $this->rows[$row->ip]['is_autoblock'] = true;
+                    } else {
+                        $this->rows[$row->ip]['is_autoblock'] = $row->drop_block != 1;
+                    }
+
+                    $this->rows[$row->ip]['is_blocked'] = $this->rows[$row->ip]['is_autoblock'];
                 });
         } catch (Exception $e) {
             $this->errors[] = [
@@ -729,7 +734,7 @@ class OwnStatistics extends Controller
     }
 
     /**
-     * Снфтие установка временной блокировки на сайте
+     * Снятие установка временной блокировки на сайте
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -776,7 +781,7 @@ class OwnStatistics extends Controller
                 $do = $model->where('ip', $request->ip)->where('date', $date);
 
                 /** Удаление при отсутствии колонки мягкого удаления */
-                if (empty($block->drop_block)) {
+                if (!is_integer($block->drop_block ?? null)) {
                     $do->delete();
                 } else {
                     $do->update([

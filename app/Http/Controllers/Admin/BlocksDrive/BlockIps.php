@@ -185,10 +185,11 @@ class BlockIps extends Drive
 
         $this->rows[$row->host]['blocks'][$database['id']] = $row->is_block == 1;
 
-        if (empty($row->drop_block)) {
+        if (!is_integer($row->drop_block ?? null)) {
             $this->rows[$row->host]['is_autoblock'] = (bool) $row->autoblock;
         } else if ($row->autoblock) {
             $this->rows[$row->host]['is_autoblock'] = ($row->drop_block != 1);
+            $this->rows[$row->host]['drop_autoblock'] = $row->drop_block;
         }
 
         return $this->rows[$row->host];
