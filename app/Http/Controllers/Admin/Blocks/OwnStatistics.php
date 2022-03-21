@@ -113,7 +113,7 @@ class OwnStatistics extends Controller
                 if (!$autoblock) {
                     $is_autoblock = false;
                 } else {
-                    if (!empty($autoblock->drop_block)) {
+                    if (is_integer($autoblock->drop_block ?? null)) {
                         $is_autoblock = ($autoblock->drop_block != 1);
                     } else {
                         $is_autoblock = true;
@@ -533,7 +533,7 @@ class OwnStatistics extends Controller
                     if (!isset($this->rows[$row->ip]))
                         $this->rows[$row->ip] = $this->createIpRow($row, $connection);
 
-                    if (empty($row->drop_block)) {
+                    if (!is_integer($row->drop_block ?? null)) {
                         $this->rows[$row->ip]['is_autoblock'] = true;
                     } else {
                         $this->rows[$row->ip]['is_autoblock'] = $row->drop_block != 1;
