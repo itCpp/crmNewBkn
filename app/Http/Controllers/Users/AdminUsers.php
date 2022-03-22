@@ -18,7 +18,7 @@ class AdminUsers extends Controller
      * Вывод списка сотрудников по запросу
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getUsers(Request $request)
     {
@@ -63,7 +63,7 @@ class AdminUsers extends Controller
      * Вывод данных сотрудника
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getUser(Request $request)
     {
@@ -79,7 +79,7 @@ class AdminUsers extends Controller
      * Данные для вывода окна создания сотрудника
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getAddUserData(Request $request)
     {
@@ -120,8 +120,8 @@ class AdminUsers extends Controller
     /**
      * Поиск следующего pin'a в коллцентре
      * 
-     * @param int $id   Идентификтаор коллцентра
-     * @return int      Следующий pin коллцентра
+     * @param int $id Идентификатор коллцентра
+     * @return int Следующий pin коллцентра
      */
     public static function getNextPinCallcenter($id = null)
     {
@@ -134,16 +134,14 @@ class AdminUsers extends Controller
         $max = User::where([
             ['pin', '>', $pin],
             ['pin', '<', $pin + 10000],
-        ])
-            ->max('pin');
+        ])->max('pin');
 
         $last = User::select('pin')
             ->where([
-                ['pin', '>=', $max ?? $pin],
+                ['pin', '>=', $max ?: $pin],
                 ['pin', '<', $pin + 10000],
             ])
-            ->limit(1)
-            ->get();
+            ->first();
 
         if ($last[0]->pin ?? null)
             $pin = $last[0]->pin + 1;
@@ -155,7 +153,7 @@ class AdminUsers extends Controller
      * Данные для смены колл-центра сотрудника
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getCallCenterData(Request $request)
     {
@@ -174,7 +172,7 @@ class AdminUsers extends Controller
      * Создание или обновление данных сотрудника
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function saveUser(Request $request)
     {
@@ -184,17 +182,21 @@ class AdminUsers extends Controller
             'surname' => 'required',
             'name' => 'required',
             'pin' => "required",
+            'login' => "required|unique:App\Models\User,login",
         ];
 
         if (!$user || ($user and ($user->pin != $request->pin)))
             $rules['pin'] .= "|unique:App\Models\User,pin";
 
-        if ($request->login) {
-            if (!$user || ($user and ($user->login != $request->login)))
-                $rules['login'] = "unique:App\Models\User,login";
-        }
+        // if ($request->login) {
+        //     if (!$user || ($user and ($user->login != $request->login)))
+        //         $rules['login'] = "unique:App\Models\User,login";
+        // }
 
-        $validate = $request->validate($rules);
+        $request->validate($rules, [
+            'login.required' => "Номер телефона не указан или указан неверно.",
+            'login.unique' => "Этот номер телефона уже используется у другого сотрудника.",
+        ]);
 
         if ($request->auth_type == "secret" and !$request->password and !$user) {
             return response()->json([
@@ -226,7 +228,7 @@ class AdminUsers extends Controller
 
         $user->save();
 
-        $log = parent::logData($request, $user);
+        $log = parent::logData($request, $user, $user->password ? true : false);
 
         // Логирование изменения должности
         if ($old_position_id != $request->position_id) {
@@ -253,7 +255,7 @@ class AdminUsers extends Controller
      * Блокировка сотрудника
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function blockUser(Request $request)
     {
@@ -278,7 +280,7 @@ class AdminUsers extends Controller
      * Вывод ролей и разрешений для сотрудника
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getRolesAndPermits(Request $request)
     {
@@ -334,7 +336,7 @@ class AdminUsers extends Controller
      * Установка роли пользователю
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setUserRole(Request $request)
     {
@@ -369,7 +371,7 @@ class AdminUsers extends Controller
      * Установка разрешения пользователю
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setUserPermission(Request $request)
     {
@@ -394,5 +396,28 @@ class AdminUsers extends Controller
             'permission' => $request->permission,
             'checked' =>  $permissions ? false : true,
         ]);
+    }
+
+    /**
+     * Создание учетной записи нового сотрудника
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function create(Request $request)
+    {
+        $pin = $request->user()->callcenter_id
+            ? self::getNextPinCallcenter($request->user()->callcenter_id)
+            : (User::max('pin') + 1);
+
+        $request->merge([
+            'auth_type' => "admin",
+            'login' => parent::checkPhone($request->login, 3) ?: null,
+            'pin' => $pin,
+            'callcenter_id' => $request->user()->callcenter_id ?: 2,
+            'callcenter_sector_id' => $request->user()->callcenter_sector_id ?: 2,
+        ]);
+
+        return self::saveUser($request);
     }
 }

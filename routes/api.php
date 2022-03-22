@@ -170,6 +170,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Выводит список пройденных тестирований */
         Route::post('mytests', 'Testing\MyTests@mytests')->name('api.users.mytests');
+
+        /** Создание учетной записи нового сотрудника */
+        Route::post('save', 'Users\AdminUsers@create')->middleware('user.can:user_create')->name('api.users.save');
     });
 
     /** Маршрутищация работы с договорными клиентами */
