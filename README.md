@@ -17,7 +17,7 @@ php artisan old:requestshistory
 
 ## API
 
-[/documentation/api.md](Документация API)
+[Документация API](/documentation/api.md)
 
 ## Cron
 Для выполнения задач необходимо активировать следующие процессы
