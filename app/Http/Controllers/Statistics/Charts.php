@@ -53,9 +53,6 @@ class Charts
      */
     public function setEmptyDay($data)
     {
-        if (!count($data))
-            return [];
-
         $days = [];
 
         foreach ($data as $row) {

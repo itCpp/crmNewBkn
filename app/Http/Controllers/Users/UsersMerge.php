@@ -175,18 +175,21 @@ class UsersMerge extends Controller
         );
 
         // Определение пина
-        $max = null;
-        $pinStart = $this->sectorsPin[$user->{'call-center'}] ?? null;
+        // $max = null;
+        // $pinStart = $this->sectorsPin[$user->{'call-center'}] ?? null;
 
-        if ($pinStart)
-            $max = User::whereBetween('pin', [$pinStart, $pinStart + 9999])->max('pin');
+        // if ($pinStart)
+        //     $max = User::whereBetween('pin', [$pinStart, $pinStart + 9999])->max('pin');
 
-        if ($pinStart and $max)
-            $pin = $max + 1;
-        elseif ($pinStart)
-            $pin = $pinStart;
-        else
-            $pin = $user->pin;
+        // if ($pinStart and $max)
+        //     $pin = $max + 1;
+        // elseif ($pinStart)
+        //     $pin = $pinStart;
+        // else
+        //     $pin = $user->pin;
+
+        /** Отключено создание нового пина, старые сотрудники перенесутся со старыми данными */
+        $pin = $user->pin;
 
         if ($user->pin == 813)
             $user->username = "abrik";
