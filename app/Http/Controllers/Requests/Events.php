@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Events\Comings;
 use App\Http\Controllers\Settings;
 use App\Models\RequestsClient;
 use App\Models\IncomingCall;
@@ -64,6 +65,8 @@ class Events extends Controller
         } elseif ($request->call and $call = IncomingCallRequest::find($request->call)) {
             $response['_JOB'] = $date;
             IncomingRequestCallJob::dispatch($call);
+        } elseif ($type == "coming") {
+            return Comings::incomingEvent($request);
         }
 
         return response()->json($response);
