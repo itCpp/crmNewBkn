@@ -59,14 +59,14 @@ class Events extends Controller
             IncomingCallAsteriskJob::dispatch($request->call_id);
         } else if ($type == "callDetailRecord") {
             $response = $this->writeCallDetailRecord($request);
+        } elseif ($type == "coming") {
+            return Comings::incomingEvent($request);
         } else if ($request->text and $text = IncomingTextRequest::find($request->text)) {
             $response['_JOB'] = $date;
             IncomingRequestTextJob::dispatch($text);
         } elseif ($request->call and $call = IncomingCallRequest::find($request->call)) {
             $response['_JOB'] = $date;
             IncomingRequestCallJob::dispatch($call);
-        } elseif ($type == "coming") {
-            return Comings::incomingEvent($request);
         }
 
         return response()->json($response);
