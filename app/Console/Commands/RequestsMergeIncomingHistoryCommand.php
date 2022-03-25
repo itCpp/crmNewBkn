@@ -12,6 +12,7 @@ use App\Models\RequestsStory;
 use App\Models\RequestsStoryPin;
 use App\Models\RequestsStoryStatus;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Cursor;
 
 class RequestsMergeIncomingHistoryCommand extends Command
 {
@@ -48,12 +49,26 @@ class RequestsMergeIncomingHistoryCommand extends Command
     {
         $this->last_id = 0;
         $this->merge = new RequestsMerge;
+        $this->cursor = new Cursor($this->output);
 
         $this->newLine();
         $this->info("Перенос истории заявок");
         $this->line("Начало переноса: " . date("Y-m-d H:i:s"));
 
-        $bar = $this->output->createProgressBar($this->merge->count);
+        $message = "Подсчет количества строк в таблице истории: ";
+        $this->line($message);
+        $this->cursor->moveUp();
+        $this->cursor->moveRight(mb_strlen($message));
+
+        $count = CrmNewRequestsStory::select('id_request')
+            ->where('id_request', '!=', null)
+            ->orderBy('id_request')
+            ->distinct()
+            ->count('id_request');
+
+        $this->info($count);
+
+        $bar = $this->output->createProgressBar($count);
         $bar->start();
 
         $stop = false;
@@ -81,7 +96,9 @@ class RequestsMergeIncomingHistoryCommand extends Command
      */
     public function handleStep()
     {
-        if (!$crm_request = CrmRequest::where('id', '>', $this->last_id)->first())
+        $crm_request = CrmRequest::select('crm_requests.*')->join('crm_new_requests_story', 'crm_new_requests_story.id_request', '=', 'crm_requests.id')->where('crm_requests.id', '>', $this->last_id)->first();
+
+        if (!$crm_request)
             return false;
 
         $this->last_id = $crm_request->id;

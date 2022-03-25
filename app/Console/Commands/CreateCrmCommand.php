@@ -4,6 +4,9 @@ namespace App\Console\Commands;
 
 use App\Console\MyOutput;
 use App\Http\Controllers\Settings;
+use App\Models\CrmMka\CrmRequest;
+use App\Models\CrmMka\CrmUser;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -19,7 +22,8 @@ class CreateCrmCommand extends Command
     protected $signature = 'createcrm
                             {--users : Перенести данные сотрудников}
                             {--requests : Перенести заявки}
-                            {--cdr : Перенести детализацию звоков}';
+                            {--cdr : Перенести детализацию звоков}
+                            {--story : Перенести историю изменения заявок}';
 
     /**
      * The console command description.
@@ -89,8 +93,11 @@ class CreateCrmCommand extends Command
 
         $this->newLine(1);
 
-        $this->line("Теперь можно запустить перенос истории заявок:");
-        $this->info("php artisan old:requestshistory");
+        if ($this->story) {
+        } else {
+            $this->line("Теперь можно запустить перенос истории заявок:");
+            $this->info("php artisan old:requestshistory");
+        }
 
         return 0;
     }
@@ -104,9 +111,26 @@ class CreateCrmCommand extends Command
     {
         $this->title('Перенос ЦРМ');
 
+        try {
+            CrmRequest::count();
+        } catch (Exception $e) {
+            $this->error("База данных старой ЦРМ не доступна!\n");
+            $this->error($e->getMessage());
+
+            return false;
+        }
+
+        if (!env("NEW_CRM_OFF", true)) {
+            $this->error("Использование старой ЦРМ отключено в .env файле, возможно команда переноса запущена случайно");
+            $this->line("Чтобы запустить перенос ЦРМ определите переменную <fg=green;options=bold>NEW_CRM_OFF</> в .env со значением <fg=green;options=bold>true</>");
+
+            return false;
+        }
+
         $this->users_merge = $this->option('users');
         $this->requests_merge = $this->option('requests');
         $this->cdr_merge = $this->option('cdr');
+        $this->story = $this->option('story');
 
         $this->line("При запуске этой комманды вся текущая база данных будет удалена");
 
@@ -128,6 +152,12 @@ class CreateCrmCommand extends Command
 
         if (!$this->cdr_merge and $this->confirm('Перенести детализацию вызовов?', true)) {
             $this->cdr_merge = true;
+        }
+
+        $this->line(" История изменения заявок может длиться несколько дней,\r\n запустить процесс переноса истории можно позже");
+
+        if (!$this->story and $this->confirm('Перенести историю изменения заявок сейчас?', false)) {
+            $this->story = true;
         }
 
         return true;
