@@ -5,10 +5,10 @@ namespace App\Console\Commands;
 use App\Console\MyOutput;
 use App\Http\Controllers\Settings;
 use App\Models\CrmMka\CrmRequest;
-use App\Models\CrmMka\CrmUser;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Cursor;
 
 class CreateCrmCommand extends Command
 {
@@ -51,6 +51,7 @@ class CreateCrmCommand extends Command
     {
         $start = microtime(1);
         $this->uuid = Str::orderedUuid();
+        $this->cursor = new Cursor($this->output);
 
         if (!$this->questionnaire())
             return 0;
@@ -154,7 +155,9 @@ class CreateCrmCommand extends Command
             $this->cdr_merge = true;
         }
 
-        $this->line(" История изменения заявок может длиться несколько дней,\r\n запустить процесс переноса истории можно позже");
+        $this->line(" История изменения заявок может длиться несколько дней,");
+        $this->line(" запустить процесс переноса истории можно позже.");
+        $this->cursor->moveUp(2);
 
         if (!$this->story and $this->confirm('Перенести историю изменения заявок сейчас?', false)) {
             $this->story = true;
