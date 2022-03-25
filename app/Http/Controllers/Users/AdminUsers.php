@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\Events\Users\NotificationsEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Callcenter;
 use App\Models\CallcenterSector;
+use App\Models\Notification;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -128,23 +130,25 @@ class AdminUsers extends Controller
         if (!$id)
             return null;
 
-        $pin = $id . "0000";
+        $pin = (int) $id . "0000";
 
-        // Максимальный pin в диапазоне коллцентра
+        /** Максимальный pin в диапазоне коллцентра */
         $max = User::where([
-            ['pin', '>', $pin],
+            ['pin', '>=', $pin],
             ['pin', '<', $pin + 10000],
         ])->max('pin');
 
-        $last = User::select('pin')
-            ->where([
-                ['pin', '>=', $max ?: $pin],
-                ['pin', '<', $pin + 10000],
-            ])
-            ->first();
+        /** Первый существующий пин после максимального */
+        $last = User::select('pin')->where([
+            ['pin', '>=', $max ?: $pin],
+            ['pin', '<', $pin + 10000],
+        ])->first();
 
-        if ($last[0]->pin ?? null)
-            $pin = $last[0]->pin + 1;
+        if ($last->pin ?? null)
+            $pin = $last->pin + 1;
+
+        if (User::wherePin($pin)->count())
+            $pin = User::max('pin') + 1;
 
         return (int) $pin;
     }
@@ -228,6 +232,12 @@ class AdminUsers extends Controller
 
         $user->save();
 
+        if ($request->create_caller) {
+
+            if (!$user->roles()->where('users_roles.role', "caller")->count())
+                $user->roles()->attach("caller");
+        }
+
         $log = parent::logData($request, $user, $user->password ? true : false);
 
         // Логирование изменения должности
@@ -245,6 +255,19 @@ class AdminUsers extends Controller
 
         $user->callcenter = Callcenter::find($user->callcenter_id)->name ?? $user->callcenter_id;
         $user->sector = CallcenterSector::find($user->callcenter_sector_id)->name ?? $user->callcenter_sector_id;
+
+        if ($request->create_notification) {
+
+            broadcast(new NotificationsEvent(
+                Notification::create([
+                    'user' => $request->user()->pin,
+                    'notif_type' => "create_user",
+                    'notification' => "Вы создали учетную запись для нового сотрудника",
+                    'data' => $user,
+                ]),
+                $request->user()->id,
+            ));
+        }
 
         return response()->json([
             'user' => $user,
@@ -406,16 +429,20 @@ class AdminUsers extends Controller
      */
     public static function create(Request $request)
     {
-        $pin = $request->user()->callcenter_id
-            ? self::getNextPinCallcenter($request->user()->callcenter_id)
+        $callcenter_id = $request->user()->callcenter_id ?: 2;
+
+        $pin = $callcenter_id
+            ? self::getNextPinCallcenter($callcenter_id)
             : (User::max('pin') + 1);
 
         $request->merge([
             'auth_type' => "admin",
             'login' => parent::checkPhone($request->login, 3) ?: null,
             'pin' => $pin,
-            'callcenter_id' => $request->user()->callcenter_id ?: 2,
+            'callcenter_id' => $callcenter_id,
             'callcenter_sector_id' => $request->user()->callcenter_sector_id ?: 2,
+            'create_notification' => true,
+            'create_caller' => true,
         ]);
 
         return self::saveUser($request);

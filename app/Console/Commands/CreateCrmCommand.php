@@ -81,10 +81,16 @@ class CreateCrmCommand extends Command
 
         $time = microtime(1) - $start;
 
-        $this->newLine(3);
+        $this->newLine(1);
+
         $this->line("Время начала переноса: <fg=green;options=bold>" . date("Y-m-d H:i:s", $start) . "</>");
         $this->line("Время окончания переноса: <fg=green;options=bold>" . date("Y-m-d H:i:s") . "</>");
         $this->line("Время работы: <fg=green;options=bold>" . date("H:i:s", $time) . "</>");
+
+        $this->newLine(1);
+
+        $this->line("Теперь можно запустить перенос истории заявок:");
+        $this->info("php artisan old:requestshistory");
 
         return 0;
     }
