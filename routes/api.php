@@ -111,6 +111,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Данные для модального окна обращений по рекламе */
         Route::post('ad/get', 'Requests\Ad@get')->name('api.requests.ad.get')->middleware('user.can:requests_show_resource');
+
+        /** Вывод истории изменения в заявке */
+        Route::post('story', 'Requests\Stories@get')->name('api.requests.story');
     });
 
     /** Маршрутизация различных рейтингов */

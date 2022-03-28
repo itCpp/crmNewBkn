@@ -155,13 +155,16 @@ class Requests extends Controller
         $view->view_at = now();
         $view->save();
 
+        if ($request->getRow)
+            return $row;
+
         $response = [
             'request' => $row,
             'permits' => RequestStart::$permits,
             'statuses' => $statuses,
             'offices' => Office::orderBy('active', 'DESC')->orderBy('name')->get(),
             'cities' => Cities::$data, // Список городов
-            'themes' => Themes::$data, // Список тем
+            'themes' => Themes::$data, // Список тематик
         ];
 
         if ($request->getComments)

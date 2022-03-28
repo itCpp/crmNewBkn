@@ -159,14 +159,22 @@ class RequestsMergeIncomingHistoryCommand extends Command
                 /** Персональный номер сотрудника, делавший изменение */
                 $created_pin = $row->pinEdited ? $this->merge->getNewPin($row->pinEdited) : null;
 
+                if ($row->del == 1)
+                    $new->deleted_at = $row->create_at;
+
+                if ($row->hided == 1) {
+                    $new->uplift = 0;
+                }
+
                 /** Создание строки истории */
                 $create = [
                     'request_id' => $row->id_request,
-                    'request_data' => $new->toArray(),
+                    'row_data' => $new->toArray(),
                     'created' => $row->newRequest,
                     'created_pin' => $created_pin,
                     'created_at' => $row->create_at,
                 ];
+
                 $story = RequestsStory::create($create);
                 // dump($create);
 

@@ -95,6 +95,7 @@ class CreateCrmCommand extends Command
         $this->newLine(1);
 
         if ($this->story) {
+            $this->call('old:requestshistory');
         } else {
             $this->line("Теперь можно запустить перенос истории заявок:");
             $this->info("php artisan old:requestshistory");
