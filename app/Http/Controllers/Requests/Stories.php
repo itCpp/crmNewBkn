@@ -33,6 +33,7 @@ class Stories extends Controller
         'id',
         'old_story',
         'updated_at',
+        'pivot',
     ];
 
     /**
@@ -90,10 +91,6 @@ class Stories extends Controller
             }
         }
 
-        /** Первая строка записи */
-        if ($this->last === null)
-            $this->last = $row->toArray();
-
         $item->row_data = $row_data ?? [];
 
         /** Определение измененных ключей */
@@ -102,6 +99,10 @@ class Stories extends Controller
                 $this->keys[] = $key;
             }
         }
+
+        /** Первая строка записи */
+        if ($this->last === null)
+            $this->last = $row->toArray();
 
         /** Уникальный список измененных ключей */
         $item->keys = array_values(array_unique($this->keys));
