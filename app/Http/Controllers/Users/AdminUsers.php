@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Users;
 
 use App\Events\Users\NotificationsEvent;
 use App\Http\Controllers\Controller;
+use App\Models\Base\CrmImagePersonal;
+use App\Models\Base\Personal;
 use App\Models\Callcenter;
 use App\Models\CallcenterSector;
 use App\Models\Notification;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\Saratov\CrmImagePersonal as SaratovCrmImagePersonal;
+use App\Models\Saratov\Personal as SaratovPersonal;
 use App\Models\User;
 use App\Models\UsersPosition;
 use App\Models\UsersPositionsStory;
@@ -105,12 +109,38 @@ class AdminUsers extends Controller
             $pin = self::getNextPinCallcenter($request->user()->callcenter_id);
         }
 
+        /** Информация о сотруднике в БАЗАх */
+        if ($user) {
+
+            if ($pers = SaratovPersonal::wherePin($user->pin)->first()) {
+
+                $img = SaratovCrmImagePersonal::where('synhId', $pers->id)
+                    ->orderBy('id', "DESC")
+                    ->first();
+
+                if ($img) {
+                    $photo = env("BASE_SARATOV_URL") . "/modules/personal/php/upload/image/" . $img->path;
+                }
+            } else if ($pers = Personal::wherePin($user->pin)->first()) {
+
+                $img = CrmImagePersonal::where('synhId', $pers->id)
+                    ->orderBy('id', "DESC")
+                    ->first();
+
+                if ($img) {
+                    $photo = env("BASE_URL") . "/modules/personal/php/upload/image/" . $img->path;
+                }
+            }
+        }
+
         return response()->json([
             'callcenter' => $request->user()->callcenter_id, // Колл-центр администратора
             'sector' => $request->user()->callcenter_sector_id, // Сектор администратора
             'callcenters' => $callcenters ?? [],
             'pin' => $pin,
             'user' => $user, // Данные сотрудника для редактирования
+            'photo' => $photo ?? null,
+            'personal' => (bool) ($pers ?? null),
             'positions' => UsersPosition::all(),
             'auth_types' => [
                 ['text' => "По паролю", 'value' => "secret"],
@@ -186,16 +216,16 @@ class AdminUsers extends Controller
             'surname' => 'required',
             'name' => 'required',
             'pin' => "required",
-            'login' => "required|unique:App\Models\User,login",
+            'login' => "required",
         ];
 
         if (!$user || ($user and ($user->pin != $request->pin)))
             $rules['pin'] .= "|unique:App\Models\User,pin";
 
-        // if ($request->login) {
-        //     if (!$user || ($user and ($user->login != $request->login)))
-        //         $rules['login'] = "unique:App\Models\User,login";
-        // }
+        if ($request->login) {
+            if (!$user || ($user and ($user->login != $request->login)))
+                $rules['login'] = "required|unique:App\Models\User,login";
+        }
 
         $request->validate($rules, [
             'login.required' => "Номер телефона не указан или указан неверно.",
@@ -216,6 +246,9 @@ class AdminUsers extends Controller
 
         if (!$user or ($user and $request->password))
             $user->password = Auth::getHashPass($request->password);
+
+        if ($user->pin and $user->pin != $request->pin)
+            $changed_pin = $user->pin;
 
         $user->pin = $request->pin;
         $user->login = $request->login;
@@ -252,6 +285,14 @@ class AdminUsers extends Controller
         }
 
         $user = new UserData($user);
+
+        if ($request->create_personal_base) {
+
+            if ($changed_pin ?? null)
+                $user->changed_pin = $changed_pin;
+
+            self::createPersonalBase($user);
+        }
 
         $user->callcenter = Callcenter::find($user->callcenter_id)->name ?? $user->callcenter_id;
         $user->sector = CallcenterSector::find($user->callcenter_sector_id)->name ?? $user->callcenter_sector_id;
@@ -443,8 +484,38 @@ class AdminUsers extends Controller
             'callcenter_sector_id' => $request->user()->callcenter_sector_id ?: 2,
             'create_notification' => true,
             'create_caller' => true,
+            'create_personal_base' => true,
         ]);
 
         return self::saveUser($request);
+    }
+
+    /**
+     * Создание сотрудника в базе
+     * 
+     * @param  \App\Http\Controllers\Users\UserData $user
+     * @return \App\Models\Saratov\Personal
+     */
+    public static function createPersonalBase($user)
+    {
+        if ($row = SaratovPersonal::wherePin($user->changed_pin ?: $user->pin)->first()) {
+
+            $row->pin = $user->changed_pin ?: $user->pin;
+            $row->fio = $user->name_full ?: $user->pin;
+
+            $row->save();
+
+            return $row;
+        }
+
+        return SaratovPersonal::create([
+            'pin' => $user->pin,
+            'doljnost' => "Оператор",
+            'fio' => $user->name_full,
+            'telefonl' => $user->login,
+            'otdel' => "Колл-центр",
+            'state' => "Работает",
+            'workStart' => date("Y-m-d"),
+        ]);
     }
 }

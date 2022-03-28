@@ -5,7 +5,7 @@ namespace App\Models\Saratov;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Personal extends Model
+class CrmImagePersonal extends Model
 {
     use HasFactory;
 
@@ -21,7 +21,7 @@ class Personal extends Model
      * 
      * @var string
      */
-    protected $table = "personal";
+    protected $table = "crm_image_personal";
 
     /**
      * Определяет необходимость отметок времени для модели.
@@ -29,19 +29,4 @@ class Personal extends Model
      * @var bool
      */
     public $timestamps = false;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'pin',
-        'doljnost',
-        'fio',
-        'telefonl',
-        'otdel',
-        'state',
-        'workStart'
-    ];
 }
