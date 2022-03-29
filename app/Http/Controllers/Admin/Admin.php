@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Users\Users;
-use App\Models\Company\AllVisit;
-use App\Models\Company\StatVisit;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,23 +20,38 @@ class Admin extends Controller
     /**
      * Данные для главной страницы админки
      * 
-     * @param \Illuminate\Http\Request
+     * @param  \Illuminate\Http\Request
      * @return \Illuminate\Http\JsonResponse
      */
     public function start(Request $request)
     {
         $response = Users::adminCheck($request, true);
 
-        $this->databases = Databases::setConfigs();
-
-        $response['views'] = $this->getViews($request);
-        $response['hosts'] = $this->getHosts($request);
-
-        return response()->json($response);
+        return response()->json(array_merge(
+            $response,
+            $this->getStats($request)
+        ));
     }
 
     /**
-     * Статистика посещений за последние 7 дней
+     * Статистика посещений
+     * 
+     * @param \Illuminate\Http\Request
+     * @return array
+     */
+    public function getStats(Request $request)
+    {
+        if (empty($this->databases))
+            $this->databases = Databases::setConfigs();
+
+        return [
+            'views' => $this->getViews($request),
+            'hosts' => $this->getHosts($request),
+        ];
+    }
+
+    /**
+     * Статистика посещений
      * 
      * @param \Illuminate\Http\Request $request
      * @return array
@@ -58,6 +71,7 @@ class Admin extends Controller
                     ->orderBy('date')
                     ->get()
                     ->each(function ($row) use (&$data) {
+
                         if (!isset($data[$row->date]))
                             $data[$row->date] = 0;
 
@@ -76,12 +90,6 @@ class Admin extends Controller
             })
             ->values()
             ->all();
-
-        // return AllVisit::selectRaw('COUNT(*) as count, DATE(created_at) as created_date')
-        //     ->where('created_at', '>=', now()->addMonth(- (self::MONTHS)))
-        //     ->groupBy('created_date')
-        //     ->get()
-        //     ->toArray();
     }
 
     /**
@@ -92,10 +100,37 @@ class Admin extends Controller
      */
     public function getHosts(Request $request)
     {
-        return StatVisit::selectRaw('COUNT(*) as count, date as created_date')
-            ->where('date', '>=', now()->addMonth(- (self::MONTHS)))
-            ->groupBy('created_date')
-            ->get()
-            ->toArray();
+        $data = [];
+
+        foreach ($this->databases as $connection) {
+
+            try {
+                DB::connection($connection)
+                    ->table('statistics')
+                    ->selectRaw('COUNT(*) as count, date')
+                    ->where('date', '>=', now()->subMonths(self::MONTHS))
+                    ->groupBy('date')
+                    ->orderBy('date')
+                    ->get()
+                    ->each(function ($row) use (&$data) {
+
+                        if (!isset($data[$row->date]))
+                            $data[$row->date] = 0;
+
+                        $data[$row->date] += $row->count;
+                    });
+            } catch (Exception) {
+            }
+        }
+
+        return collect($data)
+            ->map(function ($row, $key) {
+                return [
+                    'count' => $row,
+                    'created_date' => $key,
+                ];
+            })
+            ->values()
+            ->all();
     }
 }
