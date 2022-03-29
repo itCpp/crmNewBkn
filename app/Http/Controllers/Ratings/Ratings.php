@@ -58,4 +58,15 @@ class Ratings extends Controller
             (new CallCenters($request))->get()
         );
     }
+
+    /**
+     * Выводит данные для графика рейтинга за последние 30 дней
+     * 
+     * @param \Illumiante\Http\Request $request
+     * @return array
+     */
+    public static function getChartData(Request $request)
+    {
+        return (new Charts)($request);
+    }
 }

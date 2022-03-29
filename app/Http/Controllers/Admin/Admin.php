@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Ratings\Ratings;
 use App\Http\Controllers\Users\Users;
 use Exception;
 use Illuminate\Http\Request;
@@ -26,6 +27,8 @@ class Admin extends Controller
     public function start(Request $request)
     {
         $response = Users::adminCheck($request, true);
+
+        $response['rating_chart'] = Ratings::getChartData($request);
 
         return response()->json(array_merge(
             $response,
