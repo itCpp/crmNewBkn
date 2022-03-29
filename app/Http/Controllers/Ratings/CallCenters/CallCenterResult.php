@@ -53,7 +53,7 @@ trait CallCenterResult
      * @var array
      */
     protected $attributes_for_sum_stats = [
-        'cahsbox', 'comings', 'requests', 'requestsAll',
+        'cahsbox', 'comings', 'requests', 'requestsAll', 'drains'
     ];
 
     /**
@@ -143,6 +143,7 @@ trait CallCenterResult
             ->checkStatsRow()
             ->setComings()
             ->setRequests()
+            ->setDrains()
             ->setAgreements()
             ->setCashbox()
             ->setResult();
@@ -289,6 +290,41 @@ trait CallCenterResult
 
             $stat->dates[$date]->requestsAll += $data['all'];
             $stat->dates[$date]->requests += $data['moscow'];
+        }
+
+        return $this;
+    }
+
+    /**
+     * Подсчет сливов
+     * 
+     * @return $this
+     */
+    public function setDrains()
+    {
+        $drains = ($this->data->drains[$this->row->pin] ?? null);
+
+        if (!$drains)
+            $drains = ($this->data->drains[$this->row->pinOld] ?? null);
+
+        if (!$drains)
+            return $this;
+
+        $stat = &$this->data->stats[$this->callcenter_id]->sectors[$this->sector_id];
+
+        $this->row->drains += ($drains['count'] ?? 0);
+        $stat->drains += ($drains['count'] ?? 0);
+
+        foreach (($drains['dates'] ?? []) as $date => $data) {
+
+            if (empty($this->row->dates[$date]))
+                $this->row->dates[$date] = $this->userRowDateTemplate($date);
+
+            if (empty($stat->dates[$date]))
+                $stat->dates[$date] = $this->userRowDateTemplate($date);
+
+            $this->row->dates[$date]->drains += ($data['count'] ?? 0);
+            $stat->dates[$date]->drains += ($data['count'] ?? 0);
         }
 
         return $this;

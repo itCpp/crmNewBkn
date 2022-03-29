@@ -122,7 +122,9 @@ trait Users
 
                 $row->position = $this->getPositionName($row->position_id);
 
-                $this->data->newToOld[$row->pin] = $row->old_pin;
+                if ($row->old_pin and $row->old_pin != $row->pin)
+                    $this->data->newToOld[$row->pin] = $row->old_pin;
+
                 $rows[$row->pin] = $row;
 
                 return $row;
@@ -186,6 +188,7 @@ trait Users
             'comings_in_day' => 0, # Количество приходов в день
             'comings_sum' => 0, # Сумма за приходы
             'dates' => [], # Подробные данные по кажому дню
+            'drains' => 0, # Количество сливов
             'efficiency' => 0, # КПД
             'efficiency_agreement' => 0, # КПД договора
             'fio' => preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', trim($name)),
@@ -264,6 +267,7 @@ trait Users
             'requests' => 0,
             'requestsAll' => 0,
             'efficiency' => 0, # КПД
+            'drains' => 0, # Еоличество сливов
         ];
     }
 

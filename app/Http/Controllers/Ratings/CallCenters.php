@@ -15,6 +15,7 @@ class CallCenters extends Controller
         Data\Agreements,
         Data\Cashbox,
         Data\Comings,
+        Data\Drains,
         Data\Requests,
         Data\Users;
 
@@ -93,6 +94,7 @@ class CallCenters extends Controller
     {
         $this->getComings()
             ->getRequests()
+            ->getDrains()
             ->getCashboxData()
             ->getAgreementsData()
             ->findUsers()
@@ -142,6 +144,7 @@ class CallCenters extends Controller
             'cahsbox' => 0, # Касса
             'comings' => 0, # Количетство приходов
             'dates' => [], # Ежедневная статистика
+            'drains' => 0, # Количество сливов
             'efficiency' => 0, # КПД
             'requests' => 0, # Московские заявки
             'requestsAll' => 0, # Всего заявок

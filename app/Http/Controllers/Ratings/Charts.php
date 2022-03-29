@@ -23,8 +23,7 @@ class Charts extends Controller
     protected $translate = [
         'requests' => "Заявки",
         'comings' => "Приходы",
-        'records' => "Записи",
-        'drain' => "Сливы",
+        'drains' => "Сливы",
     ];
 
     /**
@@ -45,14 +44,13 @@ class Charts extends Controller
                         'requests' => 0,
                         'comings' => 0,
                         'records' => 0,
-                        'drain' => 0,
+                        'drains' => 0,
                     ];
                 }
 
                 $data[$row->to_day]['requests'] += $row->rating_data->requests ?? 0;
                 $data[$row->to_day]['comings'] += $row->rating_data->comings ?? 0;
-                $data[$row->to_day]['records'] += $row->rating_data->records ?? 0;
-                $data[$row->to_day]['drain'] += $row->rating_data->drain ?? 0;
+                $data[$row->to_day]['drains'] += $row->rating_data->drains ?? 0;
             });
 
         foreach ($data as $date => $row) {
