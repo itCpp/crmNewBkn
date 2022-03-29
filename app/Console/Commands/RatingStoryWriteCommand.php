@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Http\Controllers\Dates;
 use App\Http\Controllers\Ratings\CallCenters;
 use App\Http\Controllers\Users\DeveloperBot;
+use App\Models\RatingPeriodStory;
 use App\Models\RatingStory;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
@@ -87,6 +88,11 @@ class RatingStoryWriteCommand extends Command
                 'rating_data' => $user,
             ]);
         }
+
+        RatingPeriodStory::create([
+            'period' => $request->start,
+            'rating' => $rating,
+        ]);
 
         $this->info("История за период ({$request->start}) записана, создано строк: " . count($write));
 
