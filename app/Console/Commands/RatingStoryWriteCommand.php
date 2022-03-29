@@ -5,10 +5,10 @@ namespace App\Console\Commands;
 use App\Http\Controllers\Dates;
 use App\Http\Controllers\Ratings\CallCenters;
 use App\Http\Controllers\Users\DeveloperBot;
+use App\Models\RatingGlobalData;
 use App\Models\RatingPeriodStory;
 use App\Models\RatingStory;
 use Illuminate\Console\Command;
-use Illuminate\Http\Request;
 
 class RatingStoryWriteCommand extends Command
 {
@@ -44,7 +44,7 @@ class RatingStoryWriteCommand extends Command
     public function handle()
     {
         $this->question('Запись истории рейтинга');
-        
+
         $this->dates = new Dates();
 
         $request = request();
@@ -82,11 +82,26 @@ class RatingStoryWriteCommand extends Command
         $write = [];
 
         foreach ($rating->users as $user) {
+
             $write[] = RatingStory::create([
                 'to_period' => $request->start,
                 'pin' => $to_old ? ($user->pinOld ?: $user->pin) : $user->pin,
                 'rating_data' => $user,
             ]);
+
+            $global = RatingGlobalData::firstOrNew([
+                'pin' => $user->pin,
+            ]);
+
+            $global->requests += ($user->requestsAll ?? 0);
+            $global->requests_moscow += ($user->requests ?? 0);
+            $global->comings += ($user->comings ?? 0);
+            $global->drains += ($user->drains ?? 0);
+            $global->agreements_firsts += ($user->agreements['firsts'] ?? 0);
+            $global->agreements_seconds += ($user->agreements['seconds'] ?? 0);
+            $global->cashbox += ($user->cahsbox ?? 0);
+
+            $global->save();
         }
 
         RatingPeriodStory::create([
