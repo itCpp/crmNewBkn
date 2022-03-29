@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ratings;
 use App\Exceptions\ExceptionsJsonResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Dates;
+use App\Http\Controllers\Ratings\Charts\CallCenterCharts;
 use App\Models\RatingCallcenterSelected;
 use Exception;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 class CallCenters extends Controller
 {
     use CallCenters\CallCenterResult,
+        CallCenterCharts,
         Data\Agreements,
         Data\Cashbox,
         Data\Comings,
@@ -99,7 +101,8 @@ class CallCenters extends Controller
             ->getAgreementsData()
             ->findUsers()
             ->getResult()
-            ->setFilterPermit();
+            ->setFilterPermit()
+            ->getChartsData();
 
         $this->writeSelectedId();
 
@@ -107,8 +110,9 @@ class CallCenters extends Controller
             return $this->data;
 
         return (object) [
-            'dates' => $this->data->dates,
-            'users' => $this->data->users,
+            'dates' => $this->data->dates ?? [],
+            'users' => $this->data->users ?? [],
+            'charts' => $this->data->charts ?? [],
         ];
     }
 
