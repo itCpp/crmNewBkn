@@ -89,19 +89,19 @@ class RatingStoryWriteCommand extends Command
                 'rating_data' => $user,
             ]);
 
-            $global = RatingGlobalData::firstOrNew([
+            $row = RatingGlobalData::firstOrNew([
                 'pin' => $user->pin,
             ]);
 
-            $global->requests += ($user->requestsAll ?? 0);
-            $global->requests_moscow += ($user->requests ?? 0);
-            $global->comings += ($user->comings ?? 0);
-            $global->drains += ($user->drains ?? 0);
-            $global->agreements_firsts += ($user->agreements['firsts'] ?? 0);
-            $global->agreements_seconds += ($user->agreements['seconds'] ?? 0);
-            $global->cashbox += ($user->cahsbox ?? 0);
+            $row->requests += ($user->requestsAll ?? 0);
+            $row->requests_moscow += ($user->requests ?? 0);
+            $row->comings += ($user->comings ?? 0);
+            $row->drains += ($user->drains ?? 0);
+            $row->agreements_firsts += ($user->agreements['firsts'] ?? 0);
+            $row->agreements_seconds += ($user->agreements['seconds'] ?? 0);
+            $row->cashbox += ($user->cahsbox ?? 0);
 
-            $global->save();
+            $row->save();
         }
 
         RatingPeriodStory::create([
