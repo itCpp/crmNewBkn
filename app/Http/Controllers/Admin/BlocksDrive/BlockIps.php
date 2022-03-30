@@ -297,11 +297,17 @@ class BlockIps extends Drive
 
         $this->logData($request, $row);
 
-        return response()->json([
+        $response = [
             'ip' => $row->ip,
             'blocks_all' => (bool) $request->checked,
             'blokeds' => $blokeds ?? [],
             'errors' => $errors ?? null,
-        ]);
+            'row' => $row,
+        ];
+
+        if ($request->toArray)
+            return $response;
+
+        return response()->json($response);
     }
 }

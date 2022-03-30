@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\Blocks\BlockList;
 use App\Http\Controllers\Admin\Blocks\IpInfos;
 use App\Http\Controllers\Admin\Blocks\Statistics;
 use App\Http\Controllers\Admin\Blocks\Views;
+use App\Http\Controllers\Admin\BlocksDrive\BlockIps;
+use App\Models\BlockIp;
 use App\Models\Company\BlockHost;
 use Illuminate\Http\Request;
 
@@ -34,28 +36,38 @@ class Blocks extends Controller
     public static function setBlockIp(Request $request)
     {
         if (!$request->ip)
-            return response()->json(['message' => "Не указан IP адрес или имя хоста"], 403);
+            return response()->json(['message' => "Не указан IP адрес или имя хоста"], 400);
 
-        if (!$row = BlockHost::where('host', $request->ip)->first())
-            $row = BlockHost::create(['host' => $request->ip]);
+        $request->toArray = true;
 
-        $block = (bool) $row->block;
-        $row->block = (int) !$block;
+        $block = new BlockIps;
+        $response = $block->setAll($request);
 
-        if ($request->has('checked')) {
-            $row->block = (int) $request->boolean('checked');
-        }
+        return response()->json(array_merge($response, [
+            'blocked' => true,
+            'blocked_on' => $response['blocks_all'],
+        ]));
 
-        $row->save();
+        // if (!$row = BlockHost::where('host', $request->ip)->first())
+        //     $row = BlockHost::create(['host' => $request->ip]);
 
-        // Логировние
-        parent::logData($request, $row);
+        // $block = (bool) $row->block;
+        // $row->block = (int) !$block;
 
-        return response()->json([
-            'blocked' => true, // Наличие в черном списке
-            'blocked_on' => $row->block == 1 ? true : false, // Вкл/Выкл блокировка
-            'row' => $row,
-        ]);
+        // if ($request->has('checked')) {
+        //     $row->block = (int) $request->boolean('checked');
+        // }
+
+        // $row->save();
+
+        // // Логировние
+        // parent::logData($request, $row);
+
+        // return response()->json([
+        //     'blocked' => true, // Наличие в черном списке
+        //     'blocked_on' => $row->block == 1 ? true : false, // Вкл/Выкл блокировка
+        //     'row' => $row,
+        // ]);
     }
 
     /**

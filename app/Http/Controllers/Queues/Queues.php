@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Queues;
 
 use App\Events\QueueUpdateRow;
+use App\Http\Controllers\Admin\Databases;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Queues\QueueProcessings;
 use App\Http\Controllers\Users\Users;
+use App\Models\BlockIp;
 use App\Models\IpInfo;
 use App\Models\RequestsQueue;
 use App\Models\Company\BlockHost;
@@ -136,6 +138,7 @@ class Queues extends Controller
         $row->ipInfo = $this->getIpInfo($row->ip);
         $row->doneInfo = $this->getDropInfo($row);
         $row->ipBlocked = $this->getBlockIpInfo($row->ip);
+        $row->isBlockedFull = $this->ip_full_block[$row->ip] ?? false;
 
         return $row->toArray();
     }
@@ -204,16 +207,20 @@ class Queues extends Controller
      * 
      * @param string $ip
      * @return string|null
+     * 
+     * @todo Продумать механизм проверки имени хоста в таблицах статистики сайтов 
      */
     public function getHostName($ip)
     {
         if (!empty($this->hostnames[$ip]))
             return $this->hostnames[$ip];
 
-        $row = StatVisit::where('ip', $ip)
-            ->where('host', '!=', null)
-            ->orderBy('id', "DESC")
-            ->first();
+        // $row = StatVisit::where('ip', $ip)
+        //     ->where('host', '!=', null)
+        //     ->orderBy('id', "DESC")
+        //     ->first();
+
+        $row = null;
 
         if ($row)
             $name = $row->host;
@@ -245,11 +252,44 @@ class Queues extends Controller
      */
     public function getBlockIpInfo($ip)
     {
+        if (!isset($this->databases))
+            $this->databases = Databases::setConfigs();
+
         if (!empty($this->ip_block[$ip]))
-            return $this->ip_block[$ip];
+            return $this->checkBlockIpRow($this->ip_block[$ip]);
 
-        $block = BlockHost::where('host', $ip)->first();
+        $this->ip_block[$ip] = BlockIp::where([
+            ['ip', $ip],
+            ['is_period', 0],
+        ])->first();
 
-        return $this->ip_block[$ip] = ($block->block ?? null) == 1;
+        return $this->checkBlockIpRow($this->ip_block[$ip]);
+    }
+
+    /**
+     * Определение полной или не полной блокировок
+     * 
+     * @param \App\Models\BlockIp|null
+     * @return bool
+     */
+    public function checkBlockIpRow($row)
+    {
+        if (is_array($row->sites ?? null)) {
+
+            $blocked = 0;
+
+            foreach ($row->sites as $site) {
+                if ($site)
+                    $blocked++;
+            }
+
+            if ($blocked > 0 and $blocked == count($this->databases ?? []))
+                $this->ip_full_block[$row->ip] = true;
+
+            if ($blocked > 0)
+                return true;
+        }
+
+        return false;
     }
 }
