@@ -214,6 +214,10 @@ Route::group(['middleware' => 'user.token'], function () {
         Route::post('setUserRole', 'Users\AdminUsers@setUserRole')->middleware('user.can:admin_user_set_role')->name('api.admin.setUserRole');
         /** Установка разрешения пользователю */
         Route::post('setUserPermission', 'Users\AdminUsers@setUserPermission')->middleware('user.can:admin_user_set_permission')->name('api.admin.setUserPermission');
+        /** Выводит список активных сессий */
+        Route::get('users/online', 'Users\Online@index')->name('api.admin.users.online');
+        /** Завершает сессию пользователя */
+        Route::delete('users/online/delete/{id}', 'Users\Online@destroy')->name('api.admin.users.online.delete.id');
 
         /** Вывод списка колл-центорв */
         Route::post('getCallcenters', 'Callcenter\Callcenters@getCallcenters')->middleware('user.can:admin_callcenters')->name('api.admin.getCallcenters');
