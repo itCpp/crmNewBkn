@@ -81,6 +81,8 @@ class FindAndWriteGlobalRatingCommand extends Command
 
             RatingGlobalData::whereIn('id', $this->update_created_at)
                 ->update(['created_at' => $created_at]);
+
+            $this->line("Обновление даты: " . implode(", ", $this->update_created_at));
         }
 
         return 0;
@@ -133,7 +135,7 @@ class FindAndWriteGlobalRatingCommand extends Command
 
             $row->save();
 
-            if (!$row->created_at) {
+            if (!$row->created_at or ($row->created_at and $row->created_at > $stop)) {
                 $this->update_created_at[] = $row->id;
             }
 
