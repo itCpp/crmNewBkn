@@ -23,6 +23,7 @@ class RatingGlobalData extends Model
         'agreements_firsts',
         'agreements_seconds',
         'cashbox',
+        'created_at',
     ];
 
     /**
