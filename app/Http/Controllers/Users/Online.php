@@ -85,7 +85,7 @@ class Online extends Controller
         $row->delete();
 
         broadcast(new CloseSession($row->user_id, $row->token));
-        broadcast(new AuthentificationsEvent("login", $row->id, $row->user_id))->toOthers();
+        broadcast(new AuthentificationsEvent("logout", $row->id, $row->user_id))->toOthers();
 
         return response()->json([
             'message' => "Сессия завершена",

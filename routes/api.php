@@ -217,7 +217,7 @@ Route::group(['middleware' => 'user.token'], function () {
         /** Выводит список активных сессий */
         Route::get('users/online', 'Users\Online@index')->name('api.admin.users.online');
         /** Завершает сессию пользователя */
-        Route::delete('users/online/delete/{id}', 'Users\Online@destroy')->name('api.admin.users.online.delete.id');
+        Route::delete('users/online/delete', 'Users\Online@destroy')->name('api.admin.users.online.delete');
         /** Выводит данный сессий одного пользователя */
         Route::get('users/online/get', 'Users\Online@get')->name('api.admin.users.online.delete.get');
 

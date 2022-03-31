@@ -73,9 +73,8 @@ trait Drains
             ['noView', '0'],
             ['pin', '!=', ""],
         ])
-            ->whereBetween('staticDate', [$this->dates->start, $this->dates->stop])
+            ->whereBetween('rdate', [$this->dates->start, $this->dates->stop])
             ->whereIn('state', ['sliv'])
-            ->whereNotIn('type', ['Подарки от Худякова'])
             ->get()
             ->each(function ($row) use (&$drains) {
 
@@ -90,12 +89,12 @@ trait Drains
                     ];
                 }
 
-                if (empty($drains[$row->pin]['dates'][$row->staticDate])) {
-                    $drains[$row->pin]['dates'][$row->staticDate] = 0;
+                if (empty($drains[$row->pin]['dates'][$row->rdate])) {
+                    $drains[$row->pin]['dates'][$row->rdate] = 0;
                 }
 
                 $drains[$row->pin]['count']++;
-                $drains[$row->pin]['dates'][$row->staticDate]++;
+                $drains[$row->pin]['dates'][$row->rdate]++;
             });
 
         $this->data->drains = $drains ?? [];

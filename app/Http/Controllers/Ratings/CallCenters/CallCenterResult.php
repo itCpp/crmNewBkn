@@ -323,8 +323,8 @@ trait CallCenterResult
             if (empty($stat->dates[$date]))
                 $stat->dates[$date] = $this->userRowDateTemplate($date);
 
-            $this->row->dates[$date]->drains += ($data['count'] ?? 0);
-            $stat->dates[$date]->drains += ($data['count'] ?? 0);
+            $this->row->dates[$date]->drains += ($data ?? 0);
+            $stat->dates[$date]->drains += ($data ?? 0);
         }
 
         return $this;
