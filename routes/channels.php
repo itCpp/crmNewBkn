@@ -73,3 +73,8 @@ Broadcast::channel('Chat', function ($user) {
 Broadcast::channel('Chat.Room.{id}', function ($user, $id) {
     return (int) $user->id == (int) $id;
 });
+
+/** Общий канал админки */
+Broadcast::channel('App.Admin', function ($user) {
+    return $user->can('admin_access');
+});

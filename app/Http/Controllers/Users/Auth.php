@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\Events\Users\AuthentificationsEvent;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserAuthQuery;
@@ -156,7 +157,7 @@ class Auth extends Controller
         $response = Users::check($request);
         $response['token'] = self::createToken($request->user());
 
-        UsersSession::create([
+        $session = UsersSession::create([
             'token' => $response['token'],
             'user_id' => $request->user()->id,
             'user_pin' => $request->user()->pin,
@@ -165,6 +166,8 @@ class Auth extends Controller
         ]);
 
         $request->user()->writeWorkTime('login');
+
+        broadcast(new AuthentificationsEvent("login", $session->id, $request->user()->id));
 
         return response()->json($response);
     }
@@ -221,6 +224,8 @@ class Auth extends Controller
         // Запись рабочего времени
         if (!$active)
             $request->user()->writeWorkTime('logout');
+
+        broadcast(new AuthentificationsEvent("logout", $session->id ?? null, $request->user()->id));
 
         return response()->json([
             'message' => "Goodbye",

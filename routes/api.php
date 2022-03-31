@@ -218,6 +218,8 @@ Route::group(['middleware' => 'user.token'], function () {
         Route::get('users/online', 'Users\Online@index')->name('api.admin.users.online');
         /** Завершает сессию пользователя */
         Route::delete('users/online/delete/{id}', 'Users\Online@destroy')->name('api.admin.users.online.delete.id');
+        /** Выводит данный сессий одного пользователя */
+        Route::get('users/online/get', 'Users\Online@get')->name('api.admin.users.online.delete.get');
 
         /** Вывод списка колл-центорв */
         Route::post('getCallcenters', 'Callcenter\Callcenters@getCallcenters')->middleware('user.can:admin_callcenters')->name('api.admin.getCallcenters');
