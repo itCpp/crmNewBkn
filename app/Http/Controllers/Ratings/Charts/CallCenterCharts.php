@@ -21,6 +21,22 @@ trait CallCenterCharts
 
             $user->charts_mini = $this->charts_mini[$user->pin] ?? [];
 
+            if (($this->append_to_day ?? null) and count($user->charts_mini)) {
+
+                $key = count($user->charts_mini['requests']) - 1;
+                $user->charts_mini['requests'][$key] = $user->requestsAll ?? 0;
+                $key = count($user->charts_mini['requests_moscow']) - 1;
+                $user->charts_mini['requests_moscow'][$key] = $user->requests ?? 0;
+                $key = count($user->charts_mini['comings']) - 1;
+                $user->charts_mini['comings'][$key] = $user->comings ?? 0;
+                $key = count($user->charts_mini['agreements_firsts']) - 1;
+                $user->charts_mini['agreements_firsts'][$key] = $user->agreements['firsts'] ?? 0;
+                $key = count($user->charts_mini['agreements_seconds']) - 1;
+                $user->charts_mini['agreements_seconds'][$key] = $user->agreements['seconds'] ?? 0;
+                $key = count($user->charts_mini['drains']) - 1;
+                $user->charts_mini['drains'][$key] = $user->drains ?? 0;
+            }
+
             $data[] = [
                 'fio' => $user->fio,
                 'pin' => $user->pin,
@@ -118,6 +134,11 @@ trait CallCenterCharts
 
                 if ($day > $this->dates->day)
                     continue;
+
+                /** Дополнить последний день графика текщими данными */
+                if (!($this->append_to_day ?? null) and $day == $this->dates->day) {
+                    $this->append_to_day = true;
+                }
 
                 $this->charts_mini[$pin]['requests'][] = $data[$day]['requests'] ?? 0;
                 $this->charts_mini[$pin]['requests_moscow'][] = $data[$day]['requests_moscow'] ?? 0;
