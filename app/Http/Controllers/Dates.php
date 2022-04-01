@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 
 /**
  * Подготавливает набор дат
  * 
+ * @property    string              $day            Текущая дата
  * @property    string              $start          Дата начала
  * @property    string              $stop           Дата окончания
  * @property    string              $startDateTime  Дата и время начала (YYYY-MM-DD 00:00:00)
@@ -56,6 +56,8 @@ class Dates
     public function __construct($start = null, $stop = null, $type = null)
     {
         $this->today = Carbon::now();
+        $this->day = Carbon::now()->format("Y-m-d");
+
         $this->first = $start ? Carbon::create($start) : Carbon::now();
         $this->second = $stop ? Carbon::create($stop) : Carbon::now();
 

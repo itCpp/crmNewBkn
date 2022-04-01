@@ -112,6 +112,7 @@ trait Users
             ...$this->сhiefs,
         ]);
 
+        $this->data->pin_list = $pins;
         $this->data->newToOld = [];
 
         User::where(function ($query) use ($pins) {

@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Ratings\Charts;
 
+use App\Http\Controllers\Dates;
+use App\Models\RatingStory;
+use Carbon\Carbon;
+
 trait CallCenterCharts
 {
     /**
@@ -11,7 +15,11 @@ trait CallCenterCharts
      */
     public function getChartsData()
     {
-        foreach ($this->data->users ?? [] as $user) {
+        $this->getDataForMiniCharts();
+
+        foreach ($this->data->users ?? [] as &$user) {
+
+            $user->charts_mini = $this->charts_mini[$user->pin] ?? [];
 
             $data[] = [
                 'fio' => $user->fio,
@@ -64,6 +72,63 @@ trait CallCenterCharts
             'comings' => $comings ?? [],
             'agreements' => $agreements ?? [],
         ];
+
+        return $this;
+    }
+
+    /**
+     * Данные для мини грфиков
+     * 
+     * @return $this
+     */
+    public function getDataForMiniCharts()
+    {
+        if (!request()->toChats)
+            return $this;
+
+        $this->dates_charts_mini = new Dates(
+            Carbon::create($this->dates->startPeriod)->subDays(15),
+            $this->dates->stop
+        );
+
+        RatingStory::whereIn('pin', $this->data->pin_list ?? [])
+            ->whereBetween('to_day', [
+                $this->dates_charts_mini->start,
+                $this->dates_charts_mini->stop,
+            ])
+            ->orderBy('to_day', 'DESC')
+            ->get()
+            ->each(function ($row) use (&$charts) {
+
+                $data = $row->rating_data;
+
+                $charts[$row->pin][$row->to_day] = [
+                    'requests' => $data->requestsAll ?? 0,
+                    'requests_moscow' => $data->requests ?? 0,
+                    'comings' => $data->comings ?? 0,
+                    'agreements_firsts' => $data->agreements->firsts ?? 0,
+                    'agreements_seconds' => $data->agreements->seconds ?? 0,
+                    'drains' => $data->drains ?? 0,
+                ];
+            });
+
+        foreach ($charts ?? [] as $pin => $data) {
+
+            foreach ($this->dates_charts_mini->days as $day) {
+
+                if ($day > $this->dates->day)
+                    continue;
+
+                $this->charts_mini[$pin]['requests'][] = $data[$day]['requests'] ?? 0;
+                $this->charts_mini[$pin]['requests_moscow'][] = $data[$day]['requests_moscow'] ?? 0;
+                $this->charts_mini[$pin]['comings'][] = $data[$day]['comings'] ?? 0;
+                $this->charts_mini[$pin]['agreements_firsts'][] = $data[$day]['agreements_firsts'] ?? 0;
+                $this->charts_mini[$pin]['agreements_seconds'][] = $data[$day]['agreements_seconds'] ?? 0;
+                $this->charts_mini[$pin]['drains'][] = $data[$day]['drains'] ?? 0;
+            }
+        }
+
+        $this->data->charts_mini = $this->charts_mini ?? [];
 
         return $this;
     }
