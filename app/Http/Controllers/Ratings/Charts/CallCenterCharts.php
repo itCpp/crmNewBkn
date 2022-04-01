@@ -130,6 +130,8 @@ trait CallCenterCharts
 
         foreach ($charts ?? [] as $pin => $data) {
 
+            $this->charts_mini[$pin]['start'] = $this->dates_charts_mini->start;
+
             foreach ($this->dates_charts_mini->days as $day) {
 
                 if ($day > $this->dates->day)
@@ -146,6 +148,7 @@ trait CallCenterCharts
                 $this->charts_mini[$pin]['agreements_firsts'][] = $data[$day]['agreements_firsts'] ?? 0;
                 $this->charts_mini[$pin]['agreements_seconds'][] = $data[$day]['agreements_seconds'] ?? 0;
                 $this->charts_mini[$pin]['drains'][] = $data[$day]['drains'] ?? 0;
+                $this->charts_mini[$pin]['stop'] = $day;
             }
         }
 
