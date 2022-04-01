@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Ratings\Data;
 
+use App\Models\RatingGlobalData;
 use App\Models\Saratov\Personal;
 use App\Models\Saratov\PersonalOkladStory;
 use App\Models\User;
@@ -154,6 +155,8 @@ trait Users
 
             $users[$pin] = $this->getTemplateUserRow($row);
         }
+
+        $this->getGlobalRatingStats($pins);
 
         $this->data->pins = collect($users ?? []);
 
@@ -321,6 +324,29 @@ trait Users
         //     foreach ($this->data->stories->position as $position) {
         //     }
         // }
+
+        return $this;
+    }
+
+    /**
+     * Дполнительная информация по глобальным статистическим данным
+     * 
+     * @return $this
+     */
+    public function getGlobalRatingStats($pins = [])
+    {
+        RatingGlobalData::whereIn('pin', $pins)
+            ->get()
+            ->each(function ($row) {
+
+                if ($row->requests_moscow > 0)
+                    $row->efficiency = round(($row->comings / $row->requests_moscow) * 100, 2);
+
+                if ($row->comings > 0)
+                    $row->efficiency_agreement = round(($row->agreements_firsts / $row->comings) * 100, 2);
+
+                $this->data->rating_global[$row->pin] = $row;
+            });
 
         return $this;
     }

@@ -134,6 +134,8 @@ trait CallCenterResult
 
         $row->position = $this->getPositionName($row->position_id);
 
+        $row->global_stats = $this->data->rating_global[$row->pin] ?? [];
+
         $this->row = $row;
 
         $this->callcenter_id = $row->callcenter_id;

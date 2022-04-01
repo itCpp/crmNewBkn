@@ -10,6 +10,12 @@ use App\Models\RatingCallcenterSelected;
 use Exception;
 use Illuminate\Http\Request;
 
+/**
+ * **Учти товарищ!**
+ * Если будут меняться какие-либо параметры в объекте данных сотрудника, то это может повлиять
+ * на вывод рейтинга, записанного в истории. Если нужно сменить какие-то данные, лучше создать
+ * новый параметр и во фронтенде просто сделать проверку на наличие старого и нового ключа
+ */
 class CallCenters extends Controller
 {
     use CallCenters\CallCenterResult,
