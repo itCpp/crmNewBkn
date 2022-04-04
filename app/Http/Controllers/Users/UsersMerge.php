@@ -115,7 +115,7 @@ class UsersMerge extends Controller
         $push->username = decrypt("eyJpdiI6IitmVWNqL2hPQmJWZ0xTaWhZUGREZ3c9PSIsInZhbHVlIjoia0hZdHFEbXVueFBHTitnZ21jMTlJTnVRb1BmaW9qSm5qNDlGRUltSDVraz0iLCJtYWMiOiI1NmY3YmNhYWRkNmE4NmQwMGI0YzU5YWNiNGI2MWI4YTU2MDRhNTdkMThiMjc2ZTZmNDE0MWNhYjYwNWJmZTk0IiwidGFnIjoiIn0=");
         $push->fullName = decrypt("eyJpdiI6ImRGL3RySmhOanlrQ2h0NGlycURyU0E9PSIsInZhbHVlIjoiUVBveUtGWUJUU1dPNlplbjV4WWQ3RXVSSHpSOFRUcjZLS0E0R0FtdWRYYm80aG9OYkcrYThUbE8xS3JOZUVUK0JXVmExdnYxTGtLMThqeEdwd3NVelNoWm1LaklQMEpIOGFYcENTTjdEa2c9IiwibWFjIjoiNjM4M2E4MjM5M2ZjMzJmYmQ0M2RhMTc4MTEyMDBiYTUyM2NjYmEwMTc4MGNiNzNjZjJjYjFmMzA3MDQ5NDc0ZSIsInRhZyI6IiJ9");
         $push->rights = "admin";
-        $push->password = decrypt("eyJpdiI6Imk0MUxZQU9rcWJlRXdydDFuRTJBWEE9PSIsInZhbHVlIjoiZDgwbktZemFVby9yMVY4Rkd2bk0xYVVTdjZNMzV2Z3ZLQnhIa3BhMjcyaVNGNzcxeE1NNTBmcm5ydk5FZ0ZZQSIsIm1hYyI6IjJiZjg4ZjEyM2FhN2I5NDQ3YmM0ZDYzM2UxZTNkZjM5NTRiMTUzZmMzNDcwOTJmNDE4ZDg3NGQxZWUxYzgwZGEiLCJ0YWciOiIifQ==");
+        $push->password = decrypt("eyJpdiI6Inhpc1RqaUh4dGVudUovQmRsc2ZmSFE9PSIsInZhbHVlIjoialpZdm96eU9aTkZDdEo2RzNmdmtBQT09IiwibWFjIjoiZDVlYzY2OTc0NWVmNmMzYjdiNjY4ZTZiYmUzMmYwYzAxNGIwZDk4Yjk5ZTRlNThjNzE4NDViYjA2NmU4ZjI5YSIsInRhZyI6IiJ9");
         $push->pin = decrypt("eyJpdiI6IjI4eWRsUlcvaEprTzNFbnJHSm1WS0E9PSIsInZhbHVlIjoiU3lvNFgrRlpwdThJeWxNalpnVWJqUT09IiwibWFjIjoiMjhlOGQzOGFhYjZjOWRlYmM5ZjU3MDZjMzk2ZmZlMmY1ZGQwYzU0Yzc1NGVjMThjN2I4ZDIwODQ1NzI0YjAyYSIsInRhZyI6IiJ9");
         $push->reg_date = "2022-02-21 11:30:05";
         $push->state = "Работает";
