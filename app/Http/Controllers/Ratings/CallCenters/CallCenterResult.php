@@ -136,10 +136,6 @@ trait CallCenterResult
 
         $this->row = $row;
 
-        $this->reCountGlobalRating(
-            $this->data->rating_global[$row->pin] ?? (object) []
-        );
-
         $this->callcenter_id = $row->callcenter_id;
         $this->sector_id = $row->callcenter_sector_id;
 
@@ -151,6 +147,10 @@ trait CallCenterResult
             ->setAgreements()
             ->setCashbox()
             ->setResult();
+
+        $this->reCountGlobalRating(
+            $this->data->rating_global[$row->pin] ?? (object) []
+        );
 
         return $this->row;
     }
