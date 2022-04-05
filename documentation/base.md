@@ -54,16 +54,16 @@ BASE_SERVER_ADDRS=127.0.0.1,127.0.0.2
 | ------ | ------ | ------ |
 | `address` | `integer` | Идентификатор офиса |
 | `checked` | `boolean` | В случае успеха - подтвержденная запись |
-| `comment` | `string|null` | Комментарий клиента или суть обащения |
-| `comment_urist` | `string|null` | Комментарий для юриста |
-| `client_name` | `string|null` | Имя клиента |
+| `comment` | `string` `null` | Комментарий клиента или суть обащения |
+| `comment_urist` | `string` `null` | Комментарий для юриста |
+| `client_name` | `string` `null` | Имя клиента |
 | `date` | `string` | Дата и время записи |
 | `id` | `integer` | Идентификатор заявки колл-центра |
-| `office_icon` | `string|null` | URL адрес иконки офиса |
-| `office_id` | `string|null` | Текстовый идентификатор офиса |
-| `office_name` | `string|null` | Наименование офиса |
-| `pin` | `string|null` | Персональный идентификационный номер оператора колл-центра |
-| `theme` | `string|null` | Тематика заявки |
+| `office_icon` | `string` `null` | URL адрес иконки офиса |
+| `office_id` | `string` `null` | Текстовый идентификатор офиса |
+| `office_name` | `string` `null` | Наименование офиса |
+| `pin` | `string` `null` | Персональный идентификационный номер оператора колл-центра |
+| `theme` | `string` `null` | Тематика заявки |
 
 ##### Офисы
 Массив `offices` содержит информацию о количестве записей по каждому офису
@@ -71,7 +71,7 @@ BASE_SERVER_ADDRS=127.0.0.1,127.0.0.2
 | Параметр | Тип | Описание |
 | ------ | ------ | ------ |
 | `address` | `integer` | Идентификатор офиса |
-| `office_icon` | `string|null` | URL адрес иконки офиса |
-| `office_id` | `string|null` | Текстовый идентификатор офиса |
-| `office_name` | `string|null` | Наименование офиса |
+| `office_icon` | `string` `null` | URL адрес иконки офиса |
+| `office_id` | `string` `null` | Текстовый идентификатор офиса |
+| `office_name` | `string` `null` | Наименование офиса |
 | `records` | `integer` | Количество записей |
