@@ -34,9 +34,15 @@ class Counters extends Controller
      */
     public static function getCounterData(Request $request)
     {
-        $counter = [];
+        $start = microtime(true);
+
+        $counter = [
+            'timecode' => [],
+        ];
 
         foreach ($request->tabs as $tab) {
+
+            $step = microtime(true);
             $request->tab = $tab;
 
             $query = new RequestsQuery($request);
@@ -49,6 +55,8 @@ class Counters extends Controller
                 'name' => $tab->name,
                 'count' => $count,
             ];
+
+            $counter['timecode'][$key] = microtime(true) - $step;
         }
 
         $permits = $request->user()->getListPermits([
@@ -58,17 +66,37 @@ class Counters extends Controller
         ]);
 
         // Счетчик очереди
-        if ($permits->queues_access)
+        if ($permits->queues_access) {
+            $step = microtime(true);
             $counter['queue'] = self::getQueueCounter($request);
+            $counter['timecode']['queue'] = microtime(true) - $step;
+        }
 
-        if ($permits->sms_access)
+        if ($permits->sms_access) {
+            $step = microtime(true);
             $counter['sms'] = Sms::getCounterNewSms($request);
+            $counter['timecode']['sms'] = microtime(true) - $step;
+        }
 
-        if ($permits->second_calls_access)
+        if ($permits->second_calls_access) {
+            $step = microtime(true);
             $counter['secondcalls'] = SecondCalls::getCounterNewSecondCalls($request);
+            $counter['timecode']['secondcalls'] = microtime(true) - $step;
+        }
 
         /** Счетчик незавершенных тестирований сотрудника */
-        $counter['tests'] = MyTests::countTestings($request->user()->pin, $request->user()->old_pin);
+        $step = microtime(true);
+        $counter['tests'] = MyTests::countTestings(
+            $request->user()->pin,
+            $request->user()->old_pin
+        );
+        $counter['timecode']['tests'] = microtime(true) - $step;
+
+        $counter['timecode']['stop'] = microtime(true) - $start;
+
+        foreach ($counter['timecode'] as &$time) {
+            $time = round($time, 3);
+        }
 
         return $counter;
     }
