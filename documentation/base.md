@@ -31,6 +31,7 @@ BASE_SERVER_ADDRS=127.0.0.1,127.0.0.2
             "address": 4,
             "comment": null,
             "comment_urist": null,
+            "client_name": "Агнешка",
             "pin": "1000",
             "theme": "Авторское право"
         }
