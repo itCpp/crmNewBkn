@@ -39,6 +39,9 @@ include __DIR__ . "/api/api.chat.php";
 /** Маршрутизация тестирования сотрудников */
 include __DIR__ . "/api/api.testing.php";
 
+/** Маршрутизация для информации по базам */
+include __DIR__ . "/api/api.base.php";
+
 /** Группа маршрутов авторизованного пользователя */
 Route::group(['middleware' => 'user.token'], function () {
 
