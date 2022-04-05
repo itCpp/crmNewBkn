@@ -44,7 +44,7 @@ trait CallCenterCharts
                 ];
 
                 foreach ($appends as $key => $count) {
-                    $user->charts_mini[count($user->charts_mini[$key]) - 1] = $count;
+                    $user->charts_mini[$key][count($user->charts_mini[$key]) - 1] = $count;
                 }
 
                 // $key = count($user->charts_mini['requests']) - 1;
