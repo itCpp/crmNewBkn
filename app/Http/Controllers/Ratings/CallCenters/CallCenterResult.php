@@ -134,9 +134,11 @@ trait CallCenterResult
 
         $row->position = $this->getPositionName($row->position_id);
 
-        $row->global_stats = $this->data->rating_global[$row->pin] ?? [];
-
         $this->row = $row;
+
+        $this->reCountGlobalRating(
+            $this->data->rating_global[$row->pin] ?? (object) []
+        );
 
         $this->callcenter_id = $row->callcenter_id;
         $this->sector_id = $row->callcenter_sector_id;
@@ -632,5 +634,26 @@ trait CallCenterResult
             $this->row->working = $this->row->personal->state == "Работает";
 
         return $this;
+    }
+
+    /**
+     * Подсчет глобального рейтинга
+     * 
+     * @param object $row
+     * @return object
+     */
+    public function reCountGlobalRating($row)
+    {
+        $row->requests_moscow = ($row->requests_moscow ?? 0) + $this->row->requests;
+        $row->comings = ($row->comings ?? 0) + $this->row->comings;
+        $row->agreements_firsts = ($row->agreements_firsts ?? 0) + ($this->row->agreements['firsts'] ?? 0);
+
+        if ($row->requests_moscow > 0)
+            $row->efficiency = round(($row->comings / $row->requests_moscow) * 100, 2);
+
+        if ($row->comings > 0)
+            $row->efficiency_agreement = round(($row->agreements_firsts / $row->comings) * 100, 2);
+
+        $this->row->global_stats = $row;
     }
 }

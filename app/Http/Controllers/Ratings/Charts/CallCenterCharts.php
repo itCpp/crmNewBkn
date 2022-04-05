@@ -22,7 +22,7 @@ trait CallCenterCharts
         foreach ($this->data->users ?? [] as &$user) {
 
             $user->charts_mini = $this->charts_mini[$user->pin] ?? [];
-        
+
             $day_data = (object) [];
 
             foreach ($user->dates ?? [] as $day) {
@@ -46,19 +46,6 @@ trait CallCenterCharts
                 foreach ($appends as $key => $count) {
                     $user->charts_mini[$key][count($user->charts_mini[$key]) - 1] = $count;
                 }
-
-                // $key = count($user->charts_mini['requests']) - 1;
-                // $user->charts_mini['requests'][$key] = $user->requestsAll ?? 0;
-                // $key = count($user->charts_mini['requests_moscow']) - 1;
-                // $user->charts_mini['requests_moscow'][$key] = $user->requests ?? 0;
-                // $key = count($user->charts_mini['comings']) - 1;
-                // $user->charts_mini['comings'][$key] = $user->comings ?? 0;
-                // $key = count($user->charts_mini['agreements_firsts']) - 1;
-                // $user->charts_mini['agreements_firsts'][$key] = $user->agreements['firsts'] ?? 0;
-                // $key = count($user->charts_mini['agreements_seconds']) - 1;
-                // $user->charts_mini['agreements_seconds'][$key] = $user->agreements['seconds'] ?? 0;
-                // $key = count($user->charts_mini['drains']) - 1;
-                // $user->charts_mini['drains'][$key] = $user->drains ?? 0;
             }
 
             $data[] = [
