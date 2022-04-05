@@ -17,24 +17,48 @@ trait CallCenterCharts
     {
         $this->getDataForMiniCharts();
 
+        $day_stop = $this->dates_charts_mini->stop ?? now()->format("Y-m-d");
+
         foreach ($this->data->users ?? [] as &$user) {
 
             $user->charts_mini = $this->charts_mini[$user->pin] ?? [];
+        
+            $day_data = (object) [];
+
+            foreach ($user->dates ?? [] as $day) {
+                if ($day->date == $day_stop) {
+                    $day_data = $day;
+                    break;
+                }
+            }
 
             if (($this->append_to_day ?? null) and count($user->charts_mini)) {
 
-                $key = count($user->charts_mini['requests']) - 1;
-                $user->charts_mini['requests'][$key] = $user->requestsAll ?? 0;
-                $key = count($user->charts_mini['requests_moscow']) - 1;
-                $user->charts_mini['requests_moscow'][$key] = $user->requests ?? 0;
-                $key = count($user->charts_mini['comings']) - 1;
-                $user->charts_mini['comings'][$key] = $user->comings ?? 0;
-                $key = count($user->charts_mini['agreements_firsts']) - 1;
-                $user->charts_mini['agreements_firsts'][$key] = $user->agreements['firsts'] ?? 0;
-                $key = count($user->charts_mini['agreements_seconds']) - 1;
-                $user->charts_mini['agreements_seconds'][$key] = $user->agreements['seconds'] ?? 0;
-                $key = count($user->charts_mini['drains']) - 1;
-                $user->charts_mini['drains'][$key] = $user->drains ?? 0;
+                $appends = [
+                    'requests' => $day_data->requestsAll ?? 0,
+                    'requests_moscow' => $day_data->requests ?? 0,
+                    'comings' => $day_data->comings ?? 0,
+                    'drains' => $day_data->drains ?? 0,
+                    'agreements_firsts' => $this->data->agreements[$user->pin]['dates'][$day_stop]['firsts'] ?? 0,
+                    'agreements_seconds' => $this->data->agreements[$user->pin]['dates'][$day_stop]['firsts'] ?? 0,
+                ];
+
+                foreach ($appends as $key => $count) {
+                    $user->charts_mini[count($user->charts_mini[$key]) - 1] = $count;
+                }
+
+                // $key = count($user->charts_mini['requests']) - 1;
+                // $user->charts_mini['requests'][$key] = $user->requestsAll ?? 0;
+                // $key = count($user->charts_mini['requests_moscow']) - 1;
+                // $user->charts_mini['requests_moscow'][$key] = $user->requests ?? 0;
+                // $key = count($user->charts_mini['comings']) - 1;
+                // $user->charts_mini['comings'][$key] = $user->comings ?? 0;
+                // $key = count($user->charts_mini['agreements_firsts']) - 1;
+                // $user->charts_mini['agreements_firsts'][$key] = $user->agreements['firsts'] ?? 0;
+                // $key = count($user->charts_mini['agreements_seconds']) - 1;
+                // $user->charts_mini['agreements_seconds'][$key] = $user->agreements['seconds'] ?? 0;
+                // $key = count($user->charts_mini['drains']) - 1;
+                // $user->charts_mini['drains'][$key] = $user->drains ?? 0;
             }
 
             $data[] = [
@@ -102,10 +126,15 @@ trait CallCenterCharts
         if (!request()->toChats)
             return $this;
 
-        $this->dates_charts_mini = new Dates(
-            Carbon::create($this->dates->startPeriod)->subDays(15),
-            $this->dates->stop
-        );
+        if ($this->dates->stop >= $this->dates->day) {
+            $start = Carbon::create($this->dates->day)->subDays(15);
+            $stop = $this->dates->day;
+        } else {
+            $start = $this->dates->startPeriod;
+            $stop = $this->dates->stopPeriod;
+        }
+
+        $this->dates_charts_mini = new Dates($start, $stop);
 
         RatingStory::whereIn('pin', $this->data->pin_list ?? [])
             ->whereBetween('to_day', [

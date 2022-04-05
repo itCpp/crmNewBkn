@@ -24,16 +24,19 @@ php artisan old:requestshistory
 
 ```sh
 # Проверка входящих СМС на шлюзах
-* 9-21 * * * php /var/www/<API>/artisan sms:incomings >> /var/www/.logs/call.sms.incomings.log 2>&1
+* 9-21 * * * php /<DOCUMENT_ROOT>/artisan sms:incomings >> /var/www/.logs/call.sms.incomings.log 2>&1
 
 # Проверка очереди заявок
-* * * * * php /var/www/<API>/artisan requests:getfromsite --while --sleep=10 >> /var/www/.logs/requests.queues.log 2>&1
+* * * * * php /<DOCUMENT_ROOT>/artisan requests:getfromsite --while --sleep=10 >> /var/www/.logs/requests.queues.log 2>&1
 
 # Перешифровка данных событий с использованием внутреннего ключа шифрования
-* * * * * php /var/www/<API>/artisan events:recrypt
+* * * * * php /<DOCUMENT_ROOT>/artisan events:recrypt
 
 # Запись истории рейтинга колл-центра
-55 23 * * * php /var/www/<API>/artisan rating:write
+55 23 * * * php /<DOCUMENT_ROOT>/artisan rating:write
+
+# Завершает все активные сессии
+0 23 * * * php /<DOCUMENT_ROOT>/artisan users:endsessions
 ```
 Пути поменять при необходимости
 
