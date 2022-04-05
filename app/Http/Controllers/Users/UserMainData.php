@@ -40,6 +40,8 @@ class UserMainData
      */
     public function getMyData(Request $request)
     {
+        $request->toChats = true; # Вывод данных для графиков рейтинга
+
         return [
             'alerts' => [
                 'requests' => Requests::getNewRequests($request->user()->pin),
