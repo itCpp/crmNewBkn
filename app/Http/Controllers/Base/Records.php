@@ -28,6 +28,14 @@ class Records extends Controller
 
         $records = RequestsRow::where('event_at', '>=', $date)
             ->whereIn('status_id', $statuses)
+            ->when((bool) $request->office, function ($query) use ($request) {
+
+                $base = BaseOffice::find($request->office);
+
+                if ($office = Office::where('base_id', $base->oldId ?? null)->first()) {
+                    $query->where('address', $office->id);
+                }
+            })
             ->orderBy('event_at')
             ->get()
             ->map(function ($row) use ($checkeds, &$counter) {
