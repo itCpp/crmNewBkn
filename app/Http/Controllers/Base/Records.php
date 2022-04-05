@@ -33,6 +33,7 @@ class Records extends Controller
             ->map(function ($row) use ($checkeds, &$counter) {
 
                 $response_row = [
+                    'client_name' => $row->client_name,
                     'id' => $row->id,
                     'date' => $row->event_at,
                     'checked' => in_array($row->status_id, $checkeds),
@@ -58,6 +59,7 @@ class Records extends Controller
 
         foreach (($this->offices ?? []) as $addr => $row) {
             $row['records'] = $counter[$addr] ?? 0;
+            $row['address'] = $addr;
             $offices[] = $row;
         }
 

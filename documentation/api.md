@@ -1,5 +1,9 @@
 # API
 
+- [Информация для БАЗЫ](/documentation/base.md)
+
+## Общие запросы
+
 ### Обработка входящего события
 `POST` `GET` `/api/events/{type?}`
 
