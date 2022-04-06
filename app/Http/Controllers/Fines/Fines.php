@@ -29,7 +29,7 @@ class Fines extends Controller
     {
         $data = Fine::withTrashed()
             ->when((bool) $request->search, function ($query) use ($request) {
-                
+
                 $pins = User::where('surname', 'LIKE', "%{$request->search}%")
                     ->orWhere('name', 'LIKE', "%{$request->search}%")
                     ->orWhere('patronymic', 'LIKE', "%{$request->search}%")
@@ -45,9 +45,8 @@ class Fines extends Controller
             ->orderBy('created_at', "DESC")
             ->paginate(40);
 
-        $rows = $data->map(function ($row) {
-            return $this->serialize($row);
-        });
+        foreach ($data as $row)
+            $rows[] = $this->serialize($row);
 
         return response()->json([
             'rows' => $rows ?? [],
@@ -143,6 +142,8 @@ class Fines extends Controller
 
         Notifications::createFineNotification($row, $message);
 
+        $this->logData($request, $row);
+
         return response()->json(
             $this->serialize($row)->toArray()
         );
@@ -170,6 +171,8 @@ class Fines extends Controller
         $message = "Штраф на сумму " . $row->fine . " руб от " . date("d.m.Y", strtotime($row->fine_date)) . " г. восстановлен";
 
         Notifications::createFineNotification($row, $message);
+
+        $this->logData($request, $row);
 
         return response()->json(
             $this->serialize($row)->toArray()
