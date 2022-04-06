@@ -18,4 +18,7 @@ Route::group([
 
     /** Вывод количества записей */
     Route::get('records', 'Base\Records@get');
+
+    /** Вывод рейтинга колл-центра */
+    Route::get('rating/callcenter', 'Base\Ratings@callcenter');
 });
