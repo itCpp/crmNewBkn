@@ -265,7 +265,7 @@ Route::group(['middleware' => 'user.token'], function () {
         /** Удаление штрафа */
         Route::delete('delete', 'Fines\Fines@delete')->middleware('user.can:user_fines_delete');
         /** Восстановление удаленного штрафа */
-        Route::post('restore', 'Fines\Fines@restore')->middleware('user.can:user_fines_delete');
+        Route::post('restore', 'Fines\Fines@restore');
     });
 
     /** Маршрутизация админпанели разработчика */

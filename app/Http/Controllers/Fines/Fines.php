@@ -28,15 +28,28 @@ class Fines extends Controller
     public function index(Request $request)
     {
         $data = Fine::withTrashed()
+            ->when((bool) $request->search, function ($query) use ($request) {
+                
+                $pins = User::where('surname', 'LIKE', "%{$request->search}%")
+                    ->orWhere('name', 'LIKE', "%{$request->search}%")
+                    ->orWhere('patronymic', 'LIKE', "%{$request->search}%")
+                    ->get()
+                    ->map(function ($row) {
+                        return $row->pin;
+                    })
+                    ->toArray();
+
+                $query->where('user_pin', 'LIKE', "%{$request->search}%")
+                    ->orWhereIn('user_pin', $pins);
+            })
             ->orderBy('created_at', "DESC")
-            ->paginate(30);
+            ->paginate(40);
 
         $rows = $data->map(function ($row) {
             return $this->serialize($row);
         });
 
         return response()->json([
-            $data,
             'rows' => $rows ?? [],
             'page' => $data->currentPage(),
             'pages' => $data->lastPage(),
@@ -105,6 +118,11 @@ class Fines extends Controller
      */
     public function create(Request $request)
     {
+        $request->validate([
+            'fine' => 'required',
+            'user_pin' => 'required',
+        ]);
+
         return response()->json();
     }
 
