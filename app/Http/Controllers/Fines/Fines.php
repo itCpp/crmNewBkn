@@ -122,7 +122,20 @@ class Fines extends Controller
             'user_pin' => 'required',
         ]);
 
-        return response()->json();
+        $row = Fine::create([
+            'user_pin' => $request->user_pin,
+            'from_pin' => $request->user()->pin,
+            'fine' => $request->fine,
+            'comment' => $request->comment,
+            'request_id' => $request->request_id,
+            'fine_date' => $request->date ?: now(),
+        ]);
+
+        Notifications::createFineNotification($row);
+
+        return response()->json(
+            $this->serialize($row)->toArray()
+        );
     }
 
     /**
