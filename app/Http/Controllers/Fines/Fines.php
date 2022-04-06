@@ -3,10 +3,22 @@
 namespace App\Http\Controllers\Fines;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Users\Notifications;
+use App\Http\Controllers\Users\UserData;
+use App\Models\Fine;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class Fines extends Controller
 {
+    /**
+     * Количество минут, в течение которых можно восстановить удаленный штраф
+     * или удалить только что созданный штраф, для которых удаление запрещено
+     * 
+     * @var int
+     */
+    protected $pause = 15;
+
     /**
      * Вывод штрафов
      * 
@@ -15,7 +27,63 @@ class Fines extends Controller
      */
     public function index(Request $request)
     {
-        return response()->json();
+        $data = Fine::withTrashed()
+            ->orderBy('created_at', "DESC")
+            ->paginate(30);
+
+        $rows = $data->map(function ($row) {
+            return $this->serialize($row);
+        });
+
+        return response()->json([
+            $data,
+            'rows' => $rows ?? [],
+            'page' => $data->currentPage(),
+            'pages' => $data->lastPage(),
+            'total' => $data->total(),
+        ]);
+    }
+
+    /**
+     * Формирование строки со штрафом
+     * 
+     * @param  \App\Models\Fine $row
+     * @return \App\Models\Fine
+     */
+    public function serialize(Fine $row)
+    {
+        $row->user_fio = $row->user_pin ? $this->getNameUser($row->user_pin) : null;
+        $row->from_fio = $row->from_pin ? $this->getNameUser($row->from_pin) : null;
+
+        /** Можно удалить штраф */
+        $row->is_delete = (!$row->deleted_at and request()->user()->can('user_fines_delete'));
+
+        /** Можно удалить недавно созданный штраф */
+        if (!$row->deleted_at and !$row->is_delete and request()->user()->pin == $row->from_pin and $row->created_at > now()->subMinutes($this->pause)) {
+            $row->is_delete = true;
+        }
+
+        /** Можно восстановить удаленный штраф */
+        $row->is_restore = ($row->deleted_at and $row->deleted_at > now()->subMinutes($this->pause));
+
+        return $row;
+    }
+
+    /**
+     * ФИО сотрудника
+     * 
+     * @param  null|int $pin
+     * @return string
+     */
+    public function getNameUser($pin)
+    {
+        if (!empty($this->users[$pin]))
+            return $this->users[$pin];
+
+        if ($user = User::wherePin($pin)->first())
+            return $this->users[$pin] = (new UserData($user))->name_fio;
+
+        return $this->users[$pin] = null;
     }
 
     /**
@@ -48,6 +116,45 @@ class Fines extends Controller
      */
     public function delete(Request $request)
     {
-        return response()->json();
+        if (!$row = Fine::find($request->id))
+            return response()->json(['message' => "Штраф не найден или уже был удален"], 400);
+
+        $row->delete();
+
+        $message = "Штраф на сумму " . $row->fine . " руб от " . date("d.m.Y", strtotime($row->fine_date)) . " г. был удален";
+
+        Notifications::createFineNotification($row, $message);
+
+        return response()->json(
+            $this->serialize($row)->toArray()
+        );
+    }
+
+    /**
+     * Восстановление удаленного штрафа
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function restore(Request $request)
+    {
+        if (!$row = Fine::withTrashed()->find($request->id))
+            return response()->json(['message' => "Штраф не найден или уже был удален"], 400);
+
+        if (!$row->deleted_at)
+            return response()->json(['message' => "Штраф еще не был удален или уже его кто-то восстановил"], 400);
+
+        if ($row->deleted_at < now()->subMinutes($this->pause))
+            return response()->json(['message' => "Время восстановления прошло"], 400);
+
+        $row->restore();
+
+        $message = "Штраф на сумму " . $row->fine . " руб от " . date("d.m.Y", strtotime($row->fine_date)) . " г. восстановлен";
+
+        Notifications::createFineNotification($row, $message);
+
+        return response()->json(
+            $this->serialize($row)->toArray()
+        );
     }
 }

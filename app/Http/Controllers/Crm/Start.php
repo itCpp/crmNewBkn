@@ -17,6 +17,7 @@ class Start extends Controller
     public static $permitsList = [
         'clients_agreements_access', # Доступ к договорным клиентам
         'clients_show_phone', # Может видеть номера телефонов клиента
+        'queues_access', # Доступ к очередям
         'rating_access', # Доступ к рейтингу
         'requests_access', # Доступ к заявкам
         'requests_add', # Может добавлять новую заявку
@@ -32,9 +33,9 @@ class Start extends Controller
         'requests_sector_set', # Может назначать заявку для сектора
         'requests_set_null_status', # Может устанавливать заявке статус "Не обработано"
         'requests_show_resource', # Может просматривать статистику обращений
-        'queues_access', # Доступ к очередям
         'second_calls_access', # Доступ ко вторичным звонкам
         'sms_access', # Доступ к смс сообщениям
+        'users_fines_access', # Доступ к разделу штрафов
     ];
 
     /**

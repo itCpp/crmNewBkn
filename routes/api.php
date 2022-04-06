@@ -257,13 +257,15 @@ Route::group(['middleware' => 'user.token'], function () {
     Route::group(['prefix' => 'fines'], function () {
 
         /** Вывод штрафов */
-        Route::post('index', 'Fines\Fines@index');
+        Route::post('index', 'Fines\Fines@index')->middleware('user.can:user_fines_access');
         /** Вывод штрафа */
         Route::post('get', 'Fines\Fines@get');
         /** Добавление нового штрафа */
-        Route::put('create', 'Fines\Fines@create');
+        Route::put('create', 'Fines\Fines@create')->middleware('user.can:user_fines_create');
         /** Удаление штрафа */
-        Route::delete('delete', 'Fines\Fines@delete');
+        Route::delete('delete', 'Fines\Fines@delete')->middleware('user.can:user_fines_delete');
+        /** Восстановление удаленного штрафа */
+        Route::post('restore', 'Fines\Fines@restore')->middleware('user.can:user_fines_delete');
     });
 
     /** Маршрутизация админпанели разработчика */
