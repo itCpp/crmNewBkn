@@ -77,6 +77,9 @@ class CreateCrmCommand extends Command
         if ($this->cdr_merge)
             $this->call('old:cdr');
 
+        /** Перенос информации по штрафам */
+        $this->call('old:fines');
+
         /** Отключение блокировки добавления новых заявок */
         Settings::set('DROP_ADD_REQUEST', false);
         /** Включение проверки СМС на шлюзах */

@@ -253,6 +253,19 @@ Route::group(['middleware' => 'user.token'], function () {
         });
     });
 
+    /** Управление штрафами */
+    Route::group(['prefix' => 'fines'], function () {
+
+        /** Вывод штрафов */
+        Route::post('index', 'Fines\Fines@index');
+        /** Вывод штрафа */
+        Route::post('get', 'Fines\Fines@get');
+        /** Добавление нового штрафа */
+        Route::put('create', 'Fines\Fines@create');
+        /** Удаление штрафа */
+        Route::delete('delete', 'Fines\Fines@delete');
+    });
+
     /** Маршрутизация админпанели разработчика */
     include __DIR__ . "/api/api.dev.php";
 });

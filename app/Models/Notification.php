@@ -20,6 +20,7 @@ class Notification extends Model
         'notif_type',
         'notification',
         'data',
+        'created_at',
         'readed_at',
         'user_by_id',
     ];
