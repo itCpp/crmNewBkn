@@ -118,20 +118,35 @@ class Fines extends Controller
     public function create(Request $request)
     {
         $request->validate([
-            'fine' => 'required',
-            'user_pin' => 'required',
+            'fine' => 'required|numeric|min:0.01',
+            'pin' => 'required',
+            'comment' => 'required',
         ]);
 
         $row = Fine::create([
-            'user_pin' => $request->user_pin,
+            'user_pin' => $request->pin,
             'from_pin' => $request->user()->pin,
             'fine' => $request->fine,
             'comment' => $request->comment,
             'request_id' => $request->request_id,
+            'is_autofine' => (bool) $request->is_autofine,
             'fine_date' => $request->date ?: now(),
         ]);
 
         Notifications::createFineNotification($row);
+
+        if ($request->is_autofine)
+            return null;
+
+        if (is_array($request->chiefs)) {
+
+            $request->is_autofine = true;
+
+            foreach ($request->chiefs as $chief) {
+                $request->pin = $chief;
+                $this->create($request);
+            }
+        }
 
         return response()->json(
             $this->serialize($row)->toArray()
@@ -151,7 +166,7 @@ class Fines extends Controller
 
         $row->delete();
 
-        $message = "Штраф на сумму " . $row->fine . " руб от " . date("d.m.Y", strtotime($row->fine_date)) . " г. был удален";
+        $message = "Штраф на сумму " . $row->fine . " руб от " . date("d.m.Y", strtotime($row->fine_date)) . " г. отменен";
 
         Notifications::createFineNotification($row, $message);
 
