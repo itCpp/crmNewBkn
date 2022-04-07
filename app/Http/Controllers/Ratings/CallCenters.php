@@ -24,6 +24,7 @@ class CallCenters extends Controller
         Data\Cashbox,
         Data\Comings,
         Data\Drains,
+        Data\Fines,
         Data\Requests,
         Data\Users;
 
@@ -105,6 +106,7 @@ class CallCenters extends Controller
             ->getDrains()
             ->getCashboxData()
             ->getAgreementsData()
+            ->getFines()
             ->findUsers()
             ->getResult()
             ->setFilterPermit()

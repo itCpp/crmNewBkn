@@ -146,6 +146,7 @@ trait CallCenterResult
             ->setDrains()
             ->setAgreements()
             ->setCashbox()
+            ->setFines()
             ->setResult();
 
         $this->reCountGlobalRating(
@@ -655,5 +656,25 @@ trait CallCenterResult
             $row->efficiency_agreement = round(($row->agreements_firsts / $row->comings) * 100, 2);
 
         $this->row->global_stats = $row;
+    }
+
+    /**
+     * Применение информации по штрафам
+     * 
+     * @return $this
+     */
+    public function setFines()
+    {
+        $this->row->fines = $this->data->fines[$this->row->pin]['sum'] ?? 0;
+        $this->row->fine_data = [];
+
+        foreach (($this->data->fines[$this->row->pin]['dates'] ?? []) as $date => $fine) {
+            $this->row->fine_data[] = [
+                'date' => $date,
+                'fine' => $fine,
+            ];
+        }
+
+        return $this;
     }
 }

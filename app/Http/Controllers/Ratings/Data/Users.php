@@ -195,6 +195,7 @@ trait Users
             'drains' => 0, # Количество сливов
             'efficiency' => 0, # КПД
             'efficiency_agreement' => 0, # КПД договора
+            'fines' => 0, # Сумма ЦРэМочных штрафов сотрудника
             'fio' => preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', trim($name)),
             'load' => 0, # Нагрузка
             'name' => trim($name),
