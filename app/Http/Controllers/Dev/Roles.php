@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Users\UserData;
 use Illuminate\Http\Request;
 
 use App\Models\Role;
@@ -62,6 +63,12 @@ class Roles extends Controller
 
         if ($request->getPermits) {
             $response['permits'] = $role->permissions;
+        }
+
+        if ($request->getUsers) {
+            $response['users'] = $role->users->map(function ($row) {
+                return new UserData($row);
+            });
         }
 
         $response['role'] = $role;
