@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Log;
+use App\Models\UsersViewPart;
 use Exception;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -260,5 +261,27 @@ class Controller extends BaseController
 		}
 
 		return $array ?? [];
+	}
+
+	/**
+	 * Обновляет время посещения раздела
+	 * 
+	 * @param  string $part
+	 * @return null|\App\Models\UsersViewPart
+	 */
+	public static function setLastTimeViewPart($part)
+	{
+		if (!$user_id = optional(request()->user())->id or !(bool) $part)
+			return null;
+
+		$view = UsersViewPart::firstOrNew([
+			'user_id' => $user_id,
+			'part_name' => $part
+		]);
+
+		$view->view_at = now();
+		$view->save();
+
+		return $view;
 	}
 }

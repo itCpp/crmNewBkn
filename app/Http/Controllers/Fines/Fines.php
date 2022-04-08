@@ -48,6 +48,8 @@ class Fines extends Controller
         foreach ($data as $row)
             $rows[] = $this->serialize($row);
 
+        $this->setLastTimeViewPart("fines");
+
         return response()->json([
             'rows' => $rows ?? [],
             'page' => $data->currentPage(),

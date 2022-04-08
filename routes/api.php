@@ -125,7 +125,9 @@ Route::group(['middleware' => 'user.token'], function () {
         /** Загрузка настроек пользователя для рейтинга */
         Route::post('callcenter/start', 'Ratings\Ratings@ratingStart')->name('api.ratings.callcenter.start');
         /** Вывод основного рейтинга колл-центров */
-        Route::post('callcenter', 'Ratings\Ratings@getCallCenters')->name('api.ratings.callcenter');
+        Route::post('callcenter', 'Ratings\Ratings@getCallCenters')
+            ->name('api.ratings.callcenter')
+            ->middleware(\App\Http\Middleware\WriteLastViewTimePart::class);
 
         /** Данные по операторам */
         Route::post('getOperators', 'Statistics\Operators@getOperators')->name('api.ratings.getOperators');
@@ -135,7 +137,9 @@ Route::group(['middleware' => 'user.token'], function () {
     Route::group(['prefix' => 'queues', 'middleware' => 'user.can:queues_access'], function () {
 
         /** Вывод очереди */
-        Route::post('getQueues', 'Queues\Queues@getQueues')->name('api.queues.getQueues');
+        Route::post('getQueues', 'Queues\Queues@getQueues')
+            ->name('api.queues.getQueues')
+            ->middleware(\App\Http\Middleware\WriteLastViewTimePart::class);
         /** Решение по очереди */
         Route::post('done', 'Queues\Queues@done')->name('api.queues.done');
     });
@@ -188,7 +192,9 @@ Route::group(['middleware' => 'user.token'], function () {
     ], function () {
 
         /** Список договоров */
-        Route::post('/', 'Agreements\Agreements@index')->name('api.agreements');
+        Route::post('/', 'Agreements\Agreements@index')
+            ->name('api.agreements')
+            ->middleware(\App\Http\Middleware\WriteLastViewTimePart::class);
         /** Вывод данных одного договора для окна редактирования */
         Route::post('/get', 'Agreements\Agreements@get')->name('api.agreemetns.get');
         /** Сохраняет статус и комментарий по договору */
