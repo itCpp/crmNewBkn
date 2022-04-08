@@ -68,7 +68,7 @@ class Roles extends Controller
         if ($request->getUsers) {
             $response['users'] = $role->users->map(function ($row) {
                 return new UserData($row);
-            });
+            })->sortBy('name_full')->values()->all();
         }
 
         $response['role'] = $role;
