@@ -58,6 +58,12 @@ class Roles extends Controller
             $response['statuses'] = Status::orderBy('name')->get();
         }
 
+        $role->is_superadmin = (env("USER_SUPER_ADMIN_ACCESS_FOR_ROLE") and env("USER_SUPER_ADMIN_ROLE") == $role->role);
+
+        if ($request->getPermits) {
+            $response['permits'] = $role->permissions;
+        }
+
         $response['role'] = $role;
 
         return response()->json($response);
@@ -77,6 +83,8 @@ class Roles extends Controller
         foreach ($role->permissions as $permit) {
             $role_permissions[] = $permit->permission;
         }
+
+        $role->is_superadmin = (env("USER_SUPER_ADMIN_ACCESS_FOR_ROLE") and env("USER_SUPER_ADMIN_ROLE") == $role->role);
 
         return response()->json([
             'role' => $role,
