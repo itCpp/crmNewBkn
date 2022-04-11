@@ -387,13 +387,35 @@ trait RowsQuery
         if ($row->unicIdClient)
             return $this->getPhonesFromRequest($row->unicIdClient);
 
-        $phones = json_decode($row->phones, true) ?: [];
+        foreach ($this->getPhonesListFromAgreementRow($row) as $key => $phone) {
+            $phones[] = $this->serializePhoneRow($phone, "+{$row->id}d{$key}");
+        }
+
+        return $phones ?? [];
+    }
+
+    /**
+     * Формирует список номеров телефона клиента по договору
+     * 
+     * @param  int|\App\Models\Base\CrmAgreement $row
+     * @return array
+     */
+    public static function getPhonesListFromAgreementRow($row)
+    {
+        if (!$row instanceof CrmAgreement) {
+            $row = CrmAgreement::select('crm_agreement.id', 'crm_clients_unical.phone as phones')
+                ->leftjoin('crm_clients_unical', 'crm_clients_unical.id', '=', 'crm_agreement.uniclClientId')
+                ->where('crm_agreement.id', $row)
+                ->first();
+        }
+
         $list = [];
+        $phones = json_decode($row->phones, true) ?: [];
 
         // Поиск номеров из таблицы клиента
         foreach ($phones as $phone) {
 
-            $phone = $this->checkPhone($phone, 3);
+            $phone = parent::checkPhone($phone, 3);
 
             if ($phone and !in_array($phone, $list))
                 $list[] = $phone;
@@ -404,19 +426,13 @@ trait RowsQuery
 
         foreach ($phones as $phone) {
 
-            $phone = $this->checkPhone($phone, 3);
+            $phone = parent::checkPhone($phone, 3);
 
             if ($phone and !in_array($phone, $list))
                 $list[] = $phone;
         }
 
-        $phones = [];
-
-        foreach (array_unique($list ?? []) as $key => $phone) {
-            $phones[] = $this->serializePhoneRow($phone, "+{$row->id}d{$key}");
-        }
-
-        return $phones;
+        return array_values(array_unique($list));
     }
 
     /**

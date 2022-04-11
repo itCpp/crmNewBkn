@@ -16,6 +16,7 @@ class Start extends Controller
      */
     public static $permitsList = [
         'clients_agreements_access', # Доступ к договорным клиентам
+        'clients_consultation_access', # Доступ к клиентам с бесплатной консультацией
         'clients_show_phone', # Может видеть номера телефонов клиента
         'queues_access', # Доступ к очередям
         'rating_access', # Доступ к рейтингу

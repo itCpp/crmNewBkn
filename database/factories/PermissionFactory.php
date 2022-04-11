@@ -27,6 +27,7 @@ class PermissionFactory extends Factory
         ['admin_users', 'Доступ администратора к созданию и редактированию данных сотрудников'],
         ['clients_agreements_access', 'Доступ к договорным клиентам'],
         ['clients_agreements_all', 'Доступ ко всем договорам'],
+        ['clients_consultation_access', 'Доступ к клиетам с бесплатной консультацией'],
         ['clients_show_phone', 'Может видеть номера телефонов клиента'],
         ['rating_access', 'Доступ к рейтингу'],
         ['rating_all_callcenters', 'Доступ к рейтингу всех колл-центров'],
