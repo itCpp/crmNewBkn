@@ -99,19 +99,19 @@ class Worktime extends Controller
     {
         $date = now();
 
+        /** Последнее событие сегодняшнего дня */
         $last = UserWorkTime::whereDate('date', $date)
             ->whereUserPin($pin)
             ->orderBy('id', 'DESC')
             ->first();
 
         /** Предотвращение записи одинакового события */
-        if ($last) {
-            if ($last->event_type == $type)
-                return $last;
+        if (($last->event_type ?? null) == $type) {
+            return $last;
         }
 
         /** Проверка события отдыха при авторизации */
-        if ($type == "login" and !in_array($last->event_type ?? null, self::$timeout)) {
+        if ($type == "login" and !in_array(($last->event_type ?? null), self::$timeout)) {
 
             $timeout = UserWorkTime::whereDate('date', $date)
                 ->whereUserPin($pin)
@@ -130,14 +130,22 @@ class Worktime extends Controller
 
                 $type = $timeout->event_type;
             }
+
+            if ($type != "work" and $type != "free")
+                $createWork = true;
         }
 
-        return UserWorkTime::create([
+        $event = UserWorkTime::create([
             'user_pin' => $pin,
             'event_type' => $type,
             'date' => $date,
             'created_at' => $date,
         ]);
+
+        if ($createWork ?? null)
+            self::checkAndWriteWork($pin);
+
+        return $event;
     }
 
     /**
@@ -154,8 +162,7 @@ class Worktime extends Controller
         $count = RequestsRow::where([
             ['pin', $pin],
             ['status_id', null]
-        ])
-            ->count();
+        ])->count();
 
         $worktime = self::writeEvent($pin, $count ? 'work' : 'free');
         $user = $worktime->user()->first('id');

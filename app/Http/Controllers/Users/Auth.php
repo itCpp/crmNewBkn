@@ -218,7 +218,7 @@ class Auth extends Controller
 
         // Поиск активных сессиий
         $active = UsersSession::where('user_id', $request->user()->id)
-            ->whereDate('created_at', now())
+            ->where('created_at', now()->format("Y-m-d 00:00:00"))
             ->count();
 
         // Запись рабочего времени
