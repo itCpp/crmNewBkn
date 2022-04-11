@@ -64,15 +64,19 @@ class UserMainData
      */
     public function getNotifications(Request $request)
     {
-        $notif = Notification::where('user', $request->user()->pin)
+        $data = Notification::where('user', $request->user()->pin)
             ->orderBy('id', "DESC");
 
+        $notifications = new Notifications;
+        $rows = $data->limit(50)->get()
+            ->map(function ($row) use ($notifications) {
+                return $notifications->serialize($row);
+            });
+
         return [
-            'count' => $notif->count(),
-            'rows' => $notif->limit(50)->get(),
-            'recent' => Notification::where('user', $request->user()->pin)
-                ->where('readed_at', null)
-                ->count(),
+            'count' => $data->count(),
+            'rows' => $rows,
+            'recent' => $data->where('readed_at', null)->count(),
         ];
     }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Users;
 use App\Events\Users\NotificationsEvent;
 use App\Models\Fine;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class Notifications
@@ -92,5 +93,65 @@ class Notifications
         ));
 
         return null;
+    }
+
+    /**
+     * Формирует строку уведомления
+     * 
+     * @param  \App\Models\Notification $row
+     * @return \App\Models\Notification
+     */
+    public function serialize($row)
+    {
+        $row->author_data = $this->getAuthor((int) $row->user_by_id);
+        $row->author = $row->author_data['fio'] ?? null;
+
+        return $row;
+    }
+
+    /**
+     * Выводит строку уведомления и устанавливает время прочтения
+     * 
+     * @param  \Illumiante\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function read(Request $request)
+    {
+        if (!$row = Notification::find($request->id))
+            return response()->json(['message' => "Уведомление не найдено или удалено"], 404);
+
+        if ($row->user != $request->user()->pin)
+            return response()->json(['message' => "Доступ к уведомлению ограничен"], 403);
+
+        if (!$row->readed_at) {
+            $row->readed_at = now();
+            $row->save();
+        }
+
+        return response()->json(
+            $this->serialize($row)
+        );
+    }
+
+    /**
+     * Определяет автора уведомления
+     * 
+     * @param  int $id
+     * @return array
+     */
+    public function getAuthor($id)
+    {
+        if (!empty($this->authors[$id]))
+            return $this->authors[$id];
+
+        if (!$row = User::find($id))
+            return $this->authors[$id] = [];
+
+        $row = new UserData($row);
+
+        return $this->authors[$id] = [
+            'fio' => $row->name_fio,
+            'pin' => $row->pin,
+        ];
     }
 }

@@ -183,6 +183,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Создание учетной записи нового сотрудника */
         Route::post('save', 'Users\AdminUsers@create')->middleware('user.can:user_create')->name('api.users.save');
+
+        /** Вывод уведомления и установка даты чтения */
+        Route::post('notifications/read', 'Users\Notifications@read')->name('api.users.notifications.read');
     });
 
     /** Маршрутищация работы с договорными клиентами */
