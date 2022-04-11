@@ -154,4 +154,26 @@ class Notifications
             'pin' => $row->pin,
         ];
     }
+
+    /**
+     * Отмечает все уведомления пользователя как прочитанные
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function readAll(Request $request)
+    {
+        $readed_at = now();
+
+        Notification::where([
+            ['user', $request->user()->pin],
+            ['user', '!=', null]
+        ])->update([
+            'readed_at' => $readed_at,
+        ]);
+
+        return response()->json([
+            'readed_at' => $readed_at,
+        ]);
+    }
 }

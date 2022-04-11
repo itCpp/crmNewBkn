@@ -186,6 +186,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Вывод уведомления и установка даты чтения */
         Route::post('notifications/read', 'Users\Notifications@read')->name('api.users.notifications.read');
+
+        /** Отмечает все уведомления пользователя как прочитанные */
+        Route::post('notifications/read/all', 'Users\Notifications@readAll')->name('api.users.notifications.read.all');
     });
 
     /** Маршрутищация работы с договорными клиентами */
