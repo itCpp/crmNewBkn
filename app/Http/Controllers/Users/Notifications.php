@@ -31,32 +31,40 @@ class Notifications
      */
     public static function changeRequestPin($id, $new, $old)
     {
+        $notifications = new static;
+
         if ($new) {
+
+            $row = self::create([
+                'user' => $new,
+                'notif_type' => "set_request",
+                'notification' => "Вам назначена заявка #{$id}",
+                'data' => [
+                    'request_id' => $id,
+                ],
+                'user_by_id' => optional(request()->user())->id,
+            ]);
+
             broadcast(new NotificationsEvent(
-                self::create([
-                    'user' => $new,
-                    'notif_type' => "set_request",
-                    'notification' => "Вам назначена заявка #{$id}",
-                    'data' => [
-                        'request_id' => $id,
-                    ],
-                    'user_by_id' => optional(request()->user())->id,
-                ]),
+                $notifications->serialize($row)->toArray(),
                 Users::findUserId($new)
             ));
         }
 
         if ($old) {
+
+            $row = self::create([
+                'user' => $old,
+                'notif_type' => "set_request",
+                'notification' => "Заявка #{$id} передана другому сотруднику",
+                'data' => [
+                    'drop_request_id' => $id,
+                ],
+                'user_by_id' => optional(request()->user())->id,
+            ]);
+
             broadcast(new NotificationsEvent(
-                self::create([
-                    'user' => $old,
-                    'notif_type' => "set_request",
-                    'notification' => "Заявка #{$id} передана другому сотруднику",
-                    'data' => [
-                        'drop_request_id' => $id,
-                    ],
-                    'user_by_id' => optional(request()->user())->id,
-                ]),
+                $notifications->serialize($row)->toArray(),
                 Users::findUserId($old)
             ));
         }
@@ -81,14 +89,18 @@ class Notifications
                 $message .= ", по причине {$row->comment}";
         }
 
+        $notifications = new static;
+
+        $notification = self::create([
+            'user' => $row->user_pin,
+            'notif_type' => "fine",
+            'notification' => $message,
+            'data' => $row->toArray(),
+            'user_by_id' => optional(request()->user())->id,
+        ]);
+
         broadcast(new NotificationsEvent(
-            self::create([
-                'user' => $row->user_pin,
-                'notif_type' => "fine",
-                'notification' => $message,
-                'data' => $row->toArray(),
-                'user_by_id' => optional(request()->user())->id,
-            ]),
+            $notifications->serialize($notification)->toArray(),
             Users::findUserId($row->user_pin)
         ));
 
