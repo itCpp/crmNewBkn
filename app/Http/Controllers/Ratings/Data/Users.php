@@ -55,7 +55,7 @@ trait Users
             return $this;
 
         $this->сhiefs = User::select('pin')
-            ->whereIn('position_id', $this->envExplode('RATING_CHIEF_POSITION_ID'))
+            ->whereIn('position_id', $this->envExplode('RATING_TRAINER_POSITINS_ID'))
             ->where(function ($query) {
                 $query->where('deleted_at', null)
                     ->orWhere('deleted_at', '>', $this->dates->start . " 00:00:00");
