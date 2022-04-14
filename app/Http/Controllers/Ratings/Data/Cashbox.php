@@ -14,6 +14,8 @@ trait Cashbox
      */
     public function getCashboxData()
     {
+        $cahsbox = [];
+
         $rows = CrmAgreement::selectRaw(
             'SUM(crm_kassa.uppSumma) as sum, crm_agreement.coll, crm_kassa.hidePin, crm_kassa.date'
         )
@@ -23,13 +25,12 @@ trait Cashbox
                 ['crm_kassa.nomerDogovora', '!=', ""],
             ])
             ->whereBetween('crm_kassa.date', [
-                $this->dates->start,
-                $this->dates->stop,
+                $this->dates->startPeriod,
+                $this->dates->stopPeriod,
             ])
             ->where('crm_agreement.coll', '!=', '')
             ->where('crm_agreement.coll', '!=', null)
             ->whereNotIn('crm_agreement.coll', [
-                'Вторичка',
                 'Улица',
                 'Промо',
                 'СМИ',
@@ -41,35 +42,32 @@ trait Cashbox
                 'crm_kassa.hidePin',
                 'crm_kassa.date'
             ])
-            ->get();
+            ->get()
+            ->each(function ($row) use (&$cahsbox) {
 
-        $cahsbox = [];
+                $pin = (int) ($row->coll) ?: $row->hidePin;
 
-        foreach ($rows as $row) {
+                if (!$pin)
+                    return;
 
-            $row->pin = (int) ($row->coll ?: $row->hidePin);
+                if (!in_array($pin, $this->data->pins))
+                    $this->data->pins[] = $pin;
 
-            if (!$row->pin)
-                continue;
+                if (empty($cahsbox[$pin])) {
+                    $cahsbox[$pin] = [
+                        'sum' => 0,
+                        'pin' => $pin,
+                        'dates' => [],
+                    ];
+                }
 
-            if (!in_array($row->pin, $this->data->pins))
-                $this->data->pins[] = $row->pin;
+                if (empty($cahsbox[$pin]['dates'][$row->date])) {
+                    $cahsbox[$pin]['dates'][$row->date] = 0;
+                }
 
-            if (empty($cahsbox[$row->pin])) {
-                $cahsbox[$row->pin] = [
-                    'sum' => 0,
-                    'pin' => $row->pin,
-                    'dates' => [],
-                ];
-            }
-
-            if (empty($cahsbox[$row->pin]['dates'][$row->date])) {
-                $cahsbox[$row->pin]['dates'][$row->date] = 0;
-            }
-
-            $cahsbox[$row->pin]['sum'] += $row->sum;
-            $cahsbox[$row->pin]['dates'][$row->date] += $row->sum;
-        }
+                $cahsbox[$pin]['sum'] += $row->sum;
+                $cahsbox[$pin]['dates'][$row->date] += $row->sum;
+            });
 
         $this->data->cahsbox = (object) [
             'sum' => $this->getCashboxSums(),
