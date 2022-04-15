@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\Developer\RequestsSourceChangeAbbrNameJob;
+use App\Models\IncomingCallsToSource;
+use App\Models\Incomings\SourceExtensionsName;
 use App\Models\RequestsSource;
 use App\Models\RequestsSourcesResource;
 use Illuminate\Http\Request;
@@ -265,6 +267,19 @@ class Sources extends Controller
         parent::logData($request, $resource);
 
         $source->resources = $source->resources()->get();
+
+        if ($resource->type == "phone") {
+
+            if ($call = IncomingCallsToSource::where('phone', $resource->val)->first()) {
+
+                $extension = SourceExtensionsName::firstOrNew([
+                    'extension' => $call->extension,
+                ]);
+
+                $extension->abbr_name = $request->set ? $source->abbr_name : null;
+                $extension->save();
+            }
+        }
 
         return Response::json([
             'source' => $source,
