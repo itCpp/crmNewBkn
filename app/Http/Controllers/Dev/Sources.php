@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Developer\RequestsSourceChangeAbbrNameJob;
 use App\Models\RequestsSource;
 use App\Models\RequestsSourcesResource;
 use Illuminate\Http\Request;
@@ -58,17 +59,23 @@ class Sources extends Controller
         if (!$source = RequestsSource::find($request->id))
             return Response::json(['message' => "Источник не найден"], 400);
 
+        $abbr_name = $source->abbr_name;
+
         $source->actual_list = (int) $request->actual_list;
         $source->auto_done_text_queue = (int) $request->auto_done_text_queue;
         $source->show_counter = (int) $request->show_counter;
         $source->comment = $request->comment;
         $source->name = $request->name;
+        $source->abbr_name = $request->abbr_name;
 
         $source->save();
 
         $source->resources = $source->resources;
 
         parent::logData($request, $source);
+
+        if ($abbr_name != $source->abbr_name)
+            RequestsSourceChangeAbbrNameJob::dispatch($source);
 
         return Response::json([
             'source' => $source,
