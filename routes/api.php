@@ -286,4 +286,7 @@ Route::group(['middleware' => 'user.token'], function () {
 
     /** Маршрутизация админпанели разработчика */
     include __DIR__ . "/api/api.dev.php";
+
+    /** Вывод внутренних телефонных номеров */
+    Route::get('phoneboock', 'Crm\Phoneboock@get')->name('api.phoneboock');
 });
