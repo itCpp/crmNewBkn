@@ -195,7 +195,7 @@ class SipMain extends Controller
         $stop = now()->format("Y-m-d 20:00:00"); // Окончание рабочего дня
         $last = now()->format("Y-m-d H:i:s"); // Время последнего события
 
-        $rows = SipTimeEvent::where(function ($query) {
+        $rows = count($this->data['tables']) ? SipTimeEvent::where(function ($query) {
 
             foreach ($this->data['tables'] as $row) {
 
@@ -225,7 +225,9 @@ class SipMain extends Controller
                     'created_at' => $row->event_at,
                     'event_type' => $row->event_status,
                 ];
-            });
+            })
+            ->toArray()
+            : [];
 
         $a = strtotime($start);
         $b = strtotime($stop);
@@ -257,7 +259,7 @@ class SipMain extends Controller
             'startTime' => $a,
             'stopTime' => $b,
             'time' => $l,
-            'rows' => $rows->toArray(),
+            'rows' => $rows,
         ];
     }
 
@@ -273,7 +275,10 @@ class SipMain extends Controller
 
         UsersSession::withTrashed()
             ->select('ip', 'created_at')
-            ->whereDate('created_at', now())
+            ->where([
+                ['user_id', $user_id],
+                ['created_at', now()->startOfDay()]
+            ])
             ->orderBy('created_at', "DESC")
             ->get()
             ->each(function ($row) use (&$ips) {

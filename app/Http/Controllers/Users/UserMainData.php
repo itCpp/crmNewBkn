@@ -43,16 +43,27 @@ class UserMainData
         $request->toChats = true; # Вывод данных для графиков рейтинга
 
         return [
-            'alerts' => [
-                'requests' => Requests::getNewRequests($request->user()->pin),
-                'notifications' => $this->getNotifications($request),
-                // 'chat' => null,
-            ],
+            'alerts' => $this->getMyDataAlerts($request),
             'rating' => (new CallCenters($request))->getMyRow($request->user()->pin),
             'charts' => (new Charts($request))->getCharts($request),
             'user' => $request->user(),
             'worktime' => Worktime::getTapeTimes($request),
             'calls' => (new SipMain)->getTapeTimes($request),
+        ];
+    }
+
+    /**
+     * Выводит массив с уведомлениями
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function getMyDataAlerts(Request $request)
+    {
+        return [
+            'requests' => Requests::getNewRequests($request->user()->pin),
+            'notifications' => $this->getNotifications($request),
+            // 'chat' => null,
         ];
     }
 
