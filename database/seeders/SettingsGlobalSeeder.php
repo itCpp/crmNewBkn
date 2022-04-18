@@ -36,6 +36,12 @@ class SettingsGlobalSeeder extends Seeder
             'value' => 0,
             'type' => null,
             'comment' => "Сохранять информацию о звонках",
+        ],
+        [
+            'id' => "ASTERISK_INCOMING_CALL_TO_CREATE_REQUESTS",
+            'value' => 0,
+            'type' => null,
+            'comment' => "Добавлять заявки от входящих звонков Asterisk",
         ]
     ];
     /**

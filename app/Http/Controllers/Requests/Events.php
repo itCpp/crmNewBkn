@@ -114,8 +114,10 @@ class Events extends Controller
         $date = date("Y-m-d H:i:s");
 
         // Расшифровка события
-        $crypt = new Encrypter($this->key, config('app.cipher'));
-        $data = $this->decrypt($row->event->request_data ?? null, $crypt);
+        if (!($row->event->recrypt ?? null))
+            $crypt = new Encrypter($this->key, config('app.cipher'));
+
+        $data = $this->decrypt($row->event->request_data ?? null, $crypt ?? null);
         $row->event->request_data = $data;
 
         $recrypt = $this->encrypt($data); // Перешифровка данных
@@ -376,13 +378,29 @@ class Events extends Controller
         $extension = $data->extension ?? null;
 
         // Поиск внутреннего адреса номера телефонии
-        if (!$internal = SipInternalExtension::where('extension', $extension)->first())
-            return null;
+        $internal = SipInternalExtension::where('extension', $extension)->first();
 
         // Обработка вторичного звонка
         // Настройка идентификатор вторичного звонка указана в таблице внутренних номеров
-        if ($internal->for_in == 1)
+        if (($internal->for_in ?? null) == 1)
             return $this->incomingSecondCallAsterisk();
+
+        if ((new Settings())->ASTERISK_INCOMING_CALL_TO_CREATE_REQUESTS) {
+
+            $call = $data->Call ?? null;
+            $direction = $data->Direction ?? null;
+
+            if ($call != "Start" and $direction != "in")
+                return null;
+
+            $incoming = new IncomingCallRequest;
+            $incoming->api_type = "Asterisk";
+            $incoming->incoming_event_id = $event->id;
+            $incoming->response_code = 200;
+            $incoming->sent_at = now();
+
+            $this->callEvent($incoming);
+        }
 
         return null;
     }
