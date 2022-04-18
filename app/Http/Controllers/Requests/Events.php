@@ -147,6 +147,7 @@ class Events extends Controller
         $incoming = IncomingCall::create([
             'phone' => $this->encrypt($row->event->request_data->phone),
             'sip' => $row->event->request_data->sip,
+            'event_id' => $row->incoming_event_id ?? null,
         ]);
 
         // Слушатель сип номеров
@@ -391,7 +392,6 @@ class Events extends Controller
 
             if ($call != "Start" and $direction != "in")
                 return null;
-
 
             if (!($data->phone ?? null))
                 $data->phone = $phone;
