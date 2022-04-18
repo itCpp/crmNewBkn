@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\IncomingRequestCallRetryJob;
 use App\Models\IncomingCall;
 use App\Models\IncomingCallsToSource;
+use App\Models\Incomings\SourceExtensionsName;
 use App\Models\RequestsSourcesResource;
 use Illuminate\Http\Request;
 
@@ -142,21 +143,21 @@ class Calls extends Controller
             ]);
         }
 
-        if (!$extension = IncomingCallsToSource::find($request->id) and $request->id)
+        if (!$row = IncomingCallsToSource::find($request->id) and $request->id)
             return response()->json(['message' => "Слушатель с id#{$request->id} не найден"], 400);
 
-        if (!$extension)
-            $extension = new IncomingCallsToSource;
+        if (!$row)
+            $row = new IncomingCallsToSource;
 
-        $extension->extension = $request->extension;
-        $extension->phone = $phone;
-        $extension->on_work = (int) $request->on_work;
-        $extension->comment = $request->comment;
-        $extension->ad_place = $request->ad_place;
+        $row->extension = $request->extension;
+        $row->phone = $phone;
+        $row->on_work = (int) $request->on_work;
+        $row->comment = $request->comment;
+        $row->ad_place = $request->ad_place;
 
-        $extension->save();
+        $row->save();
 
-        parent::logData($request, $extension);
+        parent::logData($request, $row);
 
         $resource = RequestsSourcesResource::where([
             ['val', $phone],
@@ -169,10 +170,18 @@ class Calls extends Controller
             $alert = "Указанный номер телефона не используется в источниках";
         }
 
+        $abbr = SourceExtensionsName::firstOrNew([
+            'extension' => $row->extension,
+        ]);
+
+        $abbr->abbr_name = (bool) $row->on_work ? ($resource->source->abbr_name ?? null) : null;
+        $abbr->save();
+
         return response()->json([
-            'extension' => $extension,
+            'extension' => $row,
             'resource' => $resource,
             'alert' => $alert ?? null,
+            'abbr' => $abbr,
         ]);
     }
 
