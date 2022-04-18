@@ -203,7 +203,6 @@ class Events extends Controller
      */
     public static function retryAddRequestFromCall(IncomingCall $incoming, $pin, $ip, $user_agent)
     {
-
         // Слушатель сип номеров
         $sip = IncomingCallsToSource::where([
             ['extension', $incoming->sip],
@@ -392,6 +391,18 @@ class Events extends Controller
 
             if ($call != "Start" and $direction != "in")
                 return null;
+
+
+            if (!($data->phone ?? null))
+                $data->phone = $phone;
+
+            if (!($data->sip ?? null))
+                $data->sip = $data->extension;
+
+            $recrypt = $this->encrypt($data); // Перешифровка данных
+            $event->request_data = $recrypt;
+            $event->recrypt = now();
+            $event->save();
 
             $incoming = new IncomingCallRequest;
             $incoming->api_type = "Asterisk";
