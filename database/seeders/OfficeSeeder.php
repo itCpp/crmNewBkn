@@ -30,82 +30,7 @@ class OfficeSeeder extends Seeder
      * 
      * @var array
      */
-    protected $rowsData = [
-        [
-            1,
-            '',
-            0,
-            'Волконский',
-            '1-й Волконский пер., д. 15',
-            'г. Москва, 1-й Волконский пер., д. 15',
-            null,
-            [],
-            null,
-            [],
-        ],
-        [
-            2,
-            'ЮРИСКОНСУЛЬТ',
-            0,
-            'Таганский',
-            'ул. Таганская, д. 15, стр. 2',
-            'г. Москва, ул. Таганская, д. 15, стр. 2',
-            null,
-            [],
-            null,
-            [],
-        ],
-        [
-            3,
-            'ЮРСЛУЖБА',
-            0,
-            'Хамовники',
-            '2-й Обыденский пер., д. 12',
-            'г. Москва, 2-й Обыденский пер., д. 12',
-            null,
-            [],
-            null,
-            [],
-        ],
-        [
-            4,
-            'БАУ',
-            1,
-            'Басманский',
-            'Бауманская ул., 43/1с1',
-            '105005, г. Москва, Бауманская улица, 43/1с1',
-            'Запись на прием ${date} в ${time} адрес: метро Бауманская, ул. Бауманская д. 43/1 стр.1, 2 под., 6 эт. Номер пропуска на льготный приём ${id}. Номер секретаря ${tel}',
-            [3, 4],
-            '84951981604',
-            [
-                ["gate" => 1, "type" => "gate_default", "channel" => "1"]
-            ],
-        ],
-        [
-            5,
-            'СПР',
-            0,
-            'СПР',
-            'Посланников пер., д. 1',
-            '105005, г. Москва, Посланников пер., д. 1',
-            null,
-            [],
-            null,
-            [],
-        ],
-        [
-            6,
-            'МАЯ',
-            0,
-            'Маяковка',
-            'ул. Малая Дмитровка, д. 24/2',
-            'г. Москва, ул. Малая Дмитровка, д. 24/2, 1 этаж',
-            'Запись на прием ${date} в ${time}. Адрес: метро Маяковская, ул. Малая Дмитровка, д. 24/2, 1 этаж. Номер льготного пропуска ${id}. Тел. ${tel}',
-            [3, 4],
-            '84951222390',
-            [],
-        ],
-    ];
+    protected $rowsData = "eyJpdiI6Ikg0K3A3ekp3SHlkOVlZUm9jcmU3ZlE9PSIsInZhbHVlIjoiNzVFRzd0YnhKdTJ2cUVWZzVoYlFVM0dObjVmRTZyN2plTlVFc1kzaFVybVhlc0NFaDBPbGZGVHNEdXh1NmZXUXJ6dGNHUDRPTWd1dEdrUjlMNE0zUWx2VEZtaE1SOVR3SUlUMGhsdS9ZZ2hjaGxheWd1NXJhWDJFOWE0TW1OODZzNXB2S2ZvcHAwWjVSV2hFK1JKNVZKRFQ4MHpyMjZoWGQvRG8rWnYyUGplS2pnTjNQcjNUblFPSnpUMTluT1g2S3grdkY2WDFlNm5JaitMTGErZVl3RjRTQzlpZ29mZG9aK1liVklEaytaUURQYkZ4M1ovMnhmWUhrZjhNaEluWER5TlpVQ2dDTkQrMzAzZEphMmFRWU1KendYWmJtaTUxSmpveTJvaGExTEU4Rmk2ckVkczJRNmZldTJZY0cyQllId2M2SGFVVkoxbHJRbFJjZ2VPYjJOUXFGRDhRL1hidVZXbUI5Z1U2V085ck5vMVVFdFcycXhmMnlPczJUaEZ4bVFXVnVrVW8ybjB6ekpMVWJpY1RYMzh0bVdpVlZxZnZzdnl5eTBNTlVMaml6Z2ZkVjBFMCtNOVdUSHlYNDA4bDRqUExWWTUrTE8wRzlKL3AxMzBPaDRYb2MxQUZVV0lNek9JL2czSGN2QTRybllDU1JjMzlTOTNoYi9DTklTbi9KdVVJbytiMzFhQ0ZkcDB4UHZMVzB5dm5PcVFWQzVDdlVYV1F3c3gwZk9XSWZDNU00ZTdKL0wwaFlDay85TjUvNTNLY2YzY2FhRFFicm1GdWtUSHQvTEJzRGVGYWdHMUIydys3cEJjbStvcjhDR1FVWnY1cUFEenhWa3dveTBPSGxJWHgwZTRJejhyM2ZiNWVzU2VEeUVoTTMyQS9TenV6UnlESXI4SVFZYVowbjhHQTNHVzNNTXFYbnV5NVdEQmhxRlVxUXRFbytqTWFqVnlKY2ZLKzU1cjFFYVcxbzlHVlZDZ3NFUnAyNHg2OW9vWmpmQngvNTB6bHQ2YjhjS3FEak1rREZYZlVIUkVoZkZteXVXb2puazhLRVVvN3luSzI1RjdJREwwK1JlV3I3N0xTSXZHYjBCS05LbWhBWTQzdFplMUN6K08ya3BlM3c2emdxeXhzSVdGTkZCMjNaRlBMeHNJSEh6TjRCM3U3cEZqWms0ZDJSa0srSlViU01LUWlldzNJODlWTjd0Y20yMzFrVDZ4QkIzN3ZJUyswUmVqNmF3UXk0SGRvYWRGMVhSKzJxdVYxc1JzZkNpcGlZaVNUYUgwdk5iL1BjZUhHYUZoeHUzNEZmMnViZVV0dzl6eWEycHRCNHF4UXRiZisvb2VRZW1MYmFLekkxVS92R1dGOExNMXFOUForRnRHaUUyMkwxMklCdVFKMkY5VFR6OFhmMFlDVUFpTTBjMDZ0YnBiaWdwTHJ4SFpEbGRRelYrUUxOZ0NlejQ5bWNBT2pDWDBweStRbi8rbFliZkFRSUNWOTdDdzh1L1h0Y1VzRTNVakY4amljS0JURGxpcTJPMWtLMVQ5RHlIM3dGVmhnaFZMWUxUMHZZemEvL2ZtS2J0bzhFZFdxNk5pZ2NnRWxWS0FjSlEyN3NCMDJnT0tDNkp2TmpmZVNGSnU1U2RrWHNrODBtd0xnbGdvWlpENHhaeTZUNjRvQnJja1ZmczgxNGZqUi9WMlJsWHhGbTBaS0U1TWpvcE5tbk1MTHVFaWNZRkIwV2dZY0ZkNHNoTXNMYW5GMWowRlgvOFBOM09Lakh4UEhOT1BuRDc4S3dtYUtUckZxM1lldkhUcDVxWGhlTW9rLzRLbURVbjNSaTJYUytzQ3RGc3lVLzJ2bFYwZVNSWXRUVmVGZFNuK3VIeWUySTk4ZkRWNC9ZWlJPM1MvSExuNmtVd3lTMDlMK2N5Q1QyQktyRkFOZktYemRhMGducG5oK1JqaTd1aCtiWkdvZSsvQnI0VVVDa3FMN3FnV2ZEMm9XMzVaWjRzYlVaNTRZQTlnK2M2RXpBazBpam5wdDZiU3puOEpHbElSaG5LOUY1RTk5WnJVZkloMzVBZHgwbyt3R2o2NTBpOXB5TklzZUlqZC9JU1grb0VBRmtFZ1VHTExwYXdsWWZyNVh4cHpUb3hFbERUK0YvbUd4cWpKdlNta05vK1ZJRzRZSy9VRVdqR0tkSk5hZVUrdW4xRkNHQy9ETStOdFBRQnBON0o3NnNGWnVCT1dTVzBxVzZESDUzS2NzWWVYZW9BR3hjaWJyMmdqYXhDUHo3eWF1dlEzZkFoaktsQUJoMFhiYzZtQXRzL0llWHRsbDlyMXFvOGdtZ01IQ05lbXF1ZXZ4dmtFY1gzQTNWcHJ3ZldvRVROa0xMUWlBQzZQQVdJL1dubFZHZDloVXRrcmhyY0h5SjdFbkVmRFFRZlcwbFNwdDRxWU5kQjNLWXZnOVBjUFQ5NU5JQ2tQdTlpSFdTMTZZK3JMM2swdkdOWnZtaHNFVWRqc0lSRC9YN05JNitrK0laSmhLa2lXby9aRGU4djRwbFdXUjlFeXk4cENTc3VKMTRYWUh4U1VtRStBSmpOVVdaS2x0MFRnRmlZZTY2NlRiWk5MaWJ2ZHZNM2djeU1FRGN3ZERWKzIwakt0WWhYdUtTejVtTVNvN092SnhBb0ZmeTl6V04wSkZtM0dmNFl5aCtocS9KaytIam40bEZJa3Q2WnhiRWtPckRWS2pSaDJCWFFTeS9ycUJNdy83SThGZG9pd3FKc28vcTNTU01nSkR0WERHZHVNZU1OWlUxbmNiRkFZVEVsNFhqbWpnZ2lGUWJqQ0ZyS1JaQ0hJeHBvQW5GQXRzTlJUaVdreEZpS2sySktCRHF4T1gzNDBidVlFUWsvWDhrdzBOQW1YSFk4WWpMQ1N3N3A4SENLK1p6VER5amVNNDhjdklTVXpaRGFZcytqQmFsVlhMcW42bXZWRFdtUCtJaVFrVklsYU84MVB5eG1KZ2dlQmZUUktJZFVSb0xEc0Nrd0lVallXSmRCTGt2RHlXcDJpYW1zcUd5TXZkL0ZSQk1KS0prejhIemNBUXUvdzhQZ0xqQklhN0JaQm9vZEtUckIwV2VOZnZjZmQ2V2NhY0ZFQ2EwZ1BFWUFQSjI3Y0lVMEUrNTBJRTFmVlZ4VE5EU3doQk42M0VId0ZkaGZUQzBpSzY1OHlHRlN5RVBJNGxsOW1nZUhYbE9jNXM4ejNLdmh5d0J5N3B0UzdPcVdlcFN4NittV1J1bzFEZk5GSkZTV0EwOWJqQ1RuMitYSGZBa1MzYlZnNmFFSlNNa0h5V25udWMzNTlhM3JGTkx0MXZXQ2NWeCttUnIrR05mcXlLMHJXRS9sa0JhWnczeWxreGtzUGlsNFZONXc3dGxMNXpqRkJTMnNCbSt5em44TVlERy9QaTRzUzZ4RkJzSi80QW10aXhmcGM1SExPWitOWWc4QnBmSGo2MUcrWlZUUzUxRlV4VHVTSGxQUUNEdm1SbEFreHBqWitXNTlrWi9LL0NwenNzZnJCTXl0VzYrdEQyWDYzUGo1TnZqNVZwSnFiQlMyOHVoaDdwMlhMaTVsQ2RJSGRRaHhwSkZSZyt5WmZ1WnVFcWNqaU5GODlncFdybGRIZDNGSkp5azdkRm9ONUtlWnk5emJzTlMrbHczZFU4bEtmUG9xVFdGUFc2dU1TWW0rN0x6V3BzWjQrSnhSUnpaekc2UmQ0dDdzUGo0aWxDcmhFRnlxNXdWaTVWdnF1U3hRK0dJeG9JMnFLRy9rdlVsUkZGdzM0WVNiekV5bTVkU2xBbzZJUzNGSlpsRTFsajZ6UWFqS0U0Vnl0UThPU0F2dnpUWlJZZWNjK1ZpbUx3YU02OXJNbitMNGQvZUpsb0pic3N6QVhFYzV6ZXJZZncrWk0wZ0VFOCtaRm1XVDZVRkxQa05EWDlVK1pwdWJnaDlTaUswVFd4QnRETllCYjZ6c2pMeERxOWl3WWZQOWVTQmVsOE5VdzR4a2l4UGhxWFpOWUdBdmg3TjBvWGpXYVllYWxpeUhrV0NhYkpYOUk4T1pvbWdaaEtkMnpicFpXZWdXbm00TVZVNS91ZlhnZy9QTUZwQnh3aUZaT0Npb3RIaEdmNHgrdStnT1VsV3BobVkzYk81U3ZWMDk1T1E5KzBTY2tGZ0UxS0wvYmtPMDRyeGIreEdMK0s4Zm5TMDZ6YmFKKzd0aE9vQ2xmTDdkcHBmUG5Fb29YZkxpYUNsWGF1c3Y0aTViWkNqV2ZNQldQYnRPbjMrSkZvL2t2OWk5Q0IxOWRCYWdMYlBQSllUdFI5bFFzVmZtNFBHamxtZlBPL3hmSFhjSHMrVXdRUWFKU3haNXFDMmo4dmlqQnVJTWsxc2txZWNjdWNsN2JYaVRUNXBwWDZqTDB3ditoUnJIdVdncmJuSWdHTlZsQmNDNmt5RmpsT3pIMlp6dGo5d3c3YmxTcHBScUdJTUE9PSIsIm1hYyI6ImY5ZjU1ZTNlZWE1MzlkODBlOTNjODJjY2M5ZWQ2OWU5YjgyYzYwNDQzNGI0NGJlMDRjYmU3ZDE5NDIxMDU3ZDUiLCJ0YWciOiIifQ==";
 
     /**
      * Run the database seeds.
@@ -114,7 +39,7 @@ class OfficeSeeder extends Seeder
      */
     public function run()
     {
-        foreach ($this->rowsData as $row) {
+        foreach (decrypt($this->rowsData) as $row) {
             CreateCrm::createRow($row, $this->rowsColumn, Office::class);
         }
     }
