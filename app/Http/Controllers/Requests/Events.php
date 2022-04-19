@@ -497,4 +497,101 @@ class Events extends Controller
 
         return $row->toArray();
     }
+
+    /**
+     * Вывод события
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function get(Request $request)
+    {
+        $rows = IncomingEvent::orderBy('id', 'DESC')
+            ->when($request->id and !$request->session, function ($query) use ($request) {
+                $query->where('id', $request->id);
+            })
+            ->when(!$request->id and $request->session, function ($query) use ($request) {
+                $query->where('session_id', $request->session);
+            })
+            ->when(!$request->id and !$request->session, function ($query) {
+                $query->limit(1);
+            })
+            ->get()
+            ->map(function ($row) use (&$session) {
+
+                if (!$row->recrypt)
+                    $crypt = new Encrypter($this->key, config('app.cipher'));
+
+                $row->request_data = parent::decryptSetType(
+                    $row->request_data ?? null,
+                    $crypt ?? null
+                );
+
+                if ($row->session_id)
+                    $session = $row->session_id;
+
+                if (!request()->user()->can('show_events_data'))
+                    $row->request_data = $this->maskObject($row->request_data);
+
+                return $row;
+            });
+
+        if ($session ?? null)
+            $session_count = IncomingEvent::where('session_id', $session)->count();
+
+        if ($rows[0] ?? null) {
+
+            $prev = IncomingEvent::select('id')
+                ->where('id', '<', $rows[0]->id)
+                ->orderBy('id', 'DESC')
+                ->first()->id ?? null;
+
+            $next = IncomingEvent::select('id')
+                ->where('id', '>', $rows[count($rows) - 1]->id ?? null)
+                ->first()->id ?? null;
+        }
+
+        return response()->json([
+            'session_count' => $session_count ?? 0,
+            'session' => $session ?? null,
+            'rows' => $rows,
+            'prev' => $prev ?? null,
+            'next' => $next ?? null,
+        ]);
+    }
+
+    /**
+     * Маскирует строку
+     * 
+     * @param  mixed $data
+     * @return mixed
+     */
+    public function maskObject($data)
+    {
+        if (is_null($data))
+            return null;
+
+        if (is_bool($data))
+            return "****";
+
+        if (is_array($data) or is_object($data)) {
+
+            $response = [];
+
+            foreach ($data as $key => $value) {
+                $response[$key] = $this->maskObject($value);
+            }
+
+            settype($response, gettype($data));
+
+            return $response;
+        }
+
+        $string = (string) $data;
+        $len = mb_strlen($string);
+        $substr = $len < 4 ? 0 : 2;
+        $response = mb_substr($string, 0, $substr);
+
+        return str_pad($response, $len, "*");
+    }
 }

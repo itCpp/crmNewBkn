@@ -233,4 +233,11 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         /** Сохранение шлюза */
         Route::post('/save', 'Admin\Gates@save')->name('api.dev.gates.save');
     });
+
+    /** Маршрутизация работы с входящими событиями */
+    Route::group(['prefix' => 'events'], function () {
+
+        /** Вывод события */
+        Route::get('get', 'Admin\Events@get');
+    });
 });
