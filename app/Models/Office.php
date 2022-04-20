@@ -23,6 +23,7 @@ class Office extends Model
         'sms',
         'statuses',
         'tel',
+        'settings',
     ];
 
     /**
