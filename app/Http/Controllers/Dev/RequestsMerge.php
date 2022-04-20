@@ -49,75 +49,28 @@ class RequestsMerge extends Controller
     protected $add;
 
     /**
+     * @var string
+     */
+    protected $sourceToSourceCrypt = "eyJpdiI6IkJpVUZEcC9NODJPNjQrNXpGRHZxc2c9PSIsInZhbHVlIjoiVHdrd29SOWIzUjltYTAwdzRrTTdva0tnUGltL0o2QkNJc1ZFYm5neDRQZUJ4b1Z4b1FGQ2JBbG8xWFNCbkMvQXB2QzJPUjhIb2Y0cGNRUGthU25semxaMS9sNHFyL3A1Y1E1ZkNpcUIvbW5oejd1YlFFU093S2Z5MVRZZ1I0ampOcDdnQVBETlFpOWU3akxvUDdmSjVMcGtpb3ZPNWVueU0vdEtZdkxkV0NaNFhCK3lLQSs3YlAxUVRnT3hUSW5qSmRydEJmZURWYTBDVHA3OUdQTzM3WjY5alNicmtNY1VjcFNNYm1hRHlOQnlRc3l0M0toaElPUEs1TUdyeHlFOGl2NVhVem5OaWxBOHkrOUNpdVQ3RXFjRFpWdXF2aGF2cWI0ZXFSYmU1ckxEbU1PdWFBK3JzVVN5cWcrU0ZkNzRRbWRIdzZWWHJlZWIvZFlzVmtLM2xZWW15YXlDNjVYa3hqRjdzUTlSNW8vOGxZU1l0b21NUlRpV2VnQVIxdWhBT3liY1VpQWg4U3RGcDJQY21kZkZmdW5tdzE4Njg0MXEzeXhQM1g0c1VZcy91WDMzUWhXa25WV2FLUzJLcEVZdXVpRFVBRG1Sclo3V1p3UkhGY1RWcmJTK2IxdEYxMU1DNlpBTjhQSk80OXBKOVRRT1FaaGRkWjJOK1VzSUk4blFKcHlNZXpvd05oSmlqTW5EWEZvZlBwY3BucC83WU1qdllwK1hmSVIrRHdjZlFjZUFDM0xCVDRQZnBKbkU0VitjVThTczBzdThJSzFnV2VSOHZWeUZrYjc2UGpFbjFUV2ttNGFCVTdOTlZRd2pSaVFtR2RmUlFlQStxOXdFdUVleUJPTnVKQXRLcytFWC9BK0F6b3lHb1U4T2ZCVjN0clhDc3RaQ0luUkZKZkt5aGlIbUJWQWlEUlBGZGhXRGRwV1lOUXBVUFhWb1UwUHNjQWJMcjBJQTNzL2o0TGgwR0h6OXZPUWdaSnZRSTNZNXQvQWVNdUhPOTV6bER5clFjT1d2MW56NmUvME42M0ZIUDNrY2ljSCtFdHBGamNDVU9TWWRyc1N5Z2dYcWkyc29sMmpGckkvUFZ0Qk1CWUxoa0lEb2MzVUFwWnFFUC85NUpZaVI1NzZ0disxU0lSNFVWalhZZTY4QUhvcEo2WmNHQ1hrM2hzRmkyYUY4cm9KdFpyUmtYZjlJczd1SjMycmtFOG0vcWhrZDkzNUVtTzBEd0VLNlg2S3RCUyt5M2w2azdLU2tuK2tHVTVCcDVZSGJycTVMVEZCckM3dG8xMUI0WEhCU0I4a0I3azdXbHFyUG9jRVpvck83NzRmQTcvUENNU1N0WllIU3lsWElJMnpSWWN5NEpTNEtDQUNOMUJTb2puNnd3NU9BbnQwTlpGRUI3WW56cHhJMXJyektSeUIzVmt6TkJFUzdybWNoRXdLTnlUWXNsbVdSMVhTOTJpRXQvQ21STzlWQUE4OHNhTUJPT1lwMmkwTDg0U2dVZENnUjUxRkV0cE5VMG0yamFzbU14djJyWExtSTl0Y3dobElpNTYwMXVDVDJDYTVrd1o3RXV1TURRazZ4SHZpa2MxNzdRL1B3YTkzZzlpRG4wN21rSnZoK0dQRkZyRHpWT1NJbkdsK2xBRk5LZUhEMVpxeWkrYVd5eStiWUZCUjUvY0U1K3ZjQlhUZGtML0dSNllKbm9Ydjd1WVcrZk9EeS9ZZFgyYWdJNGJlV1l2RGxxNllyRXJBVUlsbUlhYXdpS0FwU0pWVVBjQnVqNS9HN0dTQzQ1V0EvR21VRXNkWWc2UC84Q25wZnU5dnJpNWdrUUpYek9QY2xQT3ZKOEQyUjB0OGRiam1lNWZGUkNzSlcvNTYyb0xKMEQzSm14QUdBYW14V1RpYzE0bVJuZ2pRV2xMbkRmVDNiSFIzcG11RjRjcS8xeVJkNDMycVBFTDArOW0xVHZlNU83UTlDRGJEQWVuZFAxZ29IWXlDaTQ5VXZGSlVDazNyUmRhQTlHQ1FnZW5sVWVCa3hLSTdrd0MwdWtOMHcrWDdFdlZsK2gvWHF5bHhEaklidmFWVkVuUT09IiwibWFjIjoiMzYxZWQyZTkxNWU2N2MxZjg0MGZmMDc4MjA3NzlhNTk1ZWI5NjljZTRkNTNlZTEyNmM2ZDE0MTAyNzI0NGRiNCIsInRhZyI6IiJ9";
+
+    /**
      * Массив сопоставления идентификаторов источников
      * 
      * @var array
      */
-    public $sourceToSource = [
-        [2, 'БАСМАНКА'],
-        [14, 'БЗБ'],
-        [6, 'БРАКИ'],
-        [15, 'ГАЗЕТА'],
-        [1, 'ГОСЮРИСТ'],
-        [11, 'Департамент юридических услуг'],
-        [4, 'ДОСТ'],
-        [10, 'Коллегия адвокатов'],
-        [16, 'КОНСАЛТИНГ'],
-        [8, 'Московская коллегия адвокатов'],
-        [17, 'Подарки от Худякова'],
-        [9, 'правовые эксперты России'],
-        [3, 'СПР'],
-        [5, 'ХУД'],
-        [12, 'ЦПП'],
-        [12, null],
-        [7, 'Эксперты права'],
-        [18, 'ЮК'],
-        [19, 'Юридический центр'],
-        [20, 'ЮРИСКОНСУЛЬТ'],
-        [21, 'ЮРСЛУЖБА'],
-    ];
+    public $sourceToSource = [];
+
+    /**
+     * @var string
+     */
+    protected $sourceResourceToRecourceCrypt = "eyJpdiI6IlJEdmtSYnFacHZtU1lvekR0RllESFE9PSIsInZhbHVlIjoiMmptUWpXU3Z2YzU3VENlb1AwdTE0R05qZGt3dnAvY2g5NTBaSy9BdUZDTm42QkxTdm1FU2Z1cHkrWk8wcnc4ZXkyZGErTWFLMjhRc3FaSlJDaUdRK3lFSWhoUHlMcWl1cEFrYnZYVzdLYkhyQ3Q1eXFzbzJWQTZWQmRLL1MvK2dCekZpdUg0NW5qYjAzZ1hwZEcxR3BsTnZFbWdxTU01TkY2QzV4UklBd0pRbHhvazlBUzJwdlBUSDYxY0FRN3ZiQTBJWTV1dVNmRXJndTZPUndYYTU2cThISVpEd0lqNnNkdm9BYnh0OWFpWXJqbFNLWU9SRDgvTFJUUUhMWTAxcFo1bE1GM09qOUN1cHNEQk5BY0x0MTgwbUI5bnVWYkF0ajFZc1RqcWVObXhHUk1OQkRsZGUzQ2Q3cUREVkNNM1NqZDRQNHBHNjVKWGM3bVNBd2JLUWdhdEkranZ4SWFMenlCUGV2ZVpKdXNuTHQ3aUY0Uzk4Ylp0OWZ1VFU1LzVmVGtRazVOeG9ZWEpISzl1bXZQMW54RFhjQTZQKzhsd1pDQWtLQmtJaWhGQnVERXhaTHF2ZnFFcWFtOUJZU25KSXNTWVJWMzZGNm9iMGx4VndFMUFrenhOREdzSERDdnFRVW1pbWJHdy9jUUFMSHA4ZFd1bERKY0xUT2k5OTJ5RlAxd1lWTy85a1JCak0vbzJHMEpnU2ViSnJ6QWdyRGZ1ek83NC9semswUlg3dUJ4dEd6eHMwa3FLZDZvSjZLRFBZaFluVlFvTmdYSkpSRGFkUlprb0FrL0tJdkZEK01jUUsrRldNWnRGTjhZZytsaG9pRTlLcEk5T2xkek93cy9HOW1FbWpKME90dHovaERSbDllNTFPSENpNkN6bmlaOVFWYUgrNmMxL1lvNFh2RDE3SWpIVUFKWEpzNzhqQzV4SHZKb25MRUxmOU1uKzhKN1lKcWhUTy93eUlJNFI3dmdUWS9FMGdyMkpDN2JnUnZLUDk3SjQ4ODZIMlc4K01rSWo1dElmZmNMRGdYUUorSmdDSU5UeFRqZEl3OHdLcFpWUEJwSGo0d2xZMDJrOFlIR1RXMmRGK1ZkTm00Uzc2REMyRVBhQjhZWEM3K01vWlc1S3lYMVpyRFZFaTdkbzl4SDFlSXAxUEMyY0ZjVXhPU3AzaEYyb1QzVGZpK0RaMGoyV0UvY2pPSWFZeWY3a05Qdm5UZ3ppSUNzb0JRb3FTakkvcHoxQi9hZTdaMHhSTUdrMUVIOE1KNlFTL2h3d3lEN2p0aGZWN1ZSdzQwTDF0ZFNiZHIyZzNzUEhsMmgvSmZWZ1BYRzBrSVJCbUMzbWtrT2E1dGkvaTQxM3hwMnpuOThhejZWQVRJdFIvTDFJSzNBNnVoSkEvYk56TjgvZWZDUWl3ZkliUVg5ZXRjY2JycmtMbGZ3WEtYbXN6WjBOYnJvVmhhVC9MQmtBNDlEOG9JUzBoV2ZoQ1hwVkNsVFJqc1AycUw4R2VyL1AyYkF6M1NpYXRTbnBiSTFUd2wzNHFYWGxqUXd3RUlOcXB1M1RSZXVtcHJzUkhrb21JVEsvUDFBUU5SUnpvNHg1SDcwcWtiL0tzdVZyYVhzYi9xVWFGY2p5empxRjcrNGZUaWppN2dBQUxnWEJhUlFOdUViTmNFaXNla1VjSDllZ0tJYmJxVDdSeHcwcXM2SWN0eUNPMmc1SlltY3VSUlVIYkthRjlWc1hQL3dEM3VLaWNYWlNXNUZoS1pMSWNUUjR3QTV3ZUxMc1BZZzEycE45bmJWMWdoWVYvelhzeEJRU0Q5cEhyaFMvRnN0b2ZqK0hQQnVYcHRhTGdnSUtTYUVxUFY0L0o0UXFiVG4xY2dZVTZUczFSN05LMHBZcTk5NXhTVzFqZlNieldOL0k1WjRCdUxkSHNrdmlSVmozbkpUaGRwV3NiaGpyZGVWcHJNeXRDVDloOTJKS1NYUU4rS1ZXc3lkUXFSRlVIREVESC9Rd01FdGpQVnFQNlErQ1k2YXp6WTBtVTNQVXkzNjhuYkdpSitEaitGTTQ3TGVxdi9YVVl1Y1JUVU00QzFmR3M4RGwwTVJ1bFBBUFZlMnZ2Sk8rczVIb21lRTJGUlNrVFc5am1qcmtYMXU1R0pJSnRFNGNqS1c0THN4cEViNUpQcUpYYXUza2FCVDR3Mk9scEhZS2c5UE5CcmMzelEvR0RXdS8vN1ZlSmZidmxXcE5uNjlzWFNqUGppTndmaXoyazlGbmdtZ01pWnkyZ1VPOUpHZ3pucnFKNEhTYlhBRGJVb05oWnBtQ1NLWVB5RFN5eld2L3NjRDMyQjZBSE5OeGJ1N1VrMzcwcFI5NlNSRVJXak05RkE3MXF1VWprQ0RVSHU4d08xcVdrd2Q1Q0M3WVp3Z2pGNDZyOC8yeVdlTU5mUW5WNXZtWnRlNWo4MG4weTQwRGdwMldTRnlTNmZ0SmlzUkZjdDBtRXh0UVh2Q0pkNFdSSVBOdGlUbWVZYXI4aTk3cTNKNkwrU0lxbEVaQ2I4QXdJVzJJNDJyZldhWEgxVnlJakpOR2xrMkIwMnFhMHhJdlA5WVNER2hjTzRCbWIydzBrN21HY1NRUzhjMVY3RUlKdWVaS1A5NW5BMng3cHU0ZkJaN1NlUE9XQStWSXU2YS9lTmhxd3lhU3ZYQjhoWHgrV0pTaUNKUlppQVcrWjNuUks2UzlqYnJtZkZLM0g4QVUvNDFmZTFwNXVobWtRaVFTeDhQV0NuMXpBbHRZeTBrWmdQelU1YlNVU3NBL3hmR3hUekpMWUpsYnNSVTJ3ZDVYNnN5Q3Q0TUI2WGFVNktaZGJrRTZaSG1MeUU0T0h5SytjOENmL05RRXc0L0ZSZmVCNzc1aGY1N2NDTWYvT1c0bDFGdjJQWi96NWNQcW93RVY1OFJUVWhaSEIrMU9RbjI5VlJ1T2oveG1sQlBnNlBDTEdtamxkUHlUclhJMS9ZcDM3c1lJRytUWmppRzF1MmVKdXU1bWk0Qlc4Tk4rbFM0QWVIL2M2QXdTRms0ZVV3Y1liZi9mWXlaNGc0UWxHWUMzWVlFU0Y0Ukd2K1pnbVpaZHQzMnhneXZHdXR5OSt5YWtaczdkSEVCM3BaMjBlM0dRWGZPbFp6QTBwWll0dWdVWnMxNi9DQXFuc0VTNHdBbnpXVWpYRGo1TE5mdFRKQXRWclpkdVdXT0JUVXpkR0IyYnZxNEtnR3RBK3pGQVNMU2Q5VU9Eb1ZGUGE5SEdQbG5aMDZSYnNSTnc1alNoU3dPK014N3N0ak1ZS0VYTXNubTFwTDlJaUJmaUVFUTZhOCtXVnpiSlQ4cDlyIiwibWFjIjoiZjZjOGE1NWQ3MGM5NWE4NDlkNjg5ODY2MThhZTRhMTI2ODVhMTkwYzhlZWY3YzkwMDViZDQ0OGJhNGJlN2Y4MCIsInRhZyI6IiJ9";
 
     /**
      * Сопостовление ресурсов источника
      * 
      * @var array
      */
-    public $sourceResourceToRecource = [
-        [3, '84951978661'],
-        [4, '88005002096'],
-        [5, '88005002489'],
-        [1, 'gosyurist.ru'],
-        [2, 'ros-yuristy.ru'],
-        [7, '84951978120'],
-        [8, '84952331264'],
-        [9, '88002503210'],
-        [10, '88003333404'],
-        [6, 'yuris-konsult.ru'],
-        [12, '88005000380'],
-        [11, 'xn--g1acavabdidhea6a9gxb.xn--p1ai'],
-        [13, 'профсоюзыроссии.рф'],
-        [14, 'dostoinaya-zhizn.ru'],
-        [16, '89167324970'],
-        [15, 'hudyakovroman.ru'],
-        [18, '84995509611'],
-        [19, 'm.эксперты-права.рф'],
-        [17, 'xn----8sbahm3a9achcfp1jva.xn--p1ai'],
-        [20, 'эксперты-права.рф'],
-        [23, '84951233027'],
-        [24, '84952270665'],
-        [25, '88005001573'],
-        [21, 'xn----8sbf5ajmeav8b.xn--p1ai'],
-        [22, 'xn--o1aat.xn--p1ai'],
-        [26, 'цпп-москва.рф'],
-        [27, 'цпп.рф'],
-        [29, '84951980812'],
-        [28, 'yur-experts.ru'],
-        [31, '84952212706'],
-        [32, '84996732340'],
-        [30, 'civil-right.ru'],
-        [34, '84996733020'],
-        [33, 'yurcentre.ru'],
-    ];
+    public $sourceResourceToRecource = [];
 
     /**
      * Соотношение статуса старой заявки к идентификтору нового статуса
@@ -163,6 +116,9 @@ class RequestsMerge extends Controller
      */
     public function __construct()
     {
+        $this->sourceToSource = decrypt($this->sourceToSourceCrypt);
+        $this->sourceResourceToRecource = decrypt($this->sourceResourceToRecourceCrypt);
+
         $this->lastId = 0;
         $this->count = CrmRequest::count();
         $this->max = CrmRequest::max('id');

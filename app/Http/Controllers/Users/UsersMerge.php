@@ -99,6 +99,15 @@ class UsersMerge extends Controller
     ];
 
     /**
+     * Идентификаторы должностей для некоторых сотрудников
+     * 
+     * @var array
+     */
+    protected $positions_id = [
+        3344 => 1,
+    ];
+
+    /**
      * Вывод списка руководителей, разработчиков, сисадминов и тд
      * 
      * @return \Illuminate\Database\Eloquent\Collection
@@ -211,6 +220,10 @@ class UsersMerge extends Controller
             $sector = $this->oldSectors[$user->{'call-center'}][1] ?? null;
         }
 
+        if (!($user->position_id) ?? null) {
+            $user->position_id = $this->positions_id[$pin] ?? null;
+        }
+
         $create = [
             'pin' => $pin,
             // 'old_pin' => $pin == $user->pin ? null : $user->pin,
@@ -265,7 +278,7 @@ class UsersMerge extends Controller
                     'log_id' => $log->id,
                     'user_id' => $new->id,
                     'position_new' => $new->position_id,
-                    'created_at' => now(),
+                    'created_at' => $new->created_at,
                 ]);
             }
         }
