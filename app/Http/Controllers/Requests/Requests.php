@@ -158,11 +158,32 @@ class Requests extends Controller
         if ($request->getRow)
             return $row;
 
+        $offices = Office::where('active', 1)->orderBy('name')->get();
+
+        if ($row->address) {
+
+            $offices_id = $offices->map(function ($row) {
+                return $row->id;
+            })->toArray();
+
+            if (!in_array($row->address, $offices_id)) {
+                if ($append = Office::find($row->address)) {
+                    $offices[] = $append;
+                } else {
+                    $offices[] = [
+                        'name' => "Неизвестно",
+                        'id' => $row->address,
+                        'active' => 0,
+                    ];
+                }
+            }
+        }
+
         $response = [
             'request' => $row,
             'permits' => RequestStart::$permits,
             'statuses' => $statuses,
-            'offices' => Office::orderBy('active', 'DESC')->orderBy('name')->get(),
+            'offices' => $offices,
             'cities' => Cities::$data, // Список городов
             'themes' => Themes::$data, // Список тематик
         ];
