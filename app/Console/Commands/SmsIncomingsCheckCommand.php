@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Events\NewSmsEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Settings;
 use App\Http\Controllers\Gates\GateBase64;
@@ -200,6 +201,8 @@ class SmsIncomingsCheckCommand extends Command
             $this->line(date("[Y-m-d H:i:s]") . "[NEW {$sms->message_id}][{$requests}]");
 
             $created[] = $sms;
+
+            broadcast(new NewSmsEvent($sms));
         }
 
         if (count($created) == 0)

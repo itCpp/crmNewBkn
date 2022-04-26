@@ -36,6 +36,7 @@ class Start extends Controller
         'requests_show_resource', # Может просматривать статистику обращений
         'second_calls_access', # Доступ ко вторичным звонкам
         'sms_access', # Доступ к смс сообщениям
+        'sms_access_system', # Доступ к сообщениям без заявки
         'user_fines_access', # Доступ к разделу штрафов
         'user_fines_create', # Доступ к разделу штрафов
     ];

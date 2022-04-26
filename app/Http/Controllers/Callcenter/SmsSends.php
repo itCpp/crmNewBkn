@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Callcenter;
 
 use App\Events\AppUserEvent;
+use App\Events\NewSmsEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gates\GateBase64;
 use App\Models\Gate;
@@ -89,6 +90,8 @@ class SmsSends extends Controller
             broadcast(new AppUserEvent(id: $user->id, alert: $alert));
         }
 
+        broadcast(new NewSmsEvent($this->sms));
+
         return $this;
     }
 
@@ -112,7 +115,7 @@ class SmsSends extends Controller
 
         $message = (new GateBase64)->decode($this->sms->message);
 
-        echo $url = "http://{$address}/cgi/WebCGI?1500101=account={$login}&password={$password}&port={$this->sms->channel}&destination=%2B{$phone}&content=" . urlencode($message);
+        $url = "http://{$address}/cgi/WebCGI?1500101=account={$login}&password={$password}&port={$this->sms->channel}&destination=%2B{$phone}&content=" . urlencode($message);
 
         $response = $this->sendGateRequest($url);
 

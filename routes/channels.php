@@ -78,3 +78,12 @@ Broadcast::channel('Chat.Room.{id}', function ($user, $id) {
 Broadcast::channel('App.Admin', function ($user) {
     return $user->can('admin_access');
 });
+
+/** Смски по заявкам */
+Broadcast::channel('App.Crm.Sms.Requests', function ($user) {
+    return $user->can('sms_access');
+});
+/** Все смски */
+Broadcast::channel('App.Crm.Sms.All', function ($user) {
+    return $user->can('sms_access_system');
+});
