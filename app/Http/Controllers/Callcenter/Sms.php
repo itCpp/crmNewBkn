@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gates\GateBase64;
 use App\Http\Controllers\Offices\Offices;
 use App\Http\Controllers\Requests\Requests;
+use App\Http\Controllers\Sms\Sms as SmsSms;
 use App\Jobs\SendSmsJob;
 use App\Models\Gate;
 use App\Models\Office;
@@ -37,7 +38,8 @@ class Sms extends Controller
         else if (!$message)
             $alert = "Шаблон сообщения не сформирован";
 
-        if (!$message)
+        if ($alert ?? null)
+            return response()->json(['message' => $alert], 400);
 
         $request->row = $row;
 
@@ -258,8 +260,7 @@ class Sms extends Controller
     {
         if ($request instanceof RequestsRow) {
             $row = $request;
-        }
-        else if ($request instanceof Requests) {
+        } else if ($request instanceof Requests) {
             $row = $request->row;
         }
 
@@ -294,6 +295,27 @@ class Sms extends Controller
         return response()->json([
             'now' => now(),
             'messages' => self::getMessages($request, $where ?? []),
+        ]);
+    }
+
+    /**
+     * Выводит номер телефона клиента из смс
+     * 
+     * @param  \Illumiante\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getSmsPhone(Request $request)
+    {
+        if (!$row = SmsMessage::find($request->id))
+            return response()->json(['message' => "СМС не найдено"], 400);
+
+        $sms = new SmsSms;
+        $sms->show_phone = $request->user()->can('clients_show_phone');
+        $row = $sms->getRowSms($row);
+
+        return response()->json([
+            'row' => $row,
+            'id' => $request->id,
         ]);
     }
 }

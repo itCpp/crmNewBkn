@@ -67,7 +67,6 @@ class Sms extends Controller
                 $query->where('direction', $request->direction);
             })
             ->orderBy('created_at', "DESC")
-            ->orderBy('sent_at', "DESC")
             ->distinct()
             ->paginate(25);
 
