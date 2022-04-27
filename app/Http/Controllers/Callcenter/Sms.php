@@ -13,6 +13,7 @@ use App\Models\Gate;
 use App\Models\Office;
 use App\Models\RequestsRow;
 use App\Models\SmsMessage;
+use App\Models\UsersViewPart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -301,7 +302,7 @@ class Sms extends Controller
     /**
      * Выводит номер телефона клиента из смс
      * 
-     * @param  \Illumiante\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function getSmsPhone(Request $request)
@@ -312,6 +313,10 @@ class Sms extends Controller
         $sms = new SmsSms;
         $sms->show_phone = $request->user()->can('clients_show_phone');
         $row = $sms->getRowSms($row);
+
+        $view = $sms->getLastTime($request);
+        $view->view_at = now();
+        $view->save();
 
         return response()->json([
             'row' => $row,

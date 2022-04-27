@@ -91,7 +91,7 @@ class Sms extends Controller
     /**
      * Получение последнего времени просмотра раздела смс сообщений
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \App\Models\UsersViewPart
      */
     public function getLastTime(Request $request)
