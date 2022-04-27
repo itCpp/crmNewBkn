@@ -187,22 +187,23 @@ class Sms extends Controller
      */
     public static function getCounterNewSms(Request $request)
     {
-        $counter = new SmsMessage;
-
         $view = UsersViewPart::whereUserId($request->user()->id)
             ->wherePartName('sms')
             ->first();
 
-        if ($view) {
-            $counter = $counter->where('created_at', '>', $view->view_at);
-        }
-
-        if (!$request->user()->can('sms_access_system')) {
-            $counter = $counter->join('sms_request', 'sms_request.sms_id', '=', 'sms_messages.id');
-        }
+        $count = SmsMessage::select('sms_messages.*')
+            ->when(!$request->user()->can('sms_access_system'), function ($query) {
+                $query->join('sms_request', 'sms_request.sms_id', '=', 'sms_messages.id');
+            })
+            ->when((bool) $view, function ($query) use ($view) {
+                $query->where('created_at', '>', $view->view_at);
+            })
+            ->where('direction', "in")
+            ->distinct()
+            ->count();
 
         return [
-            'count' => $counter->count(),
+            'count' => $count,
         ];
     }
 }
