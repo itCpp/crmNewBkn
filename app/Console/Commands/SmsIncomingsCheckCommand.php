@@ -148,6 +148,7 @@ class SmsIncomingsCheckCommand extends Command
                     'message' => $row[4],
                     'direction' => "in",
                     'sent_at' => $row[3],
+                    'created_at' => $row[3] ?? now(),
                 ];
 
                 $this->messages[] = $message;
