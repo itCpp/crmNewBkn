@@ -21,4 +21,11 @@ Route::group([
 
     /** Вывод рейтинга колл-центра */
     Route::get('rating/callcenter', 'Base\Ratings@callcenter');
+
+    /** Заключение договоров */
+    Route::group(['prefix' => "upp"], function () {
+
+        /** Выводит данные с комментариями для карточки клиента */
+        Route::get('getCollComment', 'Base\UppAgreements@getCollComment');
+    });
 });
