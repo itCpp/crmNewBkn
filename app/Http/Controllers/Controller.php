@@ -19,7 +19,7 @@ class Controller extends BaseController
 	const KEY_PHONE_SHOW = 3;
 
 	/** Ключ обработки номера телефона для скрытого вывода */
-	const KEY_PHONE_HIDDEN = 5;
+	const KEY_PHONE_HIDDEN = 6;
 
 	/**
 	 * Логирование изменения данных

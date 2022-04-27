@@ -12,18 +12,18 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class NewSmsEvent implements ShouldBroadcast
+class NewSmsRequestsEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
      * Create a new event instance.
      *
-     * @param  \App\Models\SmsMessage $row
+     * @param  \App\Models\SmsMessage|array $row
      * @return void
      */
     public function __construct(
-        public SmsMessage $row
+        public SmsMessage|array $row
     ) {
         //
     }
@@ -35,6 +35,12 @@ class NewSmsEvent implements ShouldBroadcast
      */
     public function broadcastWith()
     {
+        if (is_array($this->row)) {
+            return [
+                'rows' => $this->row,
+            ];
+        }
+
         return [
             'row' => (new Sms)->getRowSms($this->row)
         ];
@@ -47,13 +53,6 @@ class NewSmsEvent implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        $channels = [
-            new PrivateChannel('App.Crm.Sms.All')
-        ];
-
-        if (count($this->row->requests))
-            $channels[] = new PrivateChannel('App.Crm.Sms.Requests');
-
-        return $channels;
+        return new PrivateChannel('App.Crm.Sms.Requests');
     }
 }

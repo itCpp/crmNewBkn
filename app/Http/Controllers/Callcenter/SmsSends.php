@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Callcenter;
 
 use App\Events\AppUserEvent;
-use App\Events\NewSmsEvent;
+use App\Events\NewSmsAllEvent;
+use App\Events\NewSmsRequestsEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gates\GateBase64;
 use App\Models\Gate;
@@ -90,7 +91,8 @@ class SmsSends extends Controller
             broadcast(new AppUserEvent(id: $user->id, alert: $alert));
         }
 
-        broadcast(new NewSmsEvent($this->sms));
+        broadcast(new NewSmsAllEvent($this->sms));
+        broadcast(new NewSmsRequestsEvent($this->sms));
 
         return $this;
     }

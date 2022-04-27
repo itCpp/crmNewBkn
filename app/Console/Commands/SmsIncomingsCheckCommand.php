@@ -2,12 +2,14 @@
 
 namespace App\Console\Commands;
 
-use App\Events\NewSmsEvent;
+use App\Events\NewSmsAllEvent;
+use App\Events\NewSmsRequestsEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Settings;
 use App\Http\Controllers\Gates\GateBase64;
 use App\Http\Controllers\Gates\Gates;
 use App\Http\Controllers\Requests\AddRequest;
+use App\Http\Controllers\Sms\Sms;
 use App\Models\Gate;
 use App\Models\SmsMessage;
 use App\Models\RequestsClient;
@@ -46,9 +48,9 @@ class SmsIncomingsCheckCommand extends Command
     /**
      * Полученные сообщения
      * 
-     * @var array
+     * @var \Illuminate\Support\Collection
      */
-    protected $messages = [];
+    protected $messages;
 
     /**
      * Create a new command instance.
@@ -72,19 +74,25 @@ class SmsIncomingsCheckCommand extends Command
         $this->gates = (new Gates('sms_incomings'))->get();
         $this->base64 = new GateBase64;
 
+        $this->messages = collect([]);
+
+        $this->info(date("[Y-m-d H:i:s]"));
+
         if (!$this->settings->CRONTAB_SMS_INCOMINGS_CHECK) {
-            $this->line(date("[Y-m-d H:i:s]") . " Проверка СМС ОТКЛЮЧЕНА в настройках ЦРМ");
+            $this->line("Проверка СМС ОТКЛЮЧЕНА в настройках ЦРМ");
             return 0;
         }
 
         if (count($this->gates) == 0) {
-            $this->line(date("[Y-m-d H:i:s]") . " Шлюзы для проверки СМС не настроены");
+            $this->line("Шлюзы для проверки СМС не настроены");
             return 0;
         }
 
         foreach ($this->gates as $gate) {
             $this->parseData($gate);
         }
+
+        $this->create();
 
         return 0;
     }
@@ -148,15 +156,14 @@ class SmsIncomingsCheckCommand extends Command
                     'message' => $row[4],
                     'direction' => "in",
                     'sent_at' => $row[3],
-                    'created_at' => $row[3] ?? now(),
+                    'created_at' => $row[3] ?? now()->format("Y-m-d H:i:s"),
                 ];
 
-                $this->messages[] = $message;
                 $messages[] = $message;
             }
         }
 
-        $this->line(date("[Y-m-d H:i:s]") . "[{$gate->addr}] Найдено сообщений: " . count($messages));
+        $this->line("[{$gate->addr}] Найдено сообщений: " . count($messages));
         $this->checkAndCreateMessages($messages);
 
         return $this;
@@ -185,7 +192,7 @@ class SmsIncomingsCheckCommand extends Command
             })
             ->toArray();
 
-        $created = [];
+        $created = 0;
 
         foreach ($messages as $message) {
 
@@ -194,20 +201,42 @@ class SmsIncomingsCheckCommand extends Command
             if (in_array($hash, $checks))
                 continue;
 
+            $this->messages->push($message);
+            $created++;
+        }
+
+        $this->line("Новых сообщений: {$created}");
+
+        return null;
+    }
+
+    /**
+     * Создание строк с сообщениями
+     * 
+     * @return null
+     */
+    public function create()
+    {
+        $messages = $this->messages->sortBy('created_at')->values()->all();
+
+        if (!count($messages))
+            return null;
+
+        $this->info("Запись сообщений");
+        $to_sent = [];
+
+        foreach ($messages as $message) {
+
             $sms = SmsMessage::create($message);
             $sms = $this->findRequests($sms);
 
             $requests = count($sms->requests);
 
-            $this->line(date("[Y-m-d H:i:s]") . "[NEW {$sms->message_id}][{$requests}]");
-
-            $created[] = $sms;
-
-            broadcast(new NewSmsEvent($sms));
+            $this->line("{$sms->message_id} [{$requests}]");
+            $to_sent[] = $sms;
         }
 
-        if (count($created) == 0)
-            $this->line(date("[Y-m-d H:i:s]") . " Новых сообщений не поступало");
+        $this->sendEvent($to_sent);
 
         return null;
     }
@@ -215,8 +244,8 @@ class SmsIncomingsCheckCommand extends Command
     /**
      * Поиск заявок по номеру телефона
      * 
-     * @param SmsMessage $row
-     * @return SmsMessage
+     * @param  \App\Models\SmsMessage $row
+     * @return \App\Models\SmsMessage
      */
     public function findRequests($row)
     {
@@ -231,5 +260,37 @@ class SmsIncomingsCheckCommand extends Command
         }
 
         return $row;
+    }
+
+    /**
+     * Отправка уведомлений в канал вещения
+     * 
+     * @param  array
+     * @return null
+     */
+    public function sendEvent($rows)
+    {
+        $sms = new Sms;
+
+        $all = [];
+        $requests = [];
+
+        foreach ($rows as $row) {
+
+            $push = $sms->getRowSms($row);
+
+            $all[] = $push;
+
+            if (count($row->requests))
+                $requests[] = $push;
+        }
+
+        if (count($all))
+            broadcast(new NewSmsAllEvent($all));
+
+        if (count($requests))
+            broadcast(new NewSmsRequestsEvent($requests));
+
+        return null;
     }
 }
