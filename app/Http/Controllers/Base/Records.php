@@ -73,7 +73,7 @@ class Records extends Controller
 
         return response()->json([
             'records' => $records,
-            'offcies' => $offices ?? [],
+            'offices' => $offices ?? [],
         ]);
     }
 
