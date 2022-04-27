@@ -43,4 +43,30 @@ class UppAgreements extends Controller
 
         return response()->json($rows);
     }
+
+    /**
+     * Устанавливает подтвержение комментария оператора
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setConfirmed(Request $request)
+    {
+        if ($request->id and !is_null($request->verno)) {
+
+            $verno = ((int) $request->verno == 1) ? true : false;
+
+            RequestsRowsConfirmedComment::create([
+                'request_id' => $request->id,
+                'confirmed' => $verno,
+                'confirm_pin' => $request->pin,
+            ]);
+        }
+
+        return response()->json([
+            'message' => "Оценка принята",
+            'id' => $request->id,
+            'verno' => $verno ?? null,
+        ]);
+    }
 }

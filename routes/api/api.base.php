@@ -27,5 +27,8 @@ Route::group([
 
         /** Выводит данные с комментариями для карточки клиента */
         Route::get('getCollComment', 'Base\UppAgreements@getCollComment');
+
+        /** Устанавливает подтвержение комментария оператора */
+        Route::get('setConfirmed', 'Base\UppAgreements@setConfirmed');
     });
 });
