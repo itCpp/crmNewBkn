@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Base;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SetComingStatusFromBase;
 use App\Models\Base\Office as BaseOffice;
 use App\Models\Office;
 use App\Models\RequestsRow;
@@ -96,5 +97,20 @@ class Records extends Controller
             'office_name' => $base->name ?? null,
             'office_id' => $office->base_id ?? null,
         ];
+    }
+
+    /**
+     * Устанавливает статус прихода для заявки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setComing(Request $request)
+    {
+        SetComingStatusFromBase::dispatch($request->all(), $request->ip());
+
+        return response()->json([
+            'message' => "Задание принято в работу",
+        ]);
     }
 }

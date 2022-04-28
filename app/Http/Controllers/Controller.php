@@ -252,7 +252,7 @@ class Controller extends BaseController
 	 * @param string $separator
 	 * @return array
 	 */
-	public function envExplode($key, $separator = ",")
+	public static function envExplode($key, $separator = ",")
 	{
 		$string = env($key, "");
 

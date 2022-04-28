@@ -121,6 +121,13 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 60,
         ],
+
+        'comings' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/requests/comings.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
     ],
 
 ];

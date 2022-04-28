@@ -19,6 +19,9 @@ Route::group([
     /** Вывод количества записей */
     Route::get('records', 'Base\Records@get');
 
+    /** Устанавливает статус прихода для заявки */
+    Route::get('record/coming', 'Base\Records@setComing');
+
     /** Вывод рейтинга колл-центра */
     Route::get('rating/callcenter', 'Base\Ratings@callcenter');
 

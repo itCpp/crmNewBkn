@@ -259,7 +259,7 @@ class Requests extends Controller
             ? "{$row->event_date}T{$row->event_time}" : null;
 
         /** Данные по номерам телефона */
-        $row->clients = self::getClientPhones($row, request()->user()->can('clients_show_phone'));
+        $row->clients = self::getClientPhones($row, optional(request()->user())->can('clients_show_phone'));
 
         /** Источник заявки */
         $row->source = self::getReqoustRowSourceData($row->source_id);
@@ -280,7 +280,7 @@ class Requests extends Controller
         $row->uplift_hide_access = ($row->uplift == 1 and $row->status_id !== null and request()->user()->can('requests_hide_uplift_rows'));
 
         $row->view_at = RequestsRowsView::where([
-            'user_id' => request()->user()->id,
+            'user_id' => optional(request()->user())->id,
             'request_id' => $row->id,
         ])->first()->view_at ?? null;
 
@@ -317,7 +317,7 @@ class Requests extends Controller
      */
     public static function getRequestRowReourceSourceData($id)
     {
-        if (!request()->user()->can('requests_show_resource'))
+        if (!optional(request()->user())->can('requests_show_resource'))
             return null;
 
         if (!empty(self::$resources[$id]))
