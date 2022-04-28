@@ -46,6 +46,7 @@ class SetComingStatusFromBase implements ShouldQueue
         $data = array_merge($this->data, [
             'id' => $this->data['id'] ?? null,
             'pin' => $this->data['pin'] ?? null,
+            'name' => $this->data['name'] ?? null,
         ]);
 
         $pin = $data['pin'] ? "Base " . $data['pin'] : null;
@@ -64,6 +65,10 @@ class SetComingStatusFromBase implements ShouldQueue
         $old_status = $row->status_id;
         $row->status_id = $status_id[0];
         $row->event_at = now();
+
+        if ($data['name'] and $data['name'] != $row->client_name)
+            $row->client_name = $data['name'];
+
         $row->save();
 
         $story = RequestsStory::create([
