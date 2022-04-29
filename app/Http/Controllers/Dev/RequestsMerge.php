@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Users\UsersMerge;
+use App\Models\Base\CrmComing;
 use App\Models\CrmMka\CrmNewIncomingQuery;
 use App\Models\RequestsClient;
 use App\Models\RequestsComment;
@@ -15,6 +16,8 @@ use App\Models\CrmMka\CrmRequest;
 use App\Models\CrmMka\CrmRequestsRemark;
 use App\Models\CrmMka\CrmRequestsSbComment;
 use App\Models\IncomingQuery;
+use App\Models\RequestsRowsConfirmedComment;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
@@ -214,7 +217,39 @@ class RequestsMerge extends Controller
         // Перенос истории обращений
         // $this->findAndRequestQueries($new);
 
+        // Формирование галочки достоверности сути обращения
+        if (in_array($row->verno, ["1", "2"]))
+            $this->findAndWriteConfimedComment($row->id, (int) $row->verno);
+
         return $new;
+    }
+
+    /**
+     * Запись информации о галочке
+     * 
+     * @param  int $id
+     * @param  int $verno
+     * @return null
+     */
+    public function findAndWriteConfimedComment($id, $verno)
+    {
+        try {
+
+            $coming = CrmComing::where('unicIdClient', $id)->first();
+
+            $pins = explode("/", ($coming->lawyerPin ?? ""));
+
+            foreach ($pins as $pin) {
+                RequestsRowsConfirmedComment::create([
+                    'request_id' => $id,
+                    'confirmed' => (int) $verno == 1 ? true : false,
+                    'confirm_pin' => (int) $pin > 0 ? $pin : null,
+                ]);
+            }
+        } catch (Exception $e) {
+        }
+
+        return null;
     }
 
     /**
