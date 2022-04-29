@@ -20,7 +20,7 @@ class Calls
 
         $hashs = [];
 
-        foreach ($ids as $id) {
+        foreach (array_unique($ids) as $id) {
 
             request()->merge([
                 'request' => $id,
