@@ -51,6 +51,7 @@ class Calls extends Controller
     public function getCalls($phone_hashs = [])
     {
         return CallDetailRecord::whereIn('phone_hash', $phone_hashs)
+            ->where('duration', '>', 0)
             ->orderBy('call_at', "DESC")
             ->get()
             ->map(function ($row) {
