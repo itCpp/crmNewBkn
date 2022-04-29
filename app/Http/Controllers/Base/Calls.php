@@ -18,6 +18,12 @@ class Calls
         $calls = new CrmCalls;
         $ids = explode(",", $request->id);
 
+        if (env('NEW_CRM_OFF', true)) {
+            request()->merge([
+                'checkFromOld' => true,
+            ]);
+        }
+
         $hashs = [];
 
         foreach (array_unique($ids) as $id) {

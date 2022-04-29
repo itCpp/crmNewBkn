@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\Requests;
 use App\Models\CallDetailRecord;
+use App\Models\CrmMka\CrmRequest;
 use App\Models\RequestsRow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -80,7 +81,7 @@ class Calls extends Controller
     /**
      * Поиск номера телефона
      * 
-     * @param \Illumiante\Http\Request $request
+     * @param  \Illumiante\Http\Request $request
      * @return array
      */
     public function getPhone(Request $request)
@@ -94,16 +95,41 @@ class Calls extends Controller
     /**
      * Поиск номера телефона в заявке
      * 
-     * @param int $id
+     * @param  int $id
      * @return array
      */
     public function getPhoneFromRequest($id)
     {
+        if (request()->checkFromOld)
+            return $this->getPhoneFromRequestOldCrm($id);
+
         if (!$row = RequestsRow::find($id))
             throw new ExceptionsJsonResponse("Заявка не найдена", 400);
 
         return collect(Requests::getClientPhones($row, true))->map(function ($client) {
             return $client->phone;
         })->toArray();
+    }
+
+    /**
+     * Поиск номеров для старой ЦРМ
+     * 
+     * @param  int $id
+     * @return array
+     */
+    public function getPhoneFromRequestOldCrm($id)
+    {
+        if (!$row = CrmRequest::select('phone', 'secondPhone')->find($id))
+            throw new ExceptionsJsonResponse("Заявка не найдена", 400);
+
+        if ($phone = $this->checkPhone($row->phone))
+            $phones[] = $phone;
+
+        foreach (explode("|", $row->secondPhone) as $phone) {
+            if ($phone = $this->checkPhone($phone))
+                $phones[] = $phone;
+        }
+
+        return array_values(array_unique($phones ?? []));
     }
 }
