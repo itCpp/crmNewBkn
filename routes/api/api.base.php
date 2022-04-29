@@ -25,6 +25,9 @@ Route::group([
     /** Вывод рейтинга колл-центра */
     Route::get('rating/callcenter', 'Base\Ratings@callcenter');
 
+    /** Выводит список аудиозаписей по заявке */
+    Route::get('calls', 'Base\Calls@get');
+
     /** Заключение договоров */
     Route::group(['prefix' => "upp"], function () {
 

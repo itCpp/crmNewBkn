@@ -21,14 +21,38 @@ class Calls extends Controller
      */
     public function __invoke(Request $request)
     {
-        $phones = collect($this->getPhone($request))->map(function ($row) {
+        $phones = $this->getPhonesHashs($this->getPhone($request));
+
+        return response()->json([
+            'rows' => $this->getCalls($phones),
+        ]);
+    }
+
+    /**
+     * Формирует список хэш номеров телефонов
+     * 
+     * @param  array $phones
+     * @return array
+     */
+    public function getPhonesHashs($phones = [])
+    {
+        return collect($phones)->map(function ($row) {
             return AddRequest::getHashPhone($this->checkPhone($row) ?: $row);
         })->toArray();
+    }
 
-        $rows = CallDetailRecord::whereIn('phone_hash', $phones)
+    /**
+     * Выводит файлы аудиозаписей звонков
+     * 
+     * @param  array $phone_hashs
+     * @return array
+     */
+    public function getCalls($phone_hashs = [])
+    {
+        return CallDetailRecord::whereIn('phone_hash', $phone_hashs)
             ->orderBy('call_at', "DESC")
             ->get()
-            ->map(function ($row) use ($request) {
+            ->map(function ($row) {
 
                 $url = Str::finish(env('CALL_DETAIL_RECORDS_SERVER', 'http://localhost:8000'), '/');
 
@@ -37,7 +61,7 @@ class Calls extends Controller
 
                 $url .= $row->path;
 
-                $type = $request->user()->can() ? 2 : 5;
+                $type = (optional(request()->user())->can('clients_show_phone') and !request()->hidePhone) ? 2 : 5;
                 $phone = $this->decrypt($row->phone);
 
                 return [
@@ -51,10 +75,6 @@ class Calls extends Controller
                 ];
             })
             ->toArray();
-
-        return response()->json([
-            'rows' => $rows,
-        ]);
     }
 
     /**
