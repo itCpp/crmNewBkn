@@ -10,6 +10,7 @@ use App\Http\Controllers\Testing\MyTests;
 use App\Models\RequestsCounterStory;
 use App\Models\RequestsQueue;
 use App\Models\RequestsSource;
+use Exception;
 use Illuminate\Http\Request;
 
 class Counters extends Controller
@@ -131,23 +132,32 @@ class Counters extends Controller
 
         RequestsCounterStory::where('counter_date', '>=', now()->subDays(30))
             ->get()
-            ->each(function ($row) use ($story) {
+            ->each(function ($row) use (&$story) {
 
-                $data = decrypt($row->counter_data);
+                try {
+                    $data = decrypt($row->counter_data);
+                } catch (Exception) {
+                    $data = null;
+                }
 
                 if (!is_array($data))
                     return;
 
                 foreach ($data as $key => $counter) {
-                    $story[$key][$row->counter_date] = $counter;
+
+                    if (!isset($story[$key]))
+                        $story[$key] = [];
+
+                    if (!empty($data[$key]))
+                        $story[$key][$row->counter_date->format("Y-m-d")] = $data[$key] ?? [];
                 }
             });
 
         $counter = $this->getCounterTabsData($request->user()->getAllTabs());
 
         return response()->json([
-            'counter' => $counter,
-            'chart' => $this->chartCounter($counter),
+            'counter' => array_values($counter),
+            'chart' => $this->chartCounter($counter, $story),
             'date' => now()->format("Y-m-d"),
         ]);
     }
@@ -186,20 +196,19 @@ class Counters extends Controller
                     ];
                 }
 
-                $offices_count = $query->model()
+                $query->model()
                     ->selectRaw('count(*) as count, address')
                     ->where('address', '!=', null)
                     ->reorder()
                     ->groupBy('address')
-                    ->get();
-
-                foreach ($offices_count as $row) {
-                    $data['offices'][$row->address] = [
-                        'count' => $row->count,
-                        'name' => $this->getOfficeName($row->address),
-                        'id' => $row->address,
-                    ];
-                }
+                    ->get()
+                    ->each(function ($row) use (&$data) {
+                        $data['offices'][$row->address] = [
+                            'count' => $row->count,
+                            'name' => $this->getOfficeName($row->address),
+                            'id' => $row->address,
+                        ];
+                    });
 
                 $data['offices'] = array_values($data['offices']);
             }
@@ -219,31 +228,30 @@ class Counters extends Controller
                     $sources_id[] = $source['id'];
                 }
 
-                $sources_count = $query->model()
+                $query->model()
                     ->selectRaw('count(*) as count, source_id')
                     ->where('source_id', '!=', null)
                     ->reorder()
                     ->groupBy('source_id')
-                    ->get();
+                    ->get()
+                    ->each(function ($row) use (&$data, $sources_id) {
 
-                foreach ($sources_count as $row) {
+                        $sources_key = in_array($row->source_id, $sources_id) ? 'sources' : 'sources_hide';
 
-                    $sources_key = in_array($row->source_id, $sources_id) ? 'sources' : 'sources_hide';
+                        if (!isset($data[$sources_key]))
+                            $data[$sources_key] = [];
 
-                    if (!isset($data[$sources_key]))
-                        $data[$sources_key] = [];
-
-                    $data[$sources_key][$row->source_id] = [
-                        'count' => $row->count,
-                        'name' => $this->getSourceName($row->source_id),
-                        'id' => $row->source_id,
-                    ];
-                }
+                        $data[$sources_key][$row->source_id] = [
+                            'count' => $row->count,
+                            'name' => $this->getSourceName($row->source_id),
+                            'id' => $row->source_id,
+                        ];
+                    });
 
                 $data['sources'] = array_values($data['sources']);
             }
 
-            $counter[] = $data;
+            $counter[$tab->id] = $data;
         }
 
         return $counter ?? [];
@@ -288,55 +296,82 @@ class Counters extends Controller
      * Формирует данные для грфиков
      * 
      * @param  array $data
+     * @param  array $story
      * @return array
      */
-    public function chartCounter($data)
+    public function chartCounter($data, $story = [])
     {
         $charts = [];
 
         foreach ($data as $key => $tab) {
 
-            $charts[$key] = [
+            $row = [
                 'column' => collect([]),
                 'line' => collect([]),
             ];
 
-            $charts[$key]['column']->push([
-                'date' => now()->format("Y-m-d"),
-                'count' => $tab['count'],
-            ]);
+            $this->pushRowData($row, $tab);
 
-            if (isset($tab['sources'])) {
+            if (isset($story[$key])) {
 
-                foreach ($tab['sources'] as $source) {
-
-                    $charts[$key]['line']->push([
-                        'date' => now()->format("Y-m-d"),
-                        'count' => $source['count'],
-                        'name' => $source['name'],
-                    ]);
+                foreach ($story[$key] as $date => $tab) {
+                    $this->pushRowData($row, $tab, $date);
                 }
             }
 
-            if (isset($tab['offices'])) {
-
-                foreach ($tab['offices'] as $source) {
-
-                    $charts[$key]['line']->push([
-                        'date' => now()->format("Y-m-d"),
-                        'count' => $source['count'],
-                        'name' => $source['name'],
-                    ]);
-                }
-            }
+            $charts[$key] = $row;
         }
 
         foreach ($charts as &$row) {
 
-            $row['column']->sortBy('date')->values()->all();
-            $row['line']->sortBy('date')->values()->all();
+            $row['column'] = $row['column']->sortBy('date')->values()->all();
+            $row['line'] = $row['line']->sortBy('date')->values()->all();
         }
 
-        return $charts;
+        return array_values($charts);
+    }
+
+    /**
+     * Заполняет элемент данными графика
+     * 
+     * @param  array $row Данные для графика
+     * @param  array $tab Данные счетчика
+     * @param  string $date Дата подсчета
+     * @return array
+     */
+    public function pushRowData(&$row, $tab, $date = null)
+    {
+        $date = $date ?: now()->format("Y-m-d");
+
+        $row['column']->push([
+            'date' => $date,
+            'count' => $tab['count'],
+        ]);
+
+        if (isset($tab['sources'])) {
+
+            foreach ($tab['sources'] as $source) {
+
+                $row['line']->push([
+                    'date' => $date,
+                    'count' => $source['count'],
+                    'name' => $source['name'],
+                ]);
+            }
+        }
+
+        if (isset($tab['offices'])) {
+
+            foreach ($tab['offices'] as $source) {
+
+                $row['line']->push([
+                    'date' => $date,
+                    'count' => $source['count'],
+                    'name' => $source['name'],
+                ]);
+            }
+        }
+
+        return $row;
     }
 }
