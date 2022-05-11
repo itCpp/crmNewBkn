@@ -142,6 +142,16 @@ class RequestsQuery extends Controller
     }
 
     /**
+     * Возвращает объект модели
+     * 
+     * @return \App\Models\RequestsRow
+     */
+    public function model()
+    {
+        return $this->model;
+    }
+
+    /**
      * Формирование запроса и применение фильтров
      * 
      * @param array $params

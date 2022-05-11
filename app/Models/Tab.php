@@ -20,6 +20,8 @@ class Tab extends Model
         'date_types' => 'array',
         'statuses' => 'array',
         'statuses_not' => 'array',
+        'counter_source' => 'boolean',
+        'counter_offices' => 'boolean',
     ];
 
     /**

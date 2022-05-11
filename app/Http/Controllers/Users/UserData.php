@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Users;
 use App\Http\Controllers\Controller;
 use App\Models\CallcenterSector;
 use App\Models\Role;
+use App\Models\Tab;
 
 /**
  * @property null|string auth_type              Тип авторизации
@@ -350,7 +351,7 @@ class UserData
     public function getAllTabs()
     {
         if ($this->superadmin)
-            return \App\Models\Tab::orderBy('position')->get();
+            return Tab::orderBy('position')->get();
 
         $tabs = [];
         $id = [];
