@@ -15,7 +15,8 @@ class WriteCounterStoryCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'story:counter';
+    protected $signature = 'story:counter
+                            {--date= : Дата подсчета}';
 
     /**
      * The console command description.
@@ -43,6 +44,15 @@ class WriteCounterStoryCommand extends Command
     {
         $request = request();
 
+        if ($date = $this->option('date')) {
+            $merge['start'] = $date;
+            $merge['stop'] = $date;
+        } else {
+            $merge['toNextDay'] = true;
+        }
+
+        $request->merge($merge ?? []);
+
         $request->setUserResolver(function () {
             return (new DeveloperBot)();
         });
@@ -50,7 +60,7 @@ class WriteCounterStoryCommand extends Command
         $counters = (new Counters)->getCounterTabsData($request->user()->getAllTabs());
 
         RequestsCounterStory::create([
-            'counter_date' => now(),
+            'counter_date' => $date ?: now(),
             'counter_data' => encrypt($counters),
         ]);
 

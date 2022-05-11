@@ -22,6 +22,7 @@ class Tab extends Model
         'statuses_not' => 'array',
         'counter_source' => 'boolean',
         'counter_offices' => 'boolean',
+        'counter_next_day' => 'boolean',
     ];
 
     /**

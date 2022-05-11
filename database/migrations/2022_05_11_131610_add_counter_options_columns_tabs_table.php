@@ -16,6 +16,7 @@ class AddCounterOptionsColumnsTabsTable extends Migration
         Schema::table('tabs', function (Blueprint $table) {
             $table->boolean('counter_source')->default(0)->comment("Разделить счетчик на источники")->after('statuses_not');
             $table->boolean('counter_offices')->default(0)->comment("Разделить счетчик по офисам")->after('counter_source');
+            $table->boolean('counter_next_day')->default(0)->comment("Подсчет данных для следующего дня")->after('counter_offices');
         });
     }
 
@@ -27,7 +28,11 @@ class AddCounterOptionsColumnsTabsTable extends Migration
     public function down()
     {
         Schema::table('tabs', function (Blueprint $table) {
-            $table->dropColumn(['counter_source', 'counter_offices']);
+            $table->dropColumn([
+                'counter_source',
+                'counter_offices',
+                'counter_next_day'
+            ]);
         });
     }
 }

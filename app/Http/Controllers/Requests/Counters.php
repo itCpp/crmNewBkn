@@ -173,10 +173,26 @@ class Counters extends Controller
         $offices = $this->getActiveOffices();
         $sources = $this->getActiveSources();
 
+        $request = request();
+        $start = $request->start ? now()->create($request->start) : now();
+
         foreach ($tabs as $tab) {
 
-            $request = request();
             $request->tab = $tab;
+
+            if ($tab->counter_next_day && $request->toNextDay) {
+                $merge = [
+                    'start' => $start->copy()->addDay()->format("Y-m-d"),
+                    'stop' => $start->copy()->addDay()->format("Y-m-d"),
+                ];
+            } else {
+                $merge = [
+                    'start' => $start->copy()->format("Y-m-d"),
+                    'stop' => $start->copy()->format("Y-m-d"),
+                ];
+            }
+
+            $request->merge($merge);
 
             $query = new RequestsQuery($request);
 
