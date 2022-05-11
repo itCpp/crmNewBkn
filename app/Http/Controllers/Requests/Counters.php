@@ -306,6 +306,7 @@ class Counters extends Controller
         foreach ($data as $key => $tab) {
 
             $row = [
+                'name' => $tab['name'],
                 'column' => collect([]),
                 'line' => collect([]),
             ];
