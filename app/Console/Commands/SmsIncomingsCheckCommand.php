@@ -13,6 +13,7 @@ use App\Http\Controllers\Sms\Sms;
 use App\Models\Gate;
 use App\Models\SmsMessage;
 use App\Models\RequestsClient;
+use Exception;
 use Illuminate\Console\Command;
 
 class SmsIncomingsCheckCommand extends Command
@@ -145,8 +146,21 @@ class SmsIncomingsCheckCommand extends Command
             }
         }
 
+        $moscow = (int) now()->format("ndH");
+
         foreach ($array as $row) {
             if (isset($row[0]) and isset($row[1]) and isset($row[2]) and isset($row[3]) and isset($row[4])) {
+
+                if ($row[3]) {
+                    try {
+                        $hour = now()->create($row[3])->format("ndH");
+
+                        if ($hour > $moscow) {
+                            $row[3] = now()->create($row[3])->subHour()->format("Y-m-d H:i:s");
+                        }
+                    } catch (Exception) {
+                    }
+                }
 
                 $message = [
                     'message_id' => $row[0],
