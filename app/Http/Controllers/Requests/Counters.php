@@ -147,7 +147,8 @@ class Counters extends Controller
 
         return response()->json([
             'counter' => $counter,
-            'tabs' => $request->user()->getAllTabs(),
+            'chart' => $this->chartCounter($counter),
+            'date' => now()->format("Y-m-d"),
         ]);
     }
 
@@ -266,5 +267,61 @@ class Counters extends Controller
         $row = RequestsSource::find($id);
 
         return $this->get_source_name[$id] = $row->name ?? null;
+    }
+
+    /**
+     * Формирует данные для грфиков
+     * 
+     * @param  array $data
+     * @return array
+     */
+    public function chartCounter($data)
+    {
+        $charts = [];
+
+        foreach ($data as $key => $tab) {
+
+            $charts[$key] = [
+                'column' => collect([]),
+                'line' => collect([]),
+            ];
+
+            $charts[$key]['column']->push([
+                'date' => now()->format("Y-m-d"),
+                'count' => $tab['count'],
+            ]);
+
+            if (isset($tab['sources'])) {
+
+                foreach ($tab['sources'] as $source) {
+
+                    $charts[$key]['line']->push([
+                        'date' => now()->format("Y-m-d"),
+                        'count' => $source['count'],
+                        'name' => $source['name'],
+                    ]);
+                }
+            }
+
+            if (isset($tab['offices'])) {
+
+                foreach ($tab['offices'] as $source) {
+
+                    $charts[$key]['line']->push([
+                        'date' => now()->format("Y-m-d"),
+                        'count' => $source['count'],
+                        'name' => $source['name'],
+                    ]);
+                }
+            }
+        }
+
+        foreach ($charts as &$row) {
+
+            $row['column']->sortBy('date')->values()->all();
+            $row['line']->sortBy('date')->values()->all();
+        }
+
+        return $charts;
     }
 }
