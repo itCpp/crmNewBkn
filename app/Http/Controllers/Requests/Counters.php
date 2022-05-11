@@ -9,6 +9,7 @@ use App\Http\Controllers\Sms\Sms;
 use App\Http\Controllers\Testing\MyTests;
 use App\Models\RequestsCounterStory;
 use App\Models\RequestsQueue;
+use App\Models\RequestsSource;
 use Illuminate\Http\Request;
 
 class Counters extends Controller
@@ -159,6 +160,7 @@ class Counters extends Controller
     public function getCounterTabsData($tabs = [])
     {
         $offices = $this->getActiveOffices();
+        $sources = $this->getActiveSources();
 
         foreach ($tabs as $tab) {
 
@@ -182,26 +184,87 @@ class Counters extends Controller
                     ];
                 }
 
-                $office_count = $query->model()
+                $offices_count = $query->model()
                     ->selectRaw('count(*) as count, address')
                     ->where('address', '!=', null)
                     ->reorder()
                     ->groupBy('address')
                     ->get();
 
-                foreach ($office_count as $office) {
-                    $data['offices'][$office->address] = [
-                        'count' => $office->count,
-                        'name' => $this->getOfficeName($office->address),
+                foreach ($offices_count as $row) {
+                    $data['offices'][$row->address] = [
+                        'count' => $row->count,
+                        'name' => $this->getOfficeName($row->address),
                     ];
                 }
 
                 $data['offices'] = array_values($data['offices']);
             }
 
+            if ($tab->counter_source) {
+
+                foreach ($sources as $source) {
+                    $data['sources'][$source['id']] = [
+                        'count' => 0,
+                        'name' => $source['name'],
+                    ];
+                }
+
+                $sources_count = $query->model()
+                    ->selectRaw('count(*) as count, source_id')
+                    ->where('source_id', '!=', null)
+                    ->reorder()
+                    ->groupBy('source_id')
+                    ->get();
+
+                foreach ($sources_count as $row) {
+                    $data['sources'][$row->source_id] = [
+                        'count' => $row->count,
+                        'name' => $this->getSourceName($row->source_id),
+                    ];
+                }
+
+                $data['sources'] = array_values($data['sources']);
+            }
+
             $counter[] = $data;
         }
 
         return $counter ?? [];
+    }
+
+    /**
+     * Выводит список источников, которые необходимы для вывода счетчика
+     * 
+     * @return  array
+     */
+    public function getActiveSources()
+    {
+        return RequestsSource::where('show_counter', 1)
+            ->orderBy('name')
+            ->get()
+            ->map(function ($row) {
+
+                $this->get_source_name[$row->id] = $row->name;
+
+                return $row->only('id', 'name');
+            })
+            ->toArray();
+    }
+
+    /**
+     * Выводит наименование источника
+     * 
+     * @param  int $id
+     * @return null|string
+     */
+    public function getSourceName($id)
+    {
+        if (!empty($this->get_source_name[$id]))
+            return $this->get_source_name[$id];
+
+        $row = RequestsSource::find($id);
+
+        return $this->get_source_name[$id] = $row->name ?? null;
     }
 }
