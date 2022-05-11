@@ -305,11 +305,10 @@ class Counters extends Controller
 
         foreach ($data as $key => $tab) {
 
-            $row = [
-                'name' => $tab['name'],
+            $row = array_merge($tab, [
                 'column' => collect([]),
                 'line' => collect([]),
-            ];
+            ]);
 
             $this->pushRowData($row, $tab);
 
