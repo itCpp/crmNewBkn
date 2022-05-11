@@ -25,6 +25,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+
+        // Запись истории счетчика заявок
+        $schedule->command('story:counter')->dailyAt("23:59")->runInBackground();
     }
 
     /**

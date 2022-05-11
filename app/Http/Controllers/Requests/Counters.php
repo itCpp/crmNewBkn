@@ -182,6 +182,7 @@ class Counters extends Controller
                     $data['offices'][$office['id']] = [
                         'count' => 0,
                         'name' => $office['name'],
+                        'id' => $office['id'],
                     ];
                 }
 
@@ -196,6 +197,7 @@ class Counters extends Controller
                     $data['offices'][$row->address] = [
                         'count' => $row->count,
                         'name' => $this->getOfficeName($row->address),
+                        'id' => $row->address,
                     ];
                 }
 
@@ -204,11 +206,17 @@ class Counters extends Controller
 
             if ($tab->counter_source) {
 
+                $sources_id = [];
+
                 foreach ($sources as $source) {
+
                     $data['sources'][$source['id']] = [
                         'count' => 0,
                         'name' => $source['name'],
+                        'id' => $source['id'],
                     ];
+
+                    $sources_id[] = $source['id'];
                 }
 
                 $sources_count = $query->model()
@@ -219,9 +227,16 @@ class Counters extends Controller
                     ->get();
 
                 foreach ($sources_count as $row) {
-                    $data['sources'][$row->source_id] = [
+
+                    $sources_key = in_array($row->source_id, $sources_id) ? 'sources' : 'sources_hide';
+
+                    if (!isset($data[$sources_key]))
+                        $data[$sources_key] = [];
+
+                    $data[$sources_key][$row->source_id] = [
                         'count' => $row->count,
                         'name' => $this->getSourceName($row->source_id),
+                        'id' => $row->source_id,
                     ];
                 }
 
