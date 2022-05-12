@@ -144,7 +144,7 @@ class UserData
      * @param string $patronymic Отчество
      * @return string
      */
-    public function createNameIo($name, $patronymic)
+    public static function createNameIo($name, $patronymic)
     {
         $name_io = $name ?? "";
         $name_io .= " ";
@@ -161,10 +161,10 @@ class UserData
      * @param string $patronymic Отчество
      * @return string
      */
-    public function createNameFull($surname, $name, $patronymic)
+    public static function createNameFull($surname, $name, $patronymic)
     {
         $name_full = $surname ?? "";
-        $name_full .= " " . $this->createNameIo($name, $patronymic);
+        $name_full .= " " . self::createNameIo($name, $patronymic);
 
         return trim($name_full);
     }
@@ -177,11 +177,13 @@ class UserData
      * @param string $patronymic Отчество
      * @return string
      */
-    public function createNameFio($surname, $name, $patronymic)
+    public static function createNameFio($surname, $name, $patronymic)
     {
-        $name = $this->createNameFull($surname, $name, $patronymic);
-
-        return preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', $name);
+        return preg_replace(
+            '~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u',
+            '$1 $2.$3.',
+            self::createNameFull($surname, $name, $patronymic)
+        );
     }
 
     /**

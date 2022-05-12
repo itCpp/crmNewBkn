@@ -6,8 +6,10 @@ use Illuminate\Http\Request;
 
 use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Ratings\CallCenters;
 use App\Http\Controllers\Requests\Requests;
 use App\Http\Controllers\Users\Notifications;
+use App\Http\Controllers\Users\UserData;
 use App\Http\Controllers\Users\Worktime;
 use App\Models\Office;
 use App\Models\Permission;
@@ -24,8 +26,8 @@ class RequestPins extends Controller
     /**
      * Вывод списка доступных операторов для назначения на заявку
      * 
-     * @param \Illuminate\Http\Request  $request
-     * @return response
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function changePinShow(Request $request)
     {
@@ -62,6 +64,11 @@ class RequestPins extends Controller
         // Поиск сотрудников, имеющих личное разрешение
         $users = self::findUsers($permission->users(), $permits);
 
+        /** Проверка рейтинга для вывода статистики */
+        foreach (optional((new CallCenters($request))->get())->users ?: [] as $user) {
+            $rating[$user->pin] = $user;
+        }
+
         foreach ($users as $user) {
 
             if (!in_array($user->pin, $pins_searched)) {
@@ -69,6 +76,7 @@ class RequestPins extends Controller
                 $pins_searched[] = $user->pin;
 
                 $pins[] = [
+                    'fio' => UserData::createNameFull($user->surname, $user->name, $user->patronymic),
                     'id' => $user->id,
                     'pin' => $user->pin,
                     'callcenter' => $user->callcenter_id,
@@ -89,6 +97,7 @@ class RequestPins extends Controller
                     $pins_searched[] = $user->pin;
 
                     $pins[] = [
+                        'fio' => UserData::createNameFull($user->surname, $user->name, $user->patronymic),
                         'id' => $user->id,
                         'pin' => $user->pin,
                         'callcenter' => $user->callcenter_id,
@@ -109,6 +118,11 @@ class RequestPins extends Controller
             $pins_searched[] = $user->pin;
 
             $pins[] = [
+                'fio' => UserData::createNameFull(
+                    $user->surname ?? null,
+                    $user->name ?? null,
+                    $user->patronymic ?? null
+                ),
                 'id' => $user->id ?? 0,
                 'pin' => $user->pin ?? $row->pin,
                 'callcenter' => $user->callcenter_id ?? null,
@@ -119,11 +133,15 @@ class RequestPins extends Controller
             ];
         }
 
+        foreach ($pins as &$pin) {
+            $pin['rating'] = $rating[$pin['pin']] ?? null;
+        }
+
         // Время последней активности пользователя
         $sessions = self::getLastAtiveTime($pins_searched);
 
         // Список офисов
-        $offices =  Office::orderBy('active', 'DESC')->orderBy('name')->get();
+        $offices = Office::orderBy('active', 'DESC')->orderBy('name')->get();
 
         // Автоматическое применение адреса, если имется только один активный офис
         if (!$row->address) {
