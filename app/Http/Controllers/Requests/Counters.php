@@ -153,7 +153,7 @@ class Counters extends Controller
                 }
             });
 
-        $counter = $this->getCounterTabsData($request->user()->getAllTabs());
+        $counter = $this->getCounterTabsData($request->user()->getAllTabs(), true);
 
         return response()->json([
             'counter' => array_values($counter),
@@ -179,7 +179,7 @@ class Counters extends Controller
 
         foreach ($tabs as $tab) {
 
-            if ($fide and $tab->counter_hide_page)
+            if ($hide and $tab->counter_hide_page)
                 continue;
 
             $request->tab = $tab;
