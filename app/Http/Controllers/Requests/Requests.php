@@ -277,7 +277,7 @@ class Requests extends Controller
         $row->status = self::getRequestRowStatusData($row);
 
         /** Флаг вывода пункта меню для скрытия */
-        $row->uplift_hide_access = ($row->uplift == 1 and $row->status_id !== null and request()->user()->can('requests_hide_uplift_rows'));
+        $row->uplift_hide_access = ($row->uplift == 1 and $row->status_id !== null and optional(request()->user())->can('requests_hide_uplift_rows'));
 
         $row->view_at = RequestsRowsView::where([
             'user_id' => optional(request()->user())->id,
@@ -285,6 +285,9 @@ class Requests extends Controller
         ])->first()->view_at ?? null;
 
         $row->updated = $row->view_at < $row->updated_at;
+
+        /** Определение флага анимации мигания новых заявок */
+        $row->status_null_flash = (!$row->status_id and !$row->pin and optional(request()->user())->can('requests_flash_null_status'));
 
         /** Проверенные разрешения пользователя */
         $row->permits = RequestStart::$permits;
