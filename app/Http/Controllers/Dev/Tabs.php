@@ -163,8 +163,11 @@ class Tabs extends Controller
         $tab->date_types = $request->date_types ?: null;
         $tab->statuses = is_array($request->statuses) ? $request->statuses : [];
         $tab->statuses_not = is_array($request->statuses_not) ? $request->statuses_not : [];
-        $tab->counter_offices = (boolean) $request->counter_offices;
-        $tab->counter_source = (boolean) $request->counter_source;
+
+        $tab->counter_offices = $request->counter_offices;
+        $tab->counter_source = $request->counter_source;
+        $tab->counter_next_day = $request->counter_next_day;
+        $tab->counter_hide_page = $request->counter_hide_page;
 
         $tab->save();
 

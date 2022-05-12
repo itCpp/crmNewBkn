@@ -23,6 +23,7 @@ class Tab extends Model
         'counter_source' => 'boolean',
         'counter_offices' => 'boolean',
         'counter_next_day' => 'boolean',
+        'counter_hide_page' => 'boolean',
     ];
 
     /**

@@ -166,9 +166,10 @@ class Counters extends Controller
      * Формирует массив счетчика по вкладкам
      * 
      * @param  array $tabs
+     * @param  boolean $hide
      * @return array
      */
-    public function getCounterTabsData($tabs = [])
+    public function getCounterTabsData($tabs = [], $hide = false)
     {
         $offices = $this->getActiveOffices();
         $sources = $this->getActiveSources();
@@ -177,6 +178,9 @@ class Counters extends Controller
         $start = $request->start ? now()->create($request->start) : now();
 
         foreach ($tabs as $tab) {
+
+            if ($fide and $tab->counter_hide_page)
+                continue;
 
             $request->tab = $tab;
 
