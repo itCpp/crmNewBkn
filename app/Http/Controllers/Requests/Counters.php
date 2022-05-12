@@ -44,22 +44,30 @@ class Counters extends Controller
 
         $counter = [
             'timecode' => [],
+            'flash_null' => 0,
         ];
 
+        $flash_null = optional($request->user())->can('requests_flash_null_status');
+
         foreach ($request->tabs as $tab) {
+
+            $key = "tab{$tab->id}";
 
             $step = microtime(true);
             $request->tab = $tab;
 
             $query = new RequestsQuery($request);
-            $count = $query->count();
 
-            $key = "tab{$tab->id}";
+            if ($flash_null and $tab->flash_null) {
+                $counter['flash_null'] += $query->where('status_id', null)
+                    ->where('pin', null)
+                    ->count();
+            }
 
             $counter[$key] = [
                 'id' => $tab->id,
                 'name' => $tab->name,
-                'count' => $count,
+                'count' => $query->count(),
             ];
 
             $counter['timecode'][$key] = microtime(true) - $step;
