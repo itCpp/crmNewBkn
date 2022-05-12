@@ -24,6 +24,8 @@ class Tab extends Model
         'counter_offices' => 'boolean',
         'counter_next_day' => 'boolean',
         'counter_hide_page' => 'boolean',
+        'flash_null' => 'boolean',
+        'flash_records_confirm' => 'boolean',  
     ];
 
     /**
@@ -46,5 +48,7 @@ class Tab extends Model
         'counter_offices',
         'counter_next_day',
         'counter_hide_page',
+        'flash_null',
+        'flash_records_confirm',
     ];
 }

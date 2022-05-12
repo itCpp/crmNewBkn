@@ -168,6 +168,8 @@ class Tabs extends Controller
         $tab->counter_source = $request->counter_source;
         $tab->counter_next_day = $request->counter_next_day;
         $tab->counter_hide_page = $request->counter_hide_page;
+        $tab->flash_null = $request->flash_null;
+        $tab->flash_records_confirm = $request->flash_records_confirm;
 
         $tab->save();
 
