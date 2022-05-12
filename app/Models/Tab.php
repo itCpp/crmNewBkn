@@ -32,11 +32,19 @@ class Tab extends Model
      * @var array
      */
     protected $fillable = [
-        'name',
         'position',
+        'name',
         'name_title',
         'where_settings',
         'order_by_settings',
-        'request_all_permit'
+        'request_all_permit',
+        'date_view',
+        'date_types',
+        'statuses',
+        'statuses_not',
+        'counter_source',
+        'counter_offices',
+        'counter_next_day',
+        'counter_hide_page',
     ];
 }
