@@ -9,6 +9,7 @@ use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Settings;
 use App\Http\Controllers\Dev\Statuses;
+use App\Models\CallcenterSectorsAutoSetSource;
 use App\Models\IncomingQuery;
 use App\Models\RequestsClient;
 use App\Models\RequestsClientsQuery;
@@ -638,6 +639,8 @@ class AddRequest extends Controller
 
             if ($sector = $this->settings->AUTOSET_SECTOR_NEW_REQUEST) {
                 $this->data->callcenter_sector = $sector;
+            } else if ($this->source->id ?? null) {
+                $this->data->callcenter_sector = CallcenterSectorsAutoSetSource::where('source_id', $this->source->id)->first()->sector_id ?? null;
             }
         }
 

@@ -26,6 +26,7 @@ class Callcenters extends Controller
 
         return response()->json([
             'callcenters' => $rows,
+            'sector_default' => Sectors::getDefaultSector(),
         ]);
     }
 

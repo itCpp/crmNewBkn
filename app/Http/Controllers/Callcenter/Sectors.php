@@ -8,7 +8,6 @@ use App\Models\CallcenterSector;
 use App\Models\CallcenterSectorsAutoSetSource;
 use App\Models\Incomings\CallsSectorSetting;
 use App\Models\RequestsSource;
-use App\Models\SettingsGlobal;
 use Illuminate\Http\Request;
 
 class Sectors extends Controller
@@ -253,5 +252,21 @@ class Sectors extends Controller
             $select->delete();
 
         return new CallcenterSectorsAutoSetSource;
+    }
+
+    /**
+     * Выводит сектор, назначенный глобальной настройкой
+     * 
+     * @return \App\Models\CallcenterSector|null
+     */
+    public static function getDefaultSector()
+    {
+        if (!$id = (new Settings)->AUTOSET_SECTOR_NEW_REQUEST)
+            return null;
+
+        $sector = CallcenterSector::find($id);
+        $sector->callcenter;
+
+        return $sector;
     }
 }
