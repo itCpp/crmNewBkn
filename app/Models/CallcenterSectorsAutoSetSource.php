@@ -15,4 +15,14 @@ class CallcenterSectorsAutoSetSource extends Model
      * @var bool
      */
     public $timestamps = false;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'sector_id',
+        'source_id',
+    ];
 }

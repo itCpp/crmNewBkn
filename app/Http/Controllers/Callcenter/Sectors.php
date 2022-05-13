@@ -31,19 +31,21 @@ class Sectors extends Controller
             })
             ->toArray();
 
+
         if ($request->getSources) {
-            $row->sources = RequestsSource::orderBy('name')
-                ->orderBy('actual_list', "DESC")
+
+            $response['sources'] = RequestsSource::orderBy('actual_list', "DESC")
+                ->orderBy('name')
                 ->get();
         }
 
         $auto_set = (int) (new Settings)->AUTOSET_SECTOR_NEW_REQUEST;
         $row->auto_set = (int) ($auto_set == $row->id);
 
-        return response()->json([
-            'auto_set' => $auto_set,
-            'sector' => $row,
-        ]);
+        $response['auto_set'] = $auto_set;
+        $response['sector'] = $row;
+
+        return response()->json($response);
     }
 
     /**
@@ -94,6 +96,7 @@ class Sectors extends Controller
         parent::logData($request, $row); # Логирование изменений
 
         return response()->json([
+            'auto_set' => (new Settings)->AUTOSET_SECTOR_NEW_REQUEST,
             'sector' => $row,
         ]);
     }
@@ -138,6 +141,7 @@ class Sectors extends Controller
         }
 
         return response()->json([
+            'auto_set' => (new Settings)->AUTOSET_SECTOR_NEW_REQUEST,
             'sector' => $row,
         ]);
     }
@@ -168,5 +172,71 @@ class Sectors extends Controller
         }
 
         return 0;
+    }
+
+    /**
+     * Сохраняет источник для автоматической установки сектора новой заявке
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setAutoSector(Request $request)
+    {
+        if (!$source = RequestsSource::find($request->id))
+            return response()->json(['message' => "Источник не найден"], 400);
+
+        if (!$sector = CallcenterSector::find($request->sector))
+            return response()->json(['message' => "Сектор не найден"], 400);
+
+        if ($request->checked) {
+            $select = $this->setAutoSectorTrue($sector->id, $source->id);
+        } else {
+            $select = $this->setAutoSectorFalse($sector->id, $source->id);
+        }
+
+        $this->logData($request, $select);
+
+        return response()->json([
+            'mesage' => "Настройка сохранена",
+        ]);
+    }
+
+    /**
+     * Устанавливает или изменяет идентификтаор сектора
+     * 
+     * @param  int $sector_id
+     * @param  int $source_id
+     * @return \App\Models\CallcenterSectorsAutoSetSource
+     */
+    public function setAutoSectorTrue($sector_id, $source_id)
+    {
+        $select = CallcenterSectorsAutoSetSource::firstOrNew([
+            'source_id' => $source_id
+        ]);
+
+        $select->sector_id = $sector_id;
+        $select->save();
+
+        return $select;
+    }
+
+    /**
+     * Удаляет значение 
+     * 
+     * @param  int $sector_id
+     * @param  int $source_id
+     * @return \App\Models\CallcenterSectorsAutoSetSource|null
+     */
+    public function setAutoSectorFalse($sector_id, $source_id)
+    {
+        $select = CallcenterSectorsAutoSetSource::where([
+            ['sector_id', $sector_id],
+            ['source_id', $source_id],
+        ])->first();
+
+        if ($select)
+            $select->delete();
+
+        return new CallcenterSectorsAutoSetSource;
     }
 }

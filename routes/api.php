@@ -252,6 +252,8 @@ Route::group(['middleware' => 'user.token'], function () {
         Route::post('getSector', 'Callcenter\Sectors@getSector')->middleware('user.can:admin_callcenters')->name('api.admin.getSector');
         /** Изменение данных сектора */
         Route::post('saveSector', 'Callcenter\Sectors@saveSector')->middleware('user.can:admin_callcenters')->name('api.admin.saveSector');
+        /** Сохраняет источник для автоматической установки сектора новой заявке */
+        Route::post('setAutoSector', 'Callcenter\Sectors@setAutoSector')->middleware('user.can:admin_callcenters')->name('api.admin.saveSector');
 
         include __DIR__ . "/api/api.sip.php";
 
