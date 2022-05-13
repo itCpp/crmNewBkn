@@ -42,6 +42,12 @@ class SettingsGlobalSeeder extends Seeder
             'value' => 0,
             'type' => null,
             'comment' => "Добавлять заявки от входящих звонков Asterisk",
+        ],
+        [
+            'id' => "AUTOSET_SECTOR_NEW_REQUEST",
+            'value' => 2,
+            'type' => "int",
+            'comment' => "Идентификатор сектора для автоматической установки новой заявке",
         ]
     ];
     /**

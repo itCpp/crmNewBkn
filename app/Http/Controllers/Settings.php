@@ -119,4 +119,25 @@ class Settings
 
         return $value;
     }
+
+    /**
+     * Изменяет настройки
+     * 
+     * @param  string $key
+     * @param  mixed $value
+     * @return \App\Models\SettingsGlobal
+     */
+    public static function setOrCreate($key, $value = null)
+    {
+        if (!$setting = SettingsGlobal::find($key)) {
+            $setting = SettingsGlobal::create([
+                'id' => $key,
+                'type' => gettype($value),
+            ]);
+        }
+
+        $value = self::set($key, $value);
+
+        return $setting;
+    }
 }

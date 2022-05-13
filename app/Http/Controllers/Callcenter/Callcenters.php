@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Callcenter;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Settings;
 use App\Models\Callcenter;
+use App\Models\CallcenterSectorsAutoSetSource;
 use Illuminate\Http\Request;
 
 class Callcenters extends Controller
@@ -86,7 +88,13 @@ class Callcenters extends Controller
             return response()->json(['message' => "Сектор по колл-центру не найдены"], 400);
 
         return response()->json([
-            'sectors' => $row->sectors,
+            'auto_set' => (new Settings)->AUTOSET_SECTOR_NEW_REQUEST,
+            'sectors' => $row->sectors->map(function ($row) {
+
+                $row->sources = CallcenterSectorsAutoSetSource::where('sector_id', $row->id)->count();
+
+                return $row;
+            }),
         ]);
     }
 }
