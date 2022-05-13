@@ -49,6 +49,17 @@ class Sectors extends Controller
     }
 
     /**
+     * Выводит количество выбранных источников для автоматического назначения
+     * 
+     * @param  int $id
+     * @return int
+     */
+    public static function getCountSourceSelects($id)
+    {
+        return CallcenterSectorsAutoSetSource::where('sector_id', $id)->count();
+    }
+
+    /**
      * Изменение данных сектора
      * 
      * @param  \Illuminate\Http\Request $request
@@ -95,6 +106,8 @@ class Sectors extends Controller
 
         parent::logData($request, $row); # Логирование изменений
 
+        $row->sources = self::getCountSourceSelects($row->id);
+
         return response()->json([
             'auto_set' => (new Settings)->AUTOSET_SECTOR_NEW_REQUEST,
             'sector' => $row,
@@ -139,6 +152,8 @@ class Sectors extends Controller
                 parent::logData($request, $setting);
             }
         }
+
+        $row->sources = self::getCountSourceSelects($row->id);
 
         return response()->json([
             'auto_set' => (new Settings)->AUTOSET_SECTOR_NEW_REQUEST,
