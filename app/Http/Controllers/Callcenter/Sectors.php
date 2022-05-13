@@ -108,7 +108,8 @@ class Sectors extends Controller
         $row->sources = self::getCountSourceSelects($row->id);
 
         return response()->json([
-            'auto_set' => (new Settings)->AUTOSET_SECTOR_NEW_REQUEST,
+            'auto_set' => $auto_set,
+            'default_sector' => self::getDefaultSector(),
             'sector' => $row,
         ]);
     }
@@ -155,7 +156,8 @@ class Sectors extends Controller
         $row->sources = self::getCountSourceSelects($row->id);
 
         return response()->json([
-            'auto_set' => (new Settings)->AUTOSET_SECTOR_NEW_REQUEST,
+            'auto_set' => $auto_set,
+            'default_sector' => self::getDefaultSector(),
             'sector' => $row,
         ]);
     }
