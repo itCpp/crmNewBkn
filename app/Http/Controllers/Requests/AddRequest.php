@@ -154,7 +154,10 @@ class AddRequest extends Controller
 
         $this->zeroing = false; // Идентифиикатор удаленной заявки
 
-        $this->settings = new Settings('DROP_ADD_REQUEST');
+        $this->settings = new Settings(
+            'DROP_ADD_REQUEST',
+            'AUTOSET_SECTOR_NEW_REQUEST',
+        );
     }
 
     /**
@@ -628,6 +631,14 @@ class AddRequest extends Controller
                 $this->addComment("Смена тематики с \"{$this->data->theme}\" на \"{$this->request->theme}\"");
 
             $this->data->theme = $this->request->theme;
+        }
+
+        // Установка сектора
+        if (!$this->data->callcenter_sector) {
+
+            if ($sector = $this->settings->AUTOSET_SECTOR_NEW_REQUEST) {
+                $this->data->callcenter_sector = $sector;
+            }
         }
 
         return $this;
