@@ -33,37 +33,37 @@ class Kernel extends ConsoleKernel
         $schedule->command('sms:incomings')
             ->everyMinute()
             ->between('8:30', '22:00')
-            ->sendOutputTo(storage_path("{$path}/{$file_name}_sms_incomings.log"))
+            // ->sendOutputTo(storage_path("{$path}/{$file_name}_sms_incomings.log"))
             ->runInBackground();
 
         /** Проверка очереди заявок */
         $schedule->command('requests:getfromsite', ['--while', '--sleep' => 10])
             ->everyMinute()
-            ->sendOutputTo(storage_path("{$path}/{$file_name}_requests_getfromsite.log"))
+            // ->sendOutputTo(storage_path("{$path}/{$file_name}_requests_getfromsite.log"))
             ->runInBackground();
 
         /** Перешифровка данных событий с использованием внутреннего ключа шифрования */
         $schedule->command('events:recrypt')
             ->everyMinute()
-            ->sendOutputTo(storage_path("{$path}/{$file_name}_events_recrypt.log"))
+            // ->sendOutputTo(storage_path("{$path}/{$file_name}_events_recrypt.log"))
             ->runInBackground();
 
         /** Завершает все активные сессии */
         $schedule->command('users:endsessions')
             ->dailyAt("20:30")
-            ->sendOutputTo(storage_path("{$path}/{$file_name}_users_endsessions.log"))
+            // ->sendOutputTo(storage_path("{$path}/{$file_name}_users_endsessions.log"))
             ->runInBackground();
 
         /** Запись истории счетчика заявок */
         $schedule->command('story:counter')
             ->dailyAt("23:59")
-            ->sendOutputTo(storage_path("{$path}/{$file_name}_story_counter.log"))
+            // ->sendOutputTo(storage_path("{$path}/{$file_name}_story_counter.log"))
             ->runInBackground();
 
         /** Запись истории рейтинга колл-центра */
         $schedule->command('rating:write')
             ->dailyAt("23:59")
-            ->sendOutputTo(storage_path("{$path}/{$file_name}_rating_write.log"))
+            // ->sendOutputTo(storage_path("{$path}/{$file_name}_rating_write.log"))
             ->runInBackground();
     }
 
