@@ -48,6 +48,7 @@ class Counters extends Controller
         ];
 
         $flash_null = optional($request->user())->can('requests_flash_null_status');
+        $flash_records = optional($request->user())->can('requests_flash_records_status');
 
         foreach ($request->tabs as $tab) {
 
@@ -62,6 +63,32 @@ class Counters extends Controller
                 $counter['flash_null'] += $query->where('status_id', null)
                     ->where('pin', null)
                     ->count();
+
+                $counter['flash_null_tabs'][] = $tab->id;
+            }
+
+            if ($tab->flash_records_confirm and $flash_records) {
+
+                if (!isset($counter['flash_records'])) {
+                    $counter['flash_records'] = [
+                        'count' => 0,
+                        'tabs' => [],
+                    ];
+                }
+
+                $records = parent::envExplode('STATISTICS_OPERATORS_STATUS_RECORD_ID');
+                $confirmed = parent::envExplode('STATISTICS_OPERATORS_STATUS_RECORD_CHECK_ID');
+
+                $counter['flash_records']['count'] += $query->model()
+                    ->whereIn('status_id', $records)
+                    ->whereNotIn('status_id', $confirmed)
+                    ->whereBetween('event_at', [
+                        now()->startOfDay()->format("Y-m-d H:i:s"),
+                        now()->addHours(2)->format("Y-m-d H:i:s"),
+                    ])
+                    ->count();
+
+                $counter['flash_records']['tabs'][] = $tab->id;
             }
 
             $counter[$key] = [
