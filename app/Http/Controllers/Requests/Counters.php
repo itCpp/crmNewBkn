@@ -60,17 +60,27 @@ class Counters extends Controller
             $query = new RequestsQuery($request);
 
             if ($flash_null and $tab->flash_null) {
-                $counter['flash_null'] += $query->where('status_id', null)
+
+                if (!isset($counter['btnFlashNull'])) {
+                    $counter['btnFlashNull'] = [
+                        'count' => 0,
+                        'tabs' => [],
+                    ];
+                }
+
+                $count = $query->model()
+                    ->where('status_id', null)
                     ->where('pin', null)
                     ->count();
 
-                $counter['flash_null_tabs'][] = $tab->id;
+                $counter['btnFlashNull']['count'] += $count;
+                $counter['btnFlashNull']['tabs'][] = $tab->id;
             }
 
             if ($tab->flash_records_confirm and $flash_records) {
 
-                if (!isset($counter['flash_records'])) {
-                    $counter['flash_records'] = [
+                if (!isset($counter['btnRecords'])) {
+                    $counter['btnRecords'] = [
                         'count' => 0,
                         'tabs' => [],
                     ];
@@ -79,7 +89,7 @@ class Counters extends Controller
                 $records = parent::envExplode('STATISTICS_OPERATORS_STATUS_RECORD_ID');
                 $confirmed = parent::envExplode('STATISTICS_OPERATORS_STATUS_RECORD_CHECK_ID');
 
-                $counter['flash_records']['count'] += $query->model()
+                $counter['btnRecords']['count'] += $query->model()
                     ->whereIn('status_id', $records)
                     ->whereNotIn('status_id', $confirmed)
                     ->whereBetween('event_at', [
@@ -88,7 +98,7 @@ class Counters extends Controller
                     ])
                     ->count();
 
-                $counter['flash_records']['tabs'][] = $tab->id;
+                $counter['btnRecords']['tabs'][] = $tab->id;
             }
 
             $counter[$key] = [
