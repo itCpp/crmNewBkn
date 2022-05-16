@@ -59,6 +59,14 @@ class Counters extends Controller
 
             $query = new RequestsQuery($request);
 
+            $counter[$key] = [
+                'id' => $tab->id,
+                'name' => $tab->name,
+                'count' => $query->count(),
+            ];
+
+            $counter['timecode'][$key] = microtime(true) - $step;
+
             if ($flash_null and $tab->flash_null) {
 
                 if (!isset($counter['btnFlashNull'])) {
@@ -75,6 +83,7 @@ class Counters extends Controller
 
                 $counter['btnFlashNull']['count'] += $count;
                 $counter['btnFlashNull']['tabs'][] = $tab->id;
+                $counter['timecode']["tab{$tab->id}_btnFlashNull"] = microtime(true) - $step;
             }
 
             if ($tab->flash_records_confirm and $flash_records) {
@@ -99,15 +108,8 @@ class Counters extends Controller
                     ->count();
 
                 $counter['btnRecords']['tabs'][] = $tab->id;
+                $counter['timecode']["tab{$tab->id}_btnRecords"] = microtime(true) - $step;
             }
-
-            $counter[$key] = [
-                'id' => $tab->id,
-                'name' => $tab->name,
-                'count' => $query->count(),
-            ];
-
-            $counter['timecode'][$key] = microtime(true) - $step;
         }
 
         $permits = $request->user()->getListPermits([
@@ -143,7 +145,7 @@ class Counters extends Controller
         );
         $counter['timecode']['tests'] = microtime(true) - $step;
 
-        $counter['timecode']['stop'] = microtime(true) - $start;
+        $counter['timecode']['_stop'] = microtime(true) - $start;
 
         foreach ($counter['timecode'] as &$time) {
             $time = round($time, 3);
