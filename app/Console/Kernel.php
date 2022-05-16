@@ -32,6 +32,11 @@ class Kernel extends ConsoleKernel
             ->between('8:30', '22:00')
             ->runInBackground();
 
+        /** Проверка очереди заявок */
+        $schedule->command('requests:getfromsite', ['--while', '--sleep' => 10])
+            ->everyMinute()
+            ->runInBackground();
+
         /** Запись истории счетчика заявок */
         $schedule->command('story:counter')->dailyAt("23:59")->runInBackground();
     }
