@@ -488,6 +488,7 @@ class Counters extends Controller
             ->whereBetween('requests_clients_queries.created_at', $between)
             ->join('requests_rows', function ($join) use ($between) {
                 $join->on('requests_rows.id', '=', 'request_id')
+                    ->where('requests_rows.deleted_at', null)
                     ->whereBetween('requests_rows.created_at', $between);
             })
             ->distinct()

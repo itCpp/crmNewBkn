@@ -26,7 +26,13 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
 
-        // Запись истории счетчика заявок
+        /** Проверка входящих СМС на шлюзах */
+        $schedule->command('sms:incomings')
+            ->everyMinute()
+            ->between('8:30', '22:00')
+            ->runInBackground();
+
+        /** Запись истории счетчика заявок */
         $schedule->command('story:counter')->dailyAt("23:59")->runInBackground();
     }
 
@@ -37,7 +43,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }
