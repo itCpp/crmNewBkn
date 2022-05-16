@@ -15,6 +15,7 @@ use App\Models\SmsMessage;
 use App\Models\RequestsClient;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class SmsIncomingsCheckCommand extends Command
 {
@@ -72,6 +73,9 @@ class SmsIncomingsCheckCommand extends Command
     {
         $this->settings = new Settings('CRONTAB_SMS_INCOMINGS_CHECK');
 
+        $this->logger = Log::channel('cron_sms');
+        $this->log_message = "";
+
         $this->gates = (new Gates('sms_incomings'))->get();
         $this->base64 = new GateBase64;
 
@@ -81,19 +85,25 @@ class SmsIncomingsCheckCommand extends Command
 
         if (!$this->settings->CRONTAB_SMS_INCOMINGS_CHECK) {
             $this->line("Проверка СМС ОТКЛЮЧЕНА в настройках ЦРМ");
+            $this->logger->warning("Проверка СМС ОТКЛЮЧЕНА в настройках ЦРМ");
             return 0;
         }
 
         if (count($this->gates) == 0) {
             $this->line("Шлюзы для проверки СМС не настроены");
+            $this->logger->warning("Шлюзы для проверки СМС не настроены");
             return 0;
         }
+
+        $this->log_message .= "\r\n";
 
         foreach ($this->gates as $gate) {
             $this->parseData($gate);
         }
 
         $this->create();
+
+        $this->logger->info($this->log_message);
 
         return 0;
     }
@@ -178,6 +188,8 @@ class SmsIncomingsCheckCommand extends Command
         }
 
         $this->line("[{$gate->addr}] Найдено сообщений: " . count($messages));
+        $this->log_message .= "[{$gate->addr}] Найдено сообщений: " . count($messages) . " ";
+
         $this->checkAndCreateMessages($messages);
 
         return $this;
@@ -220,6 +232,7 @@ class SmsIncomingsCheckCommand extends Command
         }
 
         $this->line("Новых сообщений: {$created}");
+        $this->log_message .= "Новых сообщений: {$created}\r\n";
 
         return null;
     }
@@ -237,6 +250,8 @@ class SmsIncomingsCheckCommand extends Command
             return null;
 
         $this->info("Запись сообщений");
+        $this->log_message .= "\r\nЗапись сообщений:\r\n";
+
         $to_sent = [];
 
         foreach ($messages as $message) {
@@ -247,6 +262,8 @@ class SmsIncomingsCheckCommand extends Command
             $requests = count($sms->requests);
 
             $this->line("{$sms->message_id} [{$requests}]");
+            $this->log_message .= "{$sms->message_id} [{$requests}]\r\n";
+
             $to_sent[] = $sms;
         }
 

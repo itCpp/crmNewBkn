@@ -51,7 +51,7 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => 14,
+            'days' => 60,
         ],
 
         'slack' => [
@@ -105,14 +105,14 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/calls/second_calls.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => 30,
+            'days' => 60,
         ],
 
         'eventsrecrypt' => [
             'driver' => 'daily',
             'path' => storage_path('logs/events/recrypt.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => 30,
+            'days' => 60,
         ],
 
         'check_queues' => [
@@ -125,6 +125,13 @@ return [
         'comings' => [
             'driver' => 'daily',
             'path' => storage_path('logs/requests/comings.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'cron_sms' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cron/sms/sms.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 60,
         ],
