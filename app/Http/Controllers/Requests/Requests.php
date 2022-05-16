@@ -289,6 +289,21 @@ class Requests extends Controller
         /** Определение флага анимации мигания новых заявок */
         $row->status_null_flash = (!$row->status_id and !$row->pin and optional(request()->user())->can('requests_flash_null_status'));
 
+        /** Определение флага индикации подтверждения записи */
+        if ($row->event_at) {
+
+            if (now() > now()->create($row->event_at)->subHours(2)) {
+
+                $status_records = parent::envExplode('STATISTICS_OPERATORS_STATUS_RECORD_ID');
+                $status_confirmed = parent::envExplode('STATISTICS_OPERATORS_STATUS_RECORD_CHECK_ID');
+
+                $row->status_records_flash = (in_array($row->status_id, $status_records)
+                    and !in_array($row->status_id, $status_confirmed)
+                    and optional(request()->user())->can('requests_flash_records_status')
+                );
+            }
+        }
+
         /** Проверенные разрешения пользователя */
         $row->permits = RequestStart::$permits;
 
