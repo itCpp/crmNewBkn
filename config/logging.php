@@ -108,13 +108,6 @@ return [
             'days' => 60,
         ],
 
-        'eventsrecrypt' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/events/recrypt.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
-            'days' => 60,
-        ],
-
         'check_queues' => [
             'driver' => 'daily',
             'path' => storage_path('logs/requests/check_queue_site.log'),
@@ -132,6 +125,20 @@ return [
         'cron_sms' => [
             'driver' => 'daily',
             'path' => storage_path('logs/cron/sms/sms.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'cron_users' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cron/users/stop_session.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'cron_events_recrypt' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cron/events/recrypt.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 60,
         ],

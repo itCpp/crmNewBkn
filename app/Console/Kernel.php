@@ -37,8 +37,17 @@ class Kernel extends ConsoleKernel
             ->everyMinute()
             ->runInBackground();
 
+        /** Перешифровка данных событий с использованием внутреннего ключа шифрования */
+        $schedule->command('events:recrypt')->everyMinute()->runInBackground();
+
+        /** Завершает все активные сессии */
+        $schedule->command('users:endsessions')->dailyAt("20:30")->runInBackground();
+
         /** Запись истории счетчика заявок */
         $schedule->command('story:counter')->dailyAt("23:59")->runInBackground();
+
+        /** Запись истории рейтинга колл-центра */
+        $schedule->command('rating:write')->dailyAt("23:59")->runInBackground();
     }
 
     /**

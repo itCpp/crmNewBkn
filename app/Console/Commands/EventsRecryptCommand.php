@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Support\Facades\Log;
 
-class RecryptExternalEvents extends Command
+class EventsRecryptCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -40,8 +40,6 @@ class RecryptExternalEvents extends Command
     public function __construct()
     {
         parent::__construct();
-
-        $this->key = base64_decode(str_replace("base64:", "", env('APP_KEY_IN')));
     }
 
     /**
@@ -51,12 +49,14 @@ class RecryptExternalEvents extends Command
      */
     public function handle()
     {
+        $this->key = base64_decode(str_replace("base64:", "", env('APP_KEY_IN')));
+
         for ($i = 0; $i <= 10; $i++) {
             try {
                 if ($id = $this->eventRecrypt())
-                    Log::channel('eventsrecrypt')->debug('Rewriting external events id: ' . $id);
+                    Log::channel('cron_events_recrypt')->debug('Rewriting external events id: ' . $id);
             } catch (\Exception $e) {
-                Log::channel('eventsrecrypt')->emergency($e->getMessage());
+                Log::channel('cron_events_recrypt')->emergency($e->getMessage());
             }
         }
 
