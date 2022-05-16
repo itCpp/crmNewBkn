@@ -7,6 +7,7 @@ use App\Http\Controllers\Offices\OfficesTrait;
 use App\Http\Controllers\SecondCalls\SecondCalls;
 use App\Http\Controllers\Sms\Sms;
 use App\Http\Controllers\Testing\MyTests;
+use App\Models\RequestsClientsQuery;
 use App\Models\RequestsCounterStory;
 use App\Models\RequestsQueue;
 use App\Models\RequestsSource;
@@ -440,5 +441,69 @@ class Counters extends Controller
         }
 
         return $row;
+    }
+
+    /**
+     * Подсчитывает информацию о клиентах
+     * 
+     * @param  null|string $date
+     * @return array
+     */
+    public function getClientsData($date = null)
+    {
+        $date = now()->create($date ?: now()->format("Y-m-d"));
+        $between = [
+            $date->copy()->startOfDay()->format("Y-m-d H:i:s"),
+            $date->copy()->endOfDay()->format("Y-m-d H:i:s"),
+        ];
+
+        /** Количество обращений */
+        $data['queries'] = RequestsClientsQuery::whereBetween('created_at', $between)
+            ->count();
+
+        /** Количество клиентов */
+        $data['clients'] = RequestsClientsQuery::select('client_id')
+            ->whereBetween('created_at', $between)
+            ->distinct()
+            ->count();
+
+        /** Количество новых клиентов */
+        $data['clients_new'] = RequestsClientsQuery::select('client_id')
+            ->whereBetween('requests_clients_queries.created_at', $between)
+            ->join('requests_clients', function ($join) use ($between) {
+                $join->on('requests_clients.id', '=', 'client_id')
+                    ->whereBetween('requests_clients.created_at', $between);
+            })
+            ->distinct()
+            ->count();
+
+        /** Количество новых заявок */
+        $data['requests'] = RequestsClientsQuery::select('request_id')
+            ->whereBetween('created_at', $between)
+            ->distinct()
+            ->count();
+
+        /** Количество новых заявок */
+        $data['requests_new'] = RequestsClientsQuery::select('request_id')
+            ->whereBetween('requests_clients_queries.created_at', $between)
+            ->join('requests_rows', function ($join) use ($between) {
+                $join->on('requests_rows.id', '=', 'request_id')
+                    ->whereBetween('requests_rows.created_at', $between);
+            })
+            ->distinct()
+            ->count();
+
+        /** Источники и ресурсы */
+        RequestsClientsQuery::select('source_id', 'resource_id')
+            ->whereBetween('created_at', $between)
+            ->distinct()
+            ->get()
+            ->each(function ($row) use (&$sources) {
+                $sources[(int) $row->source_id][] = (int) $row->resource_id;
+            });
+
+        $data['sources'] = $sources ?? [];
+
+        return $data;
     }
 }

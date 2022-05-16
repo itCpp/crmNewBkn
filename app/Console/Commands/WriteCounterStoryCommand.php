@@ -57,11 +57,14 @@ class WriteCounterStoryCommand extends Command
             return (new DeveloperBot)();
         });
 
-        $counters = (new Counters)->getCounterTabsData($request->user()->getAllTabs());
+        $counters = new Counters;
+
+        $data = $counters->getCounterTabsData($request->user()->getAllTabs());
+        $data['clients'] = $counters->getClientsData($date);
 
         RequestsCounterStory::create([
             'counter_date' => $date ?: now(),
-            'counter_data' => encrypt($counters),
+            'counter_data' => encrypt($data),
         ]);
 
         return 0;
