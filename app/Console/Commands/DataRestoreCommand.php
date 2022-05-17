@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 
-class DataRestore extends Command
+class DataRestoreCommand extends Command
 {
     /**
      * The name and signature of the console command.

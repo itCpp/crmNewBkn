@@ -7,10 +7,11 @@ use App\Http\Controllers\Settings;
 use App\Models\CrmMka\CrmRequest;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Cursor;
 
-class CreateCrmCommand extends Command
+class CreatecrmCommand extends Command
 {
     use MyOutput;
 
@@ -49,13 +50,43 @@ class CreateCrmCommand extends Command
      */
     public function handle()
     {
-        $start = microtime(1);
+        $this->start = microtime(1);
         $this->uuid = Str::orderedUuid();
         $this->cursor = new Cursor($this->output);
 
         if (!$this->questionnaire())
             return 0;
 
+        $this->secret = Str::uuid();
+
+        /** Перевод в режим обслуживания для отключения крон и тому подобных */
+        Artisan::call("down --secret={$this->secret}");
+
+        $this->line("Для обхода режима обслуживания перейти по ссылке:");
+        $this->info(Str::finish(env('APP_URL', "http://localhost:8000"), "/") . $this->secret);
+        $this->newLine();
+
+        sleep(5);
+
+        try {
+            $this->createcrm();
+        } catch (Exception $e) {
+            $this->error(" {$e->getMessage()} ");
+        }
+
+        /** Вывод из режима обслуживания */
+        Artisan::call("up");
+
+        return 0;
+    }
+
+    /**
+     * Метод работы для его проверки
+     * 
+     * @return int
+     */
+    public function createcrm()
+    {
         /** Сохранение данных перед переносом */
         $this->call('data:dump', ['--name' => $this->uuid]);
 
@@ -87,11 +118,11 @@ class CreateCrmCommand extends Command
         /** Включение приёма детализции вызовов */
         Settings::set('CALL_DETAIL_RECORDS_SAVE', true);
 
-        $time = microtime(1) - $start;
+        $time = microtime(1) - $this->start;
 
         $this->newLine(1);
 
-        $this->line("Время начала переноса: <fg=green;options=bold>" . date("Y-m-d H:i:s", $start) . "</>");
+        $this->line("Время начала переноса: <fg=green;options=bold>" . date("Y-m-d H:i:s", $this->start) . "</>");
         $this->line("Время окончания переноса: <fg=green;options=bold>" . date("Y-m-d H:i:s") . "</>");
         $this->line("Время работы: <fg=green;options=bold>" . date("H:i:s", $time) . "</>");
 

@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 
-class DataDump extends Command
+class DataDumpCommand extends Command
 {
     /**
      * The name and signature of the console command.
