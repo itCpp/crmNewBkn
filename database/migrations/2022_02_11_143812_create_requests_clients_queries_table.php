@@ -15,11 +15,12 @@ class CreateRequestsClientsQueriesTable extends Migration
     {
         Schema::create('requests_clients_queries', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('client_id')->nullable()->comment('Идентификатор клиента');
-            $table->bigInteger('request_id')->nullable()->comment('Идентификатор заявки');
-            $table->bigInteger('source_id')->nullable()->comment('Идентификатор источника');
-            $table->bigInteger('resource_id')->nullable()->comment('Идентификатор ресурса');
+            $table->bigInteger('client_id')->nullable()->comment('Идентификатор клиента')->index();
+            $table->bigInteger('request_id')->nullable()->comment('Идентификатор заявки')->index();
+            $table->bigInteger('source_id')->nullable()->comment('Идентификатор источника')->index();
+            $table->bigInteger('resource_id')->nullable()->comment('Идентификатор ресурса')->index();
             $table->timestamp('created_at')->nullable();
+            $table->index('created_at');
         });
     }
 
