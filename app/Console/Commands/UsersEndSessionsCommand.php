@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
  * Рекомендуется запускать кроной ежедневно в конце рабочего дня
  * `55 23 * * * php /<DOCUMENT_ROOT>/artisan users:endsessions`
  */
-class UsersEndSessionsCommand extends Command
+class UsersEndsessionsCommand extends Command
 {
     /**
      * The name and signature of the console command.

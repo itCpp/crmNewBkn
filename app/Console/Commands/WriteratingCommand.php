@@ -9,7 +9,7 @@ use App\Models\RatingGlobalData;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
-class FindAndWriteGlobalRatingCommand extends Command
+class WriteratingCommand extends Command
 {
     /**
      * The name and signature of the console command.

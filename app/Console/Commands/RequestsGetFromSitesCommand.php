@@ -8,13 +8,15 @@ use App\Http\Controllers\Queues\QueueProcessings;
 use App\Http\Controllers\Requests\Queues;
 use App\Models\RequestsQueue;
 use App\Models\SettingsQueuesDatabase;
+use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class GetRequestsQueuesFromSitesCommand extends Command
+class RequestsGetFromSitesCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -85,6 +87,16 @@ class GetRequestsQueuesFromSitesCommand extends Command
         $this->locked = $this->option('locked');
         $this->delete = $this->option('delete');
 
+        /** Принудительная блокировка и удаление строк после перехода в новую ЦРМ */
+        if (!env('NEW_CRM_OFF', true)) {
+
+            if (!$this->locked)
+                $this->locked = true;
+
+            if (!$this->delete)
+                $this->delete = true;
+        }
+
         $this->handleStep();
 
         if (!$this->while)
@@ -118,6 +130,21 @@ class GetRequestsQueuesFromSitesCommand extends Command
     }
 
     /**
+     * Вывод ошибки при подключении к БД
+     * 
+     * @param  string $connection
+     * @param  object $e
+     * @return $this
+     */
+    public function exceptionWrite($connection, $e)
+    {
+        $this->log->error("[{$connection}] Ошибка: {$e->getMessage()}");
+        $this->line(date("[Y-m-d H:i:s]") . "[{$connection}] Ошибка: <error>{$e->getMessage()}</error>");
+
+        return $this;
+    }
+
+    /**
      * Подключение к базам данных и получение данных
      * 
      * @param array $db
@@ -139,12 +166,10 @@ class GetRequestsQueuesFromSitesCommand extends Command
 
             $this->log->info("[{$connection}] " . count($data) . " {$db['name']}");
             $this->line(date("[Y-m-d H:i:s]") . "[{$connection}][" . count($data) . "][<info>{$db['name']}</info>]");
-        } catch (\Illuminate\Database\QueryException $e) {
-
-            $this->log->error("[{$connection}] Ошибка: {$e->getMessage()}");
-            $this->line(date("[Y-m-d H:i:s]") . "[{$connection}] Ошибка: <error>{$e->getMessage()}</error>");
-
-            return $this;
+        } catch (QueryException $e) {
+            return $this->exceptionWrite($connection, $e);
+        } catch (Exception $e) {
+            return $this->exceptionWrite($connection, $e);
         }
 
         if (!count($data))
@@ -169,17 +194,17 @@ class GetRequestsQueuesFromSitesCommand extends Command
             // Удаление строки
             $deleted = "NOT DELETED";
 
-            if ($this->delete) {
-                $table->where('id', $row->id)->limit(1)->delete();
-                $deleted = "DELETED";
-            }
-
             // Автоматическое добавление заявки
             $added = "NOT ADDED";
 
             if ($this->settings->TEXT_REQUEST_AUTO_ADD || $this->checkAutoDoneResource($queue->site)) {
                 $added = "ADDED";
                 (new QueueProcessings($queue))->add();
+            }
+
+            if ($this->delete) {
+                $table->where('id', $row->id)->limit(1)->delete();
+                $deleted = "DELETED";
             }
 
             $this->log->notice("[{$connection}][{$row->id}][{$deleted}][{$queue->id}][{$added}][{$queue->ip}][{$queue->site}]");
@@ -217,7 +242,10 @@ class GetRequestsQueuesFromSitesCommand extends Command
             'ip' => $row->ip,
             'site' => idn_to_utf8($row->site),
             'user_agent' => $row->user_agent ?? null,
-            'created_at' => Carbon::createFromTimeString($row->created_at ?? now(), 3),
+            'created_at' => Carbon::createFromTimeString(
+                $row->created_at ?? now()->format("Y-m-d H:i:s"),
+                3
+            ),
         ]);
 
         return $queue;

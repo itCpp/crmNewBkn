@@ -9,7 +9,7 @@ use App\Models\Base\CallDetailRecord as BaseCallDetailRecord;
 use App\Models\CallDetailRecord;
 use Illuminate\Console\Command;
 
-class CallDetailRecordsMigrateCommand extends Command
+class OldCdrCommand extends Command
 {
     /**
      * The name and signature of the console command.

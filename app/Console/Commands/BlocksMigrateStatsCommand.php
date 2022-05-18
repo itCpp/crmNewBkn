@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class MigrateSitesStatistics extends Command
+class BlocksMigrateStatsCommand extends Command
 {
     /**
      * The name and signature of the console command.

@@ -17,7 +17,7 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
-class SmsIncomingsCheckCommand extends Command
+class SmsIncomingsCommand extends Command
 {
     /**
      * The name and signature of the console command.
