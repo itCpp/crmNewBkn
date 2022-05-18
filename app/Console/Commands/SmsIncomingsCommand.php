@@ -16,7 +16,6 @@ use App\Models\RequestsClient;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\Console\Cursor;
 
 class SmsIncomingsCommand extends Command
 {
@@ -73,7 +72,6 @@ class SmsIncomingsCommand extends Command
     public function handle()
     {
         $this->settings = new Settings('CRONTAB_SMS_INCOMINGS_CHECK');
-        $this->cursor = new Cursor($this->output);
 
         $this->logger = Log::channel('cron_sms');
         $this->log_message = "";
@@ -189,10 +187,7 @@ class SmsIncomingsCommand extends Command
             }
         }
 
-        $this->line("[{$gate->addr}] Найдено сообщений: " . count($messages));
-        $this->log_message .= "[{$gate->addr}] Найдено сообщений: " . count($messages) . " ";
-
-        $this->checkAndCreateMessages($messages);
+        $this->checkAndCreateMessages($messages, $gate->addr);
 
         return $this;
     }
@@ -200,10 +195,11 @@ class SmsIncomingsCommand extends Command
     /**
      * Проверка и создания сообщения в БД
      * 
-     * @param array $messages
+     * @param  array $messages
+     * @param  string $gate
      * @return null
      */
-    public function checkAndCreateMessages($messages = [])
+    public function checkAndCreateMessages($messages = [], $gate = "0.0.0.0")
     {
         $checks = SmsMessage::where(function ($query) use ($messages) {
             foreach ($messages as $message) {
@@ -233,9 +229,9 @@ class SmsIncomingsCommand extends Command
             $created++;
         }
 
-        $this->cursor->moveUp(1);
-        $this->line("\t\t\t\t\tНовых сообщений: {$created}");
+        $this->line("[{$gate}] Найдено сообщений: " . count($messages) . " \tНовых сообщений: {$created}");
 
+        $this->log_message .= "[{$gate}] Найдено сообщений: " . count($messages) . " \t";
         $this->log_message .= "Новых сообщений: {$created}\r\n";
 
         return null;
