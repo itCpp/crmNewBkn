@@ -21,13 +21,32 @@ class Callcenters extends Controller
         $rows = Callcenter::get();
 
         foreach ($rows as &$row) {
-            $row->sectorCount = $row->sectors()->count();
+            $row = self::serializeCallcenterRow($row);
         }
 
         return response()->json([
             'callcenters' => $rows,
             'sector_default' => Sectors::getDefaultSector(),
         ]);
+    }
+
+    /**
+     * Формирует строку колл-центра для вывода
+     * 
+     * @param  \App\Models\Callcenter $row
+     * @return \App\Models\Callcenter
+     */
+    public static function serializeCallcenterRow($row)
+    {
+        $row->sectorCount = 0;
+        $row->sectorCountActive = 0;
+
+        $row->sectors->each(function ($item) use ($row) {
+            $row->sectorCount++;
+            $row->sectorCountActive += $item->active;
+        });
+
+        return $row;
     }
 
     /**
@@ -73,7 +92,7 @@ class Callcenters extends Controller
         $row->save();
 
         return response()->json([
-            'callcenter' => $row,
+            'callcenter' => self::serializeCallcenterRow($row),
         ]);
     }
 

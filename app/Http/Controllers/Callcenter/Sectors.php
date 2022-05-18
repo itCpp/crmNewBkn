@@ -111,7 +111,19 @@ class Sectors extends Controller
             'auto_set' => $auto_set,
             'default_sector' => self::getDefaultSector(),
             'sector' => $row,
+            'callcenter' => self::getCallcenterFromSector($row),
         ]);
+    }
+
+    /**
+     * Выводит данные колл-центра
+     * 
+     * @param  \App\Models\CallcenterSector $row
+     * @return \App\Models\Callcenter
+     */
+    public static function getCallcenterFromSector($row)
+    {
+        return Callcenters::serializeCallcenterRow($row->callcenter);
     }
 
     /**
@@ -159,6 +171,7 @@ class Sectors extends Controller
             'auto_set' => $auto_set,
             'default_sector' => self::getDefaultSector(),
             'sector' => $row,
+            'callcenter' => self::getCallcenterFromSector($row),
         ]);
     }
 
@@ -187,7 +200,7 @@ class Sectors extends Controller
             return $id;
         }
 
-        return 0;
+        return $auto_set;
     }
 
     /**

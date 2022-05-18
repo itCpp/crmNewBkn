@@ -46,7 +46,7 @@ class SettingsGlobalSeeder extends Seeder
         [
             'id' => "AUTOSET_SECTOR_NEW_REQUEST",
             'value' => 2,
-            'type' => "int",
+            'type' => "integer",
             'comment' => "Идентификатор сектора для автоматической установки новой заявке",
         ]
     ];
