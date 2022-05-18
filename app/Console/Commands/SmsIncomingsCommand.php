@@ -16,6 +16,7 @@ use App\Models\RequestsClient;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Console\Cursor;
 
 class SmsIncomingsCommand extends Command
 {
@@ -72,6 +73,7 @@ class SmsIncomingsCommand extends Command
     public function handle()
     {
         $this->settings = new Settings('CRONTAB_SMS_INCOMINGS_CHECK');
+        $this->cursor = new Cursor($this->output);
 
         $this->logger = Log::channel('cron_sms');
         $this->log_message = "";
@@ -231,7 +233,9 @@ class SmsIncomingsCommand extends Command
             $created++;
         }
 
-        $this->line("Новых сообщений: {$created}");
+        $this->cursor->moveUp(1);
+        $this->line("\t\t\t\t\tНовых сообщений: {$created}");
+
         $this->log_message .= "Новых сообщений: {$created}\r\n";
 
         return null;
