@@ -6,9 +6,8 @@ use App\Http\Controllers\Requests\Counters;
 use App\Http\Controllers\Users\DeveloperBot;
 use App\Models\RequestsCounterStory;
 use Illuminate\Console\Command;
-use Illuminate\Http\Request;
 
-class WriteCounterStoryCommand extends Command
+class StoryCounterCommand extends Command
 {
     /**
      * The name and signature of the console command.

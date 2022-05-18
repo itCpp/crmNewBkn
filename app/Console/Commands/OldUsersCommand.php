@@ -12,7 +12,7 @@ use Illuminate\Console\Command;
  * Будут созданы учетные записи не уволенных сотрудников
  * Уволенные сотрудники добавятся при переносе заявок
  */
-class UsersMergeFromOld extends Command
+class OldUsersCommand extends Command
 {
     use MyOutput;
 

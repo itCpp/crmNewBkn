@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
-class OldMergeFinesCommand extends Command
+class OldFinesCommand extends Command
 {
     /**
      * The name and signature of the console command.

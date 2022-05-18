@@ -10,7 +10,7 @@ use App\Models\RatingPeriodStory;
 use App\Models\RatingStory;
 use Illuminate\Console\Command;
 
-class RatingStoryWriteCommand extends Command
+class RatingWriteCommand extends Command
 {
     /**
      * The name and signature of the console command.

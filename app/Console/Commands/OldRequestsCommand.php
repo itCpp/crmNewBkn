@@ -6,7 +6,7 @@ use App\Console\MyOutput;
 use App\Http\Controllers\Dev\RequestsMerge;
 use Illuminate\Console\Command;
 
-class RequestsMergeCommand extends Command
+class OldRequestsCommand extends Command
 {
     use MyOutput;
 

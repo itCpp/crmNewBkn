@@ -14,7 +14,7 @@ use App\Models\RequestsStoryStatus;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Cursor;
 
-class RequestsMergeIncomingHistoryCommand extends Command
+class OldRequestsHistoryCommand extends Command
 {
     /**
      * The name and signature of the console command.

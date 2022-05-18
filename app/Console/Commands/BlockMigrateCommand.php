@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class BlockCompnyMigrateCommand extends Command
+class BlockMigrateCommand extends Command
 {
     /**
      * The name and signature of the console command.
