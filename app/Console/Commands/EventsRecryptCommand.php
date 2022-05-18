@@ -53,10 +53,17 @@ class EventsRecryptCommand extends Command
 
         for ($i = 0; $i <= 10; $i++) {
             try {
-                if ($id = $this->eventRecrypt())
-                    Log::channel('cron_events_recrypt')->debug('Rewriting external events id: ' . $id);
+                if ($id = $this->eventRecrypt()) {
+                    Log::channel('cron_events_recrypt')
+                        ->debug('Rewriting external events id: ' . $id);
+
+                    $this->line("Rewriting external events id: $id");
+                }
             } catch (\Exception $e) {
-                Log::channel('cron_events_recrypt')->emergency($e->getMessage());
+                Log::channel('cron_events_recrypt')
+                    ->emergency($e->getMessage());
+
+                $this->error($e->getMessage());
             }
         }
 
