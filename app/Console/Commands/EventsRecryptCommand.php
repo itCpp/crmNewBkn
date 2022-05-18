@@ -57,13 +57,13 @@ class EventsRecryptCommand extends Command
                     Log::channel('cron_events_recrypt')
                         ->debug('Rewriting external events id: ' . $id);
 
-                    $this->line("Rewriting external events id: $id");
+                    $this->line(date("[Y-m-d H:i:s]") . " Rewriting external events id: $id");
                 }
             } catch (\Exception $e) {
                 Log::channel('cron_events_recrypt')
                     ->emergency($e->getMessage());
 
-                $this->error($e->getMessage());
+                $this->error(date("[Y-m-d H:i:s] ") . $e->getMessage());
             }
         }
 
