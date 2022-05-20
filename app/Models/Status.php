@@ -19,6 +19,17 @@ class Status extends Model
         'theme',
         'zeroing',
         'zeroing_data',
+        'settings',
     ];
 
+    /**
+     * Атрибуты, которые следует преобразовать
+     * `zeroing_data` не определять, так как в коде используется принудительное
+     * преобразование
+     * 
+     * @var array
+     */
+    protected $casts = [
+        'settings' => "object",
+    ];
 }

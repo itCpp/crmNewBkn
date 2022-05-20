@@ -48,6 +48,12 @@ class SettingsGlobalSeeder extends Seeder
             'value' => 2,
             'type' => "integer",
             'comment' => "Идентификатор сектора для автоматической установки новой заявке",
+        ],
+        [
+            'id' => "REQUESTS_AUTO_CHANGE_MINUTES",
+            'value' => 15,
+            'type' => "integer",
+            'comment' => "Количество минут, по истечению которых будет произведена автоматическая смена статуса в заявке",
         ]
     ];
     /**
