@@ -43,6 +43,7 @@ class DataDumpCommand extends Command
         \App\Models\RatingStory::class,
         \App\Models\BlockHost::class,
         \App\Models\BlockIp::class,
+        \App\Models\SmsMessage::class,
     ];
 
     /**
