@@ -53,14 +53,13 @@ class SendNewSmsRequestsJob implements ShouldQueue
                     ->get()
                     ->each(function ($request) use ($message, $phone) {
 
-                        $request->pin = 424;
-
                         $user = $this->getUserData($request->pin);
                         $show_phone = optional($user)->can('clients_show_phone') ?: false;
 
                         $message['phone'] = $this->sms->displayPhoneNumber($phone, $show_phone, 4);
                         $message['to_pin'] = $request->pin;
                         $message['to_request'] = $request->id;
+                        $message['client_name'] = $request->client_name;
 
                         broadcast(new NewSmsEvent($message));
                     });
