@@ -74,7 +74,10 @@ class RequestsAutoChangeCommand extends Command
         if (!count($statuses))
             $this->line("No configured statuses for automatic change (<options=bold>auto_change_id</> setting)");
 
-        foreach (($this->counts ?? []) as $pin => $count) {
+        if (!count($this->counts))
+            $this->line("No requests for change 💩");
+ 
+        foreach ($this->counts as $pin => $count) {
 
             $row = RequestsAutoChangeCount::firstOrNew([
                 'pin' => (int) $pin,
