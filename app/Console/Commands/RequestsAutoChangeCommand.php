@@ -63,8 +63,6 @@ class RequestsAutoChangeCommand extends Command
         if (!$this->minutes = (new Settings)->REQUESTS_AUTO_CHANGE_MINUTES)
             $this->minutes = self::MINUTES;
 
-        $this->line(now()->format("[Y-m-d H:i:s]"));
-
         $statuses = Status::where('settings->auto_change_id', '!=', null)
             ->get()
             ->each(function ($row) {
@@ -72,10 +70,10 @@ class RequestsAutoChangeCommand extends Command
             });
 
         if (!count($statuses))
-            $this->line("No configured statuses for automatic change (<options=bold>auto_change_id</> setting)");
+            $this->line(now()->format("[Y-m-d H:i:s]") . " No configured statuses for automatic change (<options=bold>auto_change_id</> setting)");
 
         if (!count($this->counts))
-            $this->line("No requests for change 💩");
+            $this->line(now()->format("[Y-m-d H:i:s]") . " No requests for change 💩");
  
         foreach ($this->counts as $pin => $count) {
 
@@ -103,7 +101,7 @@ class RequestsAutoChangeCommand extends Command
         $change = $row->settings->auto_change_id;
 
         RequestsRow::where('status_id', $row->id)
-            ->where('event_at', '<', now()->addMinute($minutes))
+            ->where('event_at', '<', now()->subMinute($minutes))
             ->orderBy('event_at')
             ->get()
             ->each(function ($row) use ($change) {
@@ -133,7 +131,7 @@ class RequestsAutoChangeCommand extends Command
                     ]);
                 }
 
-                $this->line("Change status request id: <fg=green>{$row->id}</> (<options=bold>$status_old</> to <options=bold>$change</> id)");
+                $this->line(now()->format("[Y-m-d H:i:s]") . " Change status request id: <fg=green>{$row->id}</> (<options=bold>$status_old</> to <options=bold>$change</> id)");
 
                 $row = Requests::getRequestRow($row); // Полные данные по заявке
 
