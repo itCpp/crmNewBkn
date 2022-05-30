@@ -63,10 +63,16 @@ class RequestsAutoChangeCommand extends Command
         if (!$this->minutes = (new Settings)->REQUESTS_AUTO_CHANGE_MINUTES)
             $this->minutes = self::MINUTES;
 
-        Status::where('settings->auto_change_id', '!=', null)->get()
+        $this->line(now()->format("[Y-m-d H:i:s]"));
+
+        $statuses = Status::where('settings->auto_change_id', '!=', null)
+            ->get()
             ->each(function ($row) {
                 $this->handleStep($row);
             });
+
+        if (!count($statuses))
+            $this->line("No configured statuses for automatic change (<options=bold>auto_change_id</> setting)");
 
         foreach (($this->counts ?? []) as $pin => $count) {
 
