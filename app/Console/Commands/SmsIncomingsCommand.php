@@ -166,7 +166,9 @@ class SmsIncomingsCommand extends Command
                         $hour = now()->create($row[3])->format("ndH");
 
                         if ($hour > $moscow) {
-                            $row[3] = now()->create($row[3])->subHour()->format("Y-m-d H:i:s");
+                            $row[3] = now()->create($row[3])
+                                ->subHours($hour - $moscow)
+                                ->format("Y-m-d H:i:s");
                         }
                     } catch (Exception) {
                     }
