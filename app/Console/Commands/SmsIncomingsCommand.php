@@ -10,6 +10,7 @@ use App\Http\Controllers\Gates\GateBase64;
 use App\Http\Controllers\Gates\Gates;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Sms\Sms;
+use App\Jobs\SendNewSmsRequestsJob;
 use App\Models\Gate;
 use App\Models\SmsMessage;
 use App\Models\RequestsClient;
@@ -307,6 +308,7 @@ class SmsIncomingsCommand extends Command
 
         $all = [];
         $requests = [];
+        $to_operators = [];
 
         foreach ($rows as $row) {
 
@@ -314,15 +316,21 @@ class SmsIncomingsCommand extends Command
 
             $all[] = $push;
 
-            if (count($row->requests))
+            if (count($row->requests)) {
+                $to_operators[] = $row->id;
                 $requests[] = $push;
+            }
         }
 
+        /** Уведомления сотрудникам с доступом ко всем сообщениям */
         if (count($all))
             broadcast(new NewSmsAllEvent($all));
 
+        /** Уведомления сотрудникам с доступом только к сообщениям с заявкой*/
         if (count($requests))
             broadcast(new NewSmsRequestsEvent($requests));
+
+        SendNewSmsRequestsJob::dispatch($to_operators);
 
         return null;
     }
