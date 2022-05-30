@@ -44,6 +44,13 @@ class Kernel extends ConsoleKernel
             ->appendOutputTo("{$path}/{$file_name}_sms_incomings.log")
             ->runInBackground();
 
+        /** Автоматическая смена статуса заявок */
+        $schedule->command('requests:autochange')
+            ->everyMinute()
+            ->between('9:00', '20:00')
+            ->appendOutputTo("{$path}/{$file_name}_requests_autochange.log")
+            ->runInBackground();
+
         /** Проверка очереди заявок */
         $schedule->command('requests:getfromsite', ['--while', '--sleep' => 10])
             ->everyMinute()
