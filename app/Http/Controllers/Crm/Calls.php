@@ -8,7 +8,9 @@ use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\Requests;
 use App\Models\CallDetailRecord;
 use App\Models\CrmMka\CrmRequest;
+use App\Models\Incomings\SipInternalExtension;
 use App\Models\RequestsRow;
+use App\Models\UsersSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -134,5 +136,21 @@ class Calls extends Controller
         }
 
         return array_values(array_unique($phones ?? []));
+    }
+
+    /**
+     * Поиск оператора в настоящий момент по внутреннему номеру
+     * 
+     * @param  string $extension
+     * @return string|null
+     */
+    public static function getPinFromExtension($extension = "")
+    {
+        if (!$sip = SipInternalExtension::where('extension', $extension)->first())
+            return null;
+
+        $session = UsersSession::where('ip', $sip->internal_addr)->orderBy('id', "DESC")->first();
+
+        return $session->user_pin ?? null;
     }
 }

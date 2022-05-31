@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Requests;
 
 use App\Events\CallsLogEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Crm\Calls;
 use App\Http\Controllers\Events\Comings;
 use App\Http\Controllers\Settings;
 use App\Models\RequestsClient;
@@ -490,6 +491,7 @@ class Events extends Controller
             'phone' => $this->encrypt($phone),
             'phone_hash' => AddRequest::getHashPhone($phone),
             'extension' => $request->extension,
+            'operator' => Calls::getPinFromExtension($request->extension),
             'path' => $request->path,
             'call_at' => $request->call_at,
             'type' => $request->type,

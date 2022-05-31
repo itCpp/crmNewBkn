@@ -19,6 +19,7 @@ class CallDetailRecord extends Model
         'phone',
         'phone_hash',
         'extension',
+        'operator',
         'path',
         'call_at',
         'type',
