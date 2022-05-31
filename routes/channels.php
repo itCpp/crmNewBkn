@@ -87,3 +87,8 @@ Broadcast::channel('App.Crm.Sms.Requests', function ($user) {
 Broadcast::channel('App.Crm.Sms.All', function ($user) {
     return $user->can('sms_access_system');
 });
+
+/** Журнал вызовов коллцентра */
+Broadcast::channel('App.Crm.Calls.Log', function ($user) {
+    return $user->can('calls_log_access');
+});

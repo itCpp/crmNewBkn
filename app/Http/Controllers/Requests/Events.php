@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Events\CallsLogEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Events\Comings;
 use App\Http\Controllers\Settings;
@@ -494,6 +495,11 @@ class Events extends Controller
             'type' => $request->type,
             'duration' => $request->duration,
         ]);
+
+        try {
+            broadcast(new CallsLogEvent($row));
+        } finally {
+        }
 
         return $row->toArray();
     }

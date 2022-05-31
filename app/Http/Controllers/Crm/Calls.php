@@ -14,6 +14,8 @@ use Illuminate\Support\Str;
 
 class Calls extends Controller
 {
+    use CallsLog;
+
     /**
      * Handle the incoming request.
      *

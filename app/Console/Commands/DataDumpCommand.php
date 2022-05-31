@@ -37,7 +37,7 @@ class DataDumpCommand extends Command
         \App\Models\ChatRoomsUser::class,
         \App\Models\ChatRoomsViewTime::class,
         \App\Models\IpInfo::class,
-        \App\Models\TestingProcess::class,
+        // \App\Models\TestingProcess::class,
         \App\Models\RatingPeriodStory::class,
         \App\Models\RatingGlobalData::class,
         \App\Models\RatingStory::class,

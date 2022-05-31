@@ -15,6 +15,7 @@ class Start extends Controller
      * @var array
      */
     public static $permitsList = [
+        'calls_log_access', # Доступ к разделу журнала вызовов
         'clients_agreements_access', # Доступ к договорным клиентам
         'clients_consultation_access', # Доступ к клиентам с бесплатной консультацией
         'clients_show_phone', # Может видеть номера телефонов клиента
@@ -38,7 +39,7 @@ class Start extends Controller
         'sms_access', # Доступ к смс сообщениям
         'sms_access_system', # Доступ к сообщениям без заявки
         'user_fines_access', # Доступ к разделу штрафов
-        'user_fines_create', # Доступ к разделу штрафов
+        'user_fines_create', # Может создавать штраф сотруднику
     ];
 
     /**

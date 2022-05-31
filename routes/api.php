@@ -294,4 +294,11 @@ Route::group(['middleware' => 'user.token'], function () {
 
     /** Вывод внутренних телефонных номеров */
     Route::get('phoneboock', 'Crm\Phoneboock@get')->name('api.phoneboock');
+
+    /** Маршрутизация журнала вызовов */
+    Route::group(['prefix' => "calls", 'middleware' => "user.can:calls_log_access"], function () {
+
+        /** Выводит список звонков */
+        Route::post('/log', 'Crm\Calls@getLog');
+    });
 });
