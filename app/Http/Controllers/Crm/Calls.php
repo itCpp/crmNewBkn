@@ -8,6 +8,7 @@ use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\Requests;
 use App\Models\CallDetailRecord;
 use App\Models\CrmMka\CrmRequest;
+use App\Models\CrmMka\CrmUsersToken;
 use App\Models\Incomings\SipInternalExtension;
 use App\Models\RequestsRow;
 use App\Models\UsersSession;
@@ -149,8 +150,31 @@ class Calls extends Controller
         if (!$sip = SipInternalExtension::where('extension', $extension)->first())
             return null;
 
-        $session = UsersSession::where('ip', $sip->internal_addr)->orderBy('id', "DESC")->first();
+        if (!$sip->internal_addr)
+            return null;
+
+        if (env('NEW_CRM_OFF', true))
+            return self::getPinFromExtensionOldCrm($sip->internal_addr);
+
+        $session = UsersSession::where('ip', $sip->internal_addr)
+            ->orderBy('id', "DESC")
+            ->first();
 
         return $session->user_pin ?? null;
+    }
+
+    /**
+     * Поиск оператора в старой ЦРМ
+     * 
+     * @param  string $ip
+     * @return string|null
+     */
+    public static function getPinFromExtensionOldCrm($ip)
+    {
+        $session = CrmUsersToken::where('ip', $ip)
+            ->orderBy('id', "DESC")
+            ->first();
+
+        return $session->pin ?? null;
     }
 }
