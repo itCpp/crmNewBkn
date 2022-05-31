@@ -17,14 +17,19 @@ trait CallsLog
      */
     public function getLog(Request $request)
     {
-        CallDetailRecord::orderBy('id', "DESC")
-            ->paginate(40)
-            ->each(function ($row) use (&$rows) {
-                $rows[] = $this->logRowSerialize($row);
-            });
+        $data = CallDetailRecord::orderBy('id', "DESC")
+            ->paginate(40);
+
+        $data->each(function ($row) use (&$rows) {
+            $rows[] = $this->logRowSerialize($row);
+        });
 
         return response()->json([
             'rows' => $rows ?? [],
+            'current' => $data->currentPage(),
+            'next' => $data->currentPage() + 1,
+            'total' => $data->total(),
+            'pages' => $data->lastPage(),
             'hidePhone' => !$request->user()->can('clients_show_phone'),
         ]);
     }
