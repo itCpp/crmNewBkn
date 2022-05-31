@@ -25,6 +25,7 @@ trait CallsLog
 
         return response()->json([
             'rows' => $rows ?? [],
+            'hidePhone' => !$request->user()->can('clients_show_phone'),
         ]);
     }
 
@@ -63,5 +64,21 @@ trait CallsLog
         $row->hidePhone = $type === $hide_phone;
 
         return $row;
+    }
+
+    /**
+     * Вывод одной строки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getLogRow(Request $request)
+    {
+        if (!$row = CallDetailRecord::find($request->id))
+            return response()->json(['message' => "Запись истории звонка"], 400);
+
+        return response()->json([
+            'row' => $this->logRowSerialize($row),
+        ]);
     }
 }

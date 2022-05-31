@@ -299,6 +299,9 @@ Route::group(['middleware' => 'user.token'], function () {
     Route::group(['prefix' => "calls", 'middleware' => "user.can:calls_log_access"], function () {
 
         /** Выводит список звонков */
-        Route::post('/log', 'Crm\Calls@getLog');
+        Route::post('log', 'Crm\Calls@getLog');
+
+        /** Проверка скрытого номера телефона */
+        Route::post('get', 'Crm\Calls@getLogRow');
     });
 });
