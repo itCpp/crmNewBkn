@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use App\Http\Controllers\Crm\CallsLog;
+use App\Http\Controllers\Crm\Calls;
 use App\Models\CallDetailRecord;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -14,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 
 class CallsLogEvent implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels, CallsLog;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
      * Create a new event instance.
@@ -35,7 +35,9 @@ class CallsLogEvent implements ShouldBroadcast
      */
     public function broadcastWith()
     {
-        return $this->logRowSerialize($this->file)->toArray();
+        $calls = new Calls;
+
+        return $calls->logRowSerialize($this->file)->toArray();
     }
 
     /**
