@@ -115,6 +115,8 @@ class UserData
         // Дата регистрации
         $this->date = date("d.m.Y H:i:s", strtotime($this->created_at));
 
+        $this->roles = [];
+
         // Список ролей, пренаджежащих пользователю  
         foreach ($user->roles as $role)
             $this->roles[] = $role->role;
@@ -213,7 +215,7 @@ class UserData
                 return true;
         }
 
-        $roles = Role::find($this->roles);
+        $roles = Role::whereIn('role', $this->roles)->get();
 
         foreach ($roles as $role) {
 

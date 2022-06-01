@@ -17,6 +17,7 @@ class RequestsCounterStory extends Model
     protected $fillable = [
         'counter_date',
         'counter_data',
+        'to_pin',
     ];
 
     /**
