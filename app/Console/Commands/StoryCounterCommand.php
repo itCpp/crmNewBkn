@@ -11,6 +11,18 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 
+/**
+ * Запись истории счетчиков
+ * 
+ * Данные счетчиков записываются с учетом прав доступа к заявкам, подсчет
+ * производится для сотрудников, фигурировавших в рейтинге за прошедший день
+ * 
+ * Полные данные счетчка записаны с правами супер-админа и сохранены в
+ * базе данных без персонального идентификационного номера сотрудника
+ * 
+ * @method array getPinsFromCallCenterRating(\Illuminate\Http\Request $request)
+ * @method \App\Models\RequestsCounterStory writeCounter(\Illuminate\Http\Request $request, string|null $date, bool $to_client)
+ */
 class StoryCounterCommand extends Command
 {
     /**
@@ -104,7 +116,7 @@ class StoryCounterCommand extends Command
      * @param  \Illuminate\Http\Request $request
      * @param  null|string $date
      * @param  boolean $to_client Флаг подсчета информации о клиентах
-     * @return int
+     * @return \App\Models\RequestsCounterStory
      */
     public function writeCounter(Request $request, $date, $to_client = false)
     {
@@ -115,7 +127,7 @@ class StoryCounterCommand extends Command
         if ($to_client)
             $data['clients'] = $counters->getClientsData($date);
 
-        RequestsCounterStory::create([
+        return RequestsCounterStory::create([
             'counter_date' => $date ?: now(),
             'counter_data' => encrypt($data),
             'to_pin' => $request->user()->pin,
