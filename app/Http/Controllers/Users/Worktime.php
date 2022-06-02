@@ -91,8 +91,8 @@ class Worktime extends Controller
     /**
      * Запись события о смене статуса
      * 
-     * @param int $pin
-     * @param string $type
+     * @param  int $pin
+     * @param  string $type
      * @return \App\Models\UserWorkTime
      */
     public static function writeEvent($pin, $type)
@@ -151,7 +151,7 @@ class Worktime extends Controller
     /**
      * Проверка наличия необработанных заявок и запись статуса
      * 
-     * @param null|int $pin
+     * @param  null|int $pin
      * @return \App\Models\UserWorkTime|null
      */
     public static function checkAndWriteWork($pin)
@@ -175,11 +175,11 @@ class Worktime extends Controller
     /**
      * Определение цвета по текущему статусу
      * 
-     * @param null|string $type
-     * @param null|string $timeout
+     * @param  null|string $type
+     * @param  null|string $timeout
      * @return null|string
      */
-    public static function getColorButton(null|string $type, null|string $timeout = null): null|string
+    public static function getColorButton($type, $timeout = null)
     {
         // Перив
         if (in_array($type, self::$timeout) or in_array($timeout, self::$timeout))
@@ -202,7 +202,7 @@ class Worktime extends Controller
     /**
      * Определение цвета кнопки установки перерыва
      * 
-     * @param string|null $status
+     * @param  string|null $status
      * @return string
      */
     public static function getColorButtonTimeout(string|null $status): string
@@ -217,16 +217,13 @@ class Worktime extends Controller
      * Определение активности кнопки установки перерыва
      * Также проверка возможности установить перерыв
      * 
-     * @param string|null $status Основной последний статус рабочего времени
-     * @param string|null $timeout Последний статус с перерывом
+     * @param  string|null $status Основной последний статус рабочего времени
+     * @param  string|null $timeout Последний статус с перерывом
      * @return bool
      */
-    public static function getPropDisabledButtonTimeout(string|null $status, string|null $timeout): bool
+    public static function getPropDisabledButtonTimeout($status, $timeout)
     {
-        if (in_array($timeout, self::$timeout))
-            return false;
-
-        if (in_array($status, self::$inWork))
+        if (in_array($status, self::$inWork) and !in_array($timeout, self::$timeout))
             return true;
 
         return false;
@@ -235,8 +232,8 @@ class Worktime extends Controller
     /**
      * Вывод массива данных по рабочему времени
      * 
-     * @param \App\Models\UserWorkTime $row
-     * @param bool $timeout Флаг необходимости поиска "перивного" статуса
+     * @param  \App\Models\UserWorkTime $row
+     * @param  bool $timeout Флаг необходимости поиска "перивного" статуса
      * @return array
      */
     public static function getDataForEvent(UserWorkTime $row, bool $timeout = true)
@@ -256,7 +253,7 @@ class Worktime extends Controller
     /**
      * Поиск последнего статуса с перерывом
      * 
-     * @param int|string $pin
+     * @param  int|string $pin
      * @return string|null
      */
     public static function getLastTimeoutStatus(int|string $pin): string|null
@@ -274,7 +271,7 @@ class Worktime extends Controller
     /**
      * Добавление информации о перерыве
      * 
-     * @param \App\Models\UserWorkTime $row
+     * @param  \App\Models\UserWorkTime $row
      * @return \App\Models\UserWorkTime
      */
     public static function addepdTimeoutData($row)
@@ -283,7 +280,7 @@ class Worktime extends Controller
         $row->timeout_color = self::getColorButtonTimeout($row->timeout_icon);
 
         // Определение свойства дизактивации для икноки смены перерыва
-        $row->timeout_disabled = self::getPropDisabledButtonTimeout($row->timeout_icon, $row->event_type);
+        $row->timeout_disabled = self::getPropDisabledButtonTimeout($row->event_type, $row->timeout_icon);
 
         // Определение иконки
         $row->timeout_icon = in_array($row->timeout_icon, self::$timeoutOf)
@@ -301,8 +298,8 @@ class Worktime extends Controller
     /**
      * Ручная установка статуса сотрудника
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setWorkTime(Request $request)
     {
@@ -371,7 +368,7 @@ class Worktime extends Controller
     /**
      * Вывод ленты рабочего времени
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return array
      */
     public static function getTapeTimes(Request $request)
