@@ -343,7 +343,7 @@ class AdminUsers extends Controller
     /**
      * Вывод ролей и разрешений для сотрудника
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public static function getRolesAndPermits(Request $request)
@@ -355,8 +355,8 @@ class AdminUsers extends Controller
         $roles = new Role;
 
         // Роли с учетом своих ролей
-        if ($request->__user->roles and !$request->__user->superadmin) {
-            $roles = $roles->whereIn('role', $request->__user->roles);
+        if ($request->user()->roles and !$request->user()->superadmin) {
+            $roles = $roles->whereIn('role', $request->user()->roles);
         }
 
         $roles = $roles->orderBy('lvl', "DESC")->get();
@@ -370,7 +370,7 @@ class AdminUsers extends Controller
         }
 
         // Разрешенные права
-        $rights = $request->__user->getListPermits($permits_list);
+        $rights = $request->user()->getListPermits($permits_list);
 
         // Список разрешений, с учетом своих разрешений
         foreach ($permits_all as $permit) {
@@ -380,6 +380,16 @@ class AdminUsers extends Controller
 
         // Роли сотрудника
         foreach ($user->roles as $role) {
+
+            $role->permissions()
+                ->when(count($roles_permits ?? []) > 0, function ($query) use (&$roles_permits) {
+                    $query->whereNotIn('permissions.permission', $roles_permits);
+                })
+                ->get()
+                ->each(function ($row) use (&$roles_permits) {
+                    $roles_permits[] = $row->permission;
+                });
+
             $user_roles[] = $role->role;
         }
 
@@ -393,13 +403,15 @@ class AdminUsers extends Controller
             'permits' => $permits ?? [],
             'user_roles' => $user_roles ?? [],
             'user_permits' => $user_permits ?? [],
+            'roles_permits' => self::getPermitsFromRoles($user),
+            'superadmin' => (new UserData($user))->superadmin,
         ]);
     }
 
     /**
      * Установка роли пользователю
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public static function setUserRole(Request $request)
@@ -428,7 +440,32 @@ class AdminUsers extends Controller
             'role' => $request->role,
             'roles' => $roles ?? [],
             'checked' => $search ? false : true,
+            'roles_permits' => self::getPermitsFromRoles($user),
+            'superadmin' => (new UserData($user))->superadmin,
         ]);
+    }
+
+    /**
+     * Выводит список разрешений, принадлежащих ролям пользователя
+     * 
+     * @param  \App\Models\User $user
+     * @return array
+     */
+    public static function getPermitsFromRoles($user)
+    {
+        foreach ($user->roles as $role) {
+
+            $role->permissions()
+                ->when(count($roles_permits ?? []) > 0, function ($query) use (&$roles_permits) {
+                    $query->whereNotIn('permissions.permission', $roles_permits);
+                })
+                ->get()
+                ->each(function ($row) use (&$roles_permits) {
+                    $roles_permits[] = $row->permission;
+                });
+        }
+
+        return array_values(array_unique($roles_permits ?? []));
     }
 
     /**
