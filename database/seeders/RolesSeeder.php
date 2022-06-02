@@ -16,6 +16,7 @@ class RolesSeeder extends Seeder
         'callCenterManager' => [
             'permissions' => [
                 'rating_access',
+                'rating_show_chiefs',
                 'requests_access',
                 'requests_add',
                 'requests_addr_change',
