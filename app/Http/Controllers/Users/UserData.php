@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Users;
 
-use App\Http\Controllers\Controller;
 use App\Models\CallcenterSector;
 use App\Models\Role;
+use App\Models\Status;
 use App\Models\Tab;
 
 /**
@@ -84,7 +84,8 @@ class UserData
     /**
      * Создание объекта
      * 
-     * @param \App\Models\User $user Экземпляр модели пользователя
+     * @param  \App\Models\User $user Экземпляр модели пользователя
+     * @return void
      */
     public function __construct($user)
     {
@@ -128,7 +129,7 @@ class UserData
     /**
      * Магический метод для вывода несуществующего значения
      * 
-     * @param string $name
+     * @param  string $name
      * @return mixed
      */
     public function __get($name)
@@ -142,8 +143,8 @@ class UserData
     /**
      * Формирование имени и отчества
      * 
-     * @param string $name Имя
-     * @param string $patronymic Отчество
+     * @param  string $name Имя
+     * @param  string $patronymic Отчество
      * @return string
      */
     public static function createNameIo($name, $patronymic)
@@ -158,9 +159,9 @@ class UserData
     /**
      * Формирование полного фио
      * 
-     * @param string $surname Фамилия
-     * @param string $name Имя
-     * @param string $patronymic Отчество
+     * @param  string $surname Фамилия
+     * @param  string $name Имя
+     * @param  string $patronymic Отчество
      * @return string
      */
     public static function createNameFull($surname, $name, $patronymic)
@@ -174,9 +175,9 @@ class UserData
     /**
      * Формирование сокращенного фио
      * 
-     * @param string $surname Фамилия
-     * @param string $name Имя
-     * @param string $patronymic Отчество
+     * @param  string $surname Фамилия
+     * @param  string $name Имя
+     * @param  string $patronymic Отчество
      * @return string
      */
     public static function createNameFio($surname, $name, $patronymic)
@@ -191,7 +192,7 @@ class UserData
     /**
      * Метод записи события рабочего веремни сотрудника
      * 
-     * @param string $type
+     * @param  string $type
      * @return \App\Models\UserWorkTime
      */
     public function writeWorkTime($type)
@@ -202,7 +203,7 @@ class UserData
     /**
      * Проверка разрешения у пользователя
      * 
-     * @param array     $permits Список разрешений к проверке
+     * @param  array $permits Список разрешений к проверке
      * @return bool
      */
     public function can(...$permits)
@@ -215,39 +216,33 @@ class UserData
                 return true;
         }
 
-        $roles = Role::whereIn('role', $this->roles)->get();
+        foreach ($this->__user->roles()->get() as $role) {
 
-        foreach ($roles as $role) {
-
-            $permissions = $role->permissions()
+            $role->permissions()
                 ->whereIn('roles_permissions.permission', $permits)
                 ->get()
-                ->each(function ($row) {
-                    $this->__permissions->appends([
-                        $row->permission => true
-                    ]);
+                ->each(function ($row) use (&$checkeds) {
+                    $checkeds[] = $row->permission;
                 });
-
-            if (count($permissions))
-                return true;
         }
 
-        $permissions = $this->__user
-            ->permissions()
+        $this->__user->permissions()
             ->whereIn('permission', $permits)
             ->get()
-            ->each(function ($row) {
-                $this->__permissions->appends([
-                    $row->permission => true
-                ]);
+            ->each(function ($row) use (&$checkeds) {
+                $checkeds[] = $row->permission;
             });
 
-        if (count($permissions))
-            return true;
+        $checkeds = array_values(array_unique($checkeds ?? []));
 
-        foreach ($permits as $permit) {
-            $this->__permissions->$permit = false;
-        }
+        foreach ($permits as $permit)
+            $appends[$permit] = in_array($permit, $checkeds);
+
+        $this->__permissions->appends($appends ?? []);
+
+        foreach ($permits as $permit)
+            if ($this->__permissions->$permit)
+                return true;
 
         return false;
     }
@@ -255,8 +250,8 @@ class UserData
     /**
      * Вывод списка разрешений пользователя
      * 
-     * @param array     $permits Список разрешений к проверке
-     * @return Permissions
+     * @param  array $permits Список разрешений к проверке
+     * @return \App\Http\Controllers\Users\Permissions
      */
     public function getListPermits($permits = [])
     {
@@ -294,7 +289,7 @@ class UserData
     /**
      * Вывод уже проверенных разрешений
      * 
-     * @return Permissions
+     * @return \App\Http\Controllers\Users\Permissions
      */
     public function checkedPermits()
     {
@@ -304,8 +299,8 @@ class UserData
     /**
      * Формирование списка разрешений для супер-админа
      * 
-     * @param array     $permits Список заправшиваемых разрешений
-     * @return Permissions
+     * @param  array $permits Список заправшиваемых разрешений
+     * @return \App\Http\Controllers\Users\Permissions
      */
     protected function superAdminPermitsList($permits)
     {
@@ -382,7 +377,7 @@ class UserData
     /**
      * Проверка разрешения на вывод данных по вкладке
      * 
-     * @param int $id Идентификатор вкладки
+     * @param  int $id Идентификатор вкладки
      * @return bool
      */
     public function canTab($id = null)
@@ -409,7 +404,7 @@ class UserData
     public function getStatusesList()
     {
         if ($this->superadmin)
-            return \App\Models\Status::all();
+            return Status::all();
 
         $statuses = [];
         $id = [];

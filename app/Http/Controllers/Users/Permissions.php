@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Users;
 
 class Permissions
 {
-
     /**
      * Инициализация объекта
      * 
