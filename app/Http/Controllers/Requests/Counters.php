@@ -173,12 +173,25 @@ class Counters extends Controller
      * 
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
+     * 
+     * @todo По необходимости добавить право `counter_all_data` в общую таблицу
      */
     public function getCounterPage(Request $request)
     {
         $story = [];
 
-        RequestsCounterStory::where('counter_date', '>=', now()->subDays(30))
+        $pin = optional($request->user())->pin;
+        $can = (bool) optional($request->user())->can('counter_all_data');
+
+        $show = ((bool) $pin and $can);
+
+        RequestsCounterStory::where('counter_date', '>=', now()->subDays(30)->format("Y-m-d"))
+            ->when($show === true, function ($query) {
+                $query->where('to_pin', null);
+            })
+            ->when($show === false, function ($query) use ($request) {
+                $query->where('to_pin', optional($request->user())->pin);
+            })
             ->get()
             ->each(function ($row) use (&$story) {
 
