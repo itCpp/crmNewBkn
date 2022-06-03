@@ -105,10 +105,10 @@ class OldRequestsQueueCommand extends Command
         if ($row->pin_done !== null)
             $done_pin = (int) $row->pin_done > 0 ? $row->pin_done : "AUTO";
 
-        if ($row->done_type == 1)
-            $row->done_type = 2;
-        else if ($row->done_type == 2)
-            $row->done_type = 1;
+        if ($row->done == 1)
+            $row->done = 2;
+        else if ($row->done == 2)
+            $row->done = 1;
 
         RequestsQueue::create([
             'request_data' => $request_data,
@@ -116,7 +116,7 @@ class OldRequestsQueueCommand extends Command
             'site' => idn_to_utf8($row->site),
             'user_agent' => $row->user_agent ?: null,
             'done_pin' => $done_pin ?? null,
-            'done_type' => $row->done_type,
+            'done_type' => $row->done,
             'done_at' => $row->done_time,
             'created_at' => $row->created_at,
             'hash' => md5($hash),
