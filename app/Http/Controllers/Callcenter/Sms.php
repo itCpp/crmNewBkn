@@ -39,8 +39,9 @@ class Sms extends Controller
         else if (!$message)
             $alert = "Шаблон сообщения не сформирован";
 
-        if ($alert ?? null)
-            return response()->json(['message' => $alert], 400);
+        // Не возвращать, так как проверка происходит во фронтенде
+        // if ($alert ?? null)
+        //     return response()->json(['message' => $alert], 400);
 
         $request->row = $row;
 
