@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddColumnHashRequestsQueuesTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('requests_queues', function (Blueprint $table) {
+            $table->string('hash', 50)->nullable()->comment('Хэш очереди')->index('hash');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('requests_queues', function (Blueprint $table) {
+            $table->dropIndex('hash');
+            $table->dropColumn('hash');
+        });
+    }
+}

@@ -166,8 +166,6 @@ class RequestsGetFromSitesCommand extends Command
 
             $this->log->info("[{$connection}] " . count($data) . " {$db['name']}");
             $this->line(date("[Y-m-d H:i:s]") . "[{$connection}][" . count($data) . "][<info>{$db['name']}</info>]");
-        } catch (QueryException $e) {
-            return $this->exceptionWrite($connection, $e);
         } catch (Exception $e) {
             return $this->exceptionWrite($connection, $e);
         }
@@ -222,7 +220,7 @@ class RequestsGetFromSitesCommand extends Command
      */
     public function createQueue($row)
     {
-        $request_data = (object) Controller::encrypt([
+        $data = [
             'phone' => $row->number,
             'client_name' => $row->name,
             'comment' => $row->comment,
@@ -235,7 +233,14 @@ class RequestsGetFromSitesCommand extends Command
             'utm_term' => $row->utm_term,
             'device' => $row->device,
             'region' => $row->region,
-        ]);
+        ];
+
+        $hash = "";
+
+        foreach ($data as $key => $value)
+            $hash .= (string) $key . (string) $value . ";";
+
+        $request_data = (object) Controller::encrypt($data);
 
         $queue = RequestsQueue::create([
             'request_data' => $request_data,
@@ -246,6 +251,7 @@ class RequestsGetFromSitesCommand extends Command
                 $row->created_at ?? now()->format("Y-m-d H:i:s"),
                 3
             ),
+            'hash' => md5($hash),
         ]);
 
         return $queue;

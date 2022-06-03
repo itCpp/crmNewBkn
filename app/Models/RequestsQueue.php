@@ -25,6 +25,7 @@ class RequestsQueue extends Model
         'done_type',
         'done_at',
         'created_at',
+        'hash',
     ];
 
     /**
