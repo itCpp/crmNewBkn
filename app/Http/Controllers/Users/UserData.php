@@ -480,10 +480,31 @@ class UserData
     /**
      * Выводит источники, доступные сотруднику
      * 
-     * @return object
+     * @return \Illuminate\Support\Collection
      */
     public function getSourceList()
     {
-        return RequestsSource::all();
+        if (!empty($this->source_list))
+            return $this->source_list;
+
+        if ($this->superadmin)
+            return RequestsSource::orderBy('name')->get();
+
+        $ids = [];
+        $sources = [];
+
+        foreach (($this->__user->roles ?? []) as $role) {
+
+            $role->sources->each(function ($source) use (&$sources, &$ids) {
+
+                if (in_array($source->id, $ids))
+                    return;
+
+                $ids[] = $source->id;
+                $sources[] = $source;
+            });
+        }
+
+        return $this->source_list = collect($sources)->sortBy('name')->values();
     }
 }

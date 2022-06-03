@@ -221,7 +221,26 @@ class RequestsQuery extends Controller
         if (!$this->user)
             return $this;
 
-        // $this->model = $this->model->where('filter', 1);
+        return $this->setUserPermitsFilterSourceList();
+    }
+
+    /**
+     * Применение фильтра по разрешенным источникам
+     * 
+     * @return $this
+     */
+    public function setUserPermitsFilterSourceList()
+    {
+        if (optional($this->user)->superadmin)
+            return $this;
+
+        $sources = $this->user->getSourceList()
+            ->map(function ($row) {
+                return $row->id;
+            })
+            ->toArray();
+
+        $this->model = $this->model->whereIn('source_id', $sources);
 
         return $this;
     }

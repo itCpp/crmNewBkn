@@ -38,6 +38,7 @@ class RolesSeeder extends Seeder
             ],
             'statuses' => [1, 2, 3, 4, 5, 6, 7, 8],
             'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            'sources' => [1, 2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20, 21, 22, 23],
         ],
         'admin' => [
             'permissions' => [
@@ -59,6 +60,7 @@ class RolesSeeder extends Seeder
             ],
             'statuses' => [1, 2, 3, 4, 5, 6, 8],
             'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            'sources' => [1, 2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20, 21, 22, 23],
         ],
         'caller' => [
             'permissions' => [
@@ -70,6 +72,7 @@ class RolesSeeder extends Seeder
             ],
             'statuses' => [1, 2, 3, 4, 5],
             'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            'sources' => [1, 2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20, 21, 22, 23],
         ],
         'administrative' => [
             'permissions' => [
@@ -112,6 +115,11 @@ class RolesSeeder extends Seeder
             // Свзяь роли со статусами заявок
             foreach ($to['statuses'] ?? [] as $status) {
                 $role->statuses()->attach($status);
+            }
+
+            // Доступ роли к источникам
+            foreach ($to['sources'] ?? [] as $source) {
+                $role->sources()->attach($source);
             }
         });
     }

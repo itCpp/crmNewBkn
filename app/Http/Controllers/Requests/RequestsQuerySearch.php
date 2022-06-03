@@ -24,6 +24,7 @@ trait RequestsQuerySearch
         }
 
         $this->setUserPermits()
+            ->setUserPermitsFilter()
             ->orderBy();
 
         return $this->model;
