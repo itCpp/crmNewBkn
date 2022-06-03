@@ -68,6 +68,8 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('setTabForRole', 'Dev\Roles@setTabForRole')->name('api.dev.setTabForRole');
         /** Присвоение роли доступа к вкладке */
         Route::post('setStatusForRole', 'Dev\Roles@setStatusForRole')->name('api.dev.setStatusForRole');
+        /** Назначение роли источник заявок */
+        Route::post('role/setSource', 'Dev\Roles@setSource')->name('api.dev.role.setSource');
     });
 
     /** Настройка источников и ресурсов */

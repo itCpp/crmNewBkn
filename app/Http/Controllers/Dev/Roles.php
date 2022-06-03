@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Role;
 use App\Models\Permission;
+use App\Models\RequestsSource;
 use App\Models\Tab;
 use App\Models\Status;
 
@@ -16,8 +17,8 @@ class Roles extends Controller
     /**
      * Загрузка страницы редактирования ролей
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getAllRoles(Request $request)
     {
@@ -35,8 +36,8 @@ class Roles extends Controller
     /**
      * Вывод данных одной роли
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getRole(Request $request)
     {
@@ -71,6 +72,16 @@ class Roles extends Controller
             })->sortBy('name_full')->values()->all();
         }
 
+        if ($request->getSources) {
+
+            $response['sources'] = RequestsSource::orderBy('name')->get();
+
+            $role->sources = $role->sources()->orderBy('name')->get();
+            $role->sourcesId = $role->sources->map(function ($row) {
+                return $row->id;
+            })->toArray();
+        }
+
         $response['role'] = $role;
 
         return response()->json($response);
@@ -79,8 +90,8 @@ class Roles extends Controller
     /**
      * Вывод разрешений роли
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getPermits(Request $request)
     {
@@ -103,8 +114,8 @@ class Roles extends Controller
     /**
      * Установка права роли
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setRolePermit(Request $request)
     {
@@ -129,8 +140,8 @@ class Roles extends Controller
     /**
      * Сохранение данных роли
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function saveRole(Request $request)
     {
@@ -144,7 +155,7 @@ class Roles extends Controller
             $rules['role'] .= "|unique:App\Models\Role,role";
         }
 
-        $validate = $request->validate($rules);
+        $request->validate($rules);
 
         if (!$role)
             $role = new Role;
@@ -167,8 +178,8 @@ class Roles extends Controller
     /**
      * Присвоение роли доступа к вкладке
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setTabForRole(Request $request)
     {
@@ -182,16 +193,18 @@ class Roles extends Controller
         else if ($presence and !$request->checked)
             $role->tabs()->detach($request->tabId);
 
+        parent::logData($request, $role);
+
         $request->tabsInfo = true;
 
-        return Roles::getRole($request);
+        return self::getRole($request);
     }
 
     /**
      * Присвоение роли доступа к кстатусу
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setStatusForRole(Request $request)
     {
@@ -205,8 +218,35 @@ class Roles extends Controller
         else if ($presence and !$request->checked)
             $role->statuses()->detach($request->statusId);
 
+        parent::logData($request, $role);
+
         $request->tabsInfo = true;
 
-        return Roles::getRole($request);
+        return self::getRole($request);
+    }
+
+    /**
+     * Установка роли доступа к источнику
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setSource(Request $request)
+    {
+        if (!$role = Role::find($request->role))
+            return response()->json(['message' => "Роль {$request->role} не найдена"], 400);
+
+        $presence = $role->sources()->where('id', $request->sourceId)->count();
+
+        if (!$presence and $request->checked)
+            $role->sources()->attach($request->sourceId);
+        else if ($presence and !$request->checked)
+            $role->sources()->detach($request->sourceId);
+
+        parent::logData($request, $role);
+
+        $request->getSources = true;
+
+        return self::getRole($request);
     }
 }
