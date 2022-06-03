@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Requests;
 
 use App\Exceptions\CreateRequestsSqlQuery;
 use App\Models\RequestsClient;
+use Illuminate\Support\Str;
 
 trait RequestsQuerySearch
 {
@@ -14,11 +15,15 @@ trait RequestsQuerySearch
      */
     public function setSearchQuery()
     {
-        $this->setSearchId()
-            ->setSearchPhone()
-            ->setSearchFio()
-            ->setSeatchPin()
-            ->setUserPermits()
+        if (is_object($this->search)) {
+
+            foreach ($this->search as $id => $value) {
+                $method = "setSearch" . Str::studly($id);
+                $this->$method();
+            }
+        }
+
+        $this->setUserPermits()
             ->orderBy();
 
         return $this->model;
@@ -52,7 +57,7 @@ trait RequestsQuerySearch
         $ids = [];
 
         if ($phone = $this->checkPhone($this->search->phone)) {
-            
+
             $hash = AddRequest::getHashPhone($phone);
             $clients = RequestsClient::where('hash', $hash)->get();
 
@@ -61,7 +66,6 @@ trait RequestsQuerySearch
                     $ids[] = $row->id;
                 }
             }
-
         }
 
         $this->model = $this->model->whereIn('id', array_unique($ids));
@@ -89,12 +93,75 @@ trait RequestsQuerySearch
      * 
      * @return $this
      */
-    public function setSeatchPin()
+    public function setSearchPin()
     {
         if (!$this->search->pin)
             return $this;
 
         $this->model = $this->model->where('pin', $this->search->pin);
+
+        return $this;
+    }
+
+    /**
+     * Поиск по региону
+     * 
+     * @return $this
+     */
+    public function setSearchRegion()
+    {
+        if (!$this->search->region)
+            return $this;
+
+        $this->model = $this->model->where('region', $this->search->region);
+
+        return $this;
+    }
+
+    /**
+     * Поиск по тематике
+     * 
+     * @return $this
+     */
+    public function setSearchTheme()
+    {
+        if (!$this->search->theme)
+            return $this;
+
+        $this->model = $this->model->where('theme', $this->search->theme);
+
+        return $this;
+    }
+
+    /**
+     * Поиск по источнику
+     * 
+     * @return $this
+     */
+    public function setSearchSource()
+    {
+        if (!$this->search->source)
+            return $this;
+
+        $this->model = $this->model->where('source_id', $this->search->source);
+
+        return $this;
+    }
+
+    /**
+     * Поиск по статусу
+     * 
+     * @return $this
+     */
+    public function setSearchStatus()
+    {
+        if (!$this->search->status)
+            return $this;
+
+        if ((int) $this->search->status < 0)
+            $this->search->status = null;
+
+        $this->model = $this->model->where('status_id', $this->search->status);
 
         return $this;
     }

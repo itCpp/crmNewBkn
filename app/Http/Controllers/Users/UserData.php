@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Users;
 
 use App\Models\CallcenterSector;
+use App\Models\RequestsSource;
 use App\Models\Role;
 use App\Models\Status;
 use App\Models\Tab;
@@ -474,5 +475,15 @@ class UserData
     public function getSectorName()
     {
         return CallcenterSector::find($this->callcenter_id)->name ?? null;
+    }
+
+    /**
+     * Выводит источники, доступные сотруднику
+     * 
+     * @return object
+     */
+    public function getSourceList()
+    {
+        return RequestsSource::all();
     }
 }

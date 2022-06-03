@@ -120,6 +120,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Вывод истории изменения в заявке */
         Route::post('story', 'Requests\Stories@get')->name('api.requests.story');
+
+        /** Выводит данные для окна поиска */
+        Route::get('search/info', 'Requests\Search@info')->name('api.requests.search.info');
     });
 
     /** Маршрутизация различных рейтингов */

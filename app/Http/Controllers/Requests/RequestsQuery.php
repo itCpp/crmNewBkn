@@ -132,6 +132,18 @@ class RequestsQuery extends Controller
     }
 
     /**
+     * Вызов несуществующих методов
+     * 
+     * @param  string $method
+     * @param  array $parameters
+     * @return $this
+     */
+    public function __call($method, $parameters)
+    {
+        return $this;
+    }
+
+    /**
      * Вывод сформированного запроса
      * 
      * @return string
