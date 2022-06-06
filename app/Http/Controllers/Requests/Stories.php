@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Offices\OfficesTrait;
+use App\Models\CallcenterSector;
 use App\Models\RequestsRow;
 use App\Models\RequestsStory;
 use Illuminate\Http\Request;
@@ -10,6 +12,8 @@ use Illuminate\Http\JsonResponse;
 
 class Stories extends Controller
 {
+    use OfficesTrait;
+
     /**
      * Ключи, имеющие изменения
      * 
@@ -34,6 +38,45 @@ class Stories extends Controller
         'old_story',
         'updated_at',
         'pivot',
+        'status_icon',
+        'source_id',
+        'sourse_resource',
+        'last_phone',
+        'deleted_at',
+        'query_type',
+    ];
+
+    /**
+     * Наименование колонок
+     * 
+     * @var array
+     */
+    protected $columns = [
+        'pin' => "Оператор",
+        'theme' => "Тематика",
+        'region' => "Регион",
+        'uplift' => "Новое обращение",
+        'address' => "Адрес офиса",
+        'comment' => "Суть обращения",
+        'event_at' => "Время события",
+        'status_id' => "Статус",
+        'uplift_at' => "Время обращения",
+        'created_at' => "Время создания",
+        'client_name' => "Имя клиента",
+        'check_moscow' => "Московский регион",
+        'comment_first' => "Первичный комментарий",
+        'comment_urist' => "Комментарий для юриста",
+        'callcenter_sector' => "Сектор",
+    ];
+
+    /**
+     * Колонки логического значения
+     * 
+     * @var array
+     */
+    protected $types_boolean = [
+        'uplift',
+        'check_moscow',
     ];
 
     /**
@@ -65,6 +108,7 @@ class Stories extends Controller
             'row' => $row,
             'rows' => $rows,
             'count' => RequestsStory::whereRequestId($request->id)->count(),
+            'columns' => $this->columns,
         ]);
     }
 
@@ -87,6 +131,15 @@ class Stories extends Controller
                     continue;
 
                 $row->$key = $value;
+
+                if (in_array($key, $this->types_boolean))
+                    $value = (int) $value == 0 ? "Нет" : "Да";
+
+                if ($key == "address")
+                    $value = $this->getOfficeNameFromAddressId($value);
+                else if ($key == "callcenter_sector")
+                    $value = $this->getCallCenterSectorName($value);
+
                 $row_data[] = ['key' => $key, 'value' => $value];
             }
         }
@@ -116,5 +169,30 @@ class Stories extends Controller
         $this->last = $row->toArray();
 
         return $item->toArray();
+    }
+
+    /**
+     * Поиск наименования офиса
+     * 
+     * @param  null|int $id
+     * @return null|string
+     */
+    public function getOfficeNameFromAddressId($id)
+    {
+        return $this->getOfficeName($id);
+    }
+
+    /**
+     * Поиск наименования сектора
+     * 
+     * @param  null|int $id
+     * @return null|string
+     */
+    public function getCallCenterSectorName($id)
+    {
+        if (!empty($this->call_center_sector_names[$id]))
+            return $this->call_center_sector_names[$id];
+
+        return $this->call_center_sector_names[$id] = CallcenterSector::find($id)->name ?? null;
     }
 }
