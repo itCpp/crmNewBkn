@@ -102,6 +102,7 @@ class RequestsAutoChangeCommand extends Command
         $change = $row->settings->auto_change_id;
 
         RequestsRow::where('status_id', $row->id)
+            ->where('status_id', '!=', $change)
             ->where($column, '<', now()->subMinute($minutes))
             ->orderBy('event_at')
             ->get()
