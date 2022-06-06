@@ -11,7 +11,6 @@ use App\Models\RequestsStory;
 use App\Models\RequestsStoryStatus;
 use App\Models\Status;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class RequestsAutoChangeCommand extends Command
 {

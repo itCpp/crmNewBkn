@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
 use App\Models\RequestsClient;
 use App\Models\RequestsRow;
@@ -79,6 +80,9 @@ class Clients extends Controller
         $request->row->clients;
 
         RequestsStory::write($request, $request->row);
+
+        // Отправка события об изменении заявки
+        broadcast(new UpdateRequestEvent($row))->toOthers();
 
         return response()->json([
             'message' => "Номер телефона добавлен в заявку",
