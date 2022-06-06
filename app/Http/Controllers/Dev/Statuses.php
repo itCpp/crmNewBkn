@@ -20,10 +20,21 @@ class Statuses extends Controller
     ];
 
     /**
+     * Все настройки статуса
+     * 
+     * @var array<string, mixed>
+     */
+    public static $settings = [
+        'auto_change_id' => Status::class, # Идентификатор статуса для смены
+        'auto_change_minutes' => "integer", # Время просроченного статуса
+        'auto_change_column' => ['event_at', 'created_at'], # Колонки учета времени
+    ];
+
+    /**
      * Список всех статусов
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getStatuses(Request $request)
     {
@@ -42,7 +53,7 @@ class Statuses extends Controller
     /**
      * Подготовка строки со статусом для вывода
      * 
-     * @param \App\Models\Status
+     * @param  \App\Models\Status
      * @return array
      */
     public static function serializeRow(Status $row)
@@ -57,7 +68,7 @@ class Statuses extends Controller
     /**
      * Список статусов для списка выбора
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return array
      */
     public static function getListStatuses(Request $request)
@@ -76,8 +87,8 @@ class Statuses extends Controller
     /**
      * Изменение данных статуса
      * 
-     * @param \Illuminate\Http\Request
-     * @return response
+     * @param  \Illuminate\Http\Request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function saveStatus(Request $request)
     {
@@ -133,7 +144,22 @@ class Statuses extends Controller
         $status->zeroing_data = is_array($zeroing ?? null) ? json_encode($zeroing) : null;
         $status->theme = $request->theme;
 
+        $settings = [];
+
+        if (is_array($request->settings)) {
+
+            foreach ($request->settings as $key => $value) {
+                if (isset(self::$settings[$key])) {
+                    $settings[$key] = $value;
+                }
+            }
+        }
+
+        $status->settings = $settings;
+
         $status->save();
+
+        parent::logData($request, $status);
 
         return response()->json([
             'status' => self::serializeRow($status),
@@ -143,8 +169,8 @@ class Statuses extends Controller
     /**
      * Создание нового статуса
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function createStatus(Request $request)
     {
@@ -154,8 +180,8 @@ class Statuses extends Controller
     /**
      * Вывод данных одного статуса
      * 
-     * @param \Illuminate\Http\Request
-     * @return response
+     * @param  \Illuminate\Http\Request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getStatusData(Request $request)
     {
@@ -164,13 +190,14 @@ class Statuses extends Controller
 
         return response()->json([
             'status' => self::serializeRow($status),
+            'settings' => self::getAllSettings($status),
         ]);
     }
 
     /**
      * Вывод данных по алгоритму обнуления
      * 
-     * @var string $name
+     * @param  string $name
      * @return null|array
      */
     public static function findAlgorithm($name = "")
@@ -186,8 +213,8 @@ class Statuses extends Controller
     /**
      * Смена темы оформления строки заявки
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setStatuseTheme(Request $request)
     {
@@ -202,5 +229,52 @@ class Statuses extends Controller
         return response()->json([
             'status' => self::serializeRow($status),
         ]);
+    }
+
+    /**
+     * Вывод доступных настроек
+     * 
+     * @param  \App\Models\Status $row
+     * @return array
+     */
+    public static function getAllSettings($row)
+    {
+        foreach (self::$settings as $setting_key => $setting) {
+
+            $type = gettype($setting);
+            $data = null;
+
+            if ($type == "string" and class_exists($setting)) {
+                $type = "array";
+                $data = (new $setting)->get()->map(function ($row) {
+
+                    if ($row->name)
+                        $text = $row->name;
+
+                    return [
+                        'key' => $row->id,
+                        'text' => $text ?? $row->id,
+                        'value' => $row->id,
+                    ];
+                })->toArray();
+            } else if ($type == "array") {
+
+                foreach ($setting as $key => $value) {
+                    $data[] = [
+                        'key' => $key,
+                        'text' => $value,
+                        'value' => $value,
+                    ];
+                }
+            }
+
+            $settings[] = [
+                'name' => $setting_key,
+                'type' => $type,
+                'data' => $data ?: null,
+            ];
+        }
+
+        return $settings ?? [];
     }
 }

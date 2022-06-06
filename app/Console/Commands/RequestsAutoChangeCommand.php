@@ -98,10 +98,11 @@ class RequestsAutoChangeCommand extends Command
     public function handleStep(Status $row)
     {
         $minutes = $row->settings->auto_change_minutes ?? $this->minutes;
+        $column = $row->settings->auto_change_column ?? "event_at";
         $change = $row->settings->auto_change_id;
 
         RequestsRow::where('status_id', $row->id)
-            ->where('event_at', '<', now()->subMinute($minutes))
+            ->where($column, '<', now()->subMinute($minutes))
             ->orderBy('event_at')
             ->get()
             ->each(function ($row) use ($change) {
