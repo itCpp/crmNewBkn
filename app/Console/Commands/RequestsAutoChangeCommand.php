@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Events\AppUserPinEvent;
 use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Requests\Requests;
 use App\Http\Controllers\Settings;
@@ -83,6 +84,12 @@ class RequestsAutoChangeCommand extends Command
 
             $row->count += $count;
             $row->save();
+
+            broadcast(new AppUserPinEvent([
+                'type' => "auto_change_count",
+                'message' => "Автоматически изменен статус заявок: {$count}",
+                'count' => $count,
+            ], $pin));
         }
 
         return 0;

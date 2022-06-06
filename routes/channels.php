@@ -23,6 +23,9 @@ Broadcast::channel('App.Users', function ($user) {
 Broadcast::channel('App.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
+Broadcast::channel('App.User.Pin.{pin}', function ($user, $pin) {
+    return (int) $user->pin === (int) $pin;
+});
 
 /** Главная страница сотрудника */
 Broadcast::channel('App.User.Page.{id}', function ($user, $id) {
