@@ -111,6 +111,9 @@ class CreatecrmCommand extends Command
         /** Перенос информации по штрафам */
         $this->call('old:fines');
 
+        /** Перенос очереди */
+        $this->call('old:requestsqueue');
+
         /** Отключение блокировки добавления новых заявок */
         Settings::set('DROP_ADD_REQUEST', false);
         /** Включение проверки СМС на шлюзах */
