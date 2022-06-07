@@ -377,13 +377,14 @@ class Worktime extends Controller
         $stop = now()->format("Y-m-d 20:00:00"); // Окончание рабочего дня
         $last = now()->format("Y-m-d H:i:s"); // Время последнего события
         $login = null; // Время авторизации
+        $last_event = null; // Последний тип события
 
         $rows = UserWorkTime::select('event_type', 'created_at')
             ->whereUserPin($request->user()->pin)
             ->where('date', now()->format('Y-m-d'))
             ->whereNotIn('event_type', self::$timeoutOf)
             ->get()
-            ->map(function ($row) use (&$start, &$stop, &$last, &$login) {
+            ->map(function ($row) use (&$start, &$stop, &$last, &$login, &$last_event) {
 
                 $row->timestamp = strtotime($row->created_at);
 
@@ -391,6 +392,19 @@ class Worktime extends Controller
                     $login = $row->created_at;
                 else if ($row->event_type == "logout")
                     $login = null;
+
+                $last_timeout = in_array($last_event, self::$timeout);
+                $no_timeout = in_array($row->event_type, [
+                    ...self::$timeoutOf,
+                    ...self::$disabled
+                ]);
+
+                if ($last_timeout and !$no_timeout) {
+                    $last_event = $row->event_type;
+                    $row->event_type = $last_timeout;
+                } else {
+                    $last_event = $row->event_type;
+                }
 
                 if ($start > $row->created_at)
                     $start = $row->created_at;
