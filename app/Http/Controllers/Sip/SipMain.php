@@ -34,8 +34,8 @@ class SipMain extends Controller
     /**
      * Вывод статистики звонков по внутренним номерам
      * 
-     * @param \Illuminate\Http\Request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function stats(Request $request)
     {
@@ -88,7 +88,7 @@ class SipMain extends Controller
     /**
      * Метод формирования данных одной строки
      * 
-     * @param \App\Models\Incomings\SipTimeEvent $row
+     * @param  \App\Models\Incomings\SipTimeEvent $row
      * @return null
      */
     public function rowData($row)
@@ -121,7 +121,7 @@ class SipMain extends Controller
     /**
      * Шаблон строки
      * 
-     * @param \App\Models\Incomings\SipTimeEvent $row
+     * @param  \App\Models\Incomings\SipTimeEvent $row
      * @return array
      */
     public function rowTemplate($row)
@@ -140,7 +140,7 @@ class SipMain extends Controller
     /**
      * Определение цвета события
      * 
-     * @param string $type
+     * @param  string $type
      * @return string
      */
     public function getEventColor($type)
@@ -157,7 +157,7 @@ class SipMain extends Controller
     /**
      * Расчет сдвига блока события
      * 
-     * @param array
+     * @param  array $event
      * @return array
      */
     public function getPercentEvent($event)
@@ -174,7 +174,7 @@ class SipMain extends Controller
     /**
      * Вывод статистики по звонкам
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return array
      */
     public function getTapeTimes(Request $request)
@@ -222,6 +222,7 @@ class SipMain extends Controller
 
                 return (object) [
                     'color' => $this->getEventColor($row->event_status),
+                    'timestamp' => strtotime($row->created_at),
                     'created_at' => $row->event_at,
                     'event_type' => $row->event_status,
                 ];
@@ -266,7 +267,7 @@ class SipMain extends Controller
     /**
      * Поиск столов, за которыми авторизирован сотрудник
      * 
-     * @param int $user_id
+     * @param  int $user_id
      * @return array
      */
     public function getTableAuths($user_id)
@@ -277,7 +278,7 @@ class SipMain extends Controller
             ->select('ip', 'created_at')
             ->where([
                 ['user_id', $user_id],
-                ['created_at', now()->startOfDay()]
+                ['created_at', '>', now()->startOfDay()]
             ])
             ->orderBy('created_at', "DESC")
             ->get()
