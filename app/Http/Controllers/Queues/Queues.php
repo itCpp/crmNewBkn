@@ -22,7 +22,41 @@ class Queues extends Controller
     /**
      * Вывод очереди
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getQueues(Request $request)
+    {
+        $done = (bool) $request->done;
+
+        $data = (new RequestsQueue)
+            ->when($done, function ($query) {
+                $query->where('done_type', '!=', null)
+                    ->orderBy('done_at', 'DESC');
+            })
+            ->when(!$done, function ($query) {
+                $query->where('done_type', null)
+                    ->orderBy('id');
+            })
+            ->paginate(self::LIMIT);
+
+        foreach ($data as $row) {
+            $queues[] = $this->modifyRow($row);
+        }
+
+        return response()->json([
+            'queues' => $queues ?? [],
+            'current' => $data->currentPage(),
+            'next' => $data->currentPage() + 1,
+            'total' => $data->total(),
+            'pages' => $data->lastPage(),
+        ]);
+    }
+
+    /**
+     * Вывод очереди
+     * 
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function getQueuesManualPaginate(Request $request)
@@ -74,40 +108,6 @@ class Queues extends Controller
             'next' => $request->page + 1,
             'total' => $total,
             'pages' => ceil($total / self::LIMIT),
-        ]);
-    }
-
-    /**
-     * Вывод очереди
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getQueues(Request $request)
-    {
-        $done = (bool) $request->done;
-
-        $data = (new RequestsQueue)
-            ->when($done, function ($query) {
-                $query->where('done_type', '!=', null)
-                    ->orderBy('done_at', 'DESC');
-            })
-            ->when(!$done, function ($query) {
-                $query->where('done_type', null)
-                    ->orderBy('id');
-            })
-            ->paginate(self::LIMIT);
-
-        foreach ($data as $row) {
-            $queues[] = $this->modifyRow($row);
-        }
-
-        return response()->json([
-            'queues' => $queues ?? [],
-            'current' => $data->currentPage(),
-            'next' => $data->currentPage() + 1,
-            'total' => $data->total(),
-            'pages' => $data->lastPage(),
         ]);
     }
 

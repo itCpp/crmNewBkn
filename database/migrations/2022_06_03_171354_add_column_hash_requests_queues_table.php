@@ -15,6 +15,7 @@ class AddColumnHashRequestsQueuesTable extends Migration
     {
         Schema::table('requests_queues', function (Blueprint $table) {
             $table->string('hash', 50)->nullable()->comment('Хэш очереди')->index('hash');
+            $table->index('done_at', 'done_at');
         });
     }
 
@@ -27,6 +28,7 @@ class AddColumnHashRequestsQueuesTable extends Migration
     {
         Schema::table('requests_queues', function (Blueprint $table) {
             $table->dropIndex('hash');
+            $table->dropIndex('done_at');
             $table->dropColumn('hash');
         });
     }
