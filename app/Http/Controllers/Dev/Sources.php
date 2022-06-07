@@ -151,15 +151,11 @@ class Sources extends Controller
         }
 
         // Источник с номером телефона
-        if ($phone = self::checkPhone($request->resource)) {
-
-            $request->phone = $phone;
-
+        if ($request->phone = self::checkPhone($request->resource)) {
             return self::createResourcePhone($request);
         }
 
-        if ($site = self::checkSiteUrl($request->resource)) {
-            $request->site = $site;
+        if ($request->site = self::checkSiteUrl($request->resource)) {
             return self::createResourceSite($request);
         }
 
@@ -176,16 +172,25 @@ class Sources extends Controller
      */
     public static function checkSiteUrl($resource)
     {
-        if (filter_var($resource, FILTER_VALIDATE_URL) !== false) {
+        $parse_url = parse_url($resource);
 
-            $url = parse_url($resource);
+        if (isset($parse_url['host']))
+            $host = $parse_url['host'];
+        else if (isset($parse_url['path']))
+            $host = $parse_url['path'];
+        else
+            $host = $resource;
 
-            return $url['host'] ?? null;
-        }
+        if (filter_var($host, FILTER_VALIDATE_URL) !== false)
+            return $host;
 
+        if (filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false)
+            return $host;
 
-        if (filter_var($resource, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false)
-            return $resource;
+        $ascii = idn_to_ascii($host);
+
+        if (filter_var($ascii, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false)
+            return $host;
 
         return false;
     }
