@@ -179,9 +179,8 @@ class SipMain extends Controller
      */
     public function getTapeTimes(Request $request)
     {
-        $this->getTableAuths($request->user()->id);
-
-        return $this->getTapeRows();
+        return $this->getTableAuths(optional($request->user())->id)
+            ->getTapeRows();
     }
 
     /**
@@ -268,12 +267,10 @@ class SipMain extends Controller
      * Поиск столов, за которыми авторизирован сотрудник
      * 
      * @param  int $user_id
-     * @return array
+     * @return $this
      */
     public function getTableAuths($user_id)
     {
-        $this->data['tables'] = [];
-
         UsersSession::withTrashed()
             ->select('ip', 'created_at')
             ->where([
@@ -282,11 +279,11 @@ class SipMain extends Controller
             ])
             ->orderBy('created_at', "DESC")
             ->get()
-            ->each(function ($row) use (&$ips) {
+            ->each(function ($row) use (&$ips, &$tables) {
 
                 $ips[] = $row->ip;
 
-                $this->data['tables'][] = (object) [
+                $tables[] = (object) [
                     'start' => $row->created_at,
                     'stop' => $row->deleted_at,
                     'ip' => $row->ip,
@@ -305,15 +302,23 @@ class SipMain extends Controller
 
         $last = null;
 
-        foreach ($this->data['tables'] as &$row) {
+        $this->data['tables'] = [];
+
+        foreach ($tables ?? [] as &$row) {
+
             $row->table = $addrs[$row->ip] ?? null;
 
             if ($last)
                 $row->stop = $last;
 
             $last = $row->start;
+
+            if ($row->table == null)
+                continue;
+
+            $this->data['tables'] = [];
         }
 
-        return $this->data['tables'];
+        return $this;
     }
 }
