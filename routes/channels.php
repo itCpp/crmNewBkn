@@ -20,6 +20,11 @@ Broadcast::channel('App.Users', function ($user) {
     return $user->toPresenceData();
 });
 
+/** Общие уведомления */
+Broadcast::channel('App.Alerts', function () {
+    return true;
+});
+
 Broadcast::channel('App.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
@@ -42,10 +47,6 @@ Broadcast::channel('App.Admin.Calls', function ($user) {
 
 /** Одобрение или отклонение авторизации пользователей */
 Broadcast::channel('App.Auth.{id}', function () {
-    return true;
-});
-
-Broadcast::channel('App.Alerts.{id}', function () {
     return true;
 });
 

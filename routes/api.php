@@ -271,6 +271,15 @@ Route::group(['middleware' => 'user.token'], function () {
             /** Включение сектора в распределение звонков */
             Route::post('setSectorDistribution', 'Admin\DistributionCalls@setSectorDistribution')->name('api.admin.setSectorDistribution');
         });
+
+        /** Маршруты рассылки */
+        Route::group(['prefix' => "mails"], function () {
+
+            /** Вывод рассылок */
+            Route::post('get', 'Admin\MailLists@get')->name('admin.mails.get');
+            /** Создание новой рассылки */
+            Route::put('create', 'Admin\MailLists@create')->name('admin.mails.create');
+        });
     });
 
     /** Управление штрафами */
