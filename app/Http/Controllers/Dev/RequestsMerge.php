@@ -413,7 +413,32 @@ class RequestsMerge extends Controller
      */
     public function getStatusId($row)
     {
+        if ($this->changeStatusCall($row))
+            $row->state = "bk";
+
         return $this->stateToStatusId[$row->state] ?? 6;
+    }
+
+    /**
+     * Определяет необходимость смены статуса созвона на БК
+     * 
+     * @param  CrmRequest|CrmNewRequestsState $row
+     * @return bool
+     */
+    public function changeStatusCall($row)
+    {
+        try {
+
+            if (!$datetime = $this->getEventAt($row))
+                return false;
+
+            if ($row->state == "sozvon" and now()->subMinutes(15) > now()->create($datetime)) {
+                return true;
+            }
+        } catch (Exception) {
+        }
+
+        return false;
     }
 
     /**
