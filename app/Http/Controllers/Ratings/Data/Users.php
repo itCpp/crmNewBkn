@@ -112,7 +112,12 @@ trait Users
             ...$this->сhiefs,
         ]);
 
-        $this->data->pin_list = $pins;
+        $user = optional($this->request->user());
+
+        if ($user->pin and $user->can('requests_pin_for_appointment'))
+            $pins[] = $user->pin;
+
+        $this->data->pin_list = array_values($pins);
         $this->data->newToOld = [];
 
         User::where(function ($query) use ($pins) {

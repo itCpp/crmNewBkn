@@ -85,15 +85,33 @@ trait CallCenterResult
 
         $places = array_unique($places);
 
+        $my_row = null;
+
         $this->data->users = $sorted->values()
-            ->map(function ($row) use ($places) {
+            ->map(function ($row, $item) use ($places, &$my_row) {
 
                 $place = array_search($row->efficiency, $places);
                 $row->place = $place !== null ? ($place + 1) : 0;
 
+                if ($row->id === optional(request()->user())->id)
+                    $my_row = $item;
+
                 return $row;
             })
             ->all();
+
+        /** Перенос своей строки рейтинга в начало списка */
+        if (!is_null($my_row) and isset($this->data->users[$my_row])) {
+
+            $for_top = [$this->data->users[$my_row]];
+
+            unset($this->data->users[$my_row]);
+
+            $this->data->users = [
+                ...$for_top,
+                ...$this->data->users,
+            ];
+        }
 
         return $this;
     }
