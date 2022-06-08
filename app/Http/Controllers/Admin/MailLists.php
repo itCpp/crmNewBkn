@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\UsersMailListJob;
 use App\Models\UsersMailList;
 use Illuminate\Http\Request;
 
@@ -42,6 +43,20 @@ class MailLists extends Controller
      */
     public function serializeRow(UsersMailList $row)
     {
+        if (!$row->done_at) {
+            $row->fail = $row->created_at < now()->subMinutes(5);
+        }
+
+        if (!$row->icon) {
+            $row->icon = match($row->type) {
+                'error' => "remove",
+                'success' => "checkmark",
+                'warning' => "warning circle",
+                'info' => "announcement",
+                default => "announcement",
+            };
+        }
+
         return $row;
     }
 
@@ -65,6 +80,8 @@ class MailLists extends Controller
             'markdown' => $request->markdown,
             'author_pin' => optional($request->user())->pin,
         ]);
+
+        UsersMailListJob::dispatch($row);
 
         return response()->json([
             'row' => $this->serializeRow($row),
