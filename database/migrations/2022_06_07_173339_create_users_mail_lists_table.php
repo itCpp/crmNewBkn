@@ -27,6 +27,7 @@ class CreateUsersMailListsTable extends Migration
             $table->boolean('markdown')->default(0)->comment('Markdown оформление текста');
             $table->json('response')->default(new Expression('(JSON_ARRAY())'));
             $table->integer('author_pin')->nullable();
+            $table->boolean('anonim')->default(1)->comment('Анонимная отправка');
             $table->timestamp('done_at')->nullable()->comment('Время завершения рассылки');
             $table->timestamps();
         });

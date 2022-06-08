@@ -79,6 +79,7 @@ class MailLists extends Controller
             'to_telegram' => $request->to_telegram,
             'markdown' => $request->markdown,
             'author_pin' => optional($request->user())->pin,
+            'anonim' => $request->anonim === null ? true : $request->anonim,
         ]);
 
         UsersMailListJob::dispatch($row);

@@ -25,6 +25,7 @@ class UsersMailList extends Model
         'to_telegram',
         'markdown',
         'author_pin',
+        'anonim',
         'done_at',
     ];
 
@@ -40,6 +41,7 @@ class UsersMailList extends Model
         'to_telegram' => "boolean",
         'markdown' => "boolean",
         'response' => "array",
+        'anonim' => "boolean",
         'done_at' => "datetime",
     ];
 }

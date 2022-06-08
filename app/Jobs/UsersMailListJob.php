@@ -121,7 +121,7 @@ class UsersMailListJob implements ShouldQueue
 
         User::where('deleted_at', null)
             ->when(isset($online), function ($query) use (&$online) {
-                $query->whereIn('', $online);
+                $query->whereIn('pin', $online);
             })
             ->lazy()
             ->each(function ($row) use (&$to_notice, $push) {
@@ -131,7 +131,7 @@ class UsersMailListJob implements ShouldQueue
                     'notif_type' => $this->row->type,
                     'notification' => $this->row->message,
                     'data' => $this->toast,
-                    'user_by_id' => $this->user_by_id,
+                    'user_by_id' => $this->row->anonim ? null : $this->user_by_id,
                 ]);
 
                 $to_notice['users_id'][$row->id] = $notification->id;
