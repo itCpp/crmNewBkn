@@ -84,6 +84,7 @@ class Users extends Controller
     {
         $permits = [
             'admin_access', # Доступ к админ-панели
+            'requests_access',
             'user_auth_query', # Может обработать запрос авторизации пользователя
             'user_create', # Может создавать новго сотрудника
         ];
