@@ -13,8 +13,8 @@ class Callcenters extends Controller
     /**
      * Вывод списка колл-центорв
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getCallcenters(Request $request)
     {
@@ -52,8 +52,8 @@ class Callcenters extends Controller
     /**
      * Вывод данных одного колл-центра
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getCallcenter(Request $request)
     {
@@ -70,8 +70,8 @@ class Callcenters extends Controller
     /**
      * Сохранение данных колл-центра
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function saveCallcenter(Request $request)
     {
@@ -87,9 +87,11 @@ class Callcenters extends Controller
 
         $row->name = $request->name;
         $row->comment = $request->comment;
-        $row->active = 1;
+        $row->active = (int) $request->active;
 
         $row->save();
+
+        parent::logData($request, $row);
 
         return response()->json([
             'callcenter' => self::serializeCallcenterRow($row),
@@ -99,8 +101,8 @@ class Callcenters extends Controller
     /**
      * Вывод списка секторов
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getCallcenterSectors(Request $request)
     {
