@@ -141,7 +141,13 @@ class RequestPins extends Controller
         $sessions = self::getLastAtiveTime($pins_searched);
 
         // Список офисов
-        $offices = Office::orderBy('active', 'DESC')->orderBy('name')->get();
+        $offices = Office::where('active', 1)
+            ->when((bool) $row->address, function ($query) use ($row) {
+                $query->orWhere('id', $row->address);
+            })
+            ->orderBy('active', 'DESC')
+            ->orderBy('name')
+            ->get();
 
         // Автоматическое применение адреса, если имется только один активный офис
         if (!$row->address) {
