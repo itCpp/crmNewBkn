@@ -401,7 +401,7 @@ class Worktime extends Controller
 
                 if ($last_timeout and !$no_timeout) {
                     $last_event = $row->event_type;
-                    $row->event_type = $last_timeout;
+                    $row->event_type = $last_event;
                 } else {
                     $last_event = $row->event_type;
                 }

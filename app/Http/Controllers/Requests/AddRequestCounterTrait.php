@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Requests;
 
 use App\Models\RequestsSource;
 use App\Models\RequestsSourcesResource;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 trait AddRequestCounterTrait
 {

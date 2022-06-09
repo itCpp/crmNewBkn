@@ -463,7 +463,10 @@ class Requests extends Controller
                 ->select('request_id', 'requests_story_pins.created_at')
                 ->join('requests_rows', function ($join) use ($pin) {
                     $join->on('requests_rows.id', '=', 'requests_story_pins.request_id')
-                        ->where('requests_rows.pin', $pin);
+                        ->where('requests_rows.pin', $pin)
+                        ->whereIn('requests_rows.source_id', request()->user()->getSourceList()->map(function ($row) {
+                            return $row->id;
+                        })->toArray());
                 })
                 ->where([
                     ['new_pin', $pin],
