@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\AddRequest;
+use App\Http\Controllers\Requests\AddRequestCounterTrait;
 use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Users\UsersMerge;
 use App\Models\Base\CrmComing;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Crypt;
 
 class RequestsMerge extends Controller
 {
+    use AddRequestCounterTrait;
+
     /**
      * Идентификатор последней проверки
      * 
@@ -220,6 +223,9 @@ class RequestsMerge extends Controller
         // Формирование галочки достоверности сути обращения
         if (in_array($row->verno, ["1", "2"]))
             $this->findAndWriteConfimedComment($row->id, (int) $row->verno);
+
+        /** Счетчик обращений по источникам */
+        $this->countQuerySourceResource($new->source_id, $new->sourse_resource);
 
         return $new;
     }

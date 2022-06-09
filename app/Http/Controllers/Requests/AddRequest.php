@@ -44,6 +44,8 @@ use Illuminate\Support\Facades\Crypt;
  */
 class AddRequest extends Controller
 {
+    use AddRequestCounterTrait;
+
     /**
      * Данные запроса
      * 
@@ -480,6 +482,9 @@ class AddRequest extends Controller
         $this->addData();
 
         $this->data->save();
+
+        /** Счетчик обращений по источникам */
+        $this->countQuerySourceResource($this->data->source_id, $this->data->sourse_resource);
 
         // Логирование изменений заявки
         RequestsStory::write($this->request, $this->data, true);
