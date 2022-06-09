@@ -80,7 +80,9 @@ class OldRequestsHistoryCommand extends Command
         while (!$stop) {
 
             $stop = $this->handleStep() ? false : true;
-            $bar->advance();
+
+            if (!$stop)
+                $bar->advance();
         }
 
         $bar->finish();
