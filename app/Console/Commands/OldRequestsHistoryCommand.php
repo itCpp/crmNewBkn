@@ -21,7 +21,8 @@ class OldRequestsHistoryCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'old:requestshistory';
+    protected $signature = 'old:requestshistory
+                            {--id=* : Идентификаторы заявок}';
 
     /**
      * The console command description.
@@ -62,6 +63,9 @@ class OldRequestsHistoryCommand extends Command
 
         $count = CrmNewRequestsStory::select('id_request')
             ->where('id_request', '!=', null)
+            ->when(count($this->option('id')) > 0, function ($query) {
+                $query->whereIn('id_request', $this->option('id'));
+            })
             ->orderBy('id_request')
             ->distinct()
             ->count('id_request');
@@ -96,7 +100,13 @@ class OldRequestsHistoryCommand extends Command
      */
     public function handleStep()
     {
-        $crm_request = CrmRequest::select('crm_requests.*')->join('crm_new_requests_story', 'crm_new_requests_story.id_request', '=', 'crm_requests.id')->where('crm_requests.id', '>', $this->last_id)->first();
+        $crm_request = CrmRequest::select('crm_requests.*')
+            ->join('crm_new_requests_story', 'crm_new_requests_story.id_request', '=', 'crm_requests.id')
+            ->where('crm_requests.id', '>', $this->last_id)
+            ->when(count($this->option('id')) > 0, function ($query) {
+                $query->whereIn('crm_requests.id', $this->option('id'));
+            })
+            ->first();
 
         if (!$crm_request)
             return false;
