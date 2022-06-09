@@ -275,6 +275,11 @@ class RequestPins extends Controller
         if (!$clear_pin and !$user)
             return response()->json(['message' => "Оператор не найден"], 400);
 
+        $user_data = new UserData($user);
+
+        if (!self::checkRequestPermit($user_data, $row))
+            return response()->json(['message' => "Доступ сотрудника к заявке ограничен. {$user_data->name_fio} не сможет её обработать."], 400);
+
         $old = $row->pin;
 
         $row->pin = $user->pin ?? null;
@@ -307,5 +312,23 @@ class RequestPins extends Controller
         return response()->json([
             'request' => $row,
         ]);
+    }
+
+    /**
+     * Проверка права доступа сотрудника к заявке
+     * 
+     * @param  \App\Http\Controllers\Users\UserData $user
+     * @param  \App\Models\RequestsRow $row
+     * @return boolean
+     */
+    public static function checkRequestPermit(UserData $user, RequestsRow $row)
+    {
+        /** Проверка по источнику */
+        foreach ($user->getSourceList()->toArray() as $source) {
+            if ($row->source_id == $source['id'])
+                return true;
+        }
+
+        return false;
     }
 }
