@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Events\AppUserEvent;
 use App\Events\Users\MailListAdminEvent;
 use App\Events\Users\MailListEvent;
+use App\Events\Users\NotificationsEvent;
 use App\Models\Notification;
 use App\Models\User;
 use App\Models\UsersMailList;
@@ -96,35 +97,33 @@ class UsersMailListJob implements ShouldQueue
         $this->user_by = User::where('pin', $this->row->author_pin)->first();
         $this->user_by_id = optional($this->user_by)->id;
 
-        if ($this->row->to_online) {
-            $online = UsersSession::select('user_pin')
-                ->where('created_at', '>=', now()->startOfDay())
-                ->distinct()
-                ->get()
-                ->map(function ($row) {
-                    return $row->user_pin;
-                })
-                ->toArray();
+        $online = UsersSession::select('user_pin')
+            ->where('created_at', '>=', now()->startOfDay())
+            ->distinct()
+            ->get()
+            ->map(function ($row) {
+                return $row->user_pin;
+            })
+            ->toArray();
 
-            $to_notice['online'] = $online;
+        $to_notice['online'] = $online;
 
-            if (!count($online)) {
+        if ($this->row->to_online and !count($online)) {
 
-                $this->row->response = array_merge(
-                    $this->row->response,
-                    ['to_notice' => $to_notice]
-                );
+            $this->row->response = array_merge(
+                $this->row->response,
+                ['to_notice' => $to_notice]
+            );
 
-                return null;
-            }
+            return null;
         }
 
         User::where('deleted_at', null)
-            ->when(isset($online), function ($query) use (&$online) {
+            ->when((count($online) > 0 and (bool) $this->row->to_online), function ($query) use (&$online) {
                 $query->whereIn('pin', $online);
             })
             ->lazy()
-            ->each(function ($row) use (&$to_notice, $push) {
+            ->each(function ($row) use (&$to_notice, $push, &$online) {
 
                 $notification = Notification::create([
                     'user' => $row->pin,
@@ -139,6 +138,9 @@ class UsersMailListJob implements ShouldQueue
                 if ($push) {
                     $to_notice['users_id_push'][] = $row->id;
                     broadcast(new AppUserEvent(id: $row->id, alert: $this->toast));
+
+                    if (in_array($row->pin, $online ?? []))
+                        broadcast(new NotificationsEvent($notification, $row->id, true));
                 }
             });
 

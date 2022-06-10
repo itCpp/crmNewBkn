@@ -22,6 +22,7 @@ class NotificationsEvent implements ShouldBroadcast
     public function __construct(
         public $notification,
         protected $userId,
+        public $invisible = false
     ) {
         //
     }
