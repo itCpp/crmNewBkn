@@ -110,6 +110,8 @@ class Offices extends Controller
             ])
         );
 
+        parent::logData($request, $row);
+
         return response()->json([
             'office' => $row,
         ]);
