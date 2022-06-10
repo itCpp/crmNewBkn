@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Offices;
 
 use App\Http\Controllers\Controller;
+use App\Models\Base\Office as BaseOffice;
 use App\Models\CallcenterSector;
 use App\Models\Gate;
-use App\Models\Log;
 use App\Models\Office;
 use App\Models\Status;
 use Illuminate\Http\Request;
@@ -15,8 +15,8 @@ class Offices extends Controller
     /**
      * Вывод списка офисов
      * 
-     * @param Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getOffices(Request $request)
     {
@@ -30,12 +30,14 @@ class Offices extends Controller
     /**
      * Вывод данных офиса
      * 
-     * @param Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getOffice(Request $request)
     {
-        if (!$request->row = Office::find($request->id))
+        $request->id = $request->id === true ? 0 : $request->id;
+
+        if (!$request->row = Office::find($request->id) and !$request->forSetting)
             return response()->json(['message' => "Данные выбранного офиса не найдены"], 400);
 
         if ($request->forSetting)
@@ -49,8 +51,8 @@ class Offices extends Controller
     /**
      * Вывод данных офиса для его настроек
      * 
-     * @param Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getOfficeForSetting(Request $request)
     {
@@ -59,51 +61,72 @@ class Offices extends Controller
             ->orderBy('name')
             ->get();
 
+        $ids = Office::select('base_id')
+            ->when((bool) ($request->row->base_id ?? false), function ($query) use ($request) {
+                $query->where('base_id', '!=', $request->row->base_id);
+            })
+            ->where('base_id', '!=', null)
+            ->get()
+            ->map(function ($row) {
+                return $row->base_id;
+            })
+            ->toArray();
+
+        $synh_id = BaseOffice::select('oldId as value', 'name as text')
+            ->whereNotIn('oldId', $ids)
+            ->get();
+
         return response()->json([
-            'office' => $request->row,
+            'office' => $request->row ?? [],
             'statuses' => Status::select('id', 'name')->orderBy('name')->get(),
             'sectors' => $sectors,
             'gates' => Gate::where('for_sms', 1)->get(),
+            'synh' => $synh_id,
         ]);
     }
 
     /**
      * Сохранение данных офиса
      * 
-     * @param Request $request
-     * @return response
+     * @param  \App\Http\Controllers\Offices\OfficeRequest $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public static function saveOffice(Request $request)
+    public static function saveOffice(OfficeRequest $request)
     {
-        $errors = [];
-
-        if ($request->tel and !parent::checkPhone($request->tel))
-            $errors['tel'] = "Номер телефона секретаря указан неправильно";
-
-        if (count($errors)) {
-            return response()->json([
-                'message' => "Имеются ошибки в данных",
-                'errors' => $errors,
-            ], 400);
-        }
-
         if ($request->id)
             return self::updateOfficeData($request);
 
-        return response()->json(['message' => "Запрос не обработан"], 400);
+        $row = Office::create(
+            $request->only([
+                'base_id',
+                'active',
+                'name',
+                'addr',
+                'address',
+                'sms',
+                'statuses',
+                'tel',
+                'settings',
+            ])
+        );
+
+        return response()->json([
+            'office' => $row,
+        ]);
     }
 
     /**
      * Обновление данных офиса
      * 
-     * @param Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function updateOfficeData(Request $request)
     {
         if (!$row = Office::find($request->id))
             return response()->json(['message' => "Данные выбранного офиса не найдены"], 400);
 
+        $row->base_id = $request->base_id;
         $row->name = $request->name;
         $row->addr = $request->addr;
         $row->address = $request->address;
@@ -112,13 +135,11 @@ class Offices extends Controller
         $row->tel = $request->tel;
         $row->statuses = $request->statuses;
 
-        $row->settings = $request->settings;
-
         $row->save();
 
         parent::logData($request, $row);
 
-        return response([
+        return response()->json([
             'office' => $row,
         ]);
     }
@@ -126,11 +147,11 @@ class Offices extends Controller
     /**
      * Поиск значения в массиве настроек офиса
      * 
-     * @param Office $office
-     * @param string $type
-     * @param null|int $gate
-     * @param null|int $sector
-     * @param string $value
+     * @param  \App\Models\Office $office
+     * @param  string $type
+     * @param  null|int $gate
+     * @param  null|int $sector
+     * @param  string $value
      * @return mixed
      */
     public static function getSettingValue(Office $office, $type = null, $gate = null, $sector = null, $value = "value")
