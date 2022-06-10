@@ -128,6 +128,7 @@ class UsersMailListJob implements ShouldQueue
                 $notification = Notification::create([
                     'user' => $row->pin,
                     'notif_type' => $this->row->type,
+                    'mail_list_id' => $this->row->id,
                     'notification' => $this->row->message,
                     'data' => $this->toast,
                     'user_by_id' => $this->row->anonim ? null : $this->user_by_id,

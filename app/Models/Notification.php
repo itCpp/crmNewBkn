@@ -18,6 +18,7 @@ class Notification extends Model
     protected $fillable = [
         'user',
         'notif_type',
+        'mail_list_id',
         'notification',
         'data',
         'created_at',

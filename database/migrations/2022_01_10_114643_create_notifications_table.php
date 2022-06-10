@@ -17,6 +17,7 @@ class CreateNotificationsTable extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onUpdate('cascade')->onDelete('cascade');
             $table->string('notif_type', 50)->nullable()->comment('Тип уведомления');
+            $table->bigInteger('mail_list_id')->nullable()->comment('Идентификтор рассылки')->index();
             $table->text('notification')->nullable();
             $table->bigInteger('user_by_id')->nullable()->comment('Уведомление от пользователя');
             $table->timestamp('created_at')->nullable();
