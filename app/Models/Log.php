@@ -48,9 +48,9 @@ class Log extends Model
     /**
      * Метод создания строки лога
      * 
-     * @param \Illuminate\Http\Request $request
-     * @param mixed $data Экземпляр затрагиваемой модели
-     * @param boolean $crypt Необходимо зашифровать данные
+     * @param  \Illuminate\Http\Request $request
+     * @param  mixed $data Экземпляр затрагиваемой модели
+     * @param  boolean $crypt Необходимо зашифровать данные
      * @return \App\Models\Log
      */
     public static function log($request, $data, $crypt = false)
@@ -60,6 +60,7 @@ class Log extends Model
         $table = $data?->getTable() ?? null;
 
         $request_data = $crypt ? Controller::encrypt($request->all()) : $request->all();
+        $row_data = $crypt ? Controller::encrypt($data->toArray()) : $data->toArray();
 
         $id = $data->getKeyName();
 
@@ -68,7 +69,7 @@ class Log extends Model
             'database_name' => $db,
             'table_name' => $table,
             'row_id' => $data->$id ?? null,
-            'row_data' => json_encode($data, JSON_UNESCAPED_UNICODE),
+            'row_data' => json_encode($row_data, JSON_UNESCAPED_UNICODE),
             'request_data' => json_encode($request_data, JSON_UNESCAPED_UNICODE),
             'to_crypt' => $crypt,
             'user_id' => optional($request->user())->id,
