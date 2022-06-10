@@ -40,6 +40,7 @@ class Start extends Controller
         'sms_access_system', # Доступ к сообщениям без заявки
         'user_fines_access', # Доступ к разделу штрафов
         'user_fines_create', # Может создавать штраф сотруднику
+        'user_data_any_show', # Может открывать главную страницу любого сотрудника
     ];
 
     /**

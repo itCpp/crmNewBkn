@@ -8,6 +8,7 @@ use App\Http\Controllers\Sip\SipMain;
 use App\Http\Controllers\Statistics\Charts;
 use App\Http\Controllers\Requests\Requests;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class UserMainData
@@ -22,8 +23,18 @@ class UserMainData
     {
         $userId = $request->userId ?: $request->user()->id;
 
-        if ($request->user()->id != $userId)
+        if ($request->user()->id != $userId and !$request->user()->can("user_data_any_show"))
             throw new ExceptionsJsonResponse("Доступ ограничен", 403);
+
+        if ($request->user()->id != $userId) {
+            
+            if (!$user = User::find($userId))
+                throw new ExceptionsJsonResponse("Сотрудник не найден", 403);
+
+            $request->setUserResolver(function () use ($user) {
+                return new UserData($user);
+            });
+        }
 
         return response()->json(
             $this->getMyData($request),
