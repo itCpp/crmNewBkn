@@ -1,7 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -9,11 +8,9 @@ use Illuminate\Support\Facades\Broadcast;
 |--------------------------------------------------------------------------
 */
 
-use Illuminate\Support\Facades\Route;
+Route::group(['prefix' => "chat", 'middleware' => "user.old.token"], function () {
 
-return Route::group(['prefix' => "chat", 'middleware' => "user.old.token"], function () {
-
-    /** Информация по IP-адресу */
+    /** Загрузка данных чата */
     Route::post('startChat', 'Chats\Chat@startChat')->name('api.chat.startChat');
     /** Поиск сотрудника или чат группы */
     Route::post('searchRoom', 'Chats\Chat@searchRoom')->name('api.chat.searchRoom');
@@ -26,4 +23,16 @@ return Route::group(['prefix' => "chat", 'middleware' => "user.old.token"], func
 
     /** Выдача файла */
     Route::get('file/{hash?}', 'Chats\Chat@file')->name('api.chat.file.hash');
+});
+
+Route::group(['prefix' => "users/chat", 'middleware' => "user.token"], function () {
+
+    /** Загрузка данных чата */
+    Route::post('/', 'Chats\ForNewCrm\Chats@start')->name('api.users.chat');
+
+    /** Загрузка данных выбранного чата */
+    Route::post('room', 'Chats\ForNewCrm\Chats@room')->name('api.users.chat.room');
+
+    /** Отправка сообщения */
+    Route::post('sendMessage', 'Chats\ForNewCrm\Chats@sendMessage')->name('api.users.chat.sendMessage');
 });

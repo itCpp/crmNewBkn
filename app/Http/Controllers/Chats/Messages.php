@@ -18,8 +18,8 @@ class Messages extends Controller
     /**
      * Вывод сообщений
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param  \Illuminate\Http\Request $request
+     * @return array
      */
     public static function get(Request $request)
     {
