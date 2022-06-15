@@ -32,6 +32,7 @@ trait MessagesTrait
     public function sendMessageProcess(Request $request)
     {
         $request->chat_id = (int) $request->chat_id;
+        $request->toUserId = (int) $request->user_id;
 
         $message = ChatMessage::create([
             'user_id' => $request->user()->id,
@@ -44,9 +45,19 @@ trait MessagesTrait
         $message->message = $request->message;
         $message = $message->toArray();
 
-        $room = $this->getChatRoom($request->chat_id, true);
+        $room_id = $this->createOrRestoreChatRoom($request);
+        $room = $this->getChatRoom($room_id);
 
-        broadcast(new NewMessage($message, $room ?: [], $room['users_id']))->toOthers();
+        if ($room) {
+            $this->checkOrAttachUsersRoom($room);
+            $room_array = $room->toArray();
+        }
+
+        broadcast(new NewMessage(
+            $message,
+            $room_array ?? [],
+            $room->users_id ?? []
+        ))->toOthers();
 
         // if ($message->body)
         //     UploadFilesChatJob::dispatch($message);
@@ -58,7 +69,6 @@ trait MessagesTrait
             'room' => $room,
         ];
     }
-
 
     /**
      * Формирование массива тела сообщения с вложениями

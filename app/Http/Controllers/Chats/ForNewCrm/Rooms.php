@@ -164,7 +164,9 @@ trait Rooms
         /** Перепрвоерка удаленных */
         if ($row->user_to_user) {
 
-            $row->user_to_user = explode(",", $row->user_to_user);
+            $row->user_to_user = collect(explode(",", $row->user_to_user))->map(function ($row) {
+                return (int) $row;
+            })->toArray();
 
             if ($diff = array_diff($row->user_to_user, $users_id))
                 $users_id = [...$users_id, ...$diff];
@@ -251,7 +253,7 @@ trait Rooms
      * 
      * @param  int $id
      * @param  bool $find_users
-     * @return array|null
+     * @return \App\Models\ChatRoom|null
      */
     public function getChatRoom($id, $find_users = false)
     {
@@ -261,6 +263,7 @@ trait Rooms
         $room = $this->getChatRoomInfo($room);
 
         if ($find_users) {
+
             $room->users = User::whereIn('id', $room->users_id)
                 ->get()
                 ->map(function ($row) {
@@ -268,7 +271,7 @@ trait Rooms
                 });
         }
 
-        return $room->toArray();
+        return $room;
     }
 
     /**
@@ -298,5 +301,26 @@ trait Rooms
         $room->save();
 
         return $room->id;
+    }
+
+    
+    /**
+     * Проверяет наличие чат-группы у сотрудника
+     * 
+     * @param  \App\Models\ChatRoom $room
+     * @return array
+     * 
+     * @todo При проверке группы больше двух сотрудников добавить её определение
+     */
+    public function checkOrAttachUsersRoom($room)
+    {
+        foreach ($room->users_id as $user_id) {
+            if (!$room->users()->where('user_id', $user_id)->count()) {
+                $room->users()->attach($user_id);
+                $attach[] = $user_id;
+            }
+        }
+
+        return $attach ?? [];
     }
 }
