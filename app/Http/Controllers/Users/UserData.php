@@ -7,6 +7,7 @@ use App\Models\RequestsSource;
 use App\Models\Role;
 use App\Models\Status;
 use App\Models\Tab;
+use App\Models\User;
 
 /**
  * @property null|string auth_type              Тип авторизации
@@ -88,7 +89,7 @@ class UserData
      * @param  \App\Models\User $user Экземпляр модели пользователя
      * @return void
      */
-    public function __construct($user)
+    public function __construct(User $user)
     {
         $this->__permissions = new Permissions;
 
