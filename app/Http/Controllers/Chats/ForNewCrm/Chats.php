@@ -4,16 +4,18 @@ namespace App\Http\Controllers\Chats\ForNewCrm;
 
 use App\Http\Controllers\Chats\Messages;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Users\UserData;
 use App\Http\Controllers\Users\UserDataFind;
 use App\Models\ChatMessage;
 use App\Models\ChatRoom;
 use App\Models\ChatRoomsUser;
 use App\Models\ChatRoomsViewTime;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class Chats extends Controller
 {
-    use MessagesTrait;
+    use MessagesTrait, Rooms;
 
     /**
      * Загрузка данных чата сотрудника
@@ -36,8 +38,14 @@ class Chats extends Controller
      */
     public function getChatRooms(Request $request)
     {
-        return ChatRoomsUser::select('chat_id as id')
-            ->where('user_id', $request->user()->id)
+        $chats_id = ChatRoomsUser::where('user_id', $request->user()->id)
+            ->get()
+            ->map(function ($row) {
+                return $row->chat_id;
+            })
+            ->toArray();
+
+        return ChatRoom::whereIn('id', $chats_id)
             ->get()
             ->map(function ($row) {
                 return $this->getChatRoomInfo($row);
@@ -47,8 +55,8 @@ class Chats extends Controller
     /**
      * Данные одной строки
      * 
-     * @param  \App\Models\ChatRoomsUser $row
-     * @return \App\Models\ChatRoomsUser
+     * @param  \App\Models\ChatRoom $row
+     * @return \App\Models\ChatRoom
      */
     public function getChatRoomInfo($row)
     {
@@ -83,10 +91,10 @@ class Chats extends Controller
     /**
      * Функция определния имени чат-группы
      * 
-     * @param  \App\Models\ChatRoomsUser $row
-     * @return \App\Models\ChetRoomsUser
+     * @param  \App\Models\ChatRoom $row
+     * @return \App\Models\ChatRoom
      */
-    public function getChatRoomName(ChatRoomsUser &$row)
+    public function getChatRoomName(ChatRoom &$row)
     {
         if (!is_array($row->users_id))
             $row->users_id = $this->getUsersIdChatRoom($row->id);
@@ -164,13 +172,10 @@ class Chats extends Controller
         if (!$room = ChatRoom::find($request->id))
             return response()->json(['message' => "Чат группа не найдена"], 400);
 
-        $chat_room = new ChatRoomsUser();
-        $chat_room->id = $room->id;
-
         $request->chat_id = $room->id;
 
         return response()->json([
-            'room' => $this->getChatRoomInfo($chat_room),
+            'room' => $this->getChatRoomInfo($room),
             'messages' => $this->getMessagesChatRoom($request),
         ]);
     }
@@ -179,17 +184,25 @@ class Chats extends Controller
      * Выводит данные одной чат группы
      * 
      * @param  int $id
+     * @param  bool $find_users
      * @return array|null
      */
-    public function getChatRoom($id)
+    public function getChatRoom($id, $find_users = false)
     {
         if (!$room = ChatRoom::find($id))
             return null;
 
-        $chat_room = new ChatRoomsUser();
-        $chat_room->id = $room->id;
+        $room = $this->getChatRoomInfo($room);
 
-        return $this->getChatRoomInfo($chat_room)->toArray();
+        if ($find_users) {
+            $room->users = User::whereIn('id', $room->users_id)
+                ->get()
+                ->map(function ($row) {
+                    return new UserData($row);
+                });
+        }
+
+        return $room->toArray();
     }
 
     /**

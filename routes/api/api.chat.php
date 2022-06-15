@@ -33,6 +33,9 @@ Route::group(['prefix' => "users/chat", 'middleware' => "user.token"], function 
     /** Загрузка данных выбранного чата */
     Route::post('room', 'Chats\ForNewCrm\Chats@room')->name('api.users.chat.room');
 
+    /** Поиск чат-группы */
+    Route::post('room/search', 'Chats\ForNewCrm\Chats@search')->name('api.users.chat.room.search');
+
     /** Отправка сообщения */
     Route::post('sendMessage', 'Chats\ForNewCrm\Chats@sendMessage')->name('api.users.chat.sendMessage');
 });

@@ -44,9 +44,9 @@ trait MessagesTrait
         $message->message = $request->message;
         $message = $message->toArray();
 
-        $room = $this->getChatRoom($request->chat_id);
+        $room = $this->getChatRoom($request->chat_id, true);
 
-        broadcast(new NewMessage($message, $room ?: [], $this->channels ?? []))->toOthers();
+        broadcast(new NewMessage($message, $room ?: [], $room['users_id']))->toOthers();
 
         // if ($message->body)
         //     UploadFilesChatJob::dispatch($message);
