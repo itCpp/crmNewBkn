@@ -57,6 +57,14 @@ trait Rooms
 
         $request->chat_id = $room->id;
 
+        $time = ChatRoomsViewTime::firstOrNew([
+            'chat_id' => $room->id,
+            'user_id' => $request->user()->id,
+        ]);
+
+        $time->last_show = now();
+        $time->save();
+
         return response()->json([
             'room' => $this->getChatRoomInfo($room),
             'messages' => $this->getMessagesChatRoom($request),
