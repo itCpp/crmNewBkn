@@ -147,6 +147,7 @@ trait Rooms
         $this->getChatRoomName($row);
 
         $row->message = Messages::findLastMessage($row->id) ?: [];
+        $row->message_at = $row->message['created_at'] ?? $row->updated_at;
 
         $row->count = $this->getCountNewMessagesChatRoom($row->id, request()->user()->id);
 
