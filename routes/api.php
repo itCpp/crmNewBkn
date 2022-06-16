@@ -280,6 +280,17 @@ Route::group(['middleware' => 'user.token'], function () {
             /** Создание новой рассылки */
             Route::put('create', 'Admin\MailLists@create')->name('admin.mails.create');
         });
+
+        /** Маршрутизация расходов */
+        Route::group(['prefix' => "expenses", 'middleware' => 'user.can:admin_stats_expenses'], function () {
+
+            /** Вывод расходов */
+            Route::post('get', 'Admin\Statistics\Expenses@get')->name('api.admin.expenses.get');
+            /** Данные для сохдания или редактирвоания строки расхода */
+            Route::get('edit', 'Admin\Statistics\Expenses@edit')->name('api.admin.expenses.edit');
+            /** Сохранение расхода */
+            Route::put('save', 'Admin\Statistics\Expenses@save')->name('api.admin.expenses.save');
+        });
     });
 
     /** Управление штрафами */

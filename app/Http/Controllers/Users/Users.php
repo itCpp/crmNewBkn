@@ -107,6 +107,8 @@ class Users extends Controller
                 'admin_callcenters', # Доступ к настройкам колл-центров
                 'admin_callsqueue', # Доступ к настройкам распределения звонков
                 'admin_sources', # Доступ к настройкам источников
+                'admin_stats', # Доступ к статистики
+                'admin_stats_expenses', # Доступ к статистики по расходам
                 'admin_users', # Доступ к сотрудникам
                 'admin_users_rss', # Может создавать рассылки сотрудникам
                 'block_dev', # Блок разработчика

@@ -25,6 +25,8 @@ class PermissionFactory extends Factory
         ['admin_user_set_permission', 'Может устанавливать личные права сотрудникам'],
         ['admin_user_set_role', 'Может менять роли сотрудникам'],
         ['admin_users', 'Доступ администратора к созданию и редактированию данных сотрудников'],
+        ['admin_stats', 'Доступ к статистики'],
+        ['admin_stats_expenses', 'Доступ к статистики по расходам'],
         ['calls_log_access', 'Доступ к разделу журнала вызовов'],
         ['clients_agreements_access', 'Доступ к договорным клиентам'],
         ['clients_agreements_all', 'Доступ ко всем договорам'],

@@ -45,6 +45,8 @@ class DataDumpCommand extends Command
         \App\Models\BlockIp::class,
         \App\Models\SmsMessage::class,
         \App\Models\UsersViewPart::class,
+        \App\Models\Expense::class,
+        \App\Models\ExpensesAccount::class,
     ];
 
     /**
