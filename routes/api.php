@@ -290,6 +290,8 @@ Route::group(['middleware' => 'user.token'], function () {
             Route::get('edit', 'Admin\Statistics\Expenses@edit')->name('api.admin.expenses.edit');
             /** Сохранение расхода */
             Route::put('save', 'Admin\Statistics\Expenses@save')->name('api.admin.expenses.save');
+            /** Список расходов по аккаунту за дату */
+            Route::post('list', 'Admin\Statistics\Expenses@list')->name('api.admin.expenses.list');
         });
     });
 

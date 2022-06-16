@@ -79,6 +79,7 @@ class Expenses extends Controller
             'nextPage' => $current_page + 1,
             'lastPage' => $last_page,
             'total' => $count,
+            'limit' => $this->days,
         ]);
     }
 
@@ -179,6 +180,23 @@ class Expenses extends Controller
 
         return response()->json([
             'row' => collect($row->toArray())->except($this->not_row),
+        ]);
+    }
+
+    /**
+     * Список расходов по аккаунту за дату
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function list(Request $request)
+    {
+        $rows = Expense::whereAccountId($request->account_id)
+            ->where('date', $request->date)
+            ->get();
+
+        return response()->json([
+            'rows' => $rows,
         ]);
     }
 }
