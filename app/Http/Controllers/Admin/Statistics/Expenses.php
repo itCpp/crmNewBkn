@@ -10,6 +10,24 @@ use Illuminate\Http\Request;
 class Expenses extends Controller
 {
     /**
+     * Количество дней для вывода на одну страницу
+     * 
+     * @var int
+     */
+    protected $days = 14;
+
+    /**
+     * Список ключей элементы которых должны быть исключены из строки расхода
+     * 
+     * @var array
+     */
+    protected $not_row = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
      * Вывод расходов
      * 
      * @param  \Illuminate\Http\Request $request
@@ -19,10 +37,69 @@ class Expenses extends Controller
     {
         $count = Expense::select('date')->distinct()->count();
 
+        $current_page = $request->page ?: 1;
+        $last_page = (int) ceil($count / $this->days) ?: 1;
+
+        $dates = $this->getDateList($current_page);
+
+        $rows = [];
+
+        Expense::select('expenses.*', 'expenses_accounts.name as account_name')
+            ->join('expenses_accounts', 'expenses_accounts.id', '=', 'expenses.account_id')
+            ->whereIn('date', $dates)
+            ->orderBy('date', 'DESC')
+            ->orderBy('account_name')
+            ->get()
+            ->each(function ($row) use (&$rows) {
+
+                if (!isset($rows[$row->date])) {
+                    $rows[$row->date] = [
+                        'date' => $row->date,
+                        'expenses' => [],
+                    ];
+                }
+
+                $id = (int) $row->account_id;
+
+                if (!isset($rows[$row->date]['expenses'][$id])) {
+                    $rows[$row->date]['expenses'][$id] = collect($row->toArray())->except($this->not_row);
+                } else {
+                    $rows[$row->date]['expenses'][$id]['requests'] += $row->requests;
+                    $rows[$row->date]['expenses'][$id]['sum'] += $row->sum;
+                }
+            });
+
+        foreach ($rows as &$row) {
+            $row['expenses'] = array_values($row['expenses']);
+        }
+
         return response()->json([
-            'rows' => $rows ?? [],
+            'rows' => array_values($rows),
+            'page' => $current_page,
+            'nextPage' => $current_page + 1,
+            'lastPage' => $last_page,
             'total' => $count,
         ]);
+    }
+
+    /**
+     * Выводит список дат для вывода
+     * 
+     * @param  int $page
+     * @return array
+     */
+    public function getDateList($page)
+    {
+        return Expense::select('date')
+            ->orderBy('date', 'DESC')
+            ->distinct()
+            ->offset($page * $this->days - $this->days)
+            ->limit($this->days)
+            ->get()
+            ->map(function ($row) {
+                return $row->date;
+            })
+            ->toArray();
     }
 
     /**
@@ -77,6 +154,8 @@ class Expenses extends Controller
             $this->logData($request, $account);
 
             $request->account_id = $account->id;
+        } else {
+            $account = ExpensesAccount::find($request->account_id);
         }
 
         $row = Expense::find($request->id);
@@ -96,8 +175,10 @@ class Expenses extends Controller
 
         $this->logData($request, $row);
 
+        $row->account_name = $account->name ?? null;
+
         return response()->json([
-            'row' => $row,
+            'row' => collect($row->toArray())->except($this->not_row),
         ]);
     }
 }
