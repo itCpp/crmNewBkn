@@ -123,6 +123,7 @@ class Expenses extends Controller
 
         return response()->json([
             'accounts' => $accounts,
+            'row' => Expense::find($request->id),
         ]);
     }
 
@@ -175,12 +176,40 @@ class Expenses extends Controller
         $row->save();
 
         $this->logData($request, $row);
+        $expense = $row->toArray();
 
         $row->account_name = $account->name ?? null;
 
         return response()->json([
-            'row' => collect($row->toArray())->except($this->not_row),
+            'expense' => $expense,
+            'row' => $this->countAllDataFromExpenseRow($row),
         ]);
+    }
+
+    /**
+     * Подсчет данных аккаунта по строке расхода
+     * 
+     * @param  \App\Models\Expense $row
+     * @return array
+     */
+    public function countAllDataFromExpenseRow(Expense $row)
+    {
+        $requests = 0;
+        $sum = 0;
+
+        Expense::selectRaw('sum(requests) as requests, sum(sum) as sum')
+            ->whereAccountId($row->account_id)
+            ->where('date', $row->date)
+            ->get()
+            ->each(function ($row) use (&$requests, &$sum) {
+                $requests += $row->requests;
+                $sum += $row->sum;
+            });
+
+        $row->requests = $requests;
+        $row->sum = $sum;
+
+        return collect($row->toArray())->except($this->not_row);
     }
 
     /**
