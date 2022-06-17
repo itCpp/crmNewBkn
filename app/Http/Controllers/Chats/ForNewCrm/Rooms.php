@@ -108,13 +108,14 @@ trait Rooms
      */
     public function search(Request $request)
     {
-        $rows = User::where(function ($query) use ($request) {
-            $query->where('surname', 'LIKE', "%{$request->search}%")
-                ->orWhere('name', 'LIKE', "%{$request->search}%")
-                ->orWhere('patronymic', 'LIKE', "%{$request->search}%")
-                ->orWhere('login', 'LIKE', "%{$request->search}%")
-                ->orWhere('pin', 'LIKE', "%{$request->search}%");
-        })
+        $rows = User::where('deleted_at', null)
+            ->where(function ($query) use ($request) {
+                $query->where('surname', 'LIKE', "%{$request->search}%")
+                    ->orWhere('name', 'LIKE', "%{$request->search}%")
+                    ->orWhere('patronymic', 'LIKE', "%{$request->search}%")
+                    ->orWhere('login', 'LIKE', "%{$request->search}%")
+                    ->orWhere('pin', 'LIKE', "%{$request->search}%");
+            })
             ->orderBy('surname')
             ->orderBy('name')
             ->orderBy('patronymic')
@@ -219,6 +220,7 @@ trait Rooms
                 $row->name = $user->name_full ?? null;
                 $row->pin = $user->pin ?? null;
                 $row->user_id = $user->id ?? null;
+                $row->is_fired = (bool) ($user->deleted_at ?? null);
 
                 break;
             }
@@ -331,7 +333,7 @@ trait Rooms
 
         return implode(",", $users);
     }
-    
+
     /**
      * Проверяет наличие чат-группы у сотрудника
      * 
