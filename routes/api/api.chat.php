@@ -11,18 +11,18 @@ use Illuminate\Support\Facades\Route;
 Route::group(['prefix' => "chat", 'middleware' => "user.old.token"], function () {
 
     /** Загрузка данных чата */
-    Route::post('startChat', 'Chats\Chat@startChat')->name('api.chat.startChat');
+    // Route::post('startChat', 'Chats\Chat@startChat')->name('api.chat.startChat');
     /** Поиск сотрудника или чат группы */
-    Route::post('searchRoom', 'Chats\Chat@searchRoom')->name('api.chat.searchRoom');
+    // Route::post('searchRoom', 'Chats\Chat@searchRoom')->name('api.chat.searchRoom');
     /** Данные выбранной чат группы */
-    Route::post('getRoom', 'Chats\Rooms@getRoom')->name('api.chat.getRoom');
+    // Route::post('getRoom', 'Chats\Rooms@getRoom')->name('api.chat.getRoom');
     /** Вывод сообщений в группе */
-    Route::post('getMessages', 'Chats\Chat@getMessages')->name('api.chat.getMessages');
+    // Route::post('getMessages', 'Chats\Chat@getMessages')->name('api.chat.getMessages');
     /** Отправка сообщений */
-    Route::post('sendMessage', 'Chats\Chat@sendMessage')->name('api.chat.sendMessage');
+    // Route::post('sendMessage', 'Chats\Chat@sendMessage')->name('api.chat.sendMessage');
 
     /** Выдача файла */
-    Route::get('file/{hash?}', 'Chats\Chat@file')->name('api.chat.file.hash');
+    // Route::get('file/{hash?}', 'Chats\Chat@file')->name('api.chat.file.hash');
 });
 
 Route::group(['prefix' => "users/chat", 'middleware' => "user.token"], function () {
