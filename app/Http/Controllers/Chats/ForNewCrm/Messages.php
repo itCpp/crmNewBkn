@@ -106,7 +106,7 @@ trait Messages
             $message,
             $room_array ?? [],
             $room->users_id ?? []
-        )); //->toOthers();
+        ))->toOthers();
 
         // if ($message->body)
         //     UploadFilesChatJob::dispatch($message);

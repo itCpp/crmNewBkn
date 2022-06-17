@@ -19,9 +19,19 @@ class ChatRoom extends Model
     protected $fillable = [
         'user_id',
         'user_to_user',
+        'is_private',
         'created_at',
         'updated_at',
         'deleted_at',
+    ];
+
+    /**
+     * Атрибуты, которые необходимо преобразовать
+     * 
+     * @var array
+     */
+    protected $casts = [
+        'is_private' => "boolean",
     ];
 
     /**

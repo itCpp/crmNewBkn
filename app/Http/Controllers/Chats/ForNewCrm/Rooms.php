@@ -53,7 +53,7 @@ trait Rooms
             return $this->roomForNewChat($request);
 
         if (!$room)
-            return response()->json(['message' => "Чат группа не найдена", $id], 400);
+            return response()->json(['message' => "Чат группа не найдена"], 400);
 
         $request->chat_id = $room->id;
 
@@ -80,19 +80,23 @@ trait Rooms
     public function roomForNewChat(Request $request)
     {
         $room_id = $this->createOrRestoreChatRoom($request);
-        $room = ChatRoom::find($room_id);
+        $row = ChatRoom::find($room_id);
 
-        if (!$room->users()->where('user_id', $request->user()->id)->count()) {
-            $room->users()->attach($request->user()->id);
+        if (!$row->users()->where('user_id', $request->user()->id)->count()) {
+            $row->users()->attach($request->user()->id);
         }
 
-        $request->chat_id = $room->id;
+        $request->chat_id = $row->id;
+
+        $room = $this->getChatRoomInfo($row);
+        $messages = $this->getMessagesChatRoom($request);
+
+        $row->delete();
 
         return response()->json([
-            'room' => $this->getChatRoomInfo($room),
-            'messages' => $this->getMessagesChatRoom($request),
+            'room' => $room,
+            'messages' => $messages,
             'newChatRoom' => true,
-            $request->user()->id
         ]);
     }
 
@@ -116,12 +120,17 @@ trait Rooms
             ->orderBy('patronymic')
             ->limit(25)
             ->get()
-            ->map(function ($row) {
+            ->map(function ($row) use ($request) {
 
                 $user = new UserData($row);
 
+                $users = $this->getUserToUserString(
+                    $request->user()->id,
+                    $user->id,
+                );
+
                 return [
-                    'id' => Str::uuid(),
+                    'id' => md5($users),
                     'message' => null,
                     'name' => $user->name_full,
                     'pin' => $user->pin,
@@ -142,6 +151,8 @@ trait Rooms
      */
     public function getChatRoomInfo($row)
     {
+        $row->searchId = md5($row->user_to_user);
+
         $row->users_id = $this->getUsersIdChatRoom($row);
 
         $this->getChatRoomName($row);
@@ -291,16 +302,12 @@ trait Rooms
      */
     public function createOrRestoreChatRoom(Request $request)
     {
-        $users = [
-            $request->user()->id,
-            $request->toUserId,
-        ];
-
-        sort($users);
-
         $room = ChatRoom::withTrashed()
             ->firstOrNew(
-                ['user_to_user' => implode(",", $users)],
+                ['user_to_user' => $this->getUserToUserString(
+                    $request->user()->id,
+                    $request->toUserId,
+                )],
                 ['user_id' => $request->user()->id]
             );
 
@@ -312,6 +319,18 @@ trait Rooms
         return $room->id;
     }
 
+    /**
+     * Формирует строку сотрудников
+     * 
+     * @param  array $users
+     * @return string
+     */
+    public function getUserToUserString(...$users)
+    {
+        sort($users);
+
+        return implode(",", $users);
+    }
     
     /**
      * Проверяет наличие чат-группы у сотрудника
