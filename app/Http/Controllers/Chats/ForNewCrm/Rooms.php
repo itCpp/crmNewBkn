@@ -136,6 +136,7 @@ trait Rooms
                     'name' => $user->name_full,
                     'pin' => $user->pin,
                     'toUserId' => $user->id,
+                    'user_id' => $user->id,
                 ];
             });
 
