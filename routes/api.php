@@ -292,6 +292,8 @@ Route::group(['middleware' => 'user.token'], function () {
             Route::put('save', 'Admin\Statistics\Expenses@save')->name('api.admin.expenses.save');
             /** Список расходов по аккаунту за дату */
             Route::post('list', 'Admin\Statistics\Expenses@list')->name('api.admin.expenses.list');
+            /** Удаление/Восстановление строки расхода */
+            Route::delete('delete', 'Admin\Statistics\Expenses@delete')->name('api.admin.expenses.delete');
         });
     });
 

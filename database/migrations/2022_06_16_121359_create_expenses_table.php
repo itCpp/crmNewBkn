@@ -20,8 +20,10 @@ class CreateExpensesTable extends Migration
             $table->integer('requests')->comment('Количество заявок')->default(0);
             $table->float('sum', 11)->comment('Сумма расходов')->default(0);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['account_id', 'date']);
+            $table->index(['account_id', 'date', 'deleted_at']);
         });
     }
 

@@ -228,4 +228,33 @@ class Expenses extends Controller
             'rows' => $rows,
         ]);
     }
+
+    /**
+     * Удаление/Восстановление строки расхода
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function delete(Request $request)
+    {
+        $row = Expense::withTrashed()->whereId($request->id)->first();
+
+        if (!$row)
+            return response()->json(['message' => "Строка расхода не найдена"], 400);
+
+        if ($row->deleted_at)
+            $row->restore();
+        else
+            $row->delete();
+
+        $this->logData($request, $row);
+
+        $expense = $row->toArray();
+        $row->account_name = ExpensesAccount::find($row->account_id)->name ?? null;
+
+        return response()->json([
+            'expense' => $expense,
+            'row' => $this->countAllDataFromExpenseRow($row),
+        ]);
+    }
 }
