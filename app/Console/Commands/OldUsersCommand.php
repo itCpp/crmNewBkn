@@ -4,9 +4,6 @@ namespace App\Console\Commands;
 
 use App\Console\MyOutput;
 use App\Http\Controllers\Users\UsersMerge;
-use App\Models\ChatRoom;
-use App\Models\CrmMka\CrmUser;
-use App\Models\User;
 use Exception;
 use Illuminate\Console\Command;
 
@@ -103,34 +100,6 @@ class OldUsersCommand extends Command
                 $this->line("\t<fg=red;options=bold>" . $message . "</> <bg=red;fg=white>" . $e->getMessage() . "</>");
             }
         }
-
-        return null;
-    }
-
-    /**
-     * Смена идентификаторов служебного чата
-     * 
-     * @return null
-     */
-    public function changeChatUsersId()
-    {
-        $users_id = [];
-
-        ChatRoom::lazy()->each(function ($row) use (&$users_id) {
-
-            $users_id[] = $row->user_id;
-
-            foreach (explode(",", $row->user_to_user) as $user_id) {
-                $users_id[] = (int) $user_id;
-            }
-        });
-
-        CrmUser::whereIn('id', array_values(array_unique($users_id)))
-            ->get()
-            ->each(function ($row) {
-
-                $user = User::where('pin', $row->pin)->first();
-            });
 
         return null;
     }
