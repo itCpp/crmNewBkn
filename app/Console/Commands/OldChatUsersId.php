@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ChatMessage;
 use App\Models\ChatRoom;
+use App\Models\ChatUsersIdChange;
 use App\Models\CrmMka\CrmUser;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -40,18 +42,33 @@ class OldChatUsersId extends Command
      */
     public function handle()
     {
-        $users_id = [];
+        $this->users_id = [];
 
-        ChatRoom::lazy()->each(function ($row) use (&$users_id) {
+        /** Поиск старых идентификаторов */
+        ChatRoom::lazy()->each(function ($row) {
 
-            $users_id[] = $row->user_id;
+            $this->users_id[] = $row->user_id;
 
             foreach (explode(",", $row->user_to_user) as $user_id) {
-                $users_id[] = (int) $user_id;
+                $this->users_id[] = (int) $user_id;
             }
         });
 
-        CrmUser::whereIn('id', array_values(array_unique($users_id)))
+        $users_id = ChatMessage::select('user_id')
+            ->distinct()
+            ->get()
+            ->map(function ($row) {
+                return $row->user_id;
+            })
+            ->toArray();
+
+        $this->users_id = array_values(array_unique([...$this->users_id, ...$users_id]));
+
+        $compare = ChatUsersIdChange::whereIn('old_id', $this->users_id)->get();
+
+        dd($this->users_id);
+
+        CrmUser::whereIn('id', $this->users_id)
             ->get()
             ->each(function ($row) {
 

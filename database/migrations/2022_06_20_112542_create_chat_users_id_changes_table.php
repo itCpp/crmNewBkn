@@ -2,10 +2,9 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\Schema;
 
-class CreateBlockIpsTable extends Migration
+class CreateChatUsersIdChangesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,11 +13,12 @@ class CreateBlockIpsTable extends Migration
      */
     public function up()
     {
-        Schema::create('block_ips', function (Blueprint $table) {
+        Schema::create('chat_users_id_changes', function (Blueprint $table) {
             $table->id();
-            $table->string('ip')->nullable()->index();
-            $table->string('hostname')->nullable()->index();
-            $table->json('sites')->default(new Expression('(JSON_ARRAY())'));
+            $table->integer('new_id')->nullable();
+            $table->integer('old_id')->nullable();
+            $table->string('pin', 50)->nullable();
+            $table->integer('crm_old_id')->nullable();
             $table->timestamps();
         });
     }
@@ -30,6 +30,6 @@ class CreateBlockIpsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('block_ips');
+        Schema::dropIfExists('chat_users_id_changes');
     }
 }
