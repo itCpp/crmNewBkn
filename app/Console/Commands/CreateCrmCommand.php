@@ -111,6 +111,9 @@ class CreatecrmCommand extends Command
         /** Перенос информации по штрафам */
         $this->call('old:fines');
 
+        /** Перенос чата */
+        $this->call('old:chatusersid');
+
         /** Перенос очереди */
         $this->call('old:requestsqueue');
 
@@ -132,6 +135,10 @@ class CreatecrmCommand extends Command
         $this->newLine(1);
 
         if ($this->story) {
+
+            /** Вывод из режима обслуживания */
+            Artisan::call("up");
+
             $this->call('old:requestshistory');
         } else {
             $this->line("Теперь можно запустить перенос истории заявок:");
