@@ -80,6 +80,13 @@ class Kernel extends ConsoleKernel
             ->dailyAt("23:59")
             ->appendOutputTo("{$path}/{$file_name}_rating_write.log")
             ->runInBackground();
+
+        /** Планировщик проверки сайтов */
+        $schedule->command('sites:check')
+            ->everyFifteenMinutes()
+            ->between('8:00', '21:00')
+            ->appendOutputTo("{$path}/{$file_name}_sites_check.log")
+            ->runInBackground();
     }
 
     /**

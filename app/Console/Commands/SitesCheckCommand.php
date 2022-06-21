@@ -171,14 +171,21 @@ class SitesCheckCommand extends Command
         foreach ($chats_id as $chat_id) {
 
             try {
-                Http::withOptions(['verify' => false])
+                $response = Http::withOptions(['verify' => false])
                     ->post($api_url, [
                         'text' => $message,
                         'chat_id' => $chat_id,
                         'parse_mode' => "Markdown",
                     ]);
-            } finally {
+
+                $status = $response->status();
+            } catch (Exception $e) {
+                $status = 0;
             }
+
+            $color = $status == 200 ? "green" : "red";
+
+            $this->line("<fg=white;bg=blue> {$chat_id} </> send status <fg={$color};options=bold>{$status}</>");
         }
 
         return;
