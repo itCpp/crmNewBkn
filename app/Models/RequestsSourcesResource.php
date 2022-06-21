@@ -18,6 +18,16 @@ class RequestsSourcesResource extends Model
         'sourse_id',
         'type',
         'val',
+        'check_site',
+    ];
+
+    /**
+     * Атрибуты, которые преобразовываются в json
+     *
+     * @var array
+     */
+    protected $casts = [
+        'check_site' => 'boolean',
     ];
 
     /**
