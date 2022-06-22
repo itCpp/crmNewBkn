@@ -80,6 +80,11 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         /** Создание нового источника */
         Route::post('createSource', 'Dev\Sources@createSource')->name('api.dev.createSource');
 
+        /** Вывод сайтов из источников */
+        Route::get('resource/sites', 'Dev\Sources@sites')->name('api.dev.resource.sites');
+        /** Проверка сайта */
+        Route::post('resource/site', 'Dev\Sources@site')->name('api.dev.resource.site');
+
         /** Настройка источника */
         Route::post('getSourceData', 'Dev\Sources@getSourceData')->name('api.dev.getSourceData');
         /** Изменение настроек источника */

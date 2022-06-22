@@ -83,7 +83,7 @@ class Kernel extends ConsoleKernel
 
         /** Планировщик проверки сайтов */
         $schedule->command('sites:check')
-            ->everyFifteenMinutes()
+            ->everyFiveMinutes()
             ->between('8:00', '21:00')
             ->appendOutputTo("{$path}/{$file_name}_sites_check.log")
             ->runInBackground();

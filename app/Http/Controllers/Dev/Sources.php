@@ -8,8 +8,11 @@ use App\Models\IncomingCallsToSource;
 use App\Models\Incomings\SourceExtensionsName;
 use App\Models\RequestsSource;
 use App\Models\RequestsSourcesResource;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Str;
 
 class Sources extends Controller
 {
@@ -351,5 +354,100 @@ class Sources extends Controller
         }
 
         return $resources ?? [];
+    }
+
+    /**
+     * Выводит список сайтов среди ресурсов
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sites()
+    {
+        $sites = RequestsSourcesResource::whereType('site')
+            ->get()
+            ->map(function ($row) {
+                return $this->siteRow($row);
+            })
+            ->sortBy('name')
+            ->values()
+            ->all();
+
+        return response()->json([
+            'sites' => $sites,
+        ]);
+    }
+
+    /**
+     * Формирование строки сайта
+     * 
+     * @param  \App\Models\RequestsSourcesResource $row
+     * @return \App\Models\RequestsSourcesResource
+     */
+    public function siteRow(RequestsSourcesResource $row)
+    {
+        $row->domain = $row->val;
+        $row->name = idn_to_utf8($row->val);
+
+        if (strlen($row->val) != mb_strlen($row->val))
+            $row->domain = idn_to_ascii($row->val);
+
+        return $row;
+    }
+
+    /**
+     * Проверка сайта
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function site(Request $request)
+    {
+        if (!$row = RequestsSourcesResource::find($request->id))
+            return response()->json(['message' => "Ресурс с данным идентификатором не найден"], 400);
+
+        if ($row->type != "site")
+            return response()->json(['message' => "Ресурс не является сайтом"], 400);
+
+        $row = $this->siteRow($row);
+
+        $row->check = $this->checkSite($row->domain);
+
+        return response()->json([
+            'site' => $row,
+        ]);
+    }
+
+    /**
+     * Подключение к сайту
+     * 
+     * @param  string $domain
+     * @return array
+     */
+    public function checkSite($domain)
+    {
+        try {
+            $response = Http::timeout(5)
+                ->withHeaders([
+                    'User-Agent' => env("APP_NAME", "CPP CRM") . " (" . env("APP_URL") . ")",
+                    'Host' => $domain,
+                ])
+                ->withOptions([
+                    'verify' => false,
+                ])
+                ->get($domain);
+
+            $data = [
+                'body' => $response->body(),
+                'status' => $response->status(),
+            ];
+        } catch (Exception $e) {
+            $data = [
+                'error' => $e->getMessage(),
+                'body' => null,
+                'status' => 0,
+            ];
+        }
+
+        return $data;
     }
 }
