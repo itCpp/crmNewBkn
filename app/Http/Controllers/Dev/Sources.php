@@ -430,7 +430,7 @@ class Sources extends Controller
         try {
             $response = Http::timeout(5)
                 ->withHeaders([
-                    'User-Agent' => env("APP_NAME", "CPP CRM") . " (" . env("APP_URL") . ")",
+                    'User-Agent' => env("APP_USER_AGENT"),
                     'Host' => $domain,
                 ])
                 ->withOptions([

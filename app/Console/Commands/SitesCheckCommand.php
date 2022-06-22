@@ -99,9 +99,9 @@ class SitesCheckCommand extends Command
             $message .= ".";
 
         try {
-            $response = Http::timeout(5)
+            $response = Http::timeout(10)
                 ->withHeaders([
-                    'User-Agent' => "CPP CRM MKA (" . env("APP_URL") . ")",
+                    'User-Agent' => env("APP_USER_AGENT"),
                     'Host' => $domain,
                 ])
                 ->withOptions([
