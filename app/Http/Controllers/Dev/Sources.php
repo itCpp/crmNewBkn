@@ -31,7 +31,9 @@ class Sources extends Controller
         }
 
         return Response::json([
-            'sources' => $sources,
+            'sources' => $sources->sortByDesc(function ($row) {
+                return count($row->resources) > 0 ? 1 : 0;
+            })->values()->all(),
         ]);
     }
 
