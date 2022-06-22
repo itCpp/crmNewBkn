@@ -45,6 +45,8 @@ class SitesCheckCommand extends Command
         $this->sites = [];
         $this->errors = [];
 
+        $this->line(date("[Y-m-d H:i:s]"));
+
         RequestsSourcesResource::whereType('site')
             ->whereCheckSite(true)
             ->get()
