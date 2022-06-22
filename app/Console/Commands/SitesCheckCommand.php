@@ -107,7 +107,7 @@ class SitesCheckCommand extends Command
                 ->withOptions([
                     'verify' => false,
                 ])
-                ->get($domain);
+                ->get($domain . "?ping=" . date("YmdHis"));
 
             $status = $response->status();
 
