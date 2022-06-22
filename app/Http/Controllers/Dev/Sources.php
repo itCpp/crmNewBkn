@@ -450,4 +450,28 @@ class Sources extends Controller
 
         return $data;
     }
+
+    /**
+     * Включение/выключение в список проверки сайтов роботом
+     * 
+     * @param  \Illumiante\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function siteCheck(Request $request)
+    {
+        if (!$row = RequestsSourcesResource::find($request->id))
+            return response()->json(['message' => "Ресурс с данным идентификатором не найден"], 400);
+
+        if ($row->type != "site")
+            return response()->json(['message' => "Ресурс не является сайтом"], 400);
+
+        $row->check_site = (bool) $request->checked;
+        $row->save();
+
+        $this->logData($request, $row);
+
+        return response()->json([
+            'row' => $this->siteRow($row),
+        ]);
+    }
 }

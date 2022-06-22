@@ -84,6 +84,8 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::get('resource/sites', 'Dev\Sources@sites')->name('api.dev.resource.sites');
         /** Проверка сайта */
         Route::post('resource/site', 'Dev\Sources@site')->name('api.dev.resource.site');
+        /** Включение в список проверки */
+        Route::post('resource/site/check', 'Dev\Sources@siteCheck')->name('api.dev.resource.site.check');
 
         /** Настройка источника */
         Route::post('getSourceData', 'Dev\Sources@getSourceData')->name('api.dev.getSourceData');
