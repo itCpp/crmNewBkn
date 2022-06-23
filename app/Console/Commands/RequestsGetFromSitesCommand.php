@@ -69,6 +69,13 @@ class RequestsGetFromSitesCommand extends Command
     {
         $this->log = Log::channel('check_queues');
 
+        if (env('NEW_CRM_OFF', true)) {
+            $this->log->warning("Добавление заявок отключено до переноса");
+            $this->line(date("[Y-m-d H:i:s]") . " <error>Добавление заявок отключено до переноса</error>");
+
+            return 0;
+        }
+
         $this->start = $this->last = microtime(1);
 
         $this->databases = SettingsQueuesDatabase::getAllDecrypt();
@@ -77,6 +84,7 @@ class RequestsGetFromSitesCommand extends Command
         if (!count($this->databases)) {
             $this->log->warning("Подключения к базам данных не настроены");
             $this->line(date("[Y-m-d H:i:s]") . " <error>Подключения к базам данных не настроены</error>");
+
             return 0;
         }
 

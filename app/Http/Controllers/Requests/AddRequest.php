@@ -63,28 +63,28 @@ class AddRequest extends Controller
     /**
      * Данные клиента
      * 
-     * @var null|\App\Models\RequestsClient
+     * @var \App\Models\RequestsClient|null
      */
     protected $client = null;
 
     /**
      * Данные ресурса
      * 
-     * @var null|\App\Models\RequestsSourcesResource
+     * @var \App\Models\RequestsSourcesResource|null
      */
     protected $resource = null;
 
     /**
      * Данные источника
      * 
-     * @var null|\App\Models\RequestsSource
+     * @var \App\Models\RequestsSource|null
      */
     protected $source = null;
 
     /**
      * Данные обработанной заявки
      * 
-     * @var null|false|\App\Models\RequestsRow
+     * @var \App\Models\RequestsRow|null|false
      */
     protected $data = null;
 
@@ -119,8 +119,8 @@ class AddRequest extends Controller
     /**
      * Инициализация объекта
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return \App\Http\Controllers\Requests\AddRequest
+     * @param  \Illuminate\Http\Request $request
+     * @return void
      */
     public function __construct(Request $request)
     {
@@ -166,7 +166,7 @@ class AddRequest extends Controller
     /**
      * Магический метод для вывода несуществующего значения
      * 
-     * @param string $name
+     * @param  string $name
      * @return mixed
      */
     public function __get($name)
@@ -180,7 +180,7 @@ class AddRequest extends Controller
     /**
      * Вывод результата
      * 
-     * @return array|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\JsonResponse|array
      */
     public function response()
     {
@@ -199,7 +199,7 @@ class AddRequest extends Controller
     /**
      * Вывод плохого запроса
      * 
-     * @return array|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\JsonResponse|array
      */
     public function badRequest()
     {
@@ -216,7 +216,7 @@ class AddRequest extends Controller
     /**
      * Добавление заявки
      * 
-     * @return response
+     * @return \Illuminate\Http\JsonResponse|array
      */
     public function add()
     {
@@ -224,6 +224,12 @@ class AddRequest extends Controller
 
         if (!$this->phone)
             return $this->badRequest();
+
+        /** Запрет на добавление заявок до переноса ЦРМ */
+        if (env('NEW_CRM_OFF', true) and !$this->request->fromWebhoock) {
+            $this->errors[] = "Добавление заявок временно недоступно";
+            return $this->badRequest();
+        }
 
         // Отмена запроса при отключенной настройке
         if ($this->settings->DROP_ADD_REQUEST) {
@@ -263,7 +269,7 @@ class AddRequest extends Controller
     /**
      * Формирование хэша номера телефона
      * 
-     * @param string $phone
+     * @param  string $phone
      * @return string
      */
     public static function getHashPhone($phone)
@@ -655,12 +661,12 @@ class AddRequest extends Controller
     /**
      * Добавление комментария по заявке
      * 
-     * @param string|null $comment Текст комментария
-     * @param string $type Тип комментария
-     * - `comment` Обычный комментарий
-     * - `sb` Комментарий Службы безопасности
-     * - `client` Комментарий еклиента
-     * - `system` Системный комментарий
+     * @param  string|null $comment Текст комментария
+     * @param  string $type Тип комментария
+     *      - `comment` Обычный комментарий
+     *      - `sb` Комментарий Службы безопасности
+     *      - `client` Комментарий еклиента
+     *      - `system` Системный комментарий
      * @return $this
      */
     public function addComment($comment = null, $type = "comment")

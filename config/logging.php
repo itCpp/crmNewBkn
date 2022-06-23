@@ -142,6 +142,13 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 60,
         ],
+
+        'webhoock_access' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/webhoock/access.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
     ],
 
 ];

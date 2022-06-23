@@ -29,22 +29,12 @@ class Jwt
     /**
      * Формирвоание части токена с заголовком
      * 
+     * @param  array $data
      * @return string
      */
-    public function header()
+    public function part($data)
     {
-        return base64_encode(json_encode($this->header, true));
-    }
-
-    /**
-     * Формирвоание части токена с нагрузкой
-     * 
-     * @param  array $payload
-     * @return string
-     */
-    public function payload($payload)
-    {
-        return base64_encode(json_encode($payload, true));
+        return Str::replace(".", "_", base64_encode(json_encode($data)));
     }
 
     /**
@@ -68,8 +58,8 @@ class Jwt
      */
     public function createAccessToken($payload)
     {
-        $header = $this->header();
-        $payload = $this->payload($payload);
+        $header = $this->part($this->header);
+        $payload = $this->part($payload);
         $signature = $this->signature($header . "." . $payload);
 
         return "{$header}.{$payload}.{$signature}";

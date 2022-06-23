@@ -30,6 +30,9 @@ Route::post('loginCancel', 'Users\Auth@loginCancel')->name('api.loginCancel');
 /** Получить номер телефона через идентификатор */
 Route::any('getNumberFromId', 'Asterisk\Phones@getNumberFromId')->name('api.getNumberFromId');
 
+/** Синхронизация заявок от старой ЦРМ */
+Route::post('webhoock/{token}/{type}', 'Requests\Synhro\Webhoock@index');
+
 /** Маршрутизая общего доступа */
 include __DIR__ . "/api/api.free.php";
 
