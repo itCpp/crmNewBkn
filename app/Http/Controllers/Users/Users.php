@@ -21,10 +21,12 @@ class Users extends Controller
      */
     public static function checkToken($token)
     {
-        $sessions = UsersSession::where([
-            ['token', $token]
-        ])
-            ->whereDate('created_at', now())
+        /** Проверка JWT токена */
+        if ($jwt = (new Jwt)->verifyToken($token))
+            $token = $jwt;
+
+        $sessions = UsersSession::whereToken($token)
+            ->where('created_at', '>', now()->startOfDay())
             ->get();
 
         if (count($sessions) != 1)
