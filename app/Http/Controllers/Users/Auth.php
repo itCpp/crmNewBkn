@@ -193,7 +193,7 @@ class Auth extends Controller
 
         broadcast(new AuthentificationsEvent("login", $session->id, $request->user()->id));
 
-        $response['token'] = (new JWT)->createAccessToken(
+        $response['token'] = (new Jwt)->createAccessToken(
             array_merge(
                 $request->user()->toPresenceData(),
                 [
