@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Http\Controllers\Chats\ForNewCrm\Chats;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Offices\OfficesTrait;
 use App\Http\Controllers\SecondCalls\SecondCalls;
@@ -146,13 +147,19 @@ class Counters extends Controller
         );
         $counter['timecode']['tests'] = microtime(true) - $step;
 
-        $counter['timecode']['_stop'] = microtime(true) - $start;
+        /** Подсчет новых сообщений в чате */
+        $step = microtime(true);
+        $counter['chat'] = Chats::getCounter($request);
+        $counter['timecode']['chat'] = microtime(true) - $step;
 
         foreach ($counter['timecode'] as &$time) {
             $time = round($time, 3);
         }
 
-        return $counter;
+        /** Общее время выполенения счетчика */
+        $counter['timecode']['_stop'] = microtime(true) - $start;
+
+        return collect($counter)->sortKeys()->toArray();
     }
 
     /**

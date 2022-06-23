@@ -60,7 +60,7 @@ class CreatecrmCommand extends Command
         $this->secret = Str::uuid();
 
         /** Перевод в режим обслуживания для отключения крон и тому подобных */
-        Artisan::call("down --secret={$this->secret}");
+        Artisan::call("down --secret=\"{$this->secret}\"");
 
         $this->line("Для обхода режима обслуживания перейти по ссылке:");
         $this->info(Str::finish(env('APP_URL', "http://localhost:8000"), "/") . $this->secret);

@@ -16,7 +16,7 @@ class CreateCallDetailRecordsTable extends Migration
         Schema::create('call_detail_records', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('event_id')->nullable();
-            $table->string('phone', 255)->nullable();
+            $table->string('phone', 500)->nullable();
             $table->string('phone_hash', 100)->nullable()->comment("Хеш телефона для поиска");
             $table->string('extension', 255)->nullable();
             $table->string('path', 255)->nullable()->comment("Путь до файла на сервере");
