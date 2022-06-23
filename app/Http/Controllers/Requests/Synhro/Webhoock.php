@@ -14,17 +14,31 @@ class Webhoock extends Controller
      * @var array
      */
     protected $methods = [
-        "addPhone",
-        "changeSector",
-        "create",
-        "firstComment",
-        "hide",
-        "pin",
-        "save",
-        "sbComment",
-        "theme",
-        "update",
+        "addPhone", // Запись дополнительного телефона
+        "changeSector", // Смена сектора
+        "create", // Создание новой заявки
+        "firstComment", // Запись первичного комментария
+        "hide", // Скрытие заявки со статусом из необработанных
+        "pin", // Смена оператора
+        "save", // Изменение данных
+        "sbComment", // Комментарий службы безопасности
+        "theme", // Изменение темы
+        "update", // Обновление заявки при поступлении нового обращения
     ];
+
+    /**
+     * Handle calls to missing methods on the controller.
+     * 
+     * @param  string $method
+     * @param  array $parameters
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        return response()->json([
+            'message' => "Method [{$method}] not found"
+        ], 400);
+    }
 
     /**
      * Првоерка токена доступа
@@ -47,7 +61,9 @@ class Webhoock extends Controller
      */
     public function index(Request $request, $token, $type)
     {
-        Log::channel('webhoock_access')->info("webhoock/{$type}", [
+        $virify = $this->virifyToken($token);
+
+        Log::channel('webhoock_access')->info(($virify ? "ALLOW" : "DENIED") . " webhoock/{$type}", [
             'real_ip' => $request->header('X-Real-Ip') ?: $request->ip(),
             'ip' => $request->ip(),
             'token' => $token,
@@ -55,9 +71,11 @@ class Webhoock extends Controller
             'headers' => $request->header(),
         ]);
 
-        if (!$this->virifyToken($token))
+        if (!$virify)
             return response()->json(['message' => "Permission denied"], 403);
 
-        return response()->json();
+        $method = "hoock" . ucfirst($type);
+
+        return $this->$method($request);
     }
 }
