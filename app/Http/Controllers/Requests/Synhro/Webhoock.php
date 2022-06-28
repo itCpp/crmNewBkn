@@ -133,17 +133,27 @@ class Webhoock extends Merge
      */
     public function createOrUpdateHoock(Request $request)
     {
-        $data = $request->row ?? [];
+        $data = $request->request ?? [];
 
         if (!is_array($data))
             $data = [];
 
         /** Экземпляр модели старой заявки */
         $row = $this->getCrmRequestRow($request->row);
-        $query_type = $this->getQueryType($row);
+        $data['query_type'] = $this->getQueryType($row);
 
         if (!isset($data['phone']))
             $data['phone'] = $request->phone;
+
+        if ($data['query_type'] == "text") {
+
+            if (!isset($data['site']))
+                $data['site'] = $row->typeSiteLink;
+        } else if ($data['query_type'] == "call") {
+
+            if (!isset($data['myPhone']))
+                $data['myPhone'] = $row->myPhone;
+        }
 
         $add_request = new Request(query: $data);
         $add_request->responseData = true;
