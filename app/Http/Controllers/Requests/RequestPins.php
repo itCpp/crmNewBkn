@@ -18,6 +18,7 @@ use App\Models\RequestsStory;
 use App\Models\RequestsStoryPin;
 use App\Models\User;
 use App\Models\Notification;
+use App\Models\RequestsStoryOwnPin;
 use App\Models\UsersSession;
 use App\Models\UserWorkTime;
 
@@ -260,6 +261,11 @@ class RequestPins extends Controller
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
+        if ($request->toOwn) {
+            $request->row = $row;
+            return self::setPinOwn($request);
+        }
+
         if (!$request->addr and !$request->toOwn) {
             return response()->json([
                 'message' => "Укажите адрес офиса",
@@ -314,6 +320,57 @@ class RequestPins extends Controller
 
         /** Рассылка уведомлений */
         Notifications::changeRequestPin($row->id, $row->newPin, $row->oldPin);
+
+        return response()->json([
+            'request' => $row,
+        ]);
+    }
+
+    /**
+     * Присвоение заявки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illumiante\Http\JsonResponse
+     */
+    public static function setPinOwn(Request $request)
+    {
+        $row = $request->row;
+
+        $before = $row->pin;
+
+        $row->pin = $request->user()->pin;
+        $row->callcenter_sector = $request->user()->callcenter_sector_id;
+
+        $row->save();
+
+        /** Запись истории присвоения заявки */
+        RequestsStoryOwnPin::create([
+            'pin_before' => $before,
+            'pin_after' => $row->pin,
+            'is_moscow' => $row->check_moscow,
+            'date_create' => now()->create($row->created_at)->format("Y-m-d"),
+            'date_uplift' => now()->create($row->uplift_at)->format("Y-m-d"),
+            'status_id' => $row->status_id,
+            'request_row' => $row->toArray(),
+        ]);
+
+        /** Логирование изменений заявки */
+        $story = RequestsStory::write($request, $row);
+        RequestsStoryPin::write($story, $old);
+
+        $row = Requests::getRequestRow($row);
+        $row->newPin = $row->pin;
+        $row->oldPin = $old;
+
+        /** Отправка события об изменении заявки */
+        broadcast(new UpdateRequestEvent($row));
+
+        /** Установка статуса рабочего времени операторам */
+        Worktime::checkAndWriteWork($row->oldPin);
+        Worktime::checkAndWriteWork($row->newPin);
+
+        /** Рассылка уведомлений */
+        Notifications::changeRequestPin($row->id, $row->newPin, $row->oldPin, true);
 
         return response()->json([
             'request' => $row,

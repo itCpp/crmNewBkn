@@ -27,9 +27,10 @@ class Notifications
      * @param  int $id Идентификатор заявки
      * @param  int|null $new Персональный номер нового сотрудника
      * @param  int|null $old Персональный номер старого сотрудника
+     * @param  bool $own Присвоение заявки себе
      * @return null
      */
-    public static function changeRequestPin($id, $new, $old)
+    public static function changeRequestPin($id, $new, $old, $own = false)
     {
         $notifications = new static;
 
@@ -38,7 +39,7 @@ class Notifications
             $row = self::create([
                 'user' => $new,
                 'notif_type' => "set_request",
-                'notification' => "Вам назначена заявка #{$id}",
+                'notification' => $own ? "Заявка #{$id} теперь Ваша" : "Вам назначена заявка #{$id}",
                 'data' => [
                     'request_id' => $id,
                 ],
