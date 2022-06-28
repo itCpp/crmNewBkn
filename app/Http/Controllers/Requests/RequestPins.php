@@ -336,7 +336,7 @@ class RequestPins extends Controller
     {
         $row = $request->row;
 
-        $before = $row->pin;
+        $before = $row->pin != $request->user()->pin ? $row->pin : null;
 
         $row->pin = $request->user()->pin;
         $row->callcenter_sector = $request->user()->callcenter_sector_id;
@@ -356,11 +356,12 @@ class RequestPins extends Controller
 
         /** Логирование изменений заявки */
         $story = RequestsStory::write($request, $row);
-        RequestsStoryPin::write($story, $old);
+        RequestsStoryPin::write($story, $before);
 
         $row = Requests::getRequestRow($row);
         $row->newPin = $row->pin;
-        $row->oldPin = $old;
+        $row->oldPin = $before;
+        $row->toOwn = true;
 
         /** Отправка события об изменении заявки */
         broadcast(new UpdateRequestEvent($row));

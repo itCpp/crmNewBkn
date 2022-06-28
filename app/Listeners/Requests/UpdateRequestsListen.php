@@ -38,7 +38,7 @@ class UpdateRequestsListen
         if (isset($event->row->newPin)) {
             if ($event->row->newPin == $event->row->pin) {
                 $toExclude[] = (int) $event->row->newPin;
-                broadcast(new UpdateRequestRowForPin($event->row, $event->row->newPin, false));
+                broadcast(new UpdateRequestRowForPin($event->row, $event->row->newPin, false, $event->row->toOwn ?? false));
             }
         }
 

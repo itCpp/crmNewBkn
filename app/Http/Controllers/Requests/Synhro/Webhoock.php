@@ -273,7 +273,8 @@ class Webhoock extends Merge
         $query['comment_urist'] = $data['uristComment'] ?? null;
 
         /** Адресс */
-        $query['address'] = $data['address'] ?? null;
+        if (isset($data['address']))
+            $query['address'] = $data['address'];
 
         $this->checkRequestId($request);
 
