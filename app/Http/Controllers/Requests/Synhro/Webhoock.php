@@ -220,6 +220,25 @@ class Webhoock extends Merge
     }
 
     /**
+     * Присвоение заявки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockPinOwn(Request $request)
+    {
+        $query = is_array($request->input('request')) ? $request->input('request') : [];
+        $query['user'] = $this->getOperatorUserId($request->input('pin'));
+        $query['toOwn'] = $request->input('pin');
+
+        $this->checkRequestId($request);
+
+        $hoock_request = $this->createRequest($query, $request->pin);
+
+        return RequestPins::setPin($hoock_request);
+    }
+
+    /**
      * Обработка сохранений
      * 
      * @param  \Illuminate\Http\Request $request

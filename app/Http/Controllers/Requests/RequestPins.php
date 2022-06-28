@@ -260,7 +260,7 @@ class RequestPins extends Controller
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
-        if (!$request->addr) {
+        if (!$request->addr and !$request->toOwn) {
             return response()->json([
                 'message' => "Укажите адрес офиса",
                 'errors' => [
