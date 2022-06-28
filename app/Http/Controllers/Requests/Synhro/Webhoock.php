@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Requests\Synhro;
 
 use App\Http\Controllers\Requests\AddRequest;
+use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Requests\RequestPins;
 use App\Http\Controllers\Users\DeveloperBot;
 use App\Http\Controllers\Users\UserData;
@@ -165,6 +166,41 @@ class Webhoock extends Merge
     }
 
     /**
+     * Создает экземпляр объекта запроса
+     * 
+     * @param  array $data
+     * @param  string|int|null $pin
+     * @return \Illuminate\Http\Request
+     */
+    public function createRequest($data = [], $pin = null)
+    {
+        $request = new Request($data);
+
+        $request->setUserResolver(function () use ($pin) {
+
+            $user = User::wherePin($pin)->first();
+
+            return $user ? new UserData($user) : (new DeveloperBot)();
+        });
+
+        return $request;
+    }
+
+    /**
+     * Проверяет и/или создает строку заявки на основе старой
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \App\Models\RequestsRow
+     */
+    public function checkRequestId(Request $request)
+    {
+        if (!$row = RequestsRow::find($request->row['id'] ?? null))
+            $row = $this->createOrUpdateRequestFromOld($request);
+
+        return $row;
+    }
+
+    /**
      * Назначение оператора
      * 
      * @param  \Illuminate\Http\Request $request
@@ -176,17 +212,9 @@ class Webhoock extends Merge
         $query['addr'] = $query['address'] ?? null;
         $query['user'] = $this->getOperatorUserId($query['pin']);
 
-        if (!RequestsRow::find($query['id'] ?? null))
-            $this->createOrUpdateRequestFromOld($request);
+        $this->checkRequestId($request);
 
-        $hoock_request = new Request($query);
-
-        $hoock_request->setUserResolver(function () use ($request) {
-
-            $user = User::wherePin($request->pin)->first();
-
-            return $user ? new UserData($user) : (new DeveloperBot)();
-        });
+        $hoock_request = $this->createRequest($query, $request->pin);
 
         return RequestPins::setPin($hoock_request);
     }
@@ -197,8 +225,40 @@ class Webhoock extends Merge
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function hoockSaveDev(Request $request)
+    public function hoockSave(Request $request)
     {
-        $query = is_array($request->input('request')) ? $request->input('request') : [];
+        $data = is_array($request->input('request')) ? $request->input('request') : [];
+
+        /** Идентификатор заявки */
+        $query['id'] = $data['id'] ?? null;
+
+        /** Идентификатор статуса */
+        $query['status_id'] = $this->getStatusIdFromString($data['state'] ?? null);
+
+        /** Дата и время события */
+        $query['event_date'] = $data['rdate'] ?? null;
+        $query['event_time'] = $data['time'] ?? null;
+
+        /** ФИО клиента */
+        $query['client_name'] = $data['name'] ?? null;
+
+        /** Тематика */
+        $query['theme'] = $data['theme'] ?? null;
+
+        /** Город проживания */
+        $query['region'] = $data['region'] ?? null;
+
+        /** Комментарии */
+        $query['comment'] = $data['comment'] ?? null;
+        $query['comment_urist'] = $data['uristComment'] ?? null;
+
+        /** Адресс */
+        $query['address'] = $data['address'] ?? null;
+
+        $this->checkRequestId($request);
+
+        $hoock_request = $this->createRequest($query, $request->pin);
+
+        return RequestChange::save($hoock_request);
     }
 }

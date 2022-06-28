@@ -82,7 +82,7 @@ class Merge extends RequestsMergeData
         $new->comment_urist = (bool) $row->uristComment ? $row->uristComment : null;
         $new->comment_first = (bool) $row->first_comment ? $row->first_comment : null;
         $new->address = $row->address ?: null;
-        $new->status_id = $this->getStatusId($row);
+        $new->status_id = $this->getStatusIdFromString($row->state);
         $new->uplift = 1;
         $new->event_at = $this->getEventAt($row);
         $new->created_at = $this->getCreatedAt($row);
@@ -151,12 +151,12 @@ class Merge extends RequestsMergeData
     /**
      * Определение идентификатора статуса заявки
      * 
-     * @param  \App\Models\CrmMka\CrmRequest $row
+     * @param  string $state
      * @return null|int
      */
-    public function getStatusId($row)
+    public function getStatusIdFromString($state)
     {
-        return $this->stateToStatusId[$row->state] ?? null;
+        return $this->stateToStatusId[$state] ?? null;
     }
 
     /**
