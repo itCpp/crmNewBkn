@@ -133,7 +133,7 @@ class Webhoock extends Merge
      */
     public function createOrUpdateHoock(Request $request)
     {
-        $data = $request->request ?? [];
+        $data = $request->input('request') ?? [];
 
         if (!is_array($data))
             $data = [];
@@ -189,5 +189,16 @@ class Webhoock extends Merge
         });
 
         return RequestPins::setPin($hoock_request);
+    }
+
+    /**
+     * Обработка сохранений
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockSaveDev(Request $request)
+    {
+        $query = is_array($request->input('request')) ? $request->input('request') : [];
     }
 }
