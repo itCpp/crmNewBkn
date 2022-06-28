@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Requests\Synhro;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Requests\AddRequest;
+use App\Models\RequestsRow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class Webhoock extends Controller
+class Webhoock extends Merge
 {
     /**
      * Существующие методы
@@ -25,6 +26,23 @@ class Webhoock extends Controller
         "theme", // Изменение темы
         "update", // Обновление заявки при поступлении нового обращения
     ];
+
+    /**
+     * Объект обработки старых заявок
+     * 
+     * @var \App\Http\Controllers\Dev\RequestsMerge
+     */
+    protected $merge;
+
+    /**
+     * Инициализация объекта
+     * 
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__constrict();
+    }
 
     /**
      * Handle calls to missing methods on the controller.
@@ -77,5 +95,56 @@ class Webhoock extends Controller
         $method = "hoock" . ucfirst($type);
 
         return $this->$method($request);
+    }
+
+    /**
+     * Запрос на создание заявки
+     * 
+     * @param  \Illuminate\Http\Request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockCreate(Request $request)
+    {
+        return $this->createOrUpdateHoock($request);
+    }
+
+    /**
+     * Запрос на обновление заявки
+     * 
+     * @param  \Illuminate\Http\Request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockUpdate(Request $request)
+    {
+        return $this->createOrUpdateHoock($request);
+    }
+
+    /**
+     * Обработка хуков создания и обновления заявки
+     * 
+     * @param  \Illuminate\Http\Request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createOrUpdateHoock(Request $request)
+    {
+        $data = $request->row ?? [];
+
+        if (!is_array($data))
+            $data = [];
+
+        /** Экземпляр модели старой заявки */
+        $row = $this->getCrmRequestRow($request->row);
+        $query_type = $this->getQueryType($row);
+
+        if (!isset($data['phone']))
+            $data['phone'] = $request->phone;
+
+        $add_request = new Request(query: $data);
+        $add_request->responseData = true;
+        $add_request->fromWebhoock = true;
+
+        $data = (new AddRequest($add_request))->add();
+
+        return response()->json($data);
     }
 }
