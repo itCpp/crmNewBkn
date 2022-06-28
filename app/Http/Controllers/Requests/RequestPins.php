@@ -347,7 +347,7 @@ class RequestPins extends Controller
         RequestsStoryOwnPin::create([
             'pin_before' => $before,
             'pin_after' => $row->pin,
-            'is_moscow' => $row->check_moscow,
+            'is_moscow' => (bool) $row->check_moscow,
             'date_create' => now()->create($row->created_at)->format("Y-m-d"),
             'date_uplift' => now()->create($row->uplift_at)->format("Y-m-d"),
             'status_id' => $row->status_id,
