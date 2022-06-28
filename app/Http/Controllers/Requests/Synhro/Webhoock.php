@@ -275,6 +275,8 @@ class Webhoock extends Merge
         /** Адресс */
         if (isset($data['address']))
             $query['address'] = $data['address'];
+        else
+            $query['address'] = $request->row['address'] ?? null;
 
         $this->checkRequestId($request);
 
