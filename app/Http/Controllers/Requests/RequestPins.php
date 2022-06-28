@@ -251,8 +251,8 @@ class RequestPins extends Controller
     /**
      * Изменение оператора в заявке
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illumiante\Http\JsonResponse
      */
     public static function setPin(Request $request)
     {

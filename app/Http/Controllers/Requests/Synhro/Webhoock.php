@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\Requests\Synhro;
 
 use App\Http\Controllers\Requests\AddRequest;
+use App\Http\Controllers\Requests\RequestPins;
+use App\Http\Controllers\Users\DeveloperBot;
+use App\Http\Controllers\Users\UserData;
 use App\Models\RequestsRow;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -42,6 +46,8 @@ class Webhoock extends Merge
     public function __construct()
     {
         parent::__constrict();
+
+        $this->logger = Log::channel('webhoock_access');
     }
 
     /**
@@ -81,7 +87,7 @@ class Webhoock extends Merge
     {
         $virify = $this->virifyToken($token);
 
-        Log::channel('webhoock_access')->info(($virify ? "ALLOW" : "DENIED") . " webhoock/{$type}", [
+        $this->logger->info(($virify ? "ALLOW" : "DENIED") . " webhoock/{$type}", [
             'real_ip' => $request->header('X-Real-Ip') ?: $request->ip(),
             'ip' => $request->ip(),
             'token' => $token,
@@ -146,5 +152,32 @@ class Webhoock extends Merge
         $data = (new AddRequest($add_request))->add();
 
         return response()->json($data);
+    }
+
+    /**
+     * Назначение оператора
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockPin(Request $request)
+    {
+        $query = is_array($request->input('request')) ? $request->input('request') : [];
+        $query['addr'] = $query['address'] ?? null;
+        $query['user'] = $this->getOperatorUserId($query['pin']);
+
+        if (!RequestsRow::find($query['id'] ?? null))
+            $this->createOrUpdateRequestFromOld($request);
+
+        $hoock_request = new Request($query);
+
+        $hoock_request->setUserResolver(function () use ($request) {
+
+            $user = User::wherePin($request->pin)->first();
+
+            return $user ? new UserData($user) : (new DeveloperBot)();
+        });
+
+        return RequestPins::setPin($hoock_request);
     }
 }

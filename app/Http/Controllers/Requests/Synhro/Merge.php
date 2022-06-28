@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Requests\Synhro;
 use App\Http\Controllers\Dev\RequestsMergeData;
 use App\Http\Controllers\Requests\AddRequestCounterTrait;
 use App\Http\Controllers\Requests\RequestChange;
+use App\Http\Controllers\Users\UsersMerge;
 use App\Models\CrmMka\CrmRequest;
+use App\Models\CrmMka\CrmUser;
 use App\Models\RequestsClient;
 use App\Models\RequestsRow;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
@@ -54,7 +57,7 @@ class Merge extends RequestsMergeData
      * @param  \Illuminate\Http\Request $request
      * @return 
      */
-    public function createOrUpdateRequest(Request $request)
+    public function createOrUpdateRequestFromOld(Request $request)
     {
         /** Экземпляр модели старой заявки */
         $row = $this->getCrmRequestRow($request->row);
@@ -154,5 +157,23 @@ class Merge extends RequestsMergeData
     public function getStatusId($row)
     {
         return $this->stateToStatusId[$row->state] ?? null;
+    }
+
+    /**
+     * Проверяет наличие сотрудника или создает его
+     * 
+     * @param  string $pin
+     * @return int
+     */
+    public function getOperatorUserId($pin)
+    {
+        if ($user = User::wherePin($pin)->first())
+            return $user->id;
+
+        $old = CrmUser::wherePin($pin)->first();
+
+        $user = (new UsersMerge)->createUser($old);
+        
+        return $user->id ?? null;
     }
 }
