@@ -259,26 +259,34 @@ class Webhoock extends Merge
         $query['id'] = $data['id'] ?? null;
 
         /** Идентификатор статуса */
-        $query['status_id'] = $this->getStatusIdFromString($data['state'] ?? null);
+        if (isset($data['state']))
+            $query['status_id'] = $this->getStatusIdFromString($data['state'] ?? null);
 
         /** Дата и время события */
-        $query['event_date'] = $data['rdate'] ?? null;
-        $query['event_time'] = $data['time'] ?? null;
+        if (isset($data['rdate']))
+            $query['event_date'] = $data['rdate'] ?? null;
+        if (isset($data['time']))
+            $query['event_time'] = $data['time'] ?? null;
 
         /** ФИО клиента */
-        $query['client_name'] = $data['name'] ?? null;
+        if (isset($data['name']))
+            $query['client_name'] = $data['name'] ?? null;
 
         /** Тематика */
-        $query['theme'] = $data['theme'] ?? null;
+        if (isset($data['theme']))
+            $query['theme'] = $data['theme'] ?? null;
 
         /** Город проживания */
-        $query['region'] = $data['region'] ?? null;
+        if (isset($data['region']))
+            $query['region'] = $data['region'] ?? null;
 
         /** Комментарии */
-        $query['comment'] = $data['comment'] ?? null;
-        $query['comment_urist'] = $data['uristComment'] ?? null;
+        if (isset($data['comment']))
+            $query['comment'] = $data['comment'] ?? null;
+        if (isset($data['comment_urist']))
+            $query['comment_urist'] = $data['uristComment'] ?? null;
 
-        /** Адресс */
+        /** Адрес */
         if (isset($data['address']))
             $query['address'] = $data['address'];
         else
@@ -297,7 +305,7 @@ class Webhoock extends Merge
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function changeSector(Request $request)
+    public function hoockChangeSector(Request $request)
     {
         $this->checkRequestId($request);
 
