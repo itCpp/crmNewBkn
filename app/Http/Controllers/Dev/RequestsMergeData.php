@@ -29,6 +29,21 @@ class RequestsMergeData extends Controller
     protected $stateToStatusIdCrypt = "eyJpdiI6IjkxUC9Qa3g3TUVZaHU0REF6Y0c5bGc9PSIsInZhbHVlIjoiVDNHN2t3anFnOHhSMU9tVkdZMHNoMzBBMWtEcHB2SitBT05GQTJhZksvTk0yRWJob3BCM3RTZ0R4ZGRnL0poQ00yaVhVNENqcURrVVBxY2FwSk1zcVhLTk5ZUkUyQlQ2NkFyWTRsWUhER0h6eXRVS1hBMTlMbE5Gbkpnb29LNGZLU1ZUaVEyUEdKMjkvRlh6OUsvZnVneldSazc0cW1oTGNqUjEwbEhud1VlMlZUSE9vRFFKQ3dCdHRoaWhhZThTQU5QSkpxS2RxUzdPaGdiTms0RFlsMFpwWXRwVndJYi9XZXNaR2lPb3FEM0JqTlB1dGVFd1RlQmFGRE1BakpybDNIY2c4aUpTdXFQTDVjakc5SUJQRUFuME5hUmlmNThIcjZHSzNHOFhvc0d1Ni9neERnUmlzUFJ0OG9KcW5jWEF2MDJQZ245N2V5R2R1Y1ZVa1hzcUM3TGZNWlFBQjJpUDVwOFZsdG1TWURkakVUMXNLUHltVTJYVUlsbjNMTFR6IiwibWFjIjoiMDYwYjdmYzcxOTcxODQ4ZjM1NDNhYjY4MDcyZGQwZjU1NDg2YzA5ZTliMjQxNzM3ZDZmZDgyYTZjYmUzMzg3NSIsInRhZyI6IiJ9";
 
     /**
+     * Идентификаторы секторов
+     * 
+     * @var array
+     */
+    protected $sectorIdToId = [
+        1 => 1,
+        2 => 1,
+        3 => 2,
+        4 => 2,
+        5 => 2,
+        6 => 2,
+        7 => 3,
+    ];
+
+    /**
      * Сопостовление идентификаторов источников
      * 
      * @var array
@@ -105,17 +120,18 @@ class RequestsMergeData extends Controller
         if ($sector === "" or $sector === null)
             return null;
 
-        $sectors = [
-            1 => 1,
-            2 => 1,
-            3 => 2,
-            4 => 2,
-            5 => 2,
-            6 => 2,
-            7 => 3,
-        ];
+        return $this->sectorIdToId[(int) $sector] ?? null;
+    }
 
-        return $sectors[(int) $sector] ?? null;
+    /**
+     * Определяет идентификатор сектора по идентифкатору
+     * 
+     * @param  int $id
+     * @return int|null
+     */
+    public function getSectorIdFromId($id)
+    {
+        return $this->sectorIdToId[(int) $id] ?? null;
     }
 
     /**
@@ -206,7 +222,7 @@ class RequestsMergeData extends Controller
 
         return $date;
     }
-    
+
     /**
      * Дата создания заявки
      * 

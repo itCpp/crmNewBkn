@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Requests\Synhro;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Requests\RequestPins;
+use App\Http\Controllers\Requests\RequestSectors;
 use App\Http\Controllers\Users\DeveloperBot;
 use App\Http\Controllers\Users\UserData;
 use App\Models\RequestsRow;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -96,6 +98,9 @@ class Webhoock extends Merge
             'request' => $request->all(),
             'headers' => $request->header(),
         ]);
+
+        if (!env('NEW_CRM_OFF', true))
+            throw new Exception("Новая ЦРМ включена в работу");
 
         if (!$virify)
             return response()->json(['message' => "Permission denied"], 403);
@@ -284,5 +289,25 @@ class Webhoock extends Merge
         $hoock_request = $this->createRequest($query, $request->pin);
 
         return RequestChange::save($hoock_request);
+    }
+
+    /**
+     * Смена сектора
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function changeSector(Request $request)
+    {
+        $this->checkRequestId($request);
+
+        $data = is_array($request->input('request')) ? $request->input('request') : [];
+
+        $query['id'] = $data['id'] ?? null;
+        $query['sector'] = $this->getSectorIdFromId($data['sector'] ?? null);
+
+        $hoock_request = $this->createRequest($query, $request->pin);
+
+        return RequestSectors::setSector($hoock_request);
     }
 }
