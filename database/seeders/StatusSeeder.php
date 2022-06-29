@@ -29,7 +29,7 @@ class StatusSeeder extends Seeder
         [5, 'БК', 6, 1, 0, '{"algorithm": "nextDay", "time_created": 1, "time_updated": 1}'],
         [6, 'Брак', 4, 1, 0, '{"algorithm": "nextDay", "time_created": 1, "time_updated": 1}'],
         [7, 'Приход', 7, 0, 1, NULL],
-        [8, 'Слив', 2, 1, 1, '{"algorithm": "xDays", "time_created": 1, "time_updated": 1, "algorithm_option": "7"}'],
+        [8, 'Слив', 2, 1, 0, '{"algorithm": "xDays", "time_created": 1, "time_updated": 1, "algorithm_option": "7"}'],
         [9, 'Промо', NULL, 0, 0, NULL],
         [10, 'Онлайн', 8, 0, 0, '{"algorithm": "nextDay","time_created": 1}'],
         [11, 'Договор', NULL, 0, 0, NULL],

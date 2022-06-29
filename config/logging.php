@@ -145,7 +145,14 @@ return [
 
         'webhoock_access' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/webhoock/access.log'),
+            'path' => storage_path('logs/webhoock/request.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'webhoock_response' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/webhoock/response.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 60,
         ],

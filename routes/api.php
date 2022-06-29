@@ -31,7 +31,8 @@ Route::post('loginCancel', 'Users\Auth@loginCancel')->name('api.loginCancel');
 Route::any('getNumberFromId', 'Asterisk\Phones@getNumberFromId')->name('api.getNumberFromId');
 
 /** Синхронизация заявок от старой ЦРМ */
-Route::post('webhoock/{token}/{type}', 'Requests\Synhro\Webhoock@index');
+Route::post('webhoock/{token}/{type}', 'Requests\Synhro\Webhoock@index')
+    ->middleware(\App\Http\Middleware\WebhoockResponseLogger::class);
 
 /** Маршрутизая общего доступа */
 include __DIR__ . "/api/api.free.php";

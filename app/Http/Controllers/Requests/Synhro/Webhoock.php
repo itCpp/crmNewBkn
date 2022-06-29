@@ -91,13 +91,16 @@ class Webhoock extends Merge
     {
         $virify = $this->virifyToken($token);
 
-        $this->logger->info(($virify ? "ALLOW" : "DENIED") . " webhoock/{$type}", [
-            'real_ip' => $request->header('X-Real-Ip') ?: $request->ip(),
-            'ip' => $request->ip(),
-            'token' => $token,
-            'request' => $request->all(),
-            'headers' => $request->header(),
-        ]);
+        try {
+            $this->logger->info(($virify ? "ALLOW" : "DENIED") . " [" . $type . "]", [
+                'real_ip' => $request->header('X-Real-Ip') ?: $request->ip(),
+                'ip' => $request->ip(),
+                'token' => $token,
+                'request' => $request->all(),
+                'headers' => $request->header(),
+            ]);
+        } catch (Exception) {
+        }
 
         if (!env('NEW_CRM_OFF', true))
             throw new Exception("Новая ЦРМ включена в работу");
@@ -338,5 +341,24 @@ class Webhoock extends Merge
         $hoock_request->__cell = "commentFirst";
 
         return RequestChange::saveCell($hoock_request);
+    }
+
+    /**
+     * Скрытие без обработки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockHide(Request $request)
+    {
+        $this->checkRequestId($request);
+
+        $data = is_array($request->input('request')) ? $request->input('request') : [];
+
+        $query['id'] = $data['id'] ?? null;
+
+        $hoock_request = $this->httpRequest($query, $request->pin);
+
+        return RequestChange::hideUplift($hoock_request);
     }
 }
