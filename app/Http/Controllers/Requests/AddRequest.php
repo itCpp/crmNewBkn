@@ -231,7 +231,7 @@ class AddRequest extends Controller
             return $this->badRequest();
         }
 
-        // Отмена запроса при отключенной настройке
+        /** Отмена запроса при отключенной настройке */
         if ($this->settings->DROP_ADD_REQUEST) {
             $this->errors[] = "Добавление заявок отключено в настройках";
             return $this->badRequest();
@@ -362,10 +362,18 @@ class AddRequest extends Controller
      */
     public function findRequest()
     {
+        if ($this->request->webhoockRow instanceof RequestsRow) {
+            $this->data = $this->request->webhoockRow;
+            return $this;
+        }
+
         if (!$this->client)
             return $this;
 
-        $this->data = $this->client->requests()->where('source_id', $this->source->id ?? null)->first();
+        $this->data = $this->client
+            ->requests()
+            ->where('source_id', $this->source->id ?? null)
+            ->first();
 
         return $this;
     }
