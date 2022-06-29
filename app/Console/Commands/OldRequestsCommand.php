@@ -4,6 +4,9 @@ namespace App\Console\Commands;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Dev\RequestsMerge;
+use App\Models\CrmMka\CrmRequestsSetOwnPin;
+use App\Models\RequestsRow;
+use App\Models\RequestsStoryOwnPin;
 use Illuminate\Console\Command;
 
 class OldRequestsCommand extends Command
@@ -71,7 +74,11 @@ class OldRequestsCommand extends Command
 
         $bar->finish();
 
-        $this->newLine(2);
+        $this->newLine(1);
+
+        $this->handleSetOwnPins();
+
+        $this->newLine(1);
 
         $this->info("Время завершения: " . date("Y-m-d H:i:s"));
         $this->info("Время работы: " . Controller::secToStr((int) (microtime(1) - $start)));
@@ -90,5 +97,51 @@ class OldRequestsCommand extends Command
         $this->info("Использовано памяти: " . round($memory, 2) . " " . ($name[$i] ?? ""));
 
         return 0;
+    }
+
+    /**
+     * Перенос истории присвоения заявок
+     * 
+     * @return null
+     */
+    public function handleSetOwnPins()
+    {
+        $this->info("Перенос истории присвоения заявок: ");
+
+        $bar = $this->output->createProgressBar(CrmRequestsSetOwnPin::count());
+        $bar->start();
+
+        $stop = false;
+        $last_id = 0;
+
+        while (!$stop) {
+
+            if ($row = CrmRequestsSetOwnPin::where('id', '>', $last_id)->first()) {
+
+                $request = RequestsRow::find($row->id_request);
+
+                RequestsStoryOwnPin::create([
+                    'request_id' => $row->id_request,
+                    'pin_before' => (int) $row->pin_before ?: null,
+                    'pin_after' => $row->pin_add,
+                    'is_moscow' => (bool) $row->is_moscow,
+                    'date_create' => $row->date,
+                    'date_uplift' => $row->date_static,
+                    'status_id' => $request->status_id ?? null,
+                    'request_row' => $request ? $request->toArray() : [
+                        'region' => $row->region,
+                    ],
+                    'created_at' => $row->created_at,
+                    'updated_at' => $row->created_at,
+                ]);
+
+                $last_id = $row->id;
+            }
+
+            $bar->advance();
+            $stop = !((bool) $row);
+        }
+
+        $bar->finish();
     }
 }

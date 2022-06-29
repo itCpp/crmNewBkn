@@ -15,6 +15,7 @@ class RequestsStoryOwnPin extends Model
      * @var array
      */
     protected $fillable = [
+        'request_id',
         'pin_before',
         'pin_after',
         'is_moscow',
@@ -22,6 +23,8 @@ class RequestsStoryOwnPin extends Model
         'date_uplift',
         'status_id',
         'request_row',
+        'created_at',
+        'updated_at',
     ];
 
     /**

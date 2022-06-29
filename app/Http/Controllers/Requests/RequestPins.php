@@ -345,6 +345,7 @@ class RequestPins extends Controller
 
         /** Запись истории присвоения заявки */
         RequestsStoryOwnPin::create([
+            'request_id' => $row->id,
             'pin_before' => $before,
             'pin_after' => $row->pin,
             'is_moscow' => (bool) $row->check_moscow,
