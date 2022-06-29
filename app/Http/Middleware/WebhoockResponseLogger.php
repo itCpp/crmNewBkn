@@ -20,10 +20,12 @@ class WebhoockResponseLogger
         $response = $next($request);
 
         try {
-            Log::channel('webhoock_response')->debug($request->getRequestUri(), [
+            $encrypt = encrypt([
                 'request' => $request->all(),
                 'response' => $response->getData(true),
             ]);
+
+            Log::channel('webhoock_response')->debug($request->getRequestUri() . " " . $encrypt);
         } finally {
             return $response;
         }

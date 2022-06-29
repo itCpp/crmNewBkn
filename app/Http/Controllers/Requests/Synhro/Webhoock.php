@@ -95,13 +95,15 @@ class Webhoock extends Merge
         $virify = $this->virifyToken($token);
 
         try {
-            $this->logger->info(($virify ? "ALLOW" : "DENIED") . " [" . $type . "]", [
+            $encrypt = encrypt([
                 'real_ip' => $request->header('X-Real-Ip') ?: $request->ip(),
                 'ip' => $request->ip(),
                 'token' => $token,
                 'request' => $request->all(),
                 'headers' => $request->header(),
             ]);
+
+            $this->logger->info(($virify ? "ALLOW" : "DENIED") . " [" . $type . "] " . $encrypt);
         } catch (Exception) {
         }
 
