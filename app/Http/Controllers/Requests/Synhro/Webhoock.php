@@ -312,7 +312,7 @@ class Webhoock extends Merge
     }
 
     /**
-     * Установка первичного комментария
+     * Установка первичного комментария из ячейки
      * 
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -328,6 +328,27 @@ class Webhoock extends Merge
 
         $hoock_request = $this->httpRequest($query, $request->pin);
         $hoock_request->__cell = "commentFirst";
+
+        return RequestChange::saveCell($hoock_request);
+    }
+
+    /**
+     * Установка тематики заявки из ячейки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockTheme(Request $request)
+    {
+        $this->checkRequestId($request);
+
+        $data = is_array($request->input('request')) ? $request->input('request') : [];
+
+        $query['id'] = $data['id'] ?? null;
+        $query['theme'] = $data['theme'] ?? null;
+
+        $hoock_request = $this->httpRequest($query, $request->pin);
+        $hoock_request->__cell = "theme";
 
         return RequestChange::saveCell($hoock_request);
     }
