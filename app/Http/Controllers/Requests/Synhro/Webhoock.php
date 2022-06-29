@@ -103,7 +103,10 @@ class Webhoock extends Merge
                 'headers' => $request->header(),
             ]);
 
-            $this->logger->info(($virify ? "ALLOW" : "DENIED") . " [" . $type . "] " . $encrypt);
+            $id = $request->input('row')['id'] ?? null;
+
+            $this->logger
+                ->info(($virify ? "ALLOW" : "DENIED") . " [{$id}] [{$type}] {$encrypt}");
         } catch (Exception) {
         }
 
