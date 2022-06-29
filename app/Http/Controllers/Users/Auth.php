@@ -245,7 +245,7 @@ class Auth extends Controller
      */
     public static function logout(Request $request)
     {
-        $token = $request->bearerToken();
+        $token = (new Jwt)->verifyToken($request->bearerToken());
 
         // Обнуление сессии
         if ($session = UsersSession::where('token', $token)->first())
@@ -253,7 +253,7 @@ class Auth extends Controller
 
         // Поиск активных сессиий
         $active = UsersSession::where('user_id', $request->user()->id)
-            ->where('created_at', now()->format("Y-m-d 00:00:00"))
+            ->where('created_at', '>', now()->format("Y-m-d 00:00:00"))
             ->count();
 
         // Запись рабочего времени
