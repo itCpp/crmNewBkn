@@ -284,4 +284,65 @@ class Controller extends BaseController
 
 		return $view;
 	}
+
+	/**
+	 * Сопоставляет массив слов к числу
+	 * 
+	 * @param  int $value
+	 * @param  array $words
+	 * @param  bool $show
+	 * @return string
+	 */
+	public static function num_word($value, $words, $show = true)
+	{
+		$num = $value % 100;
+		if ($num > 19) {
+			$num = $num % 10;
+		}
+
+		$out = ($show) ?  $value . ' ' : '';
+
+		switch ($num) {
+			case 1:
+				$out .= $words[0];
+				break;
+			case 2:
+			case 3:
+			case 4:
+				$out .= $words[1];
+				break;
+			default:
+				$out .= $words[2];
+				break;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Переводит секунды в строку
+	 * 
+	 * @param  int $secs
+	 * @return string
+	 */
+	public static function secToStr($secs)
+	{
+		$res = '';
+
+		$days = floor($secs / 86400);
+		$secs = $secs % 86400;
+		$res .= $days > 0 ? self::num_word($days, ['день', 'дня', 'дней']) . ', ' : '';
+
+		$hours = floor($secs / 3600);
+		$secs = $secs % 3600;
+		$res .= $hours > 0 ? self::num_word($hours, ['час', 'часа', 'часов']) . ', ' : '';
+
+		$minutes = floor($secs / 60);
+		$secs = $secs % 60;
+		$res .= $minutes > 0 ? self::num_word($minutes, ['минута', 'минуты', 'минут']) . ', ' : '';
+
+		$res .= self::num_word($secs, ['секунда', 'секунды', 'секунд']);
+
+		return $res;
+	}
 }

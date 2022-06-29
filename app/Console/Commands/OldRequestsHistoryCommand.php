@@ -52,7 +52,6 @@ class OldRequestsHistoryCommand extends Command
         $this->merge = new RequestsMerge;
         $this->cursor = new Cursor($this->output);
 
-        $this->newLine();
         $this->info("Перенос истории заявок");
         $this->line("Начало переноса: " . date("Y-m-d H:i:s"));
 
@@ -90,7 +89,6 @@ class OldRequestsHistoryCommand extends Command
         $this->newLine();
         $this->line("Время завершения: " . date("Y-m-d H:i:s"));
         $this->info("Перенос истории заявок завершен");
-        $this->newLine();
 
         return 0;
     }

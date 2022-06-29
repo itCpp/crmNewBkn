@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Console\MyOutput;
 use App\Http\Controllers\Controller;
 use App\Models\CrmMka\CrmRequestsQueue;
 use App\Models\RequestsQueue;
@@ -10,8 +9,6 @@ use Illuminate\Console\Command;
 
 class OldRequestsQueueCommand extends Command
 {
-    use MyOutput;
-
     /**
      * The name and signature of the console command.
      *
@@ -58,8 +55,6 @@ class OldRequestsQueueCommand extends Command
         }
 
         $bar->finish();
-
-        $this->newLine(2);
 
         return 0;
     }

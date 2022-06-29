@@ -73,7 +73,6 @@ class OldCdrCommand extends Command
         $count = CallDetailRecord::count();
         $this->line("Создано записей: <fg=green;options=bold>{$count}</>");
         $this->line("Записи с нулевой длительностью разговора отброшены");
-        $this->newLine();
 
         return 0;
     }

@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Console\MyOutput;
 use App\Http\Controllers\Users\UsersMerge;
 use Exception;
 use Illuminate\Console\Command;
@@ -14,8 +13,6 @@ use Illuminate\Console\Command;
  */
 class OldUsersCommand extends Command
 {
-    use MyOutput;
-
     /**
      * The name and signature of the console command.
      *
@@ -55,8 +52,6 @@ class OldUsersCommand extends Command
     public function handle()
     {
         $this->users = new UsersMerge;
-
-        $this->title('Перенос сотрудников');
 
         $this->question(" Разработчики, руководители и тд... ");
         $this->createUsers($this->users->getNachUsers(), "secret");

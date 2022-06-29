@@ -50,6 +50,8 @@ class CreatecrmCommand extends Command
      */
     public function handle()
     {
+        ini_set('memory_limit', '-1');
+
         $this->start = microtime(1);
         $this->uuid = Str::orderedUuid();
         $this->cursor = new Cursor($this->output);
@@ -60,13 +62,13 @@ class CreatecrmCommand extends Command
         $this->secret = Str::uuid();
 
         /** Перевод в режим обслуживания для отключения крон и тому подобных */
-        Artisan::call("down --secret=\"{$this->secret}\"");
+        Artisan::call("down --secret={$this->secret}");
 
         $this->line("Для обхода режима обслуживания перейти по ссылке:");
         $this->info(Str::finish(env('APP_URL', "http://localhost:8000"), "/") . $this->secret);
         $this->newLine();
 
-        sleep(5);
+        sleep(3);
 
         try {
             $this->createcrm();
@@ -88,34 +90,55 @@ class CreatecrmCommand extends Command
     public function createcrm()
     {
         /** Сохранение данных перед переносом */
+        $this->title("Сохранение данных перед переносом", "blue");
         $this->call('data:dump', ['--name' => $this->uuid]);
+        $this->newLine(1);
 
         /** Обнуление базы данных */
+        $this->title("Обнуление базы данных", "blue");
         $this->call('migrate:fresh', ['--seeder' => "CreateCrm"]);
+        $this->newLine(1);
 
         /** Перенос сотрудников */
-        if ($this->users_merge)
+        if ($this->users_merge) {
+            $this->title("Перенос сотрудников", "blue");
             $this->call('old:users');
+            $this->newLine(1);
+        }
 
         /** Восстановление ранее сохраненных данных */
+        $this->title("Восстановление сохраненных данных", "blue");
         $this->call('data:restore', ['--name' => $this->uuid]);
+        $this->newLine(1);
 
         /** Перенос старых заявок */
-        if ($this->requests_merge)
+        if ($this->requests_merge) {
+            $this->title("Перенос заявок", "blue");
             $this->call('old:requests');
+            $this->newLine(1);
+        }
 
         /** Перенос детализации вызовов */
-        if ($this->cdr_merge)
+        if ($this->cdr_merge) {
+            $this->title("Перенос детализации вызовов", "blue");
             $this->call('old:cdr');
+            $this->newLine(1);
+        }
 
         /** Перенос информации по штрафам */
+        $this->title("Перенос штрафов", "blue");
         $this->call('old:fines');
+        $this->newLine(1);
 
         /** Перенос чата */
+        $this->title("Перенос чата", "blue");
         $this->call('old:chatusersid');
+        $this->newLine(1);
 
         /** Перенос очереди */
+        $this->title("Перенос очереди", "blue");
         $this->call('old:requestsqueue');
+        $this->newLine(1);
 
         /** Отключение блокировки добавления новых заявок */
         Settings::set('DROP_ADD_REQUEST', false);
@@ -125,8 +148,6 @@ class CreatecrmCommand extends Command
         Settings::set('CALL_DETAIL_RECORDS_SAVE', true);
 
         $time = microtime(1) - $this->start;
-
-        $this->newLine(1);
 
         $this->line("Время начала переноса: <fg=green;options=bold>" . date("Y-m-d H:i:s", $this->start) . "</>");
         $this->line("Время окончания переноса: <fg=green;options=bold>" . date("Y-m-d H:i:s") . "</>");
@@ -155,7 +176,7 @@ class CreatecrmCommand extends Command
      */
     public function questionnaire()
     {
-        $this->title('Перенос ЦРМ');
+        $this->title("Перенос нашей ЦРМ");
 
         try {
             CrmRequest::count();

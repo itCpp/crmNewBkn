@@ -2,14 +2,12 @@
 
 namespace App\Console\Commands;
 
-use App\Console\MyOutput;
+use App\Http\Controllers\Controller;
 use App\Http\Controllers\Dev\RequestsMerge;
 use Illuminate\Console\Command;
 
 class OldRequestsCommand extends Command
 {
-    use MyOutput;
-
     /**
      * The name and signature of the console command.
      *
@@ -50,7 +48,7 @@ class OldRequestsCommand extends Command
     {
         $this->merge = new RequestsMerge;
 
-        $this->title("Миграция старых заявок в новую базу");
+        $this->line("Миграция старых заявок в новую базу");
 
         $start = microtime(1);
         $memory = memory_get_usage();
@@ -73,28 +71,23 @@ class OldRequestsCommand extends Command
 
         $bar->finish();
 
-        $this->newLine();
-        $this->newLine();
+        $this->newLine(2);
 
         $this->info("Время завершения: " . date("Y-m-d H:i:s"));
-
-        $stop = microtime(1) - $start;
-
-        $this->info("Время работы: " . round($stop, 3) . " сек");
+        $this->info("Время работы: " . Controller::secToStr((int) (microtime(1) - $start)));
 
         $memory = memory_get_usage() - $memory;
 
-        // Конвертация результата в килобайты и мегабайты 
+        // Конвертация результата в нормальные байты 
         $i = 0;
+
         while (floor($memory / 1024) > 0) {
             $i++;
             $memory /= 1024;
         }
 
-        $name = ['байт', 'КБ', 'МБ'];
+        $name = ['байт', 'КБ', 'МБ', "ГБ", "ТБ"];
         $this->info("Использовано памяти: " . round($memory, 2) . " " . ($name[$i] ?? ""));
-
-        $this->newLine();
 
         return 0;
     }

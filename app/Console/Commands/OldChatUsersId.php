@@ -154,7 +154,7 @@ class OldChatUsersId extends Command
             }
         }
 
-        $this->alert("Чат перенастроен для новой ЦРМ");
+        $this->info("Чат перенастроен для новой ЦРМ");
 
         return 0;
     }
