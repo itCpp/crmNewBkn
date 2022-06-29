@@ -256,46 +256,35 @@ class Webhoock extends Merge
      */
     public function hoockSave(Request $request)
     {
+        $this->checkRequestId($request);
+
         $data = is_array($request->input('request')) ? $request->input('request') : [];
 
         /** Идентификатор заявки */
         $query['id'] = $data['id'] ?? null;
 
         /** Идентификатор статуса */
-        if (isset($data['state']))
-            $query['status_id'] = $this->getStatusIdFromString($data['state'] ?? null);
+        $query['status_id'] = $this->getStatusIdFromString($data['state'] ?? ($request->row['state'] ?? null));
 
         /** Дата и время события */
-        if (isset($data['rdate']))
-            $query['event_date'] = $data['rdate'] ?? null;
-        if (isset($data['time']))
-            $query['event_time'] = $data['time'] ?? null;
+        $query['event_date'] = $data['rdate'] ?? ($request->row['rdate'] ?? null);
+        $query['event_time'] = $data['time'] ?? ($request->row['time'] ?? null);
 
         /** ФИО клиента */
-        if (isset($data['name']))
-            $query['client_name'] = $data['name'] ?? null;
+        $query['client_name'] = $data['name'] ?? ($request->row['name'] ?? null);
 
         /** Тематика */
-        if (isset($data['theme']))
-            $query['theme'] = $data['theme'] ?? null;
+        $query['theme'] = $data['theme'] ?? ($request->row['theme'] ?? null);
 
         /** Город проживания */
-        if (isset($data['region']))
-            $query['region'] = $data['region'] ?? null;
+        $query['region'] = $data['region'] ?? ($request->row['region'] ?? null);
 
         /** Комментарии */
-        if (isset($data['comment']))
-            $query['comment'] = $data['comment'] ?? null;
-        if (isset($data['comment_urist']))
-            $query['comment_urist'] = $data['uristComment'] ?? null;
+        $query['comment'] = $data['comment'] ?? ($request->row['comment'] ?? null);
+        $query['comment_urist'] = $data['uristComment'] ?? ($request->row['uristComment'] ?? null);
 
         /** Адрес */
-        if (isset($data['address']))
-            $query['address'] = $data['address'];
-        else
-            $query['address'] = $request->row['address'] ?? null;
-
-        $this->checkRequestId($request);
+        $query['address'] = $data['address'] ?? ($request->row['address'] ?? null);
 
         $hoock_request = $this->httpRequest($query, $request->pin);
 
