@@ -179,7 +179,7 @@ class Webhoock extends Merge
      * @param  string|int|null $pin
      * @return \Illuminate\Http\Request
      */
-    public function createRequest($data = [], $pin = null)
+    public function httpRequest($data = [], $pin = null)
     {
         $request = new Request($data);
 
@@ -221,7 +221,7 @@ class Webhoock extends Merge
 
         $this->checkRequestId($request);
 
-        $hoock_request = $this->createRequest($query, $request->pin);
+        $hoock_request = $this->httpRequest($query, $request->pin);
 
         return RequestPins::setPin($hoock_request);
     }
@@ -240,7 +240,7 @@ class Webhoock extends Merge
 
         $this->checkRequestId($request);
 
-        $hoock_request = $this->createRequest($query, $request->pin);
+        $hoock_request = $this->httpRequest($query, $request->pin);
 
         return RequestPins::setPin($hoock_request);
     }
@@ -294,7 +294,7 @@ class Webhoock extends Merge
 
         $this->checkRequestId($request);
 
-        $hoock_request = $this->createRequest($query, $request->pin);
+        $hoock_request = $this->httpRequest($query, $request->pin);
 
         return RequestChange::save($hoock_request);
     }
@@ -314,8 +314,29 @@ class Webhoock extends Merge
         $query['id'] = $data['id'] ?? null;
         $query['sector'] = $this->getSectorIdFromId($data['sector'] ?? null);
 
-        $hoock_request = $this->createRequest($query, $request->pin);
+        $hoock_request = $this->httpRequest($query, $request->pin);
 
         return RequestSectors::setSector($hoock_request);
+    }
+
+    /**
+     * Установка первичного комментария
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockFirstComment(Request $request)
+    {
+        $this->checkRequestId($request);
+
+        $data = is_array($request->input('request')) ? $request->input('request') : [];
+
+        $query['id'] = $data['id'] ?? null;
+        $query['comment_first'] = trim($data['first_comment'] ?? "");
+
+        $hoock_request = $this->httpRequest($query, $request->pin);
+        $hoock_request->__cell = "commentFirst";
+
+        return RequestChange::saveCell($hoock_request);
     }
 }
