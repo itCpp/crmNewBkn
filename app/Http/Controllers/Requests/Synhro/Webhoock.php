@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Requests\Synhro;
 
+use App\Http\Controllers\Fines\Fines;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Requests\RequestPins;
 use App\Http\Controllers\Requests\RequestSectors;
 use App\Http\Controllers\Users\DeveloperBot;
 use App\Http\Controllers\Users\UserData;
+use App\Models\Fine;
 use App\Models\RequestsRow;
 use App\Models\User;
 use Exception;
@@ -25,6 +27,7 @@ class Webhoock extends Merge
         "addPhone", // Запись дополнительного телефона
         "changeSector", // Смена сектора
         "create", // Создание новой заявки
+        "fineAdd", // Создание штрафа
         "firstComment", // Запись первичного комментария
         "hide", // Скрытие заявки со статусом из необработанных
         "pin", // Смена оператора
@@ -370,5 +373,28 @@ class Webhoock extends Merge
         $hoock_request = $this->httpRequest($query, $request->pin);
 
         return RequestChange::hideUplift($hoock_request);
+    }
+
+    /**
+     * Создание штрафа сотруднику
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockFineAdd(Request $request)
+    {
+        $data = is_array($request->input('row')) ? $request->input('row') : [];
+
+        $query['fine'] = $data['fine'] ?? 0;
+        $query['pin'] = $data['pin'] ?? null;
+        $query['comment'] = $data['comment'] ?? null;
+        $query['request_id'] = $data['id_request'] ?? null;
+        $query['date'] = $data['fine_date'] ?? null;
+        $query['is_autofine'] = $data['auto_fine'] ?? null;
+
+
+        $hoock_request = $this->httpRequest($query, $data['pin_add'] ?? null);
+
+        return (new Fines)->create($hoock_request);
     }
 }
