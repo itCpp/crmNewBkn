@@ -9,10 +9,20 @@ use App\Models\UsersSession;
 use App\Models\UserWorkTime;
 use App\Models\CrmMka\CrmUser;
 use App\Models\UserAutomaticAuth;
+use App\Models\UserSetting;
 use Illuminate\Http\Request;
 
 class Users extends Controller
 {
+    /**
+     * Стандартные настройки сотрудника
+     * 
+     * @var array
+     */
+    const USER_SETTINGS = [
+        'short_menu' => false,
+    ];
+
     /**
      * Проверка токена
      * 
@@ -62,6 +72,9 @@ class Users extends Controller
 
         // Количество запросов на авторизацию
         $authQueries = $permits->user_auth_query ? Auth::countAuthQueries($request) : 0;
+
+        $settings = UserSetting::firstOrCreate(['user_id' => $request->user()->id])->toArray();
+        $request->user()->settings = array_merge(self::USER_SETTINGS, $settings);
 
         $response = [
             'user' => $request->user(),
