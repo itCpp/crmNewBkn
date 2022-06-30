@@ -250,8 +250,8 @@ class AddRequest extends Controller
             'zeroing' => $this->zeroing, // Информация об обнулении
             // 'client' => $this->client,
             'clientId' => $this->client->id ?? null, // Идентификатор клиента
-            // 'source' => $this->source,
-            // 'resource' => $this->resource,
+            'source' => $this->source->id ?? null,
+            'resource' => $this->resource->id ?? null,
             'status' => $this->status,
             // 'query' => $this->query,
             'comments' => count($this->comments),
@@ -363,6 +363,7 @@ class AddRequest extends Controller
     public function findRequest()
     {
         if ($this->request->webhoockRow instanceof RequestsRow) {
+            $this->created = $this->request->webhoockRowCreated;
             $this->data = $this->request->webhoockRow;
             return $this;
         }

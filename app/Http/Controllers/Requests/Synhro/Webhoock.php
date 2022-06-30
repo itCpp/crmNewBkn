@@ -176,6 +176,7 @@ class Webhoock extends Merge
         $add_request = new Request(query: $data);
         $add_request->responseData = true;
         $add_request->fromWebhoock = true;
+        $add_request->webhoockRowCreated = RequestsRow::whereId($row->id ?? null)->count() == 0;
         $add_request->webhoockRow = $this->createOrUpdateRequestFromOld($request);
 
         $data = (new AddRequest($add_request))->add();
