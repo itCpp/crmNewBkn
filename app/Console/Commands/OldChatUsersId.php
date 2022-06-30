@@ -66,7 +66,7 @@ class OldChatUsersId extends Command
 
         $this->users_id = array_values(array_unique([...$this->users_id, ...$users_id]));
 
-        $this->new_to_old = [];
+        $this->new_to_old_crm = [];
 
         /** 
          * Соотношение персональных номеров с идентификаторами после последнего переноса
@@ -77,17 +77,17 @@ class OldChatUsersId extends Command
          * `old_id` - идентификатор сотрудника до переноса
          * `crm_old_id` - всегда идентификатор сотрудника старой ЦРМ
          */
-        ChatUsersIdChange::whereIn('old_id', $this->users_id)
+        ChatUsersIdChange::whereIn('new_id', $this->users_id)
             ->get()
             ->each(function ($row) {
-                $this->new_to_old[$row->old_id] = $row->crm_old_id;
+                $this->new_to_old_crm[$row->new_id] = $row->crm_old_id;
             });
 
         $users_id = [];
 
         /** Замена идентификтаоров при наличии ранних переносов */
         foreach ($this->users_id as $user_id) {
-            $users_id[] = isset($this->new_to_old[$user_id]) ? $this->new_to_old[$user_id] : $user_id;
+            $users_id[] = isset($this->new_to_old_crm[$user_id]) ? $this->new_to_old_crm[$user_id] : $user_id;
         }
 
         $this->old_to_new = [];
