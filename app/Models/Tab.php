@@ -10,25 +10,6 @@ class Tab extends Model
     use HasFactory;
 
     /**
-     * Атрибуты, которые преобразовываются в json
-     *
-     * @var array
-     */
-    protected $casts = [
-        'where_settings' => 'array',
-        'order_by_settings' => 'array',
-        'date_types' => 'array',
-        'statuses' => 'array',
-        'statuses_not' => 'array',
-        'counter_source' => 'boolean',
-        'counter_offices' => 'boolean',
-        'counter_next_day' => 'boolean',
-        'counter_hide_page' => 'boolean',
-        'flash_null' => 'boolean',
-        'flash_records_confirm' => 'boolean',  
-    ];
-
-    /**
      * Атрибуты, которые назначаются массово
      *
      * @var array
@@ -50,5 +31,25 @@ class Tab extends Model
         'counter_hide_page',
         'flash_null',
         'flash_records_confirm',
+        'check_for_show',
+    ];
+
+    /**
+     * Атрибуты, которые преобразовываются в json
+     *
+     * @var array
+     */
+    protected $casts = [
+        'where_settings' => 'array',
+        'order_by_settings' => 'array',
+        'date_types' => 'array',
+        'statuses' => 'array',
+        'statuses_not' => 'array',
+        'counter_source' => 'boolean',
+        'counter_offices' => 'boolean',
+        'counter_next_day' => 'boolean',
+        'counter_hide_page' => 'boolean',
+        'flash_null' => 'boolean',
+        'flash_records_confirm' => 'boolean',
     ];
 }
