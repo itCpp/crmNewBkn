@@ -12,6 +12,7 @@ use App\Models\RequestsClientsQuery;
 use App\Models\RequestsCounterStory;
 use App\Models\RequestsQueue;
 use App\Models\RequestsSource;
+use App\Models\UsersViewPart;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -170,8 +171,28 @@ class Counters extends Controller
      */
     public static function getQueueCounter(Request $request)
     {
+        $count = RequestsQueue::where('done_type', null)->count();
+
+        if ($count > 0) {
+
+            $last_view = UsersViewPart::where([
+                ['user_id', optional($request->user())->id],
+                ['part_name', "queues"]
+            ])->first()->view_at ?? null;
+
+            if ($last_view) {
+                $update = RequestsQueue::where('done_type', null)
+                    ->where('created_at', '>=', $last_view)
+                    ->limit(1)
+                    ->count() > 0;
+            } else {
+                $update = true;
+            }
+        }
+
         return [
-            'count' => RequestsQueue::where('done_type', null)->count()
+            'count' => $count,
+            'update' => $update ?? null,
         ];
     }
 
