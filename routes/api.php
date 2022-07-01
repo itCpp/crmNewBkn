@@ -199,6 +199,9 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Отмечает все уведомления пользователя как прочитанные */
         Route::post('notifications/read/all', 'Users\Notifications@readAll')->name('api.users.notifications.read.all');
+    
+        /** Применение настройки сотрудника */
+        Route::post('setting/set', 'Users\Settings@set')->name('api.users.settings.set');
     });
 
     /** Маршрутищация работы с договорными клиентами */
