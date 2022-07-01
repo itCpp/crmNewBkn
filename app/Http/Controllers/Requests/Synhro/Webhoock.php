@@ -3,18 +3,22 @@
 namespace App\Http\Controllers\Requests\Synhro;
 
 use App\Http\Controllers\Fines\Fines;
+use App\Http\Controllers\Gates\GateBase64;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Requests\RequestPins;
 use App\Http\Controllers\Requests\RequestSectors;
 use App\Http\Controllers\Users\DeveloperBot;
 use App\Http\Controllers\Users\UserData;
-use App\Models\Fine;
+use App\Models\Gate;
+use App\Models\GateSmsCount;
 use App\Models\RequestsRow;
+use App\Models\SmsMessage;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class Webhoock extends Merge
 {
@@ -34,6 +38,7 @@ class Webhoock extends Merge
         "pinOwn", // Присвоение заявки себе
         "save", // Изменение данных
         "sbComment", // Комментарий службы безопасности
+        "smsOut", // Исходящее СМС
         "theme", // Изменение темы
         "update", // Обновление заявки при поступлении нового обращения
     ];
@@ -403,5 +408,67 @@ class Webhoock extends Merge
         $hoock_request = $this->httpRequest($query, $data['pin_add'] ?? null);
 
         return (new Fines)->create($hoock_request);
+    }
+
+    /**
+     * Исходящее СМС
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockSmsOut(Request $request)
+    {
+        $data = is_array($request->input('row')) ? $request->input('row') : [];
+
+        $fail_message = json_decode($data['fail_message'], true);
+        $response = (object) [];
+
+        if (is_array($fail_message)) {
+
+            foreach ($fail_message as $row) {
+                if (isset($row['resposne'])) {
+                    $send_at = $row['date'] ?? null;
+                    $resposne->Message = $row['response']['Message'] ?? null;
+                    $resposne->Response = $row['response']['Response'] ?? null;
+                }
+            }
+
+            if (isset($fail_message['status']) and !isset($resposne->Response))
+                $resposne->Response = $fail_message['status'];
+        }
+
+        if (($response->Response ?? null) == "Success")
+            $response->ResponseCode = 200;
+
+        $base64 = new GateBase64;
+        $row = new SmsMessage;
+
+        $row->message_id = Str::orderedUuid();
+        $row->gate = Gate::whereAddr($data['gate'] ?? null)->first()->id ?? null;
+        $row->channel = $data['channel'] ?? null;
+        $row->created_pin = $data['pin'] ?? null;
+        $row->phone = $this->encrypt($this->checkPhone($data['phone'] ?? null));
+        $row->message = $base64->encode($data['text'] ?? null);
+        $row->direction = "out";
+        $row->sent_at = $send_at ?? ($data['updated_at'] ?? now());
+        $row->response = $response;
+        $row->failed_at = $data['fail_at'] ?? null;
+        $row->created_at = $data['created_at'] ?? now();
+
+        $row->save();
+
+        if ($data['id_request'] ?? null)
+            $row->requests()->attach($data['id_request']);
+
+        $count = GateSmsCount::firstOrNew([
+            'gate_id' => $row->gate,
+            'channel_id' => $row->channel,
+            'date' => now()->format("Y-m-d"),
+        ]);
+
+        $count->count++;
+        $count->save();
+
+        return response()->json(['message' => "Сообщение принято"]);
     }
 }
