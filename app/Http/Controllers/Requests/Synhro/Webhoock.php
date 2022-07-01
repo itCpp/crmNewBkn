@@ -510,10 +510,10 @@ class Webhoock extends Merge
         $row->phone = $this->encrypt($this->checkPhone($data['phone'] ?? null));
         $row->message = $base64->encode($data['text'] ?? null);
         $row->direction = "out";
-        $row->sent_at = $send_at ?? ($data['updated_at'] ?? now());
+        $row->sent_at = $send_at ?? (isset($data['updated_at']) ? now()->create($data['updated_at'])->addHours(3) : now());
         $row->response = $response;
         $row->failed_at = $data['fail_at'] ?? null;
-        $row->created_at = $data['created_at'] ?? now();
+        $row->created_at = isset($data['created_at']) ? now()->create($data['created_at'])->addHours(3) : now();
 
         $row->save();
 
