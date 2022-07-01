@@ -423,9 +423,10 @@ class Webhoock extends Merge
         $fail_message = json_decode($data['fail_message'], true);
         $response = (object) [];
 
-        if (is_array($fail_message)) {
+        if (is_array($fail_message['logs'] ?? null)) {
 
-            foreach ($fail_message as $row) {
+            foreach ($fail_message['logs'] as $row) {
+
                 if (isset($row['response'])) {
                     $send_at = $row['date'] ?? null;
                     $response->Message = $row['response']['Message'] ?? null;
