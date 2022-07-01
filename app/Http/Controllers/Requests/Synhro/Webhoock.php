@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers\Requests\Synhro;
 
+use App\Events\AppUserPinEvent;
+use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Fines\Fines;
 use App\Http\Controllers\Gates\GateBase64;
 use App\Http\Controllers\Requests\AddRequest;
 use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Requests\RequestPins;
+use App\Http\Controllers\Requests\Requests;
 use App\Http\Controllers\Requests\RequestSectors;
 use App\Http\Controllers\Users\DeveloperBot;
 use App\Http\Controllers\Users\UserData;
 use App\Models\Gate;
 use App\Models\GateSmsCount;
+use App\Models\RequestsAutoChangeCount;
 use App\Models\RequestsRow;
+use App\Models\RequestsStory;
+use App\Models\RequestsStoryStatus;
 use App\Models\SmsMessage;
 use App\Models\User;
 use Exception;
@@ -304,6 +310,59 @@ class Webhoock extends Merge
         $hoock_request = $this->httpRequest($query, $request->pin);
 
         return RequestChange::save($hoock_request);
+    }
+
+    /**
+     * Хук автосмены статуса
+     * 
+     * @param  \Illumiante\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function hoockSozvonToBk(Request $request)
+    {
+        $data = is_array($request->input('request')) ? $request->input('request') : [];
+
+        if (!$row = RequestsRow::find($data['id'] ?? null))
+            return response()->json(['message' => "Такой заявки нет"], 400);
+
+        $status_old = $row->status_id;
+        $row->status_id = $this->getStatusIdFromString("bk");
+        $row->save();
+
+        $story = RequestsStory::write(request(), $row);
+
+        if ($status_old != $row->status_id) {
+            RequestsStoryStatus::create([
+                'story_id' => $story->id,
+                'request_id' => $row->id,
+                'status_old' => $status_old,
+                'status_new' => $row->status_id,
+                'created_pin' => optional(request()->user())->pin,
+                'created_at' => now(),
+            ]);
+        }
+
+        $row = Requests::getRequestRow($row);
+
+        broadcast(new UpdateRequestEvent($row));
+
+        $count = RequestsAutoChangeCount::firstOrNew([
+            'pin' => (int) $row->pin,
+            'date' => now()->format("Y-m-d"),
+        ]);
+
+        $count->count++;
+        $count->save();
+
+        broadcast(new AppUserPinEvent([
+            'type' => "auto_change_count",
+            'message' => "Автоматически изменен статус заявки {$row->id}",
+            'count' => 1,
+        ], $row->pin));
+
+        return response()->json([
+            'message' => "Обрботано нормально",
+        ]);
     }
 
     /**
