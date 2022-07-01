@@ -426,15 +426,15 @@ class Webhoock extends Merge
         if (is_array($fail_message)) {
 
             foreach ($fail_message as $row) {
-                if (isset($row['resposne'])) {
+                if (isset($row['response'])) {
                     $send_at = $row['date'] ?? null;
-                    $resposne->Message = $row['response']['Message'] ?? null;
-                    $resposne->Response = $row['response']['Response'] ?? null;
+                    $response->Message = $row['response']['Message'] ?? null;
+                    $response->Response = $row['response']['Response'] ?? null;
                 }
             }
 
-            if (isset($fail_message['status']) and !isset($resposne->Response))
-                $resposne->Response = $fail_message['status'];
+            if (isset($fail_message['status']) and !isset($response->Response))
+                $response->Response = $fail_message['status'];
         }
 
         if (($response->Response ?? null) == "Success")
