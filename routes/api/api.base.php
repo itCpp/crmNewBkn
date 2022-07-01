@@ -37,4 +37,7 @@ Route::group([
         /** Устанавливает подтвержение комментария оператора */
         Route::get('setConfirmed', 'Base\UppAgreements@setConfirmed');
     });
+
+    /** Привязвает идентификатор телеграма */
+    Route::post('users/telegram/bind', 'Users\Settings@telegramBind');
 });

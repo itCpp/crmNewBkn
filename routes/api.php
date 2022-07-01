@@ -201,7 +201,9 @@ Route::group(['middleware' => 'user.token'], function () {
         Route::post('notifications/read/all', 'Users\Notifications@readAll')->name('api.users.notifications.read.all');
     
         /** Применение настройки сотрудника */
-        Route::post('setting/set', 'Users\Settings@set')->name('api.users.settings.set');
+        Route::post('setting/set', 'Users\Settings@set')->name('api.users.setting.set');
+
+        Route::post('setting/telegram/bind/create', 'Users\Settings@telegramBindStart')->name('api.users.setting.telegram.bind.create');
     });
 
     /** Маршрутищация работы с договорными клиентами */
