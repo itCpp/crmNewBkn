@@ -44,10 +44,30 @@ class Settings extends Controller
      */
     public function telegramBindStart(Request $request)
     {
+        if ($request->user()->telegram_id)
+            return response()->json(['message' => "У Вас уже имеется идентификатор"], 400);
+
         UserTelegramIdBind::whereUserId($request->user()->id)
             ->each(function ($row) {
                 $row->delete();
             });
+
+        $unique = false;
+        $code = rand(10000, 99999);
+
+        while (!$unique) {
+
+            $row = UserTelegramIdBind::where([
+                ['code', $code],
+                ['created_at', '>', now()->startOfDay()],
+            ])->whereColumn('created_at', 'updated_at')->first();
+
+            if ($row) {
+                $code = rand(10000, 99999);
+            } else {
+                $unique = true;
+            }
+        }
 
         $row = UserTelegramIdBind::create([
             'user_id' => $request->user()->id,
