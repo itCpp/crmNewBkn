@@ -48,6 +48,7 @@ class DataDumpCommand extends Command
         \App\Models\UsersViewPart::class,
         \App\Models\Expense::class,
         \App\Models\ExpensesAccount::class,
+        \App\Models\UserTelegramIdBind::class,
     ];
 
     /**

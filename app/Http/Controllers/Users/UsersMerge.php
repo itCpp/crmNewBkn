@@ -8,6 +8,7 @@ use App\Models\CrmMka\CrmUser;
 use App\Models\Saratov\Personal;
 use App\Models\User;
 use App\Models\UsersPositionsStory;
+use App\Models\UserTelegramIdBind;
 use Illuminate\Http\Request;
 
 class UsersMerge extends Controller
@@ -227,6 +228,7 @@ class UsersMerge extends Controller
             'callcenter_id' => $callcenter,
             'callcenter_sector_id' => $sector,
             'position_id' => $user->position_id ?? null,
+            'telegram_id' => $this->findBindedTelegramId($pin),
         ];
 
         if ($fired or in_array($user->pin, $this->firedUser)) {
@@ -293,5 +295,22 @@ class UsersMerge extends Controller
         } catch (CreateNewUser) {
             return null;
         }
+    }
+
+    /**
+     * Поиск ранее привязанного идентфиикатора Телеграм
+     * 
+     * @param  int $pin
+     * @return null|int
+     */
+    public static function findBindedTelegramId($pin)
+    {
+        return UserTelegramIdBind::withTrashed()
+            ->where([
+                ['pin', $pin],
+                ['telegram_id', '!=', null]
+            ])
+            ->orderBy('id', 'DESC')
+            ->first()->telegram_id ?? null;
     }
 }

@@ -47,10 +47,8 @@ class Settings extends Controller
         if ($request->user()->telegram_id)
             return response()->json(['message' => "У Вас уже имеется идентификатор"], 400);
 
-        UserTelegramIdBind::whereUserId($request->user()->id)
-            ->each(function ($row) {
-                $row->delete();
-            });
+        UserTelegramIdBind::whereUserPin($request->user()->pin)
+            ->update(['deleted_at' => now()]);
 
         $unique = false;
         $code = rand(10000, 99999);
@@ -99,7 +97,7 @@ class Settings extends Controller
         $row->deleted_at = now();
         $row->save();
 
-        BindUserTelegram::dispatch($row->user_id, $row->telegram_id);
+        BindUserTelegram::dispatch($row->user_pin, $row->telegram_id);
 
         return response()->json([
             'message' => "Запрос успешно обработан",

@@ -15,7 +15,7 @@ class CreateUserTelegramIdBindsTable extends Migration
     {
         Schema::create('user_telegram_id_binds', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onUpdate('cascade')->onDelete('cascade');
+            $table->integer('user_pin')->nullable()->comment('Персональный идентификационный номер сотрудника')->index();
             $table->integer('code')->nullable()->comment('Код привязки');
             $table->bigInteger('telegram_id')->nullable();
             $table->timestamps();

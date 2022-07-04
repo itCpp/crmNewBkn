@@ -20,12 +20,12 @@ class BindUserTelegram implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param  int $user_id
+     * @param  int $user_pin
      * @param  int $telegram_id
      * @return void
      */
     public function __construct(
-        protected $user_id,
+        protected $user_pin,
         protected $telegram_id
     ) {
         //
@@ -38,7 +38,7 @@ class BindUserTelegram implements ShouldQueue
      */
     public function handle()
     {
-        if ($user = User::find($this->user_id)) {
+        if ($user = User::wherePin($this->user_pin)->first()) {
 
             $user->telegram_id = $this->telegram_id;
             $user->save();
@@ -46,7 +46,7 @@ class BindUserTelegram implements ShouldQueue
             broadcast(new TelegramBinded($user->pin, $user->telegram_id));
 
             Controller::logData(new Request([
-                'user_id' => $this->user_id,
+                'user_pin' => $this->user_pin,
                 'telegram_id' => $this->telegram_id
             ]), $user);
         }
