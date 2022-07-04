@@ -16,7 +16,7 @@ class UserTelegramIdBind extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id',
+        'user_pin',
         'code',
     ];
 }

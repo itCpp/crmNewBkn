@@ -68,7 +68,7 @@ class Settings extends Controller
         }
 
         $row = UserTelegramIdBind::create([
-            'user_id' => $request->user()->id,
+            'user_pin' => $request->user()->pin,
             'code' => rand(10000, 99999),
         ]);
 
