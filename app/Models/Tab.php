@@ -32,6 +32,7 @@ class Tab extends Model
         'flash_null',
         'flash_records_confirm',
         'check_for_show',
+        'label_counter',
     ];
 
     /**
@@ -51,5 +52,6 @@ class Tab extends Model
         'counter_hide_page' => 'boolean',
         'flash_null' => 'boolean',
         'flash_records_confirm' => 'boolean',
+        'label_counter' => 'boolean',
     ];
 }

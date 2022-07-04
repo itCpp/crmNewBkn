@@ -61,11 +61,13 @@ class Counters extends Controller
             $request->tab = $tab;
 
             $query = new RequestsQuery($request);
+            $count = $query->count();
 
             $counter[$key] = [
                 'id' => $tab->id,
                 'name' => $tab->name,
-                'count' => $query->count(),
+                'count' => $count,
+                'update' => $count > 0 and $tab->label_counter,
             ];
 
             $counter['timecode'][$key] = microtime(true) - $step;
