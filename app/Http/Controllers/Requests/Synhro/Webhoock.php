@@ -323,7 +323,7 @@ class Webhoock extends Merge
         $data = is_array($request->input('request')) ? $request->input('request') : [];
 
         if (!$row = RequestsRow::find($data['id'] ?? null))
-            return response()->json(['message' => "Такой заявки нет"], 400);
+            return response()->json(['message' => "Такой заявки нет " . ($data['id'] ?? "0")], 400);
 
         $status_old = $row->status_id;
         $row->status_id = $this->getStatusIdFromString("bk");
