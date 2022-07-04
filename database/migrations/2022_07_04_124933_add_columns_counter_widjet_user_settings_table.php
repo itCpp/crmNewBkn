@@ -14,9 +14,9 @@ class AddColumnsCounterWidjetUserSettingsTable extends Migration
     public function up()
     {
         Schema::table('user_settings', function (Blueprint $table) {
-            $table->boolean('counter_widjet_records')->after('short_menu');
-            $table->boolean('counter_widjet_comings')->after('counter_widjet_records');
-            $table->boolean('counter_widjet_drain')->after('counter_widjet_comings');
+            $table->boolean('counter_widjet_records')->default(0)->comment('Виджет счетчика записей')->after('short_menu');
+            $table->boolean('counter_widjet_comings')->default(0)->comment('Виджет счетчика приходов')->after('counter_widjet_records');
+            $table->boolean('counter_widjet_drain')->default(0)->comment('Виджет счетчика сливов')->after('counter_widjet_comings');
         });
     }
 
