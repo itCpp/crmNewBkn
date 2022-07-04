@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Requests\Counters;
 use App\Jobs\BindUserTelegram;
 use App\Models\UserSetting;
 use App\Models\UserTelegramIdBind;
@@ -10,6 +11,29 @@ use Illuminate\Http\Request;
 
 class Settings extends Controller
 {
+    /**
+     * Стандартный массив настроек
+     * 
+     * @var array
+     */
+    const DEFAULT = [
+        'short_menu' => false,
+        'counter_widjet_records' => false,
+        'counter_widjet_comings' => false,
+        'counter_widjet_drain' => false,
+    ];
+
+    /**
+     * Типы ключей для асчета счетчика
+     * 
+     * @var array
+     */
+    protected $counter_widjets = [
+        'counter_widjet_records',
+        'counter_widjet_comings',
+        'counter_widjet_drain',
+    ];
+
     /**
      * Установка настройки
      * 
@@ -29,11 +53,16 @@ class Settings extends Controller
         $row->$name = $value;
         $row->save();
 
-        return response()->json([
+        $response = [
             'settings' => $row->toArray(),
             'name' => $name,
             'value' => $value,
-        ]);
+        ];
+
+        if (in_array($name, $this->counter_widjets))
+            $response['counter'] = Counters::getCounterWidjets();
+
+        return response()->json($response);
     }
 
     /**
