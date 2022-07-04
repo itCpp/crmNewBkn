@@ -112,6 +112,7 @@ class Webhoock extends Merge
                 'token' => $token,
                 'request' => $request->all(),
                 'headers' => $request->header(),
+                'method' => $type,
             ]);
 
             $id = $request->input('row')['id'] ?? null;
@@ -320,10 +321,10 @@ class Webhoock extends Merge
      */
     public function hoockSozvonToBk(Request $request)
     {
-        $data = is_array($request->input('request')) ? $request->input('request') : [];
+        $data = is_array($request->input('row')) ? $request->input('row') : [];
 
         if (!$row = RequestsRow::find($data['id'] ?? null))
-            return response()->json(['message' => "Такой заявки нет " . ($data['id'] ?? "0")], 400);
+            return response()->json(['message' => "Такой заявки нет"], 400);
 
         $status_old = $row->status_id;
         $row->status_id = $this->getStatusIdFromString("bk");
