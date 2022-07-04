@@ -6,6 +6,7 @@ use App\Http\Controllers\Requests\Synhro\Webhoock;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class RequestRetryHoockCommand extends Command
 {
@@ -57,11 +58,19 @@ class RequestRetryHoockCommand extends Command
         $type = $data['method'] ?? null;
 
         $server = [
-            'remote-addr' => $ip,
+            'REMOTE_ADDR' => "123" . $ip,
         ];
 
         foreach ($headers as $key => $value) {
-            $server[$key] = $value;
+
+            $key = Str::start(
+                Str::upper(
+                    Str::replace("-", "_", Str::snake($key))
+                ),
+                "HTTP_"
+            );
+
+            $server[$key] = implode("\n", $value);
         }
 
         $query = new Request(
