@@ -23,8 +23,8 @@ class Counters extends Controller
     /**
      * Вывод счетчика заявок
      * 
-     * @param \Illuminate\Http\Request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getCounter(Request $request)
     {
@@ -38,7 +38,7 @@ class Counters extends Controller
     /**
      * Подсчет счетчика заявок
      * 
-     * @param \Illuminate\Http\Request
+     * @param  \Illuminate\Http\Request
      * @return array
      */
     public static function getCounterData(Request $request)
@@ -157,6 +157,9 @@ class Counters extends Controller
             $time = round($time, 3);
         }
 
+        /** Счетчик для виджетов */
+        self::getCounterWidjets($counter);
+
         /** Общее время выполенения счетчика */
         $counter['timecode']['_stop'] = microtime(true) - $start;
 
@@ -166,7 +169,7 @@ class Counters extends Controller
     /**
      * Счетчик необработанной очереди
      * 
-     * @param \Illuminate\Http\Request
+     * @param  \Illuminate\Http\Request $request
      * @return array
      */
     public static function getQueueCounter(Request $request)
@@ -369,7 +372,7 @@ class Counters extends Controller
     /**
      * Выводит список источников, которые необходимы для вывода счетчика
      * 
-     * @return  array
+     * @return array
      */
     public function getActiveSources()
     {
@@ -547,5 +550,82 @@ class Counters extends Controller
         $data['sources'] = $sources ?? [];
 
         return $data;
+    }
+
+    /**
+     * Счетчик для виджетов
+     * 
+     * @param 
+     */
+    public static function getCounterWidjets(&$counter = [])
+    {
+        $static = new static;
+
+        if (request()->user()->settings->counter_widjet_records)
+            $static->getCounterRecords($counter);
+
+        return $counter;
+    }
+
+    /**
+     * Подсчет детализации записей по офисам
+     * 
+     * @param  array $counter
+     * @return array
+     */
+    public function getCounterRecords(&$counter = [])
+    {
+        $start = microtime(true);
+        $counter['records'] = [];
+
+        $status_id = $this->envExplode("STATISTICS_OPERATORS_STATUS_RECORD_ID");
+
+        $dates = [
+            'today' => now(),
+            'tomorrow' => now()->addDay(),
+        ];
+
+        foreach ($dates as $type => $date) {
+
+            $counter['records'][$type] = [
+                'count' => 0,
+                'addrs' => [],
+            ];
+
+            $count = &$counter['records'][$type];
+
+            request()->search = ['status' => $status_id];
+
+            (new RequestsQuery(request()))->setSearchQuery()
+                ->whereBetween('event_at', [
+                    $date->copy()->startOfDay()->format("Y-m-d H:i:s"),
+                    $date->copy()->endOfDay()->format("Y-m-d H:i:s"),
+                ])
+                ->selectRaw('count(*) as count, address')
+                ->reorder('address')
+                ->groupBy('address')
+                ->get()
+                ->each(function ($row) use (&$count) {
+
+                    if (!isset($count['addrs'][$row->address]))
+                        $count['addrs'][$row->address] = 0;
+
+                    $count['count'] += $row->count;
+                    $count['addrs'][$row->address] += $row->count;
+                });
+
+            foreach ($count['addrs'] as $office_id => &$records) {
+                $records = [
+                    'office' => $this->getOfficeName($office_id),
+                    'count' => $records,
+                ];
+            }
+        }
+
+        $counter['timecode']['records'] = round(microtime(true) - $start, 4);
+
+        request()->search = null;
+
+        return $counter;
     }
 }

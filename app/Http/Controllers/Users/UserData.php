@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\Status;
 use App\Models\Tab;
 use App\Models\User;
+use App\Models\UserSetting;
 
 /**
  * @property null|string auth_type              Тип авторизации
@@ -138,6 +139,12 @@ class UserData
     {
         if (isset($this->$name) === true)
             return $this->$name;
+
+        if ($name == "settings") {
+            return $this->settings = UserSetting::firstOrCreate([
+                'user_id' => $this->__user->id
+            ]);
+        }
 
         return null;
     }

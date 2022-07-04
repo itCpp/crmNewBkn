@@ -16,11 +16,14 @@ trait OfficesTrait
     /**
      * Выводт все активные офисы
      * 
-     * @return  array
+     * @return array
      */
     public function getActiveOffices()
     {
-        return Office::where('active', 1)
+        if (!empty($this->get_active_offices))
+            return $this->get_active_offices;
+
+        return $this->get_active_offices = Office::where('active', 1)
             ->orderBy('name')
             ->get()
             ->map(function ($row) {

@@ -37,5 +37,8 @@ class UserSetting extends Model
      */
     protected $casts = [
         'short_menu' => "boolean",
+        'counter_widjet_records' => "boolean",
+        'counter_widjet_comings' => "boolean",
+        'counter_widjet_drain' => "boolean",
     ];
 }

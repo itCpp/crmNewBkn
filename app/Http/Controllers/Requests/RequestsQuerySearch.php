@@ -162,7 +162,13 @@ trait RequestsQuerySearch
         if ((int) $this->search->status < 0)
             $this->search->status = null;
 
-        $this->model = $this->model->where('status_id', $this->search->status);
+        $this->model = $this->model
+            ->when(!is_array($this->search->status), function ($query) {
+                $query->where('status_id', $this->search->status);
+            })
+            ->when(is_array($this->search->status), function ($query) {
+                $query->whereIn('status_id', $this->search->status);
+            });
 
         return $this;
     }
