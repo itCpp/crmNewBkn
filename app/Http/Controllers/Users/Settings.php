@@ -59,8 +59,12 @@ class Settings extends Controller
             'value' => $value,
         ];
 
-        if (in_array($name, $this->counter_widjets))
+        if (in_array($name, $this->counter_widjets)) {
             $response['counter'] = Counters::getCounterWidjets();
+            $response['counter']['dropKeys'] = [
+                'records', 'comings', 'drains'
+            ];
+        }
 
         return response()->json($response);
     }

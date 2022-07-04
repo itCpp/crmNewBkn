@@ -180,9 +180,9 @@ trait RequestsQuerySearch
      */
     public function setUserPermits()
     {
-        $sector = $this->user->checkedPermits()->requests_all_my_sector;
-        $sectors = $this->user->checkedPermits()->requests_all_sectors;
-        $callcenters = $this->user->checkedPermits()->requests_all_callcenters;
+        $sector = $this->user->can('requests_all_my_sector');
+        $sectors = $this->user->can('requests_all_sectors');
+        $callcenters = $this->user->can('requests_all_callcenters');
 
         if ($callcenters)
             return $this;

@@ -564,7 +564,31 @@ class Counters extends Controller
         if (request()->user()->settings->counter_widjet_records)
             $static->getCounterRecords($counter);
 
+        if (request()->user()->settings->counter_widjet_comings)
+            $static->getCounterComings($counter);
+
+        if (request()->user()->settings->counter_widjet_drain)
+            $static->getCounterDrains($counter);
+
         return $counter;
+    }
+
+    /**
+     * Возвращает массив с наименованием офиса и количеством данных
+     * 
+     * @param  array $addrs
+     * @return array
+     */
+    public function createAndSortAddrs($addrs)
+    {
+        foreach ($addrs as $office_id => $records) {
+            $addresses[] = [
+                'office' => $this->getOfficeName($office_id),
+                'count' => $records,
+            ];
+        }
+
+        return collect($addresses ?? [])->sortBy('office')->values()->all();
     }
 
     /**
@@ -614,12 +638,7 @@ class Counters extends Controller
                     $count['addrs'][$row->address] += $row->count;
                 });
 
-            foreach ($count['addrs'] as $office_id => &$records) {
-                $records = [
-                    'office' => $this->getOfficeName($office_id),
-                    'count' => $records,
-                ];
-            }
+            $count['addrs'] = $this->createAndSortAddrs($count['addrs']);
         }
 
         $counter['timecode']['records'] = round(microtime(true) - $start, 4);
@@ -627,5 +646,88 @@ class Counters extends Controller
         request()->search = null;
 
         return $counter;
+    }
+
+    /**
+     * Подсчет виджета приходов
+     * 
+     * @param  array $data
+     * @return array
+     */
+    public function getCounterComings(&$data = [])
+    {
+        return $this->getCounterWidjetDataRow(
+            $data,
+            'comings',
+            $this->envExplode("STATISTICS_OPERATORS_STATUS_DRAIN_ID")
+        );
+    }
+
+    /**
+     * Подсчет виджета сливов
+     * 
+     * @param  array $data
+     * @return array
+     */
+    public function getCounterDrains(&$data = [])
+    {
+        return $this->getCounterWidjetDataRow(
+            $data,
+            'drains',
+            $this->envExplode("STATISTICS_OPERATORS_STATUS_DRAIN_ID")
+        );
+    }
+
+    /**
+     * Подсчет данных виджета
+     * 
+     * @param  array $response
+     * @param  string $key
+     * @param  array $status_id
+     * @return array
+     */
+    public function getCounterWidjetDataRow(&$response, $key, $status_id)
+    {
+        /** Время начала подсчета данных */
+        $start = microtime(true);
+
+        /** Даныне на вывод */
+        $data = [
+            'count' => 0,
+            'addrs' => [],
+        ];
+
+        /** Поисковой запрос */
+        request()->search = ['status' => $status_id];
+
+        /** Подсчет данных с разделением на офисы */
+        (new RequestsQuery(request()))->setSearchQuery()
+            ->whereBetween('event_at', [
+                now()->startOfDay()->format("Y-m-d H:i:s"),
+                now()->endOfDay()->format("Y-m-d H:i:s"),
+            ])
+            ->selectRaw('count(*) as count, address')
+            ->reorder('address')
+            ->groupBy('address')
+            ->get()
+            ->each(function ($row) use (&$data) {
+
+                if (!isset($data['addrs'][$row->address]))
+                    $data['addrs'][$row->address] = 0;
+
+                $data['count'] += $row->count;
+                $data['addrs'][$row->address] += $row->count;
+            });
+
+        /** Формирование массива данных по адресам */
+        $data['addrs'] = $this->createAndSortAddrs($data['addrs']);
+
+        /** Обнуление поискогово запроса */
+        request()->search = null;
+
+        $response[$key] = $data;
+        $response['timecode'][$key] = round(microtime(true) - $start, 4);
+
+        return $response;
     }
 }
