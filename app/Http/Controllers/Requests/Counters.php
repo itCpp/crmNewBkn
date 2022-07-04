@@ -659,7 +659,7 @@ class Counters extends Controller
         return $this->getCounterWidjetDataRow(
             $data,
             'comings',
-            $this->envExplode("STATISTICS_OPERATORS_STATUS_DRAIN_ID")
+            $this->envExplode("STATISTICS_OPERATORS_STATUS_COMING_ID")
         );
     }
 
