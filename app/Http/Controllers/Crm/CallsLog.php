@@ -31,6 +31,7 @@ trait CallsLog
             'total' => $data->total(),
             'pages' => $data->lastPage(),
             'hidePhone' => !$request->user()->can('clients_show_phone'),
+            'filter' => $data->currentPage() == 1 ? $this->getFilterList() : null,
         ]);
     }
 
