@@ -95,7 +95,7 @@ class Views extends Controller
         }
 
         $this->connection = $this->databases->setConfigs($site ?? null)[0] ?? null;
-        $this->own_ips = $this->envExplode('ASTERISK_ACCESS_IPS');
+        $this->own_ips = $this->envExplode('OUR_IP_ADDRESSES_LIST');
 
         $this->getCounterData();
 
