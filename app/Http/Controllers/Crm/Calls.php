@@ -177,4 +177,34 @@ class Calls extends Controller
 
         return $session->pin ?? null;
     }
+
+    /**
+     * Вывод списка фильтра журнала звонков
+     * 
+     * @return array
+     */
+    public function getFilterList()
+    {
+        $operators = CallDetailRecord::select('extension')
+            ->where('extension', '!=', null)
+            ->where('duration', '>', 0)
+            ->distinct()
+            ->get()
+            ->map(function ($row) {
+                return $row->extension;
+            })
+            ->toArray();
+
+        $extension = CallDetailRecord::select('operator')
+            ->where('operator', '!=', null)
+            ->where('duration', '>', 0)
+            ->distinct()
+            ->get()
+            ->map(function ($row) {
+                return $row->operator;
+            })
+            ->toArray();
+
+        return collect([...$extension, ...$operators])->unique()->sort()->values()->all();
+    }
 }
