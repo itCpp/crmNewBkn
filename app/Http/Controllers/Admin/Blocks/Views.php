@@ -95,6 +95,7 @@ class Views extends Controller
         }
 
         $this->connection = $this->databases->setConfigs($site ?? null)[0] ?? null;
+        $this->own_ips = $this->envExplode('ASTERISK_ACCESS_IPS');
 
         $this->getCounterData();
 
@@ -104,6 +105,9 @@ class Views extends Controller
                 ->where('created_at', '<', $this->start)
                 ->when((bool) $this->request->ip, function ($query) {
                     $query->where('ip', $this->request->ip);
+                })
+                ->when(!(bool) $this->request->ip, function ($query) {
+                    $query->whereNotIn('ip', $this->own_ips);
                 })
                 ->orderBy('id', 'DESC')
                 ->paginate(50);
