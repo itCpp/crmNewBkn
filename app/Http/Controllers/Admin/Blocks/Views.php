@@ -103,6 +103,9 @@ class Views extends Controller
             $data = DB::connection($this->connection)
                 ->table('visits')
                 ->where('created_at', '<', $this->start)
+                ->when((bool) $this->request->allToDay, function ($query) {
+                    $query->where('created_at', '>=', now()->startOfDay());
+                })
                 ->when((bool) $this->request->ip, function ($query) {
                     $query->where('ip', $this->request->ip);
                 })
@@ -110,7 +113,7 @@ class Views extends Controller
                     $query->whereNotIn('ip', $this->own_ips);
                 })
                 ->orderBy('id', 'DESC')
-                ->paginate(50);
+                ->paginate(60);
 
             foreach ($data as $row) {
                 $this->rows[] = $this->serializeRow($row);
@@ -144,8 +147,14 @@ class Views extends Controller
             $this->total += DB::connection($this->connection)
                 ->table('visits')
                 ->where('created_at', '<', $this->start)
+                ->when((bool) $this->request->allToDay, function ($query) {
+                    $query->where('created_at', '>=', now()->startOfDay());
+                })
                 ->when((bool) $this->request->ip, function ($query) {
                     $query->where('ip', $this->request->ip);
+                })
+                ->when(!((bool) $this->request->ip and (bool) ($this->own_ips ?? false)), function ($query) {
+                    $query->whereNotIn('ip', $this->own_ips);
                 })
                 ->count();
         } catch (Exception) {
