@@ -247,6 +247,8 @@ class OwnStatistics extends Controller
      */
     public function getData(Request $request)
     {
+        $this->own_ips = $this->envExplode('OUR_IP_ADDRESSES_LIST');
+
         $rows = $this->getRows();
 
         foreach ($this->connection_active ?? [] as $connection) {
@@ -331,6 +333,9 @@ class OwnStatistics extends Controller
                 ->table('statistics')
                 ->when((bool) $this->request->ip, function ($query) {
                     $query->where('ip', $this->request->ip);
+                })
+                ->when((!(bool) $this->request->ip and count($this->own_ips ?? [])), function ($query) {
+                    $query->whereNotIn('ip', $this->own_ips ?? []);
                 })
                 ->where('date', $this->date)
                 ->get()
@@ -955,6 +960,9 @@ class OwnStatistics extends Controller
                     'request_data->headers->Host as host'
                 )
                 ->whereIn('ip', array_unique($this->ips ?? []))
+                ->when((!(bool) $this->request->ip and count($this->own_ips ?? [])), function ($query) {
+                    $query->whereNotIn('ip', $this->own_ips ?? []);
+                })
                 // ->whereBetween('created_at', [
                 //     $this->date . " 00:00:00",
                 //     $this->date . " 23:59:59"

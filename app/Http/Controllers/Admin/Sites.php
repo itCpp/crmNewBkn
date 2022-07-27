@@ -184,6 +184,8 @@ class Sites extends Controller
 
         $data = [];
 
+        $this->own_ips = $this->envExplode('OUR_IP_ADDRESSES_LIST');
+
         try {
             $database->table('statistics')
                 ->selectRaw('sum(visits + visits_drops) as count, date')
@@ -191,6 +193,9 @@ class Sites extends Controller
                     date("Y-m-d", time() - 90 * 24 * 60 * 60),
                     $date,
                 ])
+                ->when(count($this->own_ips ?? []), function ($query) {
+                    $query->whereNotIn('ip', $this->own_ips ?? []);
+                })
                 ->groupBy('date')
                 ->get()
                 ->each(function ($row) use (&$data) {
@@ -214,6 +219,9 @@ class Sites extends Controller
                     date("Y-m-d", time() - 90 * 24 * 60 * 60),
                     $date,
                 ])
+                ->when(count($this->own_ips ?? []), function ($query) {
+                    $query->whereNotIn('ip', $this->own_ips ?? []);
+                })
                 ->groupBy(['ip', 'date'])
                 ->get()
                 ->each(function ($row) use (&$data) {
