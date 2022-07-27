@@ -95,7 +95,7 @@ class Views extends Controller
         }
 
         $this->connection = $this->databases->setConfigs($site ?? null)[0] ?? null;
-        $this->own_ips = $this->envExplode('OUR_IP_ADDRESSES_LIST');
+        $this->own_ips = $this->envExplode('OUR_IP_ADDRESSES_LIST_VIEWS');
 
         $this->getCounterData();
 
@@ -109,8 +109,11 @@ class Views extends Controller
                 ->when((bool) $this->request->ip, function ($query) {
                     $query->where('ip', $this->request->ip);
                 })
-                ->when(!(bool) $this->request->ip, function ($query) {
+                ->when((!(bool) $this->request->ip and !(bool) $this->request->onlyOurIp), function ($query) {
                     $query->whereNotIn('ip', $this->own_ips);
+                })
+                ->when((!(bool) $this->request->ip and (bool) $this->request->onlyOurIp), function ($query) {
+                    $query->whereIn('ip', $this->own_ips);
                 })
                 ->orderBy('id', 'DESC')
                 ->paginate(60);
@@ -133,6 +136,7 @@ class Views extends Controller
             'total' => $this->total ?? 0,
             'pages' => $this->pages ?? 0,
             'nextPage' => $this->next ?? 0,
+            'ourIp' => $this->own_ips,
         ];
     }
 
@@ -153,8 +157,11 @@ class Views extends Controller
                 ->when((bool) $this->request->ip, function ($query) {
                     $query->where('ip', $this->request->ip);
                 })
-                ->when(!((bool) $this->request->ip and (bool) ($this->own_ips ?? false)), function ($query) {
+                ->when(!((bool) $this->request->ip and (bool) ($this->own_ips ?? false) and !(bool) $this->request->onlyOurIp), function ($query) {
                     $query->whereNotIn('ip', $this->own_ips);
+                })
+                ->when((!(bool) $this->request->ip and (bool) $this->request->onlyOurIp), function ($query) {
+                    $query->whereIn('ip', $this->own_ips);
                 })
                 ->count();
         } catch (Exception) {
