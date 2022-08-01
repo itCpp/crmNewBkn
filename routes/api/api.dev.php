@@ -199,6 +199,8 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('site/setblockipall', 'Admin\BlocksDrive\BlockIps@setAll');
         /** Блокировка на всех сайтах одновременно */
         Route::put('site/setAllBlockIp', 'Admin\Blocks\OwnStatistics@setAllBlockIp');
+        /** Исключения хостов для сайта */
+        Route::post('exceptionshostsite', 'Admin\SitesExceptions@get');
 
         /** Вывод информации о блокировки по хосту */
         Route::post('gethost', 'Admin\Blocks\OwnStatistics@gethost');

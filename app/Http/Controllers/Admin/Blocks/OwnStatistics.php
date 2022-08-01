@@ -53,7 +53,10 @@ class OwnStatistics extends Controller
 
         $this->sites = [];
 
-        $this->our_ips = explode(",", env("OUR_IP_ADDRESSES_LIST", ""));
+        // $this->our_ips = explode(",", env("OUR_IP_ADDRESSES_LIST", ""));
+
+        /** Необходимо отключить исключения наших адресов */
+        $this->own_ips = [];
     }
 
     /**
@@ -93,7 +96,7 @@ class OwnStatistics extends Controller
         if (!$request->ip)
             return response()->json(['message' => "Ошибка в IP адресе"], 400);
 
-        $row = BlockIp::where('ip', $request->ip)->first();
+        $row = BlockIp::firstOrNew(['ip' => $request->ip]);
 
         foreach ($this->connections as $connection) {
 
@@ -247,7 +250,10 @@ class OwnStatistics extends Controller
      */
     public function getData(Request $request)
     {
-        $this->own_ips = $this->envExplode('OUR_IP_ADDRESSES_LIST');
+        // $this->own_ips = $this->envExplode('OUR_IP_ADDRESSES_LIST');
+
+        /** Необходимо отключить исключения наших адресов */
+        $this->own_ips = [];
 
         $rows = $this->getRows();
 
