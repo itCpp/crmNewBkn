@@ -53,10 +53,7 @@ class OwnStatistics extends Controller
 
         $this->sites = [];
 
-        // $this->our_ips = explode(",", env("OUR_IP_ADDRESSES_LIST", ""));
-
-        /** Необходимо отключить исключения наших адресов */
-        $this->our_ips = [];
+        $this->our_ips = explode(",", env("OUR_IP_ADDRESSES_LIST", ""));
     }
 
     /**
