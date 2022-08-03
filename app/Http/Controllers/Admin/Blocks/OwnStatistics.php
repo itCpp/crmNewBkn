@@ -464,6 +464,14 @@ class OwnStatistics extends Controller
                 $this->rows[$row->ip]['info'] = $row->toArray();
             });
 
+        BlockIp::select('ip', 'comment')
+            ->whereIn('ip', $this->ips)
+            ->where('comment', '!=', null)
+            ->get()
+            ->each(function ($row) {
+                $this->rows[$row->ip]['comment'] = $row->comment;
+            });
+
         return null;
     }
 

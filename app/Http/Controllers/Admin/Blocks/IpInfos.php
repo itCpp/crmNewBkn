@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Blocks;
 
 use App\Exceptions\Exceptions;
 use App\Http\Controllers\Controller;
+use App\Models\BlockIp;
 use App\Models\IpInfo;
 use App\Models\Company\BlockHost;
 use App\Models\Company\StatVisitSite;
@@ -448,5 +449,40 @@ class IpInfos extends Controller
     public function getip($request)
     {
         return $this->own_statistics->getip($request, true);
+    }
+
+    /**
+     * Комментарий по IP
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function commentIp(Request $request)
+    {
+        return response()->json([
+            'comment' => BlockIp::whereIp($request->ip)->first()->comment ?? "",
+        ]);
+    }
+
+    /**
+     * Комментарий по IP
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setCommentIp(Request $request)
+    {
+        $row = BlockIp::firstOrNew(
+            ['ip' => $request->ip],
+            ['hostname' => gethostbyaddr($request->ip),]
+        );
+
+        $row->comment = $request->comment;
+        $row->save();
+
+        return response()->json([
+            'ip' => $row->ip,
+            'comment' => $row->comment,
+        ]);
     }
 }

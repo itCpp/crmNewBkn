@@ -232,6 +232,10 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
 
         /** Создание блокировки */
         Route::post('create', 'Admin\BlocksDrive\Create@create');
+
+        /** Комментарий по IP */
+        Route::post('commentIp', 'Admin\Blocks\IpInfos@commentIp');
+        Route::post('setCommentIp', 'Admin\Blocks\IpInfos@setCommentIp');
     });
 
     /** Маршрутизация шлюзов */
