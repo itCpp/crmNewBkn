@@ -196,6 +196,7 @@ class BlockIps extends Drive
                 'blocks_all' => false,
                 'period_data' => $row->period_data ?? null,
                 'is_period' => isset($row->is_period) ? ($row->is_period == 1) : false,
+                'comment' => $row->comment ?? null,
             ];
         }
 
