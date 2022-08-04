@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Admin\BlocksDrive;
 
+use App\Http\Controllers\Admin\Blocks\OwnStatistics;
+use App\Http\Controllers\Admin\Databases;
+use App\Http\Controllers\Admin\Sites;
 use App\Models\BlockIp;
 use App\Models\IpInfo;
 use Exception;
@@ -32,10 +35,15 @@ class BlockIps extends Drive
      */
     public function index(Request $request)
     {
+        if ((int) $request->page <= 1) {
+            $sites = (new Databases)->sites()->getData()->sites ?? null;
+        }
+
         return response()->json(array_merge(
             [
                 'rows' => $this->getBlocks($request),
                 'errors' => $this->errors ?? null,
+                'sites' => $sites ?? null,
             ],
             $this->paginate ?? []
         ));
@@ -59,6 +67,9 @@ class BlockIps extends Drive
             })
             ->when((bool) $request->ipv6, function ($query) {
                 $query->where('ip', 'LIKE', "%:%");
+            })
+            ->when((bool) $request->site, function ($query) use ($request) {
+                $query->where('sites->id-' . $request->site, true);
             })
             ->paginate(60);
 
