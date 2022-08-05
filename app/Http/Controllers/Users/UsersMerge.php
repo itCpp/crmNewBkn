@@ -307,7 +307,7 @@ class UsersMerge extends Controller
     {
         return UserTelegramIdBind::withTrashed()
             ->where([
-                ['pin', $pin],
+                ['user_pin', $pin],
                 ['telegram_id', '!=', null]
             ])
             ->orderBy('id', 'DESC')
