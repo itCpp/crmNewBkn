@@ -189,6 +189,7 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
 
         /** Вывод статистики по сайтам из индивидуальных баз */
         Route::post('allstatistics', 'Admin\Blocks@allstatistics')->name('api.dev.block.allstatistics');
+        Route::put('allstatistics/setutm', 'Admin\Blocks@setutm')->name('api.dev.block.setutm');
         /** Вывод информации об IP для блокировки по сайтам */
         Route::post('getip', 'Admin\Blocks\OwnStatistics@getip');
         /** Блокировка ip на сайте */

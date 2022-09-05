@@ -10,6 +10,7 @@ use App\Models\CrmMka\CrmRequestsQueue;
 use App\Models\IpInfo;
 use App\Models\RequestsQueue;
 use App\Models\SettingsQueuesDatabase;
+use App\Models\SiteFilter;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -266,6 +267,10 @@ class OwnStatistics extends Controller
                 'text' => $text ?: "Сайт #{$id}",
                 'value' => $id,
             ];
+
+            SiteFilter::whereSiteId($id)->lazy()->each(function ($row) use (&$filters) {
+                $filters[] = $row->utm_label;
+            });
         }
 
         return [
@@ -273,6 +278,7 @@ class OwnStatistics extends Controller
             'sites' => $sites ?? [],
             'domains' => $this->getDomainsList(),
             'errors' => $this->errors ?? null,
+            'filters' => collect($filters ?? [])->unique()->sort()->values()->all(),
         ];
     }
 
@@ -339,6 +345,29 @@ class OwnStatistics extends Controller
                 })
                 ->when((!(bool) $this->request->ip and count($this->own_ips ?? [])), function ($query) {
                     $query->whereNotIn('ip', $this->own_ips ?? []);
+                })
+                ->when((bool) request()->utm and is_array(request()->utm), function ($query) use ($connection) {
+
+                    $ip = DB::connection($connection)
+                        ->table('visits')
+                        ->select('ip')
+                        ->where(function ($query) {
+                            foreach (request()->utm as $utm) {
+                                $query->orWhere("request_data->get->{$utm}", '!=', null);
+                            }
+                        })
+                        ->whereBetween('created_at', [
+                            now()->startOfDay(),
+                            now()->endOfDay()
+                        ])
+                        ->distinct()
+                        ->get()
+                        ->map(function ($row) {
+                            return $row->ip;
+                        });
+
+                    $query->whereIn('ip', [...$ip, "255.255.255.255"]);
+
                 })
                 ->where('date', $this->date)
                 ->get()

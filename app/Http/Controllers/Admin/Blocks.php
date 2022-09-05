@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Blocks\Views;
 use App\Http\Controllers\Admin\BlocksDrive\BlockIps;
 use App\Models\BlockIp;
 use App\Models\Company\BlockHost;
+use App\Models\SiteFilter;
 use Illuminate\Http\Request;
 
 class Blocks extends Controller
@@ -131,5 +132,31 @@ class Blocks extends Controller
     public function allstatistics(Request $request)
     {
         return Blocks\OwnStatistics::get($request);
+    }
+
+    /**
+     * Добавляет новый параметр utm для сайта
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setutm(Request $request)
+    {
+        $request->validate([
+            'site' => "required|integer",
+            'utm' => "required|string",
+        ]);
+
+        if (SiteFilter::whereSiteId($request->site)->whereUtmLabel($request->utm)->count())
+            return response()->json(['message' => 'Такое значение utm уже существует для данного сайта'], 400);
+
+        $row = SiteFilter::create([
+            'site_id' => $request->site,
+            'utm_label' => $request->utm,
+        ]);
+
+        return response()->json([
+            'row' => $row,
+        ]);
     }
 }
