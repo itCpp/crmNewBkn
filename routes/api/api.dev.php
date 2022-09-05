@@ -195,6 +195,8 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::post('allstatistics/getutm', 'Admin\Blocks@getutm')->name('api.dev.block.getutm');
         /** Удаляет строку фильтра */
         Route::delete('allstatistics/droputm', 'Admin\Blocks@droputm')->name('api.dev.block.droputm');
+        /** Скрывает или отображает ip для вывода в таблице */
+        Route::post('allstatistics/setHideIp', 'Admin\Blocks@setHideIp')->name('api.dev.block.setHideIp');
         /** Вывод информации об IP для блокировки по сайтам */
         Route::post('getip', 'Admin\Blocks\OwnStatistics@getip');
         /** Блокировка ip на сайте */

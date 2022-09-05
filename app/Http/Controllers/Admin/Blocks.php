@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\BlocksDrive\BlockIps;
 use App\Models\BlockIp;
 use App\Models\Company\BlockHost;
 use App\Models\SiteFilter;
+use App\Models\SiteIpHide;
 use Illuminate\Http\Request;
 
 class Blocks extends Controller
@@ -192,6 +193,42 @@ class Blocks extends Controller
 
         return response()->json([
             'row' => $row,
+        ]);
+    }
+
+    /**
+     * Скрывает или отображает ip для вывода в таблице
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setHideIp(Request $request)
+    {
+        $row = SiteIpHide::where([
+            'site_id' => $request->site,
+            'ip' => $request->ip,
+        ])->first();
+
+        if ($row) {
+
+            $row->delete();
+
+            $row->site_id = null;
+            $row->ip = null;
+        } else {
+
+            $row = SiteIpHide::create([
+                'site_id' => $request->site,
+                'ip' => $request->ip,
+            ]);
+        }
+
+        parent::logData($request, $row);
+
+        return response()->json([
+            'row' => $row,
+            'ip' => $request->ip,
+            'is_hide' => (bool) $row->ip,
         ]);
     }
 }

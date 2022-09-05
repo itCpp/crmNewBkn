@@ -11,6 +11,7 @@ use App\Models\IpInfo;
 use App\Models\RequestsQueue;
 use App\Models\SettingsQueuesDatabase;
 use App\Models\SiteFilter;
+use App\Models\SiteIpHide;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -289,6 +290,8 @@ class OwnStatistics extends Controller
      */
     public function getRows()
     {
+        $this->hide_ip = [];
+
         foreach ($this->connections as $connection) {
             $this->getStatSite($connection)
                 ->getDomains($connection);
@@ -325,6 +328,8 @@ class OwnStatistics extends Controller
         $row['blocks_all'] = $blocks_all;
 
         $row['blocked_sort'] = (int) ($row['is_autoblock'] || $row['is_blocked']);
+
+        $row['is_hide'] = in_array($row['ip'], $this->hide_ip[$row['connection']] ?? []);
 
         return $row;
     }
@@ -367,7 +372,6 @@ class OwnStatistics extends Controller
                         });
 
                     $query->whereIn('ip', [...$ip, "255.255.255.255"]);
-
                 })
                 ->where('date', $this->date)
                 ->get()
@@ -392,6 +396,17 @@ class OwnStatistics extends Controller
 
             // if ($site = config("database.connections.{$connection}.site_domain"))
             //     $this->sites[] = parse_url($site, PHP_URL_HOST);
+
+            $id = config("database.connections.{$connection}.connection_id");
+
+            $this->hide_ip[$connection] = SiteIpHide::select('ip')
+                ->whereSiteId($id)
+                ->distinct()
+                ->get()
+                ->map(function ($row) {
+                    return $row->ip;
+                })
+                ->toArray();
 
             $this->connection_active[] = $connection;
         } catch (Exception $e) {
