@@ -159,4 +159,35 @@ class Blocks extends Controller
             'row' => $row,
         ]);
     }
+
+    /**
+     * Вывод списка utm фильтров для сайта
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getutm(Request $request)
+    {
+        return response()->json([
+            'filters' => SiteFilter::whereSiteId($request->site)->get(),
+        ]);
+    }
+
+    /**
+     * Удаляет строку фильтра
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function droputm(Request $request)
+    {
+        if (!$row = SiteFilter::find($request->id))
+            return response()->json(['message' => "Строка не найдена или уже удалена"], 400);
+
+        $row->delete();
+
+        return response()->json([
+            'row' => $row,
+        ]);
+    }
 }

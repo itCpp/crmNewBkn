@@ -189,7 +189,12 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
 
         /** Вывод статистики по сайтам из индивидуальных баз */
         Route::post('allstatistics', 'Admin\Blocks@allstatistics')->name('api.dev.block.allstatistics');
+        /** Создание нового фильтра по utm */
         Route::put('allstatistics/setutm', 'Admin\Blocks@setutm')->name('api.dev.block.setutm');
+        /** Вывод списка фильтра по utm для сайта */
+        Route::post('allstatistics/getutm', 'Admin\Blocks@getutm')->name('api.dev.block.getutm');
+        /** Удаляет строку фильтра */
+        Route::delete('allstatistics/droputm', 'Admin\Blocks@droputm')->name('api.dev.block.droputm');
         /** Вывод информации об IP для блокировки по сайтам */
         Route::post('getip', 'Admin\Blocks\OwnStatistics@getip');
         /** Блокировка ip на сайте */

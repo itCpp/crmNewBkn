@@ -346,13 +346,13 @@ class OwnStatistics extends Controller
                 ->when((!(bool) $this->request->ip and count($this->own_ips ?? [])), function ($query) {
                     $query->whereNotIn('ip', $this->own_ips ?? []);
                 })
-                ->when((bool) request()->utm and is_array(request()->utm), function ($query) use ($connection) {
+                ->when((bool) $this->request->utm and is_array($this->request->utm), function ($query) use ($connection) {
 
                     $ip = DB::connection($connection)
                         ->table('visits')
                         ->select('ip')
                         ->where(function ($query) {
-                            foreach (request()->utm as $utm) {
+                            foreach ($this->request->utm as $utm) {
                                 $query->orWhere("request_data->get->{$utm}", '!=', null);
                             }
                         })
