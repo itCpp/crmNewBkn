@@ -155,6 +155,8 @@ class Blocks extends Controller
             'utm_label' => $request->utm,
         ]);
 
+        parent::logData($request, $row);
+
         return response()->json([
             'row' => $row,
         ]);
@@ -185,6 +187,8 @@ class Blocks extends Controller
             return response()->json(['message' => "Строка не найдена или уже удалена"], 400);
 
         $row->delete();
+
+        parent::logData($request, $row);
 
         return response()->json([
             'row' => $row,
