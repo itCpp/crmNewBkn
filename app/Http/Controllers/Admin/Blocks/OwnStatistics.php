@@ -291,6 +291,23 @@ class OwnStatistics extends Controller
     public function getRows()
     {
         $this->hide_ip = [];
+        $this->request->hiden_only = false;
+
+        if (is_array($this->request->utm)) {
+
+            $utms = [];
+            $this->request->hiden_only = in_array("hiden_only_e567475d1390851db6764e838dc76185", $this->request->utm);
+
+            foreach ($this->request->utm as $utm) {
+
+                if ($utm == "hiden_only_e567475d1390851db6764e838dc76185")
+                    continue;
+
+                $utms[] = $utm;
+            }
+
+            $this->request->utm = $utms;
+        }
 
         foreach ($this->connections as $connection) {
             $this->getStatSite($connection)
@@ -335,6 +352,26 @@ class OwnStatistics extends Controller
     }
 
     /**
+     * Поиск скрытых IP адресов для сайта
+     * 
+     * @param  string $connection
+     * @return array
+     */
+    public function getHidenIpList($connection)
+    {
+        $id = config("database.connections.{$connection}.connection_id");
+
+        return $this->hide_ip[$connection] = SiteIpHide::select('ip')
+            ->whereSiteId($id)
+            ->distinct()
+            ->get()
+            ->map(function ($row) {
+                return $row->ip;
+            })
+            ->toArray();
+    }
+
+    /**
      * Статистика одного сайта
      * 
      * @param string $connection
@@ -343,6 +380,17 @@ class OwnStatistics extends Controller
     public function getStatSite($connection)
     {
         try {
+            $this->getHidenIpList($connection);
+        } catch (Exception $e) {
+            $this->errors[] = [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
+        }
+
+        try {
+
             DB::connection($connection)
                 ->table('statistics')
                 ->when((bool) $this->request->ip, function ($query) {
@@ -373,6 +421,12 @@ class OwnStatistics extends Controller
 
                     $query->whereIn('ip', [...$ip, "255.255.255.255"]);
                 })
+                ->when(($this->request->hiden_only ?? null) === false, function ($query) use ($connection) {
+                    $query->whereNotIn('ip', [...($this->hide_ip[$connection] ?? []), "255.255.255.255"]);
+                })
+                ->when(($this->request->hiden_only ?? null) === true, function ($query) use ($connection) {
+                    $query->whereIn('ip', [...($this->hide_ip[$connection] ?? []), "255.255.255.255"]);
+                })
                 ->where('date', $this->date)
                 ->get()
                 ->each(function ($row) use ($connection) {
@@ -396,17 +450,6 @@ class OwnStatistics extends Controller
 
             // if ($site = config("database.connections.{$connection}.site_domain"))
             //     $this->sites[] = parse_url($site, PHP_URL_HOST);
-
-            $id = config("database.connections.{$connection}.connection_id");
-
-            $this->hide_ip[$connection] = SiteIpHide::select('ip')
-                ->whereSiteId($id)
-                ->distinct()
-                ->get()
-                ->map(function ($row) {
-                    return $row->ip;
-                })
-                ->toArray();
 
             $this->connection_active[] = $connection;
         } catch (Exception $e) {
