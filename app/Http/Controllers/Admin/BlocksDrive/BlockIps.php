@@ -59,8 +59,10 @@ class BlockIps extends Drive
     {
         $paginate = BlockIp::orderBy('id', 'DESC')
             ->when((bool) $request->search, function ($query) use ($request) {
-                $query->where('ip', 'LIKE', "%{$request->search}%")
-                    ->orWhere('hostname', 'LIKE', "%{$request->search}%");
+                $query->where(function ($query) use ($request) {
+                    $query->where('ip', 'LIKE', "%{$request->search}%")
+                        ->orWhere('hostname', 'LIKE', "%{$request->search}%");
+                });
             })
             ->when((bool) $request->ipv4, function ($query) {
                 $query->where('ip', 'NOT LIKE', "%:%");
