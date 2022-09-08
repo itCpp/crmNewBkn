@@ -22,6 +22,7 @@ use App\Models\CallDetailRecord;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class Events extends Controller
 {
@@ -514,12 +515,24 @@ class Events extends Controller
      */
     public function get(Request $request)
     {
+        $only = [];
+
+        foreach ($request->all() as $key => $value) {
+            if (Str::startsWith($key, "only_")) {
+                if ((is_string($value) and $value === "true") or $value === true)
+                    $only[] = Str::replace("only_", "", $key);
+            }
+        }
+
         $rows = IncomingEvent::orderBy('id', 'DESC')
             ->when($request->id and !$request->session, function ($query) use ($request) {
                 $query->where('id', $request->id);
             })
             ->when(!$request->id and $request->session, function ($query) use ($request) {
                 $query->where('session_id', $request->session);
+            })
+            ->when(count($only) > 0 and !$request->session, function ($query) use ($only) {
+                $query->whereIn('api_type', $only);
             })
             ->when(!$request->id and !$request->session, function ($query) {
                 $query->limit(1);
@@ -551,11 +564,17 @@ class Events extends Controller
 
             $prev = IncomingEvent::select('id')
                 ->where('id', '<', $rows[0]->id)
+                ->when(count($only) > 0, function ($query) use ($only) {
+                    $query->whereIn('api_type', $only);
+                })
                 ->orderBy('id', 'DESC')
                 ->first()->id ?? null;
 
             $next = IncomingEvent::select('id')
                 ->where('id', '>', $rows[count($rows) - 1]->id ?? null)
+                ->when(count($only) > 0, function ($query) use ($only) {
+                    $query->whereIn('api_type', $only);
+                })
                 ->first()->id ?? null;
         }
 

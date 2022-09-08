@@ -262,5 +262,7 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
 
         /** Вывод события */
         Route::get('get', 'Admin\Events@get');
+        /** Вывод типов событий */
+        Route::get('get/types', 'Admin\Events@types');
     });
 });
