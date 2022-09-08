@@ -18,5 +18,6 @@ class SiteFilter extends Model
     protected $fillable = [
         'site_id',
         'utm_label',
+        'refferer_label',
     ];
 }

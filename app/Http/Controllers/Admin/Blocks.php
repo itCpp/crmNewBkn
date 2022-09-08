@@ -136,7 +136,7 @@ class Blocks extends Controller
     }
 
     /**
-     * Добавляет новый параметр utm для сайта
+     * Добавляет новый параметры фильтра для сайта
      * 
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -145,21 +145,38 @@ class Blocks extends Controller
     {
         $request->validate([
             'site' => "required|integer",
-            'utm' => "required|string",
+            // 'utm' => "required|string",
         ]);
 
-        if (SiteFilter::whereSiteId($request->site)->whereUtmLabel($request->utm)->count())
-            return response()->json(['message' => 'Такое значение utm уже существует для данного сайта'], 400);
+        if ((bool) $request->utm) {
+            $utm = $this->createFilterLabel($request->site, $request->utm, 'utm_label');
+            parent::logData($request, $utm);
+        }
 
-        $row = SiteFilter::create([
-            'site_id' => $request->site,
-            'utm_label' => $request->utm,
-        ]);
-
-        parent::logData($request, $row);
+        if ((bool) $request->refferer) {
+            $refferer = $this->createFilterLabel($request->site, $request->refferer, 'refferer_label');
+            parent::logData($request, $refferer);
+        }
 
         return response()->json([
-            'row' => $row,
+            'utm' => $utm ?? null,
+            'refferer' => $refferer ?? null,
+        ]);
+    }
+
+    /**
+     * Добавляет новый параметр utm для сайта
+     * 
+     * @param  int $site_id
+     * @param  string $value
+     * @param  string $column
+     * @return \App\Models\SiteFilter
+     */
+    public function createFilterLabel($site_id, $value, $column)
+    {
+        return SiteFilter::firstOrCreate([
+            'site_id' => $site_id,
+            $column => $value,
         ]);
     }
 

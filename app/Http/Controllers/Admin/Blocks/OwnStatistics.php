@@ -269,8 +269,13 @@ class OwnStatistics extends Controller
                 'value' => $id,
             ];
 
-            SiteFilter::whereSiteId($id)->lazy()->each(function ($row) use (&$filters) {
-                $filters[] = $row->utm_label;
+            SiteFilter::whereSiteId($id)->lazy()->each(function ($row) use (&$filter_utm, &$filter_ref) {
+
+                if ($row->utm_label)
+                    $filter_utm[] = $row->utm_label;
+
+                if ($row->refferer_label)
+                    $filter_ref[] = $row->refferer_label;
             });
         }
 
@@ -279,7 +284,8 @@ class OwnStatistics extends Controller
             'sites' => $sites ?? [],
             'domains' => $this->getDomainsList(),
             'errors' => $this->errors ?? null,
-            'filters' => collect($filters ?? [])->unique()->sort()->values()->all(),
+            'filterUtm' => collect($filter_utm ?? [])->unique()->sort()->values()->all(),
+            'filterRefferers' => collect($filter_ref ?? [])->unique()->sort()->values()->all(),
         ];
     }
 
@@ -407,6 +413,28 @@ class OwnStatistics extends Controller
                         ->where(function ($query) {
                             foreach ($this->request->utm as $utm) {
                                 $query->orWhere("request_data->get->{$utm}", '!=', null);
+                            }
+                        })
+                        ->whereBetween('created_at', [
+                            now()->startOfDay(),
+                            now()->endOfDay()
+                        ])
+                        ->distinct()
+                        ->get()
+                        ->map(function ($row) {
+                            return $row->ip;
+                        });
+
+                    $query->whereIn('ip', [...$ip, "255.255.255.255"]);
+                })
+                ->when((bool) $this->request->refferer and is_array($this->request->refferer), function ($query) use ($connection) {
+
+                    $ip = DB::connection($connection)
+                        ->table('visits')
+                        ->select('ip')
+                        ->where(function ($query) {
+                            foreach ($this->request->refferer as $ref) {
+                                $query->orWhere("referer", 'LIKE', "%{$ref}%");
                             }
                         })
                         ->whereBetween('created_at', [
