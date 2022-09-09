@@ -162,7 +162,7 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
 
         /** Повторный запрос обработки входящего звонка */
         Route::post('retryIncomingCall', 'Admin\Calls@retryIncomingCall')->name('api.dev.retryIncomingCall');
-    
+
         /** Вывод внутренних номеров */
         Route::post('calls/extensions', 'Admin\Calls@extensions')->name('api.dev.calls.extensions');
         /** Вывод одного внутреннего номера */
@@ -271,5 +271,15 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
         Route::get('get', 'Admin\Events@get');
         /** Вывод типов событий */
         Route::get('get/types', 'Admin\Events@types');
+    });
+
+    /** Маршрутизация логирований */
+    Route::group(['prefix' => "logs"], function () {
+
+        /** Вывод настроек логирования */
+        Route::get('/', 'Admin\Logs@index');
+
+        /** Вывод одной строки лога */
+        Route::post('get', 'Admin\Logs@get');
     });
 });
