@@ -162,6 +162,13 @@ Route::group(['prefix' => "dev", 'middleware' => "user.can:block_dev"], function
 
         /** Повторный запрос обработки входящего звонка */
         Route::post('retryIncomingCall', 'Admin\Calls@retryIncomingCall')->name('api.dev.retryIncomingCall');
+    
+        /** Вывод внутренних номеров */
+        Route::post('calls/extensions', 'Admin\Calls@extensions')->name('api.dev.calls.extensions');
+        /** Вывод одного внутреннего номера */
+        Route::post('calls/extension', 'Admin\Calls@extension')->name('api.dev.calls.extension');
+        /** Вывод одного внутреннего номера */
+        Route::post('calls/extension/save', 'Admin\Calls@save')->name('api.dev.calls.extension.save');
     });
 
     /** Настройки офисов */

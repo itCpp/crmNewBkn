@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\IncomingRequestCallRetryJob;
 use App\Models\IncomingCall;
 use App\Models\IncomingCallsToSource;
+use App\Models\Incomings\SipInternalExtension;
 use App\Models\Incomings\SourceExtensionsName;
 use App\Models\RequestsSourcesResource;
 use Illuminate\Http\Request;
@@ -15,8 +16,8 @@ class Calls extends Controller
     /**
      * Загрузка страницы журнала звонков
      * 
-     * @param Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function start(Request $request)
     {
@@ -58,8 +59,8 @@ class Calls extends Controller
     /**
      * Вывод списка слушателей входящих звонков
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getIncomingCallExtensions(Request $request)
     {
@@ -75,8 +76,8 @@ class Calls extends Controller
      * Для создание нового слушателя потребуются данные источников
      * поэтому слушатель может вернуть пустой массив
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getIncomingCallExtension(Request $request)
     {
@@ -109,8 +110,8 @@ class Calls extends Controller
     /**
      * Сохранение данных или создание нового слушателя
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function saveIncpmingExtension(Request $request)
     {
@@ -188,8 +189,8 @@ class Calls extends Controller
     /**
      * Повторный запрос на обрбаотку входящего звонка
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function retryIncomingCall(Request $request)
     {
@@ -199,5 +200,67 @@ class Calls extends Controller
         IncomingRequestCallRetryJob::dispatch($call, $request->user()->pin, $request->ip(), $request->header('user_agent'));
 
         return response()->json(['message' => "Запрос принят"]);
+    }
+
+    /**
+     * Вывод внутренних номеров
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function extensions(Request $request)
+    {
+        $rows = SipInternalExtension::orderBy('extension')->lazy();
+
+        return response()->json([
+            'rows' => $rows,
+        ]);
+    }
+
+    /**
+     * Вывод одного внутреннего номера
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function extension(Request $request)
+    {
+        if (!$row = SipInternalExtension::find($request->id))
+            return response()->json(['message' => "Внутренний номер не найден"], 400);
+
+        return response()->json([
+            'row' => $row,
+        ]);
+    }
+
+    /**
+     * Сохранение внутреннего номера
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function save(Request $request)
+    {
+        $row = SipInternalExtension::find($request->id);
+
+        $request->validate([
+            'extension' => "required" . ($row ? "" : "|unique:App\Models\Incomings\SipInternalExtension,extension"),
+            'internal_addr' => "nullable|ip",
+        ]);
+
+        if (!$row)
+            $row = new SipInternalExtension;
+
+        $row->extension = $request->extension;
+        $row->internal_addr = $request->internal_addr;
+        $row->for_in = $request->for_in;
+
+        $row->save();
+
+        parent::logData($request, $row);
+
+        return response()->json([
+            'row' => $row,
+        ]);
     }
 }
