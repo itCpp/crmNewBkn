@@ -54,6 +54,12 @@ class SettingsGlobalSeeder extends Seeder
             'value' => 15,
             'type' => "integer",
             'comment' => "Количество минут, по истечению которых будет произведена автоматическая смена статуса в заявке",
+        ],
+        [
+            'id' => "CHECK_LOST_REQUESTS_TAB_PERIOD_TIME",
+            'value' => 60000,
+            'type' => "integer",
+            'comment' => "Время интервала проверки неактуальных заявок во вкладке для их удаления (1 сек * 1000)"
         ]
     ];
     /**
