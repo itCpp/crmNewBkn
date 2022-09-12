@@ -13,6 +13,7 @@ use App\Http\Controllers\Requests\Requests;
 use App\Http\Controllers\Requests\RequestSectors;
 use App\Http\Controllers\Users\DeveloperBot;
 use App\Http\Controllers\Users\UserData;
+use App\Models\Fine;
 use App\Models\Gate;
 use App\Models\GateSmsCount;
 use App\Models\RequestsAutoChangeCount;
@@ -479,10 +480,24 @@ class Webhoock extends Merge
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    // public function hoockFineRemove(Request $request)
-    // {
-    //     return response()->json();
-    // }
+    public function hoockFineRemove(Request $request)
+    {
+        $data = is_array($request->input('row')) ? $request->input('row') : [];
+
+        $row = Fine::where([
+            ['pin', $data['pin'] ?? null],
+            ['fine_date', $data['fine_date'] ?? null],
+            ['pin_add', $data['pin_add'] ?? null],
+            ['id_request', $data['id_request'] ?? null],
+        ])->first();
+
+        if (!$row)
+            return response()->json(['message' => "Штраф не найден"], 400);
+
+        $hoock_request = $this->httpRequest(['id' => $row->id], $data['pin_add'] ?? null);
+
+        return (new Fines)->delete($hoock_request);
+    }
 
     // eyJpdiI6IlR2UTlVelJwcCs0bHc0cHEzdnh0V3c9PSIsInZhbHVlIjoick5KMSt4KzMxb3FhSVhtblc3SVR1Z2ZIby9hVWljMk5Ydld6aGdlTnhPTTBhTENhdnFnTkV2NDhaVHRQZ1IwOGwyOTVlcDVpQlJCQTZHMHptOTNITjBTNUxRelRvMERtNnl6TVRKU0JsdHFtY0wxV3dFZzZ0L2hMaHZBOU1jeUVQWHQ4Q2JkNWVBNGJ1REM1cUwxN2lFS09iQy90WWtJVW00MGdZZTk5UHlJTlFpNnNmY2UrczdBQ0p2RWxKOXNHWkNaRWVQWHQ2c095N1UwaS9aOHlIOWwrWmIzWHFtR0JHSU5rM3NsaG5EY2hDakVSK0dvRjdwSE5VZk9TdXVQRHlpeTFHc0NWSng2enArcGxjYThHdGxhSjYvMXltWGlxeDJsc1g3Uk9yZkdFaFhZcytCcE5heFgzWk8rVkpuQVd5OWd1NXpZejNGc1dFT1o4bDRvZ1o5bTN2RFQyK2tFNUNjam54cWtQOVpMWW5rQklhMlpKdFJ6U1FqNGdhRkhKcXg2YmlzM3d2YlR4eGk5MkI3ejdkRlFXUGd2UVBYNTJFK2NObmhocjFQUHBVTUtZTTZXcUt1d0xRQXNMM05xWVd4bVRncW1UYVdUZWY3MlNCQ1ZQL0xQOCthYWlQMjZJNjhqRFBMYnh1Wko0bCtGaHFoM3pWTVVXN3BwNW1OT1NzMFVhRDNiTzA4YmhFY3dCVDlsRS8zNytWUFY2bllOam9mRU9LT1pSTncvZUpORTdtSXVUWDlGWkUvRGdxcmw5NXZYNklHSUxaMVZ3aTRyNXVGRkFDT3RMMTN0RURyTTNpRXlHRFZrdm5tazhFRWpLY0FYbWZlaG4wTk5zRVhuSUtFYXRaeDdIckozUE9PZ2wyMWlYVjlkaEttUkZQTDNqQzg5ZTBoaWJ3dmtRbDZJUzR0SmhMSFlTM0xnUFZ6b2xsVGFRWkNJUlMwR0loQjFSc3JsemkzV3JGb1dvOFMyUE9hN3BiOGxjMi8zWGZ0N3J3QzZiMGlIRUpOY3F2Z0g1ckhIdUxQYlVrYVRFRDVsbW1BSWUyeEczV21UdVNYMSswQzUyZWZXcWRXZE5NVm8rT2JRVlNrUi9SUWJDeEM1ZDRIT0c3dEJENFl0RFBnc255ZENLVmg3Tnk3MytRZmIyWTdoZjRaMy9EK3RXdHlKRHVFN2lIVXZGRU5uVFovaXJpZ3FRcGk5MlZDWFByYjZpRkY0aVptdkg4SjB6eVZ3K1dxVXltQTlnbVl2V0FoZTE3b1dvM1U4R1dsYnhMbWlvZEk2Z0ZXNEVrZytOa2QvY0N2OGdiU01FQ1pMT3Q0N250TllSUWV6TEFRUkt1RGFWRk1GOWdTa2hBSWhEMWM1eU9NdHlOTWljNUFpYWsrWWdQSFFQU0plNTArSjl6RmgrVXVzR09rWTJERS9ic2kxbDYxTTd1dGwrUUMvVWFoME12UVZ1cjdNVEhNanNhYUFHTzBRTW5RWWJaZXpSK09jWXh2czV5YzgzSERrPSIsIm1hYyI6IjZiYTc4NWY0ZDA3ZTdlYTUzODVhYTY3NjBiMTMyMTBkMmI5MDAwNzYyZjU4OWE4MjlkNTdmZjM1ZjM1YmExNDgiLCJ0YWciOiIifQ==
 
