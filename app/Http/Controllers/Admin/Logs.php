@@ -68,7 +68,10 @@ class Logs extends Log
 
         if ($row) {
 
-            if ($row->to_crypt) {
+            $row->to_crypt_access = false;
+
+            if ($row->to_crypt and $request->user()->can('show_crypt_data')) {
+                $row->to_crypt_access = true;
                 $row->row_data = Controller::decrypt($row->row_data);
                 $row->request_data = Controller::decrypt($row->request_data);
             }

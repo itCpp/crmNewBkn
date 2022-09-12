@@ -31,6 +31,6 @@ class UserDataFind
      */
     public function __invoke()
     {
-        return new UserData($this->__user);
+        return new UserData($this->__user ?? new User);
     }
 }

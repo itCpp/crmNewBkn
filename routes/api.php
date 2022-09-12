@@ -71,6 +71,7 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Вывод заявок */
         Route::post('get', 'Requests\Requests@get')->name('api.requests.get');
+        Route::post('getlost', 'Requests\Requests@getlost')->name('api.requests.getlost');
         /** Вывод одной строки */
         Route::post('getRow', 'Requests\Requests@getRow')->name('api.requests.getRow');
         Route::post('getRowForTab', 'Requests\Requests@getRowForTab')->name('api.requests.getRowForTab');

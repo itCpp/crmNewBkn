@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\Settings;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,6 +34,7 @@ class Tab extends Model
         'flash_records_confirm',
         'check_for_show',
         'label_counter',
+        'check_lost_requests',
     ];
 
     /**
@@ -53,5 +55,38 @@ class Tab extends Model
         'flash_null' => 'boolean',
         'flash_records_confirm' => 'boolean',
         'label_counter' => 'boolean',
+        'check_lost_requests' => 'boolean',
     ];
+
+    /**
+     * Атрибуты, которые будут переданы в массив конфига
+     * 
+     * @var array
+     */
+    protected $to_settings = [
+        'id',
+        'counter_source',
+        'counter_offices',
+        'counter_next_day',
+        'counter_hide_page',
+        'flash_null',
+        'flash_records_confirm',
+        'label_counter',
+        'check_lost_requests',
+    ];
+
+    /**
+     * Выводит настройки вкладки
+     * 
+     * @return array
+     */
+    public function getSettings()
+    {
+        foreach ($this->to_settings as $row)
+            $settings[$row] = $this->$row;
+
+        $settings['intervalTimer'] = (new Settings)->CHECK_LOST_REQUESTS_TAB_PERIOD_TIME;
+
+        return $settings ?? [];
+    }
 }

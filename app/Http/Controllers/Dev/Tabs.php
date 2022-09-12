@@ -171,6 +171,7 @@ class Tabs extends Controller
         $tab->flash_null = $request->flash_null;
         $tab->flash_records_confirm = $request->flash_records_confirm;
         $tab->label_counter = $request->label_counter;
+        $tab->check_lost_requests = $request->check_lost_requests;
 
         $tab->save();
 

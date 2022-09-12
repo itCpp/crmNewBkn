@@ -59,7 +59,7 @@ class Requests extends Controller
     /**
      * Вывод заявок
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public static function get(Request $request)
@@ -94,6 +94,7 @@ class Requests extends Controller
 
         return response()->json([
             'requests' => $requests,
+            'tab' => optional($request->tab)->getSettings(),
             'permits' => RequestStart::$permits,
             'total' => $data->total(), // Количество найденных строк
             'next' => $next > $pages ? null : $next,
@@ -105,7 +106,7 @@ class Requests extends Controller
     /**
      * Вывод одной строки
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public static function getRow(Request $request)
@@ -200,7 +201,7 @@ class Requests extends Controller
     /**
      * Запрос на вывод данных для добавления заявки оператору
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public static function getRowForTab(Request $request)
@@ -226,7 +227,7 @@ class Requests extends Controller
     /**
      * Формирование запроса и вывод заявок
      * 
-     * @param \App\Models\RequestsRow $data Коллекция модели
+     * @param  \App\Models\RequestsRow $data Коллекция модели
      * @return array
      */
     public static function getRequests($data)
@@ -240,7 +241,7 @@ class Requests extends Controller
     /**
      * Обработка и дополнение данными одной строки заявки
      * 
-     * @param \App\Models\RequestsRow $row
+     * @param  \App\Models\RequestsRow $row
      * @return object
      */
     public static function getRequestRow(RequestsRow $row)
@@ -313,7 +314,7 @@ class Requests extends Controller
     /**
      * Вывод данных источника заявки
      * 
-     * @param int $id
+     * @param  int $id
      * @return null|array
      */
     public static function getReqoustRowSourceData($id)
@@ -330,7 +331,7 @@ class Requests extends Controller
     /**
      * Вывод данных ресурса источника заявки
      * 
-     * @param int $id
+     * @param  int $id
      * @return null|array
      */
     public static function getRequestRowReourceSourceData($id)
@@ -355,7 +356,7 @@ class Requests extends Controller
     /**
      * Вывод данных об офисе
      * 
-     * @param null|int $id
+     * @param  null|int $id
      * @return null|array
      */
     public static function getRequestRowOfficeData($id)
@@ -375,7 +376,7 @@ class Requests extends Controller
     /**
      * Поиск данных сектора
      * 
-     * @param null|int $id
+     * @param  null|int $id
      * @return null|array
      */
     public static function getRequestRowSectorData($id)
@@ -401,7 +402,7 @@ class Requests extends Controller
     /**
      * Вывод данных о статусе
      * 
-     * @param \App\Models\RequestsRow $row
+     * @param  \App\Models\RequestsRow $row
      * @return null|array
      */
     public static function getRequestRowStatusData($row)
@@ -420,8 +421,8 @@ class Requests extends Controller
     /**
      * Вывод номеров телефона клиента
      * 
-     * @param \App\Models\RequestsRow $row
-     * @param null|bool $permit Флаг разрешения на вывод номера
+     * @param  \App\Models\RequestsRow $row
+     * @param  null|bool $permit Флаг разрешения на вывод номера
      * @return array<object>
      */
     public static function getClientPhones(RequestsRow $row, $permit = false)
@@ -445,7 +446,7 @@ class Requests extends Controller
     /**
      * Вывод новых заявок для личной страницы
      * 
-     * @param string|int $pin
+     * @param  string|int $pin
      * @return array
      */
     public static function getNewRequests($pin)
@@ -490,6 +491,7 @@ class Requests extends Controller
         return RequestsRow::whereIn('id', array_unique($requests))
             ->get()
             ->map(function ($row) use ($sets) {
+
                 $row->set_at = $sets[$row->id] ?? null;
 
                 return self::getRequestRow($row);
@@ -497,5 +499,39 @@ class Requests extends Controller
             ->sortByDesc('set_at')
             ->values()
             ->all();
+    }
+
+    /**
+     * Проверяет необходимость вывода заявки в текущей вкладке, чтобы скрыть неактуальные строки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getlost(Request $request)
+    {
+        if (!$request->tab = Tab::find($request->id))
+            $request->tab = new Tab;
+
+        if ($request->tab->id and !$request->user()->canTab($request->tab->id))
+            return response()->json(['message' => "Доступ к вкладке ограничен"], 403);
+
+        /** Разрешения для пользователя */
+        RequestStart::$permits = $request->user()->getListPermits(Start::$permitsList);
+
+        /** Идентификаторы заявок для вывода во вкладке */
+        $actual = (new RequestsQuery($request))->where()
+            ->whereIn('id', $request->list)
+            ->get()
+            ->map(function ($row) {
+                return $row->id;
+            })
+            ->toArray();
+
+        foreach ($request->list as $id) {
+            if (!in_array($id, $actual))
+                $lost[] = $id;
+        }
+
+        return response()->json($lost ?? []);
     }
 }
