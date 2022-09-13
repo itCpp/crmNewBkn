@@ -472,8 +472,6 @@ class Webhoock extends Merge
         return (new Fines)->create($hoock_request);
     }
 
-    // eyJpdiI6IkNycUZYU21ZR0VXYXkzbHFDL2lEUXc9PSIsInZhbHVlIjoiWEZMS1VibXUyYnpGZmdjWjlpUmxZYU13blVSZEZFbW9jNHlvUGlSNEZmUmhUMk9ROFpSOTVqNmtZNHZsdm9KVXFGOFlGaWRDVW44VDJiZ2NRa2RuVGFHU1NZL28wb2JNNmRTTWY0ZU43RXVqREVtUVh2ZXlWWExzUTRmN0RDZXVmUDhOTEI1VW5vbS9ndTkzUXNCSzJPOTF4L2dTNXh1NUt3L2oxLyt2a2dwMlgxdkJva0R3cU1MU3JKS3ZXSW1lSXM4ZExQcEZ5U1N1NEdCR0xheSs4eFhzNWVoRUJ6VEFIRnYxeG43VXArVUR4RDlaTmdxdkppbXV3ZjB6QWkydFRxVTlMbUh3cmE1QzJkVHpCa2ltcllwTVRBa2REdWNsN1Nmalp0MUZZSkpGNkJ4d3NDOUgzUHV1c09CTmxad01VUEFraTRwMWpzK0F4Y0UwZWFZZUF1TVIvbERGSEt4eHNUYjJXWDdFK2VpWEg5dXVRQ0NNYkN2bzh2YnpvZDJ3Zm9wd2I2Y1FvZS8wclROUDE0RmhkakxkZHVpWlRMcWJBdm9Ka2gzNFhaVDRraWl6Y01ZUUY3Q3hxdmJsMnpTMG12alNPVDBTWmJxWHlFaUJzZGFCeXl2d0F1clJjd0w5b1Vha2poS1p4VTR1d3J6UklFVFptbVdvLytreW9CSzR2RjZ3OHAwdUFhMzJNYkxYTks0KzNSUWdBM2VrcWthY3RMbmdhQk01dVVCeDVtRUZZSXNoOE1JR1o5Y21GRHRxZWhlazg3emRGdzk1NU4rTnJwS0E4cUgzOWxPNVRneGtSWThjd2lJSDk1MCtueThPZmx3TE5IQzZwMEFOQittRVBkUnJDZFdxRUZzdmxFa0hoUWlUVEhJY2E2Z1czZ3BOVkZSSTNkSGFKeFA0ZnpXSXFwZVliWmdkZmtpS3hKN1g1czJQQmM1bjY2dy9oMHpGQ1p3QlNSNnBHL1VBd01iTjZTSmoydGR3NUl4Z1ZtS0t1OEI3aVdFZENudk5UUTI3bjVuczRUc2s5dUhqQkdOS0ozT0NuNVJoVU05dGhqRC9VZ2RxV0VrWHM3blRaVkdxYkxNKzhwVnRyVkJLdHlpYjdIUmlxdzV6cm9xWjA2bCt5NHZKdEVXYTZvUy9rT2hraGkzSGI0TUFrclBFNjlwN1hIRStwUms4cXRPY0wrOEhFeGVNaVRieTdqVzlLVG10U2JEVDRGVXJiVDNPY3RMY2NJeHVhRS9vTFhtcWRKMHZxdWNESytWaGtmaXlTMEl3ZGZWK0FTM2NLQmlSWUc2TmNvL1FBTDFFbWQvWlg5S0NKSFpKdkxwTHNUZmx0d3VjclVrWnBlWXZqMUdPRmRIZlhuTkxyR0lEc0VGR21hdjE4Y1hlQW1tRUNXWmFTRStSdE9ySkFGUEpxejU0ZjVYaGR1ejFVa1QyMEdVUXdhRkdsS3BYUXA0WlFCTGhibG9WUk5nZG5JYWlsU21ZL0hQM2ZBMG9HLzNCdjhEMEhJY1l2MnFGYWhIaXREVUFRSjR5ODNndyt5MFdOdFNDU1JSVmg0UEFsOWlYV0RDQ0w2M3NyWlBGWXBXeU8walVUbDRwSlZ4VGZ0MEpYd25SbXAwVyIsIm1hYyI6IjdhYjk2ZGEwNmZkZWZlZWRkYzJjNmY0M2MxMDA2OWU1ODU0NzE2NTBmZDgyMDM1NWU2N2M5NWJlNTY5ZGZhODIiLCJ0YWciOiIifQ==
-
     /**
      * Удаление штрафа
      * 
@@ -492,14 +490,12 @@ class Webhoock extends Merge
         ])->first();
 
         if (!$row)
-            return response()->json(['message' => "Штраф не найден"], 400);
+            return response()->json(['message' => "Штраф не определен"], 400);
 
         $hoock_request = $this->httpRequest(['id' => $row->id], $data['pin_add'] ?? null);
 
         return (new Fines)->delete($hoock_request);
     }
-
-    // eyJpdiI6IlR2UTlVelJwcCs0bHc0cHEzdnh0V3c9PSIsInZhbHVlIjoick5KMSt4KzMxb3FhSVhtblc3SVR1Z2ZIby9hVWljMk5Ydld6aGdlTnhPTTBhTENhdnFnTkV2NDhaVHRQZ1IwOGwyOTVlcDVpQlJCQTZHMHptOTNITjBTNUxRelRvMERtNnl6TVRKU0JsdHFtY0wxV3dFZzZ0L2hMaHZBOU1jeUVQWHQ4Q2JkNWVBNGJ1REM1cUwxN2lFS09iQy90WWtJVW00MGdZZTk5UHlJTlFpNnNmY2UrczdBQ0p2RWxKOXNHWkNaRWVQWHQ2c095N1UwaS9aOHlIOWwrWmIzWHFtR0JHSU5rM3NsaG5EY2hDakVSK0dvRjdwSE5VZk9TdXVQRHlpeTFHc0NWSng2enArcGxjYThHdGxhSjYvMXltWGlxeDJsc1g3Uk9yZkdFaFhZcytCcE5heFgzWk8rVkpuQVd5OWd1NXpZejNGc1dFT1o4bDRvZ1o5bTN2RFQyK2tFNUNjam54cWtQOVpMWW5rQklhMlpKdFJ6U1FqNGdhRkhKcXg2YmlzM3d2YlR4eGk5MkI3ejdkRlFXUGd2UVBYNTJFK2NObmhocjFQUHBVTUtZTTZXcUt1d0xRQXNMM05xWVd4bVRncW1UYVdUZWY3MlNCQ1ZQL0xQOCthYWlQMjZJNjhqRFBMYnh1Wko0bCtGaHFoM3pWTVVXN3BwNW1OT1NzMFVhRDNiTzA4YmhFY3dCVDlsRS8zNytWUFY2bllOam9mRU9LT1pSTncvZUpORTdtSXVUWDlGWkUvRGdxcmw5NXZYNklHSUxaMVZ3aTRyNXVGRkFDT3RMMTN0RURyTTNpRXlHRFZrdm5tazhFRWpLY0FYbWZlaG4wTk5zRVhuSUtFYXRaeDdIckozUE9PZ2wyMWlYVjlkaEttUkZQTDNqQzg5ZTBoaWJ3dmtRbDZJUzR0SmhMSFlTM0xnUFZ6b2xsVGFRWkNJUlMwR0loQjFSc3JsemkzV3JGb1dvOFMyUE9hN3BiOGxjMi8zWGZ0N3J3QzZiMGlIRUpOY3F2Z0g1ckhIdUxQYlVrYVRFRDVsbW1BSWUyeEczV21UdVNYMSswQzUyZWZXcWRXZE5NVm8rT2JRVlNrUi9SUWJDeEM1ZDRIT0c3dEJENFl0RFBnc255ZENLVmg3Tnk3MytRZmIyWTdoZjRaMy9EK3RXdHlKRHVFN2lIVXZGRU5uVFovaXJpZ3FRcGk5MlZDWFByYjZpRkY0aVptdkg4SjB6eVZ3K1dxVXltQTlnbVl2V0FoZTE3b1dvM1U4R1dsYnhMbWlvZEk2Z0ZXNEVrZytOa2QvY0N2OGdiU01FQ1pMT3Q0N250TllSUWV6TEFRUkt1RGFWRk1GOWdTa2hBSWhEMWM1eU9NdHlOTWljNUFpYWsrWWdQSFFQU0plNTArSjl6RmgrVXVzR09rWTJERS9ic2kxbDYxTTd1dGwrUUMvVWFoME12UVZ1cjdNVEhNanNhYUFHTzBRTW5RWWJaZXpSK09jWXh2czV5YzgzSERrPSIsIm1hYyI6IjZiYTc4NWY0ZDA3ZTdlYTUzODVhYTY3NjBiMTMyMTBkMmI5MDAwNzYyZjU4OWE4MjlkNTdmZjM1ZjM1YmExNDgiLCJ0YWciOiIifQ==
 
     /**
      * Восстановление удаленного штрафа
@@ -507,10 +503,24 @@ class Webhoock extends Merge
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    // public function hoockFineRestore(Request $request)
-    // {
-    //     return response()->json();
-    // }
+    public function hoockFineRestore(Request $request)
+    {
+        $data = is_array($request->input('row')) ? $request->input('row') : [];
+
+        $row = Fine::withTrashed()->where([
+            ['pin', $data['pin'] ?? null],
+            ['fine_date', $data['fine_date'] ?? null],
+            ['pin_add', $data['pin_add'] ?? null],
+            ['id_request', $data['id_request'] ?? null],
+        ])->first();
+
+        if (!$row)
+            return response()->json(['message' => "Штраф не определен"], 400);
+
+        $hoock_request = $this->httpRequest(['id' => $row->id], $data['pin_add'] ?? null);
+
+        return (new Fines)->restore($hoock_request);
+    }
 
     /**
      * Исходящее СМС
