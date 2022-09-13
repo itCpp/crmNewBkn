@@ -483,10 +483,10 @@ class Webhoock extends Merge
         $data = is_array($request->input('row')) ? $request->input('row') : [];
 
         $row = Fine::where([
-            ['pin', $data['pin'] ?? null],
+            ['user_pin', $data['pin'] ?? null],
+            ['from_pin', $data['pin_add'] ?? null],
+            ['request_id', $data['id_request'] ?? null],
             ['fine_date', $data['fine_date'] ?? null],
-            ['pin_add', $data['pin_add'] ?? null],
-            ['id_request', $data['id_request'] ?? null],
         ])->first();
 
         if (!$row)
@@ -508,10 +508,10 @@ class Webhoock extends Merge
         $data = is_array($request->input('row')) ? $request->input('row') : [];
 
         $row = Fine::withTrashed()->where([
-            ['pin', $data['pin'] ?? null],
+            ['user_pin', $data['pin'] ?? null],
+            ['from_pin', $data['pin_add'] ?? null],
+            ['request_id', $data['id_request'] ?? null],
             ['fine_date', $data['fine_date'] ?? null],
-            ['pin_add', $data['pin_add'] ?? null],
-            ['id_request', $data['id_request'] ?? null],
         ])->first();
 
         if (!$row)
