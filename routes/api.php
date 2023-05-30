@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\MailerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -186,6 +187,11 @@ Route::group(['middleware' => 'user.token'], function () {
             Route::post('distributionSetCountQueue', 'Admin\DistributionCalls@distributionSetCountQueue');
             /** Включение сектора в распределение звонков */
             Route::post('setSectorDistribution', 'Admin\DistributionCalls@setSectorDistribution');
+        });
+
+        Route::group(['middleware' => 'user.can:admin_mailer', 'prefix' => "mailer"], function () {
+
+            Route::get('/', [MailerController::class, "index"]);
         });
     });
 
