@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class RequestsSource extends Model
 {
-
     use HasFactory;
 
     /**
@@ -15,10 +14,8 @@ class RequestsSource extends Model
      * 
      * @return \App\Models\RequestsSourcesResource
      */
-    public function resources() {
-
+    public function resources()
+    {
         return $this->hasMany(RequestsSourcesResource::class, "source_id");
-
     }
-
 }

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Dev;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Requests\AddRequest;
+use App\Http\Controllers\Requests\AddRequestCounterTrait;
 use App\Http\Controllers\Requests\RequestChange;
 use App\Http\Controllers\Users\UsersMerge;
+use App\Models\Base\CrmComing;
+use App\Models\CrmMka\CrmNewIncomingQuery;
 use App\Models\RequestsClient;
 use App\Models\RequestsComment;
 use App\Models\RequestsRow;
@@ -13,69 +15,78 @@ use App\Models\User;
 use App\Models\CrmMka\CrmRequest;
 use App\Models\CrmMka\CrmRequestsRemark;
 use App\Models\CrmMka\CrmRequestsSbComment;
+use App\Models\IncomingQuery;
+use App\Models\RequestsRowsConfirmedComment;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
-class RequestsMerge extends Controller
+class RequestsMerge extends RequestsMergeData
 {
-    /** Идентификатор последней првоерки @var int */
+    use AddRequestCounterTrait;
+
+    /**
+     * Идентификатор последней проверки
+     * 
+     * @var int
+     */
     protected $lastId;
 
-    /** Количество заявок в старой базе @var int */
+    /**
+     * Количество заявок в старой базе
+     * 
+     * @var int
+     */
     public $count;
 
-    /** Максимальный идентификатор заявки @var int */
+    /**
+     * Максимальный идентификатор заявки
+     * 
+     * @var int
+     */
     public $max;
 
-    /** Экземпляр объекта создания заявки @var AddRequest */
+    /**
+     * Экземпляр объекта создания заявки
+     * 
+     * @var \App\Http\Controllers\Requests\AddRequest
+     */
     protected $add;
 
-    /** Массив сопоставления идентификаторов источников @var array */
-    public $sourceToSource = [
-        [2, 'БАСМАНКА'],
-        [14, 'БЗБ'],
-        [6, 'БРАКИ'],
-        [15, 'ГАЗЕТА'],
-        [1, 'ГОСЮРИСТ'],
-        [11, 'Департамент юридических услуг'],
-        [4, 'ДОСТ'],
-        [10, 'Коллегия адвокатов'],
-        [16, 'КОНСАЛТИНГ'],
-        [8, 'Московская коллегия адвокатов'],
-        [17, 'Подарки от Худякова'],
-        [9, 'правовые эксперты России'],
-        [3, 'СПР'],
-        [5, 'ХУД'],
-        [12, 'ЦПП'],
-        [12, null],
-        [7, 'Эксперты права'],
-        [18, 'ЮК'],
-        [19, 'Юридический центр'],
-        [20, 'ЮРИСКОНСУЛЬТ'],
-        [21, 'ЮРСЛУЖБА'],
-    ];
+    /**
+     * Массив сопоставления идентификаторов источников
+     * 
+     * @var array
+     */
+    public $sourceToSource = [];
 
-    /** Соотношение статуса старой заявки к идентификтору нового статуса */
-    public $stateToStatusId = [
-        'bk' => 5,
-        'brak' => 6,
-        'color-promo' => 12,
-        'nedozvon' => 1,
-        'neobr' => null,
-        'online' => 10,
-        'online-doc' => 11,
-        'podtverjden' => 4,
-        'prihod' => 7,
-        'promo' => 9,
-        'shipping' => 14,
-        'sliv' => 8,
-        'sozvon' => 2,
-        'vtorich' => 13,
-        'zapis' => 3,
-    ];
+    /**
+     * Сопостовление ресурсов источника
+     * 
+     * @var array
+     */
+    public $sourceResourceToRecource = [];
 
-    /** Проверяемые сотрудники @var array */
+    /**
+     * Соотношение статуса старой заявки к идентификтору нового статуса
+     * 
+     * @var array
+     */
+    public $stateToStatusId = [];
+
+    /**
+     * Проверяемые сотрудники
+     * 
+     * @var array
+     */
     protected $users = [];
+
+    /**
+     * Проверенные персональне номера сотрудников
+     * 
+     * @var array
+     */
+    protected $new_pins = [];
 
     /**
      * Объвление нового экзкмпляра
@@ -84,6 +95,10 @@ class RequestsMerge extends Controller
      */
     public function __construct()
     {
+        $this->sourceToSource = $this->sourceToSource();
+        $this->sourceResourceToRecource = $this->sourceResourceToRecource();
+        $this->stateToStatusId = $this->stateToStatusId();
+
         $this->lastId = 0;
         $this->count = CrmRequest::count();
         $this->max = CrmRequest::max('id');
@@ -136,8 +151,9 @@ class RequestsMerge extends Controller
         $new->id = $row->id;
         $new->query_type = $this->getQueryType($row);
         $new->callcenter_sector = $this->getSectorId($row);
-        $new->pin = $this->getNewPin($row);
+        $new->pin = $this->getNewPin($row->pin);
         $new->source_id = $this->getSourceId($row);
+        $new->sourse_resource = $this->getResourceId($row);
         $new->client_name = $row->name != "" ? $row->name : null;
         $new->theme = $row->theme != "" ? $row->theme : null;
         $new->region = ($row->region != "" and $row->region != "Неизвестно") ? $row->region : null;
@@ -155,6 +171,16 @@ class RequestsMerge extends Controller
         $new->deleted_at = $this->getDeletedAt($row, $new);
         $new->updated_at = $this->getUpdatedAt($new);
 
+        if ($new->uplift == 1) {
+
+            /** Обнуление подъема со статусом */
+            if ($new->status_id)
+                $new->uplift = 0;
+            /** Обнуление заявок с необарботанным статусом для определенных источников */
+            else if (!$new->status_id and in_array($new->source_id, [3, 4, 5, 6, 17]))
+                $new->uplift = 0;
+        }
+
         $new->save();
 
         // Привязка клиента к заявке
@@ -165,30 +191,45 @@ class RequestsMerge extends Controller
         // Поиск и добавление комментариев по заявке
         $data->comments = $this->getAndCreateAllComments($new->id);
 
+        // Перенос истории обращений
+        // $this->findAndRequestQueries($new);
+
+        // Формирование галочки достоверности сути обращения
+        if (in_array($row->verno, ["1", "2"]))
+            $this->findAndWriteConfimedComment($row->id, (int) $row->verno);
+
+        /** Счетчик обращений по источникам */
+        $this->countQuerySourceResource($new->source_id, $new->sourse_resource);
+
         return $new;
     }
 
     /**
-     * Поиск номеров телефона в старой заявке
+     * Запись информации о галочке
      * 
-     * @param CrmRequest $row
-     * @return array
+     * @param  int $id
+     * @param  int $verno
+     * @return null
      */
-    public function getPhones($row)
+    public function findAndWriteConfimedComment($id, $verno)
     {
-        if ($phone = $this->checkPhone($row->phone, 1))
-            $phones[] = $phone;
+        try {
 
-        $seconds = explode("|", $row->secondPhone);
+            $coming = CrmComing::where('unicIdClient', $id)->first();
 
-        if (is_array($seconds)) {
-            foreach ($seconds as $second) {
-                if ($phone = $this->checkPhone($second, 1))
-                    $phones[] = $phone;
+            $pins = explode("/", ($coming->lawyerPin ?? ""));
+
+            foreach ($pins as $pin) {
+                RequestsRowsConfirmedComment::create([
+                    'request_id' => $id,
+                    'confirmed' => (int) $verno == 1 ? true : false,
+                    'confirm_pin' => (int) $pin > 0 ? $pin : null,
+                ]);
             }
+        } catch (Exception $e) {
         }
 
-        return array_unique($phones ?? []);
+        return null;
     }
 
     /**
@@ -213,201 +254,42 @@ class RequestsMerge extends Controller
     }
 
     /**
-     * Определение типа заявки
-     * 
-     * @param CrmRequest
-     * @return string
-     */
-    public function getQueryType($row)
-    {
-        return $row->typeReq == "Звонок" ? "call" : "text";
-    }
-
-    /**
-     * Определение сектора
-     * 
-     * @param CrmRequest
-     * @return null|int
-     */
-    public function getSectorId($row)
-    {
-        $sector = $row->{'call-center'};
-
-        if ($sector === "" or $sector === null)
-            return null;
-
-        $sectors = [
-            1 => 1,
-            2 => 1,
-            3 => 2,
-            4 => 2,
-            5 => 2,
-            6 => 2,
-            7 => 3,
-        ];
-
-        return $sectors[(int) $sector] ?? null;
-    }
-
-    /**
-     * Определение источника старой заявки
-     * 
-     * @param CrmRequest
-     * @return null|int
-     */
-    public function getSourceId($row)
-    {
-        foreach ($this->sourceToSource as $source) {
-            if ($row->type == $source[1])
-                return $source[0];
-        }
-
-        return null;
-    }
-
-    /**
      * Поиск нового пина сотрудника
      * 
-     * @param CrmRequest
+     * @param string $pin
      * @return int|string
      */
-    public function getNewPin($row)
+    public function getNewPin($pin)
     {
-        if (!$row->pin)
-            return null;
+        $key = md5($pin);
 
-        if (!$user = User::where('old_pin', $row->pin)->first())
-            return $this->getFiredAndCreateNewUser($row->pin);
+        if (!empty($this->new_pins[$key]))
+            return $this->new_pins[$key];
 
-        return $user->pin;
+        if (!$pin)
+            return $this->new_pins[$key] = null;
+
+        if (!$user = User::where('old_pin', $pin)->first())
+            return $this->getFiredAndCreateNewUser($pin, $key);
+
+        return $this->new_pins[$key] = $user->pin;
     }
 
     /**
      * Создание уволенного сотрудника
      * 
      * @param string $pin
+     * @param null|string $key
      * @return int
      */
-    public function getFiredAndCreateNewUser($pin)
+    public function getFiredAndCreateNewUser($pin, $key = null)
     {
+        $key = $key ?: md5($pin);
+
         if (!$user = $this->usersMerge->createFiredUser($pin))
-            return $pin;
+            return $this->new_pins[$key] = $pin;
 
-        return $user->pin;
-    }
-
-    /**
-     * Определение идентификатора статуса заявки
-     * По умолчнию будет бракованная заявка, чтобы обнулить её при следующем поступлении
-     * 
-     * @param CrmRequest $row
-     * @return null|int
-     */
-    public function getStatusId($row)
-    {
-        return $this->stateToStatusId[$row->state] ?? 6;
-    }
-
-    /**
-     * Определение времени события
-     * 
-     * @param CrmRequest $row
-     * @return null|string
-     */
-    public function getEventAt($row)
-    {
-        if (!$row->rdate or !$row->time)
-            return null;
-
-        $date = trim($row->rdate . " " . $row->time);
-        $time = strtotime($date);
-
-        if (!$time or $time > 1640995200 or $time < 1420070400)
-            return null;
-
-        return $date;
-    }
-
-    /**
-     * Дата создания заявки
-     * 
-     * @param CrmRequest $row
-     * @return null|string
-     */
-    public function getCreatedAt($row)
-    {
-        $date = $row->staticDate;
-
-        if (!$date or $date == "")
-            $date = $row->date;
-
-        if (!$date or $date == "")
-            return null;
-
-        return trim($date . " " . $row->staticTime);
-    }
-
-    /**
-     * Определение времени подъема заявки
-     * 
-     * @param CrmRequest $row
-     * @param RequestsRow $new
-     * @return null|string
-     */
-    public function getUpliftAt($row, $new)
-    {
-        $time = null;
-
-        if ($row->timeSort and $row->timeSort != "")
-            $time = $row->timeSort;
-
-        if (!$time and $new->created_at)
-            $time = strtotime($new->created_at);
-
-        return $time ? date("Y-m-d H:i:s", $time) : null;
-    }
-
-    /**
-     * Дата и время удаления заявки
-     * 
-     * @param CrmRequest $row
-     * @param RequestsRow $new
-     * @return null|string
-     */
-    public function getDeletedAt($row, $new)
-    {
-        if ($row->del != "hide" and $row->noView != 1)
-            return null;
-
-        if ($date = $this->getUpdatedAt($new))
-            return $date;
-
-        return now();
-    }
-
-    /**
-     * Дата и время обновления
-     * 
-     * @param RequestsRow $new
-     * @return null|string
-     */
-    public function getUpdatedAt($new)
-    {
-        $date = null;
-
-        if (!$date or $new->created_at > $date)
-            $date = $new->created_at;
-
-        if (!$date or $new->event_at > $date)
-            $date = $new->event_at;
-
-        if (!$date or $new->uplift_at > $date)
-            $date = $new->uplift_at;
-
-        if (!$date or $new->uplift_at > $date)
-            $date = $new->uplift_at;
-
-        return $date;
+        return $this->new_pins[$key] = $user->pin;
     }
 
     /**
@@ -466,5 +348,107 @@ class RequestsMerge extends Controller
             $this->users[$pin] = $this->getFiredAndCreateNewUser($pin);
 
         return $this->users[$pin]->pin ?? $pin;
+    }
+
+    /**
+     * Поиск и перенос истории обращений
+     * 
+     * @param \App\Models\RequestsRow $row
+     * @return null
+     */
+    public function findAndRequestQueries($row)
+    {
+        CrmNewIncomingQuery::where('id_request', $row->id)
+            ->orderBy('created_at')
+            ->get()
+            ->each(function ($item) {
+
+                $query_data = is_array($item->request) ? $item->request : [];
+
+                if (isset($query_data['number']))
+                    $query_data['phone'] = $query_data['number'];
+
+                $hash_phone = isset($query_data['phone'])
+                    ? $this->hashPhone($query_data['phone'])
+                    : null;
+
+                if (!$hash_phone and $item->phone) {
+                    $query_data['phone'] = $item->phone;
+                    $hash_phone = $this->hashPhone($item->phone);
+                }
+
+                $client_id = optional(RequestsClient::where('hash', $hash_phone)->first())->id;
+
+                $hash_phone_resource = isset($query_data['myPhone'])
+                    ? $this->hashPhone($query_data['myPhone'])
+                    : null;
+
+                if (!$hash_phone_resource and $item->myPhone) {
+                    $query_data['myPhone'] = $item->myPhone;
+                    $hash_phone_resource = $this->hashPhone($item->myPhone);
+                }
+
+                $ad_source = isset($query_data['utm_source'])
+                    ? $query_data['utm_source'] : null;
+
+                if (isset($query_data['phone']))
+                    $query_data['phone'] = $this->encrypt($query_data['phone']);
+
+                if (isset($query_data['number']))
+                    $query_data['number'] = $this->encrypt($query_data['number']);
+
+                if (isset($query_data['ip'])) {
+                    $item->ip = $query_data['ip'];
+                    $query_data['ip_from_item'] = $item->ip;
+                }
+
+                if ($item->typeReq == "Звонок")
+                    $type = "call";
+                else if ($item->typeReq == "Текст")
+                    $type = "text";
+
+                $query_data['hash_gate'] = $item->hash_gate;
+                $query_data['xml_cdr_uuid'] = $item->xml_cdr_uuid;
+                $query_data['cdr_date'] = $item->cdr_date;
+
+                $request_data = [
+                    'id' => $item->id_request,
+                ];
+
+                foreach ($this->sourceToSource as $source) {
+                    if ($source[1] == $item->type) {
+                        $request_data['source_id'] = $source[0];
+                        break;
+                    }
+                }
+
+                $phone = $this->checkPhone($item->myPhone, 3);
+                $site = isset($query_data['site']) ? $query_data['site'] : null;
+
+                foreach ($this->sourceResourceToRecource as $source) {
+                    if ($source[1] == $phone or $source[1] == $site) {
+                        $request_data['sourse_resource'] = $source[0];
+                        break;
+                    }
+                }
+
+                $create = [
+                    'query_data' => $query_data,
+                    'client_id' => $client_id,
+                    'request_id' => $item->id_request,
+                    'ad_source' => $ad_source,
+                    'type' => $type ?? null,
+                    'hash_phone' => $hash_phone,
+                    'hash_phone_resource' => $hash_phone_resource,
+                    'request_data' => $request_data,
+                    'ip' => $item->ip,
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                ];
+
+                IncomingQuery::create($create);
+            });
+
+        return null;
     }
 }

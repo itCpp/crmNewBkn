@@ -24,6 +24,7 @@ class User extends Model
         'name',
         'patronymic',
         'password',
+        'position_id',
         'telegram_id',
         'auth_type',
         'created_at',
@@ -71,5 +72,15 @@ class User extends Model
     public function worktime()
     {
         return $this->belongsTo(UserWorkTime::class, 'pin', 'user_pin');
+    }
+
+    /**
+     * Получение информации о секторе сотрудника
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function sector()
+    {
+        return $this->belongsTo(CallcenterSector::class, 'callcenter_sector_id', 'id');
     }
 }

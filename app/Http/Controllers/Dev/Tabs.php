@@ -3,90 +3,15 @@
 namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Requests\RequestsQuery;
 use App\Models\RequestsRow;
 use App\Models\Status;
 use App\Models\Tab;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class Tabs extends Controller
 {
-    /**
-     * Вывод всех вкладок
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
-     */
-    public static function getTabs(Request $request)
-    {
-        foreach (Tab::orderBy('position')->get() as $tab) {
-
-            // $tab->where_settings = json_decode($tab->where_settings);
-
-            $tabs[] = $tab;
-        }
-
-        return response()->json([
-            'tabs' => $tabs ?? [],
-        ]);
-    }
-
-    /**
-     * Создание новой вкладки
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
-     */
-    public static function createTab(Request $request)
-    {
-        $errors = [];
-
-        if (!$request->name)
-            $errors['name'][] = "Необходимо указать наименование вкладки";
-
-        if (count($errors)) {
-            return response()->json([
-                'message' => "Имеются ошибки данных",
-                'errors' => $errors,
-            ], 422);
-        }
-
-        $tab = Tab::create([
-            'name' => $request->name,
-            'name_title' => $request->name_title,
-            'position' => Tab::count(),
-        ]);
-
-        parent::logData($request, $tab);
-
-        return response()->json([
-            'tab' => $tab,
-        ]);
-    }
-
-    /**
-     * Вывод данных одной вкладки
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
-     */
-    public static function getTab(Request $request)
-    {
-        if (!$tab = Tab::find($request->id))
-            return response()->json(['message' => "Данные по вкладке не найдены"], 400);
-
-        if ($request->getColumns)
-            $columns = RequestsRow::getColumnsList();
-
-        if ($request->getStatuses)
-            $statuses = Status::all();
-
-        return response()->json([
-            'tab' => $tab,
-            'columns' => $columns ?? null,
-            'statuses' => $statuses ?? null,
-        ]);
-    }
-
     /**
      * Список разрешенных выражений для запроса
      * 
@@ -112,15 +37,103 @@ class Tabs extends Controller
     ];
 
     /**
+     * Вывод всех вкладок
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getTabs(Request $request)
+    {
+        $rows = Tab::orderBy('position')
+            ->get()
+            ->map(function ($row) {
+                return $this->serializeRow($row);
+            })
+            ->toArray();
+
+        return response()->json([
+            'tabs' => $rows,
+        ]);
+    }
+
+    /**
+     * Обработка строки
+     * 
+     * @param \App\Models\Tab $row
+     * @return array
+     */
+    public function serializeRow(Tab $row)
+    {
+        $row->date_types = $row->date_types ?: [];
+        $row->request_all = $row->request_all ?: "my";
+        $row->statuses = $row->statuses ?: [];
+        $row->statuses_not = $row->statuses_not ?: [];
+
+        return $row->toArray();
+    }
+
+    /**
+     * Создание новой вкладки
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createTab(Request $request)
+    {
+        $request->validate([
+            'name' => "required",
+        ], [
+            'name.required' => "Необходимо указать наименование вкладки",
+        ]);
+
+        $tab = Tab::create([
+            'name' => $request->name,
+            'name_title' => $request->name_title,
+            'request_all_permit' => 1,
+            'position' => Tab::count(),
+        ]);
+
+        $this->logData($request, $tab);
+
+        return response()->json([
+            'tab' => $this->serializeRow($tab),
+        ]);
+    }
+
+    /**
+     * Вывод данных одной вкладки
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getTab(Request $request)
+    {
+        if (!$tab = Tab::find($request->id))
+            return response()->json(['message' => "Данные по вкладке не найдены"], 400);
+
+        if ($request->getColumns)
+            $columns = RequestsRow::getColumnsList();
+
+        if ($request->getStatuses)
+            $statuses = Status::all();
+
+        return response()->json([
+            'tab' => $this->serializeRow($tab),
+            'columns' => $columns ?? null,
+            'statuses' => $statuses ?? null,
+        ]);
+    }
+
+    /**
      * Изменение данных вкладки
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public static function saveTab(Request $request)
+    public function saveTab(Request $request)
     {
         if (!$tab = Tab::find($request->id))
-            return response()->json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
+            return response()->json(['message' => "Вкладка не найдена"], 400);
 
         // Проверка допустимых выражений
         if ($request->where_settings) {
@@ -142,55 +155,85 @@ class Tabs extends Controller
 
         $tab->name = $request->name;
         $tab->name_title = $request->name_title;
-        $tab->where_settings = $request->where_settings;
+        $tab->where_settings = $this->fixNullValueWhere($request->where_settings ?: []);
         $tab->order_by_settings = $request->order_by_settings;
         $tab->request_all = $request->request_all;
         $tab->request_all_permit = $request->request_all_permit;
         $tab->date_view = $request->date_view;
         $tab->date_types = $request->date_types ?: null;
+        $tab->statuses = is_array($request->statuses) ? $request->statuses : [];
+        $tab->statuses_not = is_array($request->statuses_not) ? $request->statuses_not : [];
+
+        $tab->counter_offices = $request->counter_offices;
+        $tab->counter_source = $request->counter_source;
+        $tab->counter_next_day = $request->counter_next_day;
+        $tab->counter_hide_page = $request->counter_hide_page;
+        $tab->flash_null = $request->flash_null;
+        $tab->flash_records_confirm = $request->flash_records_confirm;
+        $tab->label_counter = $request->label_counter;
+        $tab->check_lost_requests = $request->check_lost_requests;
 
         $tab->save();
 
-        parent::logData($request, $tab);
+        $this->logData($request, $tab);
 
         return response()->json([
-            'tab' => $tab,
+            'tab' => $this->serializeRow($tab),
         ]);
+    }
+
+    /**
+     * Изменяет нулевое значение на пустую строку
+     * 
+     * @param array $data
+     * @return array
+     */
+    public function fixNullValueWhere($data = [])
+    {
+        foreach ($data as &$row) {
+
+            if (is_array($row['attr'] ?? null)) {
+
+                foreach ($row['attr'] as &$attr) {
+
+                    if (in_array('value', array_keys(is_array($attr) ? $attr : []))) {
+
+                        if ($attr['value'] === null)
+                            $attr['value'] = "";
+                    }
+                }
+            }
+        }
+
+        return $data;
     }
 
     /**
      * Вывод сформированного запроса по динамическому конструктору
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public static function getSql(Request $request)
+    public function getSql(Request $request)
     {
-        if (!$tab = Tab::find($request->id))
-            return response()->json(['message' => "Информация по вкладке не обнаружена, обновите страницу и повторите запрос"], 400);
+        if (!$request->tab = Tab::find($request->id))
+            return response()->json(['message' => "Вкладка не найдена"], 400);
 
-        // $tab->where_settings = json_decode($tab->where_settings, true);
+        $creator = new RequestsQuery($request);
+        $litle = $creator->toSql();
 
-        // \DB::enableQueryLog();
+        $creator = (new RequestsQuery($request))->where();
+        $query = $creator->toSql();
+        $bindings = collect($creator->getBindings())->map(function ($row) {
+            return is_string($row) ? "'{$row}'" : $row;
+        })->toArray();
 
-        $request->where = $request->where ?? $tab->where_settings;
-        $request->orderBy = $request->orderBy ?? $tab->order_by_settings;
-
-        $params = array_merge(
-            $request->where ?? [],
-            $request->orderBy ?? []
-        );
-
-        $model = RequestsRow::setWhere($params);
-        $query = $model->toSql();
-
-        // $model->limit(1)->get();
+        $full = Str::replaceArray('?', $bindings, $query);
 
         return response()->json([
-            'message' => $query,
-            // 'where_settings' => $tab->where_settings,
-            // 'log' => \DB::getQueryLog()[0] ?? null,
-            'tab' => $tab,
+            'message' => $litle,
+            'full' => $full,
+            'tab' => $this->serializeRow($request->tab),
         ]);
     }
 
@@ -198,7 +241,7 @@ class Tabs extends Controller
      * Вывод списка значений для конструктора запросов
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getListWhereIn(Request $request)
     {
@@ -219,7 +262,7 @@ class Tabs extends Controller
      * Установка порядка вывода вкладок
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function tabsPosition(Request $request)
     {
@@ -237,7 +280,7 @@ class Tabs extends Controller
      * Формирование массива выбранных статусов
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setTabStatus(Request $request)
     {

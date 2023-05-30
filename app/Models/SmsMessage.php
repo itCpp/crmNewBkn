@@ -35,6 +35,8 @@ class SmsMessage extends Model
      */
     protected $casts = [
         'response' => 'object',
+        'sent_at' => 'datetime',
+        'failed_at' => 'datetime',
     ];
 
     /**

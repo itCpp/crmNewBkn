@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Users;
 
+use App\Events\Users\AuthentificationsEvent;
+use App\Events\Users\CloseSession;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserAuthQuery;
@@ -14,8 +16,8 @@ class Auth extends Controller
     /**
      * Проверка типа авторизации пользователя
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function loginStart(Request $request)
     {
@@ -74,8 +76,8 @@ class Auth extends Controller
     /**
      * Завершение авторизации пользователя
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function login(Request $request)
     {
@@ -105,8 +107,8 @@ class Auth extends Controller
     /**
      * Авторизация по паролю
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function loginFromPassword(Request $request)
     {
@@ -125,8 +127,8 @@ class Auth extends Controller
     /**
      * Авторизация через руководителя
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function loginFromAdmin(Request $request)
     {
@@ -144,27 +146,63 @@ class Auth extends Controller
     }
 
     /**
-     * Создание сесии
+     * Завершить сессии на одном и томже IP
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request $request
+     * @return array
+     */
+    public static function endSessionsOnSameIp(Request $request)
+    {
+        return UsersSession::where([
+            ['user_id', $request->user()->id],
+            ['ip', $request->ip()]
+        ])->get()->each(function ($row) {
+
+            broadcast(new CloseSession($row->user_id, $row->token));
+            broadcast(new AuthentificationsEvent("logout", $row->id, $row->user_id));
+
+            $row->deleted_at = now();
+            $row->save();
+        });
+    }
+
+    /**
+     * Создание сессии
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function createSession(Request $request)
     {
         $request->getResponseArray = true;
 
         $response = Users::check($request);
-        $response['token'] = self::createToken($request->__user);
+        $response['token'] = self::createToken($request->user());
 
-        UsersSession::create([
+        self::endSessionsOnSameIp($request);
+
+        $session = UsersSession::create([
             'token' => $response['token'],
-            'user_id' => $request->__user->id,
-            'user_pin' => $request->__user->pin,
+            'user_id' => $request->user()->id,
+            'user_pin' => $request->user()->pin,
             'ip' => $request->ip(),
             'user_agent' => $request->header("User-Agent"),
         ]);
 
-        $request->__user->writeWorkTime('login');
+        $request->user()->writeWorkTime('login');
+
+        broadcast(new AuthentificationsEvent("login", $session->id, $request->user()->id));
+
+        $response['token'] = (new Jwt)->createAccessToken(
+            array_merge(
+                $request->user()->toPresenceData(),
+                [
+                    'roles' => $request->user()->roles,
+                    'iat' => $session['created_at'],
+                ],
+                $session->only('token'),
+            )
+        );
 
         return response()->json($response);
     }
@@ -172,7 +210,7 @@ class Auth extends Controller
     /**
      * Создание хэша пароля
      * 
-     * @param string $pass
+     * @param  string $pass
      * @return string
      */
     public static function getHashPass($pass)
@@ -183,7 +221,7 @@ class Auth extends Controller
     /**
      * Метод создания токена
      * 
-     * @param UserData $user Объект данных пользователя
+     * @param  \App\Http\Controllers\Users\UserData $user Объект данных пользователя
      * @return string
      */
     public static function createToken($user)
@@ -202,12 +240,12 @@ class Auth extends Controller
     /**
      * Деавторизация пользователя
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function logout(Request $request)
     {
-        $token = $request->bearerToken();
+        $token = (new Jwt)->verifyToken($request->bearerToken());
 
         // Обнуление сессии
         if ($session = UsersSession::where('token', $token)->first())
@@ -215,12 +253,14 @@ class Auth extends Controller
 
         // Поиск активных сессиий
         $active = UsersSession::where('user_id', $request->user()->id)
-            ->whereDate('created_at', now())
+            ->where('created_at', '>', now()->format("Y-m-d 00:00:00"))
             ->count();
 
         // Запись рабочего времени
         if (!$active)
             $request->user()->writeWorkTime('logout');
+
+        broadcast(new AuthentificationsEvent("logout", $session->id ?? null, $request->user()->id));
 
         return response()->json([
             'message' => "Goodbye",
@@ -230,8 +270,8 @@ class Auth extends Controller
     /**
      * Отмена запроса на авторизацию
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return reponse
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function loginCancel(Request $request)
     {
@@ -256,7 +296,7 @@ class Auth extends Controller
     /**
      * Количество активных запросов авторизации
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return int
      */
     public static function countAuthQueries($request)
@@ -280,8 +320,8 @@ class Auth extends Controller
     /**
      * Вывод списка запросов на авторизацию
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function authQueries(Request $request)
     {
@@ -319,8 +359,8 @@ class Auth extends Controller
     /**
      * Завершение запроса авторизации
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function complete(Request $request)
     {

@@ -9,9 +9,11 @@
         "doctrine/dbal": "^3.1",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
+        "jenssegers/agent": "^2.6",
         "laravel/framework": "^8.54",
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
+        "php-ffmpeg/php-ffmpeg": "^0.18.0",
         "predis/predis": "^1.1"
     },
     "require-dev": {

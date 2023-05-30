@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Requests;
 
-use App\Http\Controllers\Controller;
 use App\Exceptions\CreateRequestsSqlQuery;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Dates;
 use App\Models\RequestsRow;
 use Illuminate\Http\Request;
 
@@ -85,11 +86,18 @@ class RequestsQuery extends Controller
     protected $tab;
 
     /**
-     * Экземпляр даннх пользователя
+     * Экземпляр данных пользователя
      * 
      * @var \App\Http\Controllers\Users\UserData
      */
     protected $user;
+
+    /**
+     * Обработчик дат
+     * 
+     * @var \App\Http\Controllers\Dates
+     */
+    protected $dates;
 
     /**
      * Данные поискового запроса
@@ -112,13 +120,47 @@ class RequestsQuery extends Controller
 
         $this->filter = (object) [];
 
-        $this->filter->start = $request->start ?? date("Y-m-d");
-        $this->filter->stop = $request->stop ?? date("Y-m-d");
+        $this->dates = new Dates($request->start, $request->stop);
+
+        $this->filter->start = $this->dates->startDateTime;
+        $this->filter->stop = $this->dates->stopDateTime;
 
         $this->tab = $request->tab;
 
         if ($request->search)
             $this->search = new RequestsQuerySearchParams($request->search);
+    }
+
+    /**
+     * Вызов несуществующих методов
+     * 
+     * @param  string $method
+     * @param  array $parameters
+     * @return $this
+     */
+    public function __call($method, $parameters)
+    {
+        return $this;
+    }
+
+    /**
+     * Вывод сформированного запроса
+     * 
+     * @return string
+     */
+    public function toSql()
+    {
+        return $this->setWhere()->setOrderBy()->model->toSql();
+    }
+
+    /**
+     * Возвращает объект модели
+     * 
+     * @return \App\Models\RequestsRow
+     */
+    public function model()
+    {
+        return $this->model;
     }
 
     /**
@@ -179,7 +221,26 @@ class RequestsQuery extends Controller
         if (!$this->user)
             return $this;
 
-        // $this->model = $this->model->where('filter', 1);
+        return $this->setUserPermitsFilterSourceList();
+    }
+
+    /**
+     * Применение фильтра по разрешенным источникам
+     * 
+     * @return $this
+     */
+    public function setUserPermitsFilterSourceList()
+    {
+        if (optional($this->user)->superadmin)
+            return $this;
+
+        $sources = $this->user->getSourceList()
+            ->map(function ($row) {
+                return $row->id;
+            })
+            ->toArray();
+
+        $this->model = $this->model->whereIn('source_id', $sources);
 
         return $this;
     }
@@ -219,12 +280,14 @@ class RequestsQuery extends Controller
                     // Обход аргументов
                     foreach ($attrts as $attr) {
 
-                        $column = $attr['column'] ?? null; // Наименование колонки
-                        $operator = $attr['operator'] ?? null; // Оператор условия
+                        $keys = array_keys($attr);
 
-                        $value = $attr['value'] ?? null; // Строчное значение
-                        $between = $attr['between'] ?? null; // Период значений от и до
-                        $list = $attr['list'] ?? null; // Список значений
+                        $column = in_array('column', $keys) ? $attr['column'] : null; // Наименование колонки
+                        $operator = in_array('operator', $keys) ? $attr['operator'] : null; // Оператор условия
+
+                        $value = in_array('value', $keys) ? $attr['value'] : null; // Строчное значение
+                        $between = in_array('between', $keys) ? $attr['between'] : null; // Период значений от и до
+                        $list = in_array('list', $keys) ? $attr['list'] : null; // Список значений
 
                         // Необходимо наименование колонки
                         if ($column) {
@@ -234,8 +297,10 @@ class RequestsQuery extends Controller
                             // Разделение на типы аргументов
                             if (in_array($method, $this->whereOneArguments))
                                 $row = [$column];
-                            elseif ($value)
-                                $row = [$column, $operator ?? $value, $operator ? $value : null];
+                            elseif ($value !== null and $operator)
+                                $row = [$column, $operator, $value];
+                            elseif ($value !== null)
+                                $row = [$column, $value];
                             elseif (is_array($between) and count($between) == 2)
                                 $row = [$column, $between];
                             elseif (is_array($list))
@@ -292,10 +357,10 @@ class RequestsQuery extends Controller
 
                         $set = true; # Флаг примененного фильтра
 
-                        $query->orWhere(function ($query) use ($type) {
-                            $query->whereDate($type, '>=', $this->filter->start)
-                                ->whereDate($type, '<=', $this->filter->stop);
-                        });
+                        $query->orWhereBetween($type, [
+                            $this->filter->start,
+                            $this->filter->stop
+                        ]);
                     }
                 }
             });
@@ -315,8 +380,10 @@ class RequestsQuery extends Controller
      */
     public function setDefaultDatesFilter()
     {
-        $this->model = $this->model->whereDate('created_at', '>=', $this->filter->start)
-            ->whereDate('created_at', '<=', $this->filter->stop);
+        $this->model = $this->model->whereBetween('created_at', [
+            $this->filter->start,
+            $this->filter->stop
+        ]);
 
         return $this;
     }
@@ -334,6 +401,10 @@ class RequestsQuery extends Controller
         // Применение фильтра вывода статусов
         if ($this->tab->statuses)
             $this->model = $this->model->whereIn('status_id', $this->tab->statuses);
+
+        // Применение фильтра игнорирования статусов
+        if ($this->tab->statuses_not)
+            $this->model = $this->model->whereNotIn('status_id', $this->tab->statuses_not);
 
         // Фильтр по публичным правам вкладки
         if ($this->tab->request_all_permit == 1)
@@ -361,41 +432,39 @@ class RequestsQuery extends Controller
      */
     public function setOptionsTabFilterForUserPermits()
     {
-        $sector = $this->user->checkedPermits()->requests_all_my_sector;
-        $sectors = $this->user->checkedPermits()->requests_all_sectors;
-        $callcenters = $this->user->checkedPermits()->requests_all_callcenters;
-
-        $my = $this->tab->request_all == "my" or $this->tab->request_all === null;
+        // $my = $this->tab->request_all == "my" or $this->tab->request_all === null;
         $mySector = $this->tab->request_all == "sector";
         $myCallcenter = $this->tab->request_all == "callcenter";
         $myAll = $this->tab->request_all == "all";
 
         // Вывод всех заявок
-        if ($myAll or $callcenters)
+        if ($myAll or $this->user->can('requests_all_callcenters'))
             return $this;
 
         // Ввывод заявок всего коллцентра
-        if ($myCallcenter or $sectors) {
+        if ($myCallcenter or $this->user->can('requests_all_sectors')) {
 
             $this->model = $this->model->where(function ($query) {
-                $query->where(function ($query) {
-                    $query->whereIn('callcenter_sector', $this->user->getAllSectors())
-                        ->whereNotNull('callcenter_sector');
-                })
-                    ->orWhere('pin', $this->user->pin);
+                $query->when(count($this->user->getAllSectors()) > 0, function ($query) {
+                    $query->where(function ($query) {
+                        $query->whereIn('callcenter_sector', $this->user->getAllSectors())
+                            ->whereNotNull('callcenter_sector');
+                    })->orWhere('pin', $this->user->pin);
+                });
             });
 
             return $this;
         }
 
         // Вывод всех заявок сектора
-        if ($mySector or $sector) {
+        if ($mySector or $this->user->can('requests_all_my_sector')) {
             $this->model = $this->model->where(function ($query) {
-                $query->where([
-                    ['callcenter_sector', $this->user->callcenter_sector_id],
-                    ['callcenter_sector', '!=', null],
-                ])
-                    ->orWhere('pin', $this->user->pin);
+                $query->when($this->user->callcenter_sector_id !== null, function ($query) {
+                    $query->where([
+                        ['callcenter_sector', $this->user->callcenter_sector_id],
+                        ['callcenter_sector', '!=', null],
+                    ])->orWhere('pin', $this->user->pin);
+                });
             });
 
             return $this;
@@ -426,11 +495,12 @@ class RequestsQuery extends Controller
     public function setOptionsTabFilterMySector()
     {
         $this->model = $this->model->where(function ($query) {
-            $query->where([
-                ['callcenter_sector', $this->user->callcenter_sector_id],
-                ['callcenter_sector', '!=', null],
-            ])
-                ->orWhere('pin', $this->user->pin);
+            $query->when($this->user->callcenter_sector_id !== null, function ($query) {
+                $query->where([
+                    ['callcenter_sector', $this->user->callcenter_sector_id],
+                    ['callcenter_sector', '!=', null],
+                ])->orWhere('pin', $this->user->pin);
+            });
         });
 
         return $this;
@@ -444,11 +514,12 @@ class RequestsQuery extends Controller
     public function setOptionsTabFilterMyCallcenter()
     {
         $this->model = $this->model->where(function ($query) {
-            $query->where(function ($query) {
-                $query->whereIn('callcenter_sector', $this->user->getAllSectors())
-                    ->whereNotNull('callcenter_sector');
-            })
-                ->orWhere('pin', $this->user->pin);
+            $query->when(count($this->user->getAllSectors()) > 0, function ($query) {
+                $query->where(function ($query) {
+                    $query->whereIn('callcenter_sector', $this->user->getAllSectors())
+                        ->whereNotNull('callcenter_sector');
+                })->orWhere('pin', $this->user->pin);
+            });
         });
 
         return $this;

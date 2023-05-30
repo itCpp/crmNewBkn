@@ -6,7 +6,10 @@ use Illuminate\Http\Request;
 
 use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Ratings\CallCenters;
 use App\Http\Controllers\Requests\Requests;
+use App\Http\Controllers\Users\Notifications;
+use App\Http\Controllers\Users\UserData;
 use App\Http\Controllers\Users\Worktime;
 use App\Models\Office;
 use App\Models\Permission;
@@ -14,6 +17,8 @@ use App\Models\RequestsRow;
 use App\Models\RequestsStory;
 use App\Models\RequestsStoryPin;
 use App\Models\User;
+use App\Models\Notification;
+use App\Models\RequestsStoryOwnPin;
 use App\Models\UsersSession;
 use App\Models\UserWorkTime;
 
@@ -22,8 +27,8 @@ class RequestPins extends Controller
     /**
      * Вывод списка доступных операторов для назначения на заявку
      * 
-     * @param \Illuminate\Http\Request  $request
-     * @return response
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function changePinShow(Request $request)
     {
@@ -60,6 +65,11 @@ class RequestPins extends Controller
         // Поиск сотрудников, имеющих личное разрешение
         $users = self::findUsers($permission->users(), $permits);
 
+        /** Проверка рейтинга для вывода статистики */
+        foreach (optional((new CallCenters($request))->get())->users ?: [] as $user) {
+            $rating[$user->pin] = $user;
+        }
+
         foreach ($users as $user) {
 
             if (!in_array($user->pin, $pins_searched)) {
@@ -67,6 +77,7 @@ class RequestPins extends Controller
                 $pins_searched[] = $user->pin;
 
                 $pins[] = [
+                    'fio' => UserData::createNameFull($user->surname, $user->name, $user->patronymic),
                     'id' => $user->id,
                     'pin' => $user->pin,
                     'callcenter' => $user->callcenter_id,
@@ -87,6 +98,7 @@ class RequestPins extends Controller
                     $pins_searched[] = $user->pin;
 
                     $pins[] = [
+                        'fio' => UserData::createNameFull($user->surname, $user->name, $user->patronymic),
                         'id' => $user->id,
                         'pin' => $user->pin,
                         'callcenter' => $user->callcenter_id,
@@ -107,6 +119,11 @@ class RequestPins extends Controller
             $pins_searched[] = $user->pin;
 
             $pins[] = [
+                'fio' => UserData::createNameFull(
+                    $user->surname ?? null,
+                    $user->name ?? null,
+                    $user->patronymic ?? null
+                ),
                 'id' => $user->id ?? 0,
                 'pin' => $user->pin ?? $row->pin,
                 'callcenter' => $user->callcenter_id ?? null,
@@ -117,14 +134,41 @@ class RequestPins extends Controller
             ];
         }
 
+        foreach ($pins as &$pin) {
+            $pin['rating'] = $rating[$pin['pin']] ?? null;
+        }
+
         // Время последней активности пользователя
         $sessions = self::getLastAtiveTime($pins_searched);
+
+        // Список офисов
+        $offices = Office::where('active', 1)
+            ->when((bool) $row->address, function ($query) use ($row) {
+                $query->orWhere('id', $row->address);
+            })
+            ->orderBy('active', 'DESC')
+            ->orderBy('name')
+            ->get();
+
+        // Автоматическое применение адреса, если имется только один активный офис
+        if (!$row->address) {
+
+            $actives = [];
+
+            foreach ($offices as $office) {
+                if ($office->active == 1)
+                    $actives[] = $office->id;
+            }
+
+            if (count($actives) == 1)
+                $row->address = $actives[0];
+        }
 
         return response()->json([
             'offline' => $permits->requests_pin_set_offline,
             'pins' => self::getWorkTimeAndStatusUsers($pins ?? [], $sessions),
             'clear' => $permits->requests_pin_clear,
-            'offices' => Office::orderBy('active', 'DESC')->orderBy('name')->get(),
+            'offices' => $offices,
             'address' => $row->address,
         ]);
     }
@@ -135,7 +179,7 @@ class RequestPins extends Controller
      * @param \Illuminate\Database\Eloquent\Relations\BelongsToMany $rows
      * @param \App\Http\Controllers\Users\Permissions $permits
      * @param array $pins Уже найденные операторы
-     * @return array
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     public static function findUsers($rows, $permits, $pins = [])
     {
@@ -150,7 +194,7 @@ class RequestPins extends Controller
         if (count($pins))
             $rows = $rows->whereNotIn('pin', $pins);
 
-        return $rows->get();
+        return $rows->where('deleted_at', null)->get();
     }
 
     /**
@@ -208,8 +252,8 @@ class RequestPins extends Controller
     /**
      * Изменение оператора в заявке
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illumiante\Http\JsonResponse
      */
     public static function setPin(Request $request)
     {
@@ -217,7 +261,12 @@ class RequestPins extends Controller
         if (!$row = RequestsRow::find($request->id))
             return response()->json(['message' => "Заявка не найдена"], 400);
 
-        if (!$request->addr) {
+        if ($request->toOwn) {
+            $request->row = $row;
+            return self::setPinOwn($request);
+        }
+
+        if (!$request->addr and !$request->toOwn) {
             return response()->json([
                 'message' => "Укажите адрес офиса",
                 'errors' => [
@@ -237,6 +286,11 @@ class RequestPins extends Controller
 
         if (!$clear_pin and !$user)
             return response()->json(['message' => "Оператор не найден"], 400);
+
+        $user_data = new UserData($user);
+
+        if (!self::checkRequestPermit($user_data, $row))
+            return response()->json(['message' => "Доступ сотрудника к заявке ограничен. {$user_data->name_fio} не сможет её обработать."], 400);
 
         $old = $row->pin;
 
@@ -264,8 +318,82 @@ class RequestPins extends Controller
         Worktime::checkAndWriteWork($row->oldPin);
         Worktime::checkAndWriteWork($row->newPin);
 
+        /** Рассылка уведомлений */
+        Notifications::changeRequestPin($row->id, $row->newPin, $row->oldPin);
+
         return response()->json([
             'request' => $row,
         ]);
+    }
+
+    /**
+     * Присвоение заявки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illumiante\Http\JsonResponse
+     */
+    public static function setPinOwn(Request $request)
+    {
+        $row = $request->row;
+
+        $before = $row->pin != $request->user()->pin ? $row->pin : null;
+
+        $row->pin = $request->user()->pin;
+        $row->callcenter_sector = $request->user()->callcenter_sector_id;
+
+        $row->save();
+
+        /** Запись истории присвоения заявки */
+        RequestsStoryOwnPin::create([
+            'request_id' => $row->id,
+            'pin_before' => $before,
+            'pin_after' => $row->pin,
+            'is_moscow' => (bool) $row->check_moscow,
+            'date_create' => now()->create($row->created_at)->format("Y-m-d"),
+            'date_uplift' => now()->create($row->uplift_at)->format("Y-m-d"),
+            'status_id' => $row->status_id,
+            'request_row' => $row->toArray(),
+        ]);
+
+        /** Логирование изменений заявки */
+        $story = RequestsStory::write($request, $row);
+        RequestsStoryPin::write($story, $before);
+
+        $row = Requests::getRequestRow($row);
+        $row->newPin = $row->pin;
+        $row->oldPin = $before;
+        $row->toOwn = true;
+
+        /** Отправка события об изменении заявки */
+        broadcast(new UpdateRequestEvent($row));
+
+        /** Установка статуса рабочего времени операторам */
+        Worktime::checkAndWriteWork($row->oldPin);
+        Worktime::checkAndWriteWork($row->newPin);
+
+        /** Рассылка уведомлений */
+        Notifications::changeRequestPin($row->id, $row->newPin, $row->oldPin, true);
+
+        return response()->json([
+            'request' => $row,
+        ]);
+    }
+
+    /**
+     * Проверка права доступа сотрудника к заявке
+     * 
+     * @param  \App\Http\Controllers\Users\UserData $user
+     * @param  \App\Models\RequestsRow $row
+     * @return boolean
+     */
+    public static function checkRequestPermit(UserData $user, RequestsRow $row)
+    {
+        /** Проверка по источнику */
+        foreach ($user->getSourceList()->toArray() as $source) {
+            if ($row->source_id == $source['id'])
+                return true;
+        }
+
+        return false;
     }
 }

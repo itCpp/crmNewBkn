@@ -4,15 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Exceptions;
 use App\Models\SettingsGlobal;
+use Exception;
 
 class Settings
 {
+    /**
+     * Используемые ключи настроек
+     * 
+     * @var array
+     */
+    protected $items = [];
+
     /**
      * Допустимые типы переменных
      * 
      * @var array
      */
-    protected $types = [
+    public static $types = [
         "boolean", "bool",
         "integer", "int",
         "float", "double",
@@ -28,20 +36,26 @@ class Settings
      */
     public function __construct(...$settings)
     {
-        $rows = new SettingsGlobal;
+        // $rows = new SettingsGlobal;
 
-        if ($settings)
-            $rows = $rows->whereIn('id', $settings);
+        // if (count($settings))
+        //     $rows = $rows->whereIn('id', $settings);
 
-        foreach ($rows->get() as $row) {
+        // try {
+        //     $rows = $rows->get();
+        // } catch (Exception) {
+        //     return null;
+        // }
 
-            $value = $row->value;
-            $type = $this->getType($row->type);
+        // foreach ($rows as $row) {
 
-            settype($value, $type);
+        //     $value = $row->value;
+        //     $type = $this->getType($row->type);
 
-            $this->{$row->id} = $value;
-        }
+        //     settype($value, $type);
+
+        //     $this->{$row->id} = $value;
+        // }
     }
 
     /**
@@ -52,10 +66,20 @@ class Settings
      */
     public function __get($name)
     {
-        if (isset($this->$name) === true)
-            return $this->$name;
+        if (!empty($this->items[$name]))
+            return $this->items[$name];
 
-        return null;
+        if ($row = SettingsGlobal::find($name)) {
+
+            $value = $row->value;
+            $type = $this->getType($row->type);
+
+            settype($value, $type);
+
+            return $this->items[$name] = $value;
+        }
+
+        return $this->items[$name] = null;
     }
 
     /**
@@ -66,7 +90,7 @@ class Settings
      */
     public function getType($type = null)
     {
-        return in_array($type, $this->types) ? $type : "boolean";
+        return in_array($type, self::$types) ? $type : "boolean";
     }
 
     /**
@@ -84,15 +108,36 @@ class Settings
         $settings = new static($key);
 
         $type = $settings->getType($setting->type);
-        
+
         if (gettype($value) != $type)
             throw new Exceptions("Передан неправильный тип переменной, должен быть {$type}");
 
         settype($value, $type);
-        
+
         $setting->value = $value;
         $setting->save();
 
         return $value;
+    }
+
+    /**
+     * Изменяет настройки
+     * 
+     * @param  string $key
+     * @param  mixed $value
+     * @return \App\Models\SettingsGlobal
+     */
+    public static function setOrCreate($key, $value = null)
+    {
+        if (!$setting = SettingsGlobal::find($key)) {
+            $setting = SettingsGlobal::create([
+                'id' => $key,
+                'type' => gettype($value),
+            ]);
+        }
+
+        $value = self::set($key, $value);
+
+        return $setting;
     }
 }

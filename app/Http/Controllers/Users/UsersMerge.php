@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Users;
 use App\Exceptions\CreateNewUser;
 use App\Http\Controllers\Controller;
 use App\Models\CrmMka\CrmUser;
+use App\Models\Saratov\Personal;
 use App\Models\User;
+use App\Models\UsersPositionsStory;
+use App\Models\UserTelegramIdBind;
 use Illuminate\Http\Request;
 
 class UsersMerge extends Controller
@@ -60,7 +63,7 @@ class UsersMerge extends Controller
     protected $developers = [
         401 => ['developer'],
         424 => ['developer'],
-        866 => ['developer'],
+        // 866 => ['developer'],
     ];
 
     /**
@@ -69,6 +72,7 @@ class UsersMerge extends Controller
      * @var array
      */
     protected $groupToRole = [
+        'admin' => ['administrative'],
         'caller' => ['caller'],
         'nachColl' => ['callCenterManager'],
         'nachCollSamara' => ['admin'],
@@ -80,7 +84,7 @@ class UsersMerge extends Controller
      * @var array
      */
     protected $sectorClear = [
-        1, 132, 401, 402, 424, 666, 813, 866, 890, 920,
+        1, 2, 132, 401, 402, 424, 497, 666, 813, 866, 890, 920,
     ];
 
     /**
@@ -89,7 +93,19 @@ class UsersMerge extends Controller
      * @var array
      */
     protected $firedUser = [
-        195, 403, 411, 428, 443, 475, 40002, 4900, 4901, 4902, 4903, 4908, 40909
+        195,    403,    411,    428,    443,    475,    4900,   4901,   4902,
+        4903,   4908,   40000,  40001,  40002,  40003,  40004,  40005,  40006,
+        40011,  40012,  40013,  40014,  40015,  40016,  40017,  40018,  40019,
+        40020,  40021,  40909
+    ];
+
+    /**
+     * Идентификаторы должностей для некоторых сотрудников
+     * 
+     * @var array
+     */
+    protected $positions_id = [
+        3344 => 1,
     ];
 
     /**
@@ -99,10 +115,14 @@ class UsersMerge extends Controller
      */
     public function getNachUsers()
     {
-        return CrmUser::where('state', 'Работает')
+        $users = CrmUser::where('state', 'Работает')
             ->whereIn('rights', ['admin', 'nachColl'])
             ->orderBy('pin')
             ->get();
+
+        $users->push(new UsersMerge\UserModelFirst);
+
+        return $users;
     }
 
     /**
@@ -141,25 +161,42 @@ class UsersMerge extends Controller
      */
     public function createUser($user, $auth = "admin", $fired = false)
     {
+        $request = new Request(
+            query: [
+                'user' => $user->toArray(),
+                'auth' => $auth,
+                'fired' => $fired,
+            ],
+            server: [
+                'REMOTE_ADDR' => '127.0.0.1',
+                'HTTP_USER_AGENT' => env('APP_NAME') . ' ' . env('APP_URL'),
+            ]
+        );
+
         // Определение пина
-        $max = null;
-        $pinStart = $this->sectorsPin[$user->{'call-center'}] ?? null;
+        // $max = null;
+        // $pinStart = $this->sectorsPin[$user->{'call-center'}] ?? null;
 
-        if ($pinStart)
-            $max = User::whereBetween('pin', [$pinStart, $pinStart + 9999])->max('pin');
+        // if ($pinStart)
+        //     $max = User::whereBetween('pin', [$pinStart, $pinStart + 9999])->max('pin');
 
-        if ($pinStart and $max)
-            $pin = $max + 1;
-        elseif ($pinStart)
-            $pin = $pinStart;
-        else
-            $pin = $user->pin;
+        // if ($pinStart and $max)
+        //     $pin = $max + 1;
+        // elseif ($pinStart)
+        //     $pin = $pinStart;
+        // else
+        //     $pin = $user->pin;
 
-        if (in_array($user->pin, [890, 866, 813]))
-            $pin = $user->pin;
+        /** Отключено создание нового пина, старые сотрудники перенесутся со старыми данными */
+        $pin = $user->pin;
 
         if ($user->pin == 813)
             $user->username = "abrik";
+
+        if (in_array($user->pin, $this->sectorClear)) {
+            $pin = $user->pin;
+            $user->position_id = null;
+        }
 
         // ФИО
         $user->fullName = preg_replace('/\s/', ' ', $user->fullName);
@@ -171,6 +208,10 @@ class UsersMerge extends Controller
         if (!in_array($user->pin, $this->sectorClear)) {
             $callcenter = $this->oldSectors[$user->{'call-center'}][0] ?? null;
             $sector = $this->oldSectors[$user->{'call-center'}][1] ?? null;
+        }
+
+        if (!($user->position_id) ?? null) {
+            $user->position_id = $this->positions_id[$pin] ?? null;
         }
 
         $create = [
@@ -186,10 +227,21 @@ class UsersMerge extends Controller
             'login' => $user->username,
             'callcenter_id' => $callcenter,
             'callcenter_sector_id' => $sector,
+            'position_id' => $user->position_id ?? null,
+            'telegram_id' => $this->findBindedTelegramId($pin),
         ];
 
         if ($fired or in_array($user->pin, $this->firedUser)) {
             $create['deleted_at'] = now();
+        }
+
+        if ($personal = Personal::where('pin', $user->pin)->first()) {
+
+            if ($personal->workStop)
+                $create['deleted_at'] = $personal->workStop;
+
+            if ($personal->telegram > 0)
+                $create['telegram'] = $personal->telegram;
         }
 
         if (User::where('pin', $create['pin'])->orWhere('login', $create['login'])->count())
@@ -208,6 +260,17 @@ class UsersMerge extends Controller
 
             foreach (array_unique($roles) as $role) {
                 $new->roles()->attach($role);
+            }
+
+            if ($new->position_id) {
+                $log = $this->logData($request, $new);
+
+                UsersPositionsStory::create([
+                    'log_id' => $log->id,
+                    'user_id' => $new->id,
+                    'position_new' => $new->position_id,
+                    'created_at' => $new->created_at,
+                ]);
             }
         }
 
@@ -232,5 +295,22 @@ class UsersMerge extends Controller
         } catch (CreateNewUser) {
             return null;
         }
+    }
+
+    /**
+     * Поиск ранее привязанного идентфиикатора Телеграм
+     * 
+     * @param  int $pin
+     * @return null|int
+     */
+    public static function findBindedTelegramId($pin)
+    {
+        return UserTelegramIdBind::withTrashed()
+            ->where([
+                ['user_pin', $pin],
+                ['telegram_id', '!=', null]
+            ])
+            ->orderBy('id', 'DESC')
+            ->first()->telegram_id ?? null;
     }
 }

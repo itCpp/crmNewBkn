@@ -74,4 +74,12 @@ class Role extends Model
     {
         return $this->belongsToMany(Status::class, 'status_role', 'role');
     }
+
+    /**
+     * Доступные вкладки для роли
+     */
+    public function sources()
+    {
+        return $this->belongsToMany(RequestsSource::class, 'role_source', 'role_id', 'source_id');
+    }
 }

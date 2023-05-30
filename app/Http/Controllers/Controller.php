@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Log;
+use App\Models\UsersViewPart;
+use Exception;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -16,18 +19,23 @@ class Controller extends BaseController
 	const KEY_PHONE_SHOW = 3;
 
 	/** Ключ обработки номера телефона для скрытого вывода */
-	const KEY_PHONE_HIDDEN = 5;
+	const KEY_PHONE_HIDDEN = 6;
 
 	/**
 	 * Логирование изменения данных
 	 * 
 	 * @param \Illuminate\Http\Request $request
-	 * @param $model Экземпляр затрагиваемой модели
+	 * @param mixed $model Экземпляр затрагиваемой модели
+	 * @param boolean $crypt Необходимо зашифровать данные
 	 * @return \App\Models\Log
 	 */
-	public static function logData($request, $model)
+	public static function logData($request, $model, $crypt = false)
 	{
-		return \App\Models\Log::log($request, $model);
+		try {
+			return Log::log($request, $model, $crypt);
+		} catch (Exception $e) {
+			return new Log;
+		}
 	}
 
 	/**
@@ -215,5 +223,126 @@ class Controller extends BaseController
 		settype($response, $type);
 
 		return $response;
+	}
+
+	/**
+	 * Проверяет, является ли массив простым списком
+	 * 
+	 * @param array
+	 * @return bool
+	 */
+	public static function is_array_list(array $array): bool
+	{
+		$check_key = 0;
+
+		foreach ($array as $key => $value) {
+			if ($key !== $check_key)
+				return false;
+
+			$check_key++;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Преобразует строку в массив по символу разделения
+	 * 
+	 * @param string $key
+	 * @param string $separator
+	 * @return array
+	 */
+	public static function envExplode($key, $separator = ",")
+	{
+		$string = env($key, "");
+
+		foreach (explode($separator, $string) as $row) {
+			$array[] = trim($row);
+		}
+
+		return $array ?? [];
+	}
+
+	/**
+	 * Обновляет время посещения раздела
+	 * 
+	 * @param  string $part
+	 * @return null|\App\Models\UsersViewPart
+	 */
+	public static function setLastTimeViewPart($part)
+	{
+		if (!$user_id = optional(request()->user())->id or !(bool) $part)
+			return null;
+
+		$view = UsersViewPart::firstOrNew([
+			'user_id' => $user_id,
+			'part_name' => $part
+		]);
+
+		$view->view_at = now();
+		$view->save();
+
+		return $view;
+	}
+
+	/**
+	 * Сопоставляет массив слов к числу
+	 * 
+	 * @param  int $value
+	 * @param  array $words
+	 * @param  bool $show
+	 * @return string
+	 */
+	public static function num_word($value, $words, $show = true)
+	{
+		$num = $value % 100;
+		if ($num > 19) {
+			$num = $num % 10;
+		}
+
+		$out = ($show) ?  $value . ' ' : '';
+
+		switch ($num) {
+			case 1:
+				$out .= $words[0];
+				break;
+			case 2:
+			case 3:
+			case 4:
+				$out .= $words[1];
+				break;
+			default:
+				$out .= $words[2];
+				break;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Переводит секунды в строку
+	 * 
+	 * @param  int $secs
+	 * @return string
+	 */
+	public static function secToStr($secs)
+	{
+		$res = '';
+
+		$days = floor($secs / 86400);
+		$secs = $secs % 86400;
+		$res .= $days > 0 ? self::num_word($days, ['день', 'дня', 'дней']) . ', ' : '';
+
+		$hours = floor($secs / 3600);
+		$secs = $secs % 3600;
+		$res .= $hours > 0 ? self::num_word($hours, ['час', 'часа', 'часов']) . ', ' : '';
+
+		$minutes = floor($secs / 60);
+		$secs = $secs % 60;
+		$res .= $minutes > 0 ? self::num_word($minutes, ['минута', 'минуты', 'минут']) . ', ' : '';
+
+		$res .= self::num_word($secs, ['секунда', 'секунды', 'секунд']);
+
+		return $res;
 	}
 }

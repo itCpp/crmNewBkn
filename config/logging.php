@@ -51,7 +51,7 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => 14,
+            'days' => 60,
         ],
 
         'slack' => [
@@ -103,9 +103,58 @@ return [
 
         'second_calls' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/second_calls.log'),
+            'path' => storage_path('logs/calls/second_calls.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => 14,
+            'days' => 60,
+        ],
+
+        'check_queues' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/requests/check_queue_site.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'comings' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/requests/comings.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'cron_sms' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cron/sms/sms.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'cron_users' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cron/users/stop_session.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'cron_events_recrypt' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cron/events/recrypt.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'webhoock_access' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/webhoock/request.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'webhoock_response' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/webhoock/response.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
         ],
     ],
 

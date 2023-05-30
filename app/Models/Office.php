@@ -23,6 +23,7 @@ class Office extends Model
         'sms',
         'statuses',
         'tel',
+        'settings',
     ];
 
     /**
@@ -31,6 +32,7 @@ class Office extends Model
      * @var array
      */
     protected $casts = [
+        'active' => "int",
         'statuses' => 'array',
         'settings' => 'object',
     ];

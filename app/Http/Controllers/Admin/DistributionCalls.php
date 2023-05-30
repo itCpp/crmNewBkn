@@ -66,7 +66,7 @@ class DistributionCalls extends Controller
             $row->only_queue = 0;
             $row->save();
 
-            Log::log($request, $row);
+            parent::logData($request, $row);
         }
 
         if ($data)
@@ -93,7 +93,7 @@ class DistributionCalls extends Controller
         $row->only_queue = 1;
         $row->save();
 
-        Log::log($request, $row);
+        parent::logData($request, $row);
 
         return self::getDistributionCalls($request);
     }
@@ -118,7 +118,7 @@ class DistributionCalls extends Controller
             $row->count_change_queue = !empty($data[$row->id]) ? $data[$row->id] : $row->count_change_queue;
             $row->save();
 
-            Log::log($request, $row);
+            parent::logData($request, $row);
         }
 
         return self::getDistributionCalls($request);
@@ -147,7 +147,7 @@ class DistributionCalls extends Controller
         $distribution->active = $request->checked ? 1 : 0;
         $distribution->save();
 
-        Log::log($request, $distribution);
+        parent::logData($request, $distribution);
 
         return self::getDistributionCalls($request);
     }

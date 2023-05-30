@@ -18,6 +18,7 @@ class IncomingCall extends Model
     protected $fillable = [
         'phone',
         'sip',
+        'event_id',
         'locked',
         'added',
         'failed',

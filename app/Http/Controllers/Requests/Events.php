@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Events\CallsLogEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Crm\Calls;
+use App\Http\Controllers\Events\Comings;
+use App\Http\Controllers\Settings;
 use App\Models\RequestsClient;
 use App\Models\IncomingCall;
 use App\Models\IncomingCallsToSource;
@@ -14,9 +18,11 @@ use App\Models\Incomings\SipInternalExtension;
 use App\Jobs\IncomingCallAsteriskJob;
 use App\Jobs\IncomingRequestCallJob;
 use App\Jobs\IncomingRequestTextJob;
+use App\Models\CallDetailRecord;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class Events extends Controller
 {
@@ -54,6 +60,10 @@ class Events extends Controller
         if ($type == "call_asterisk") {
             $response['_JOB'] = $date;
             IncomingCallAsteriskJob::dispatch($request->call_id);
+        } else if ($type == "callDetailRecord") {
+            $response = $this->writeCallDetailRecord($request);
+        } elseif ($type == "coming") {
+            return Comings::incomingEvent($request);
         } else if ($request->text and $text = IncomingTextRequest::find($request->text)) {
             $response['_JOB'] = $date;
             IncomingRequestTextJob::dispatch($text);
@@ -107,8 +117,10 @@ class Events extends Controller
         $date = date("Y-m-d H:i:s");
 
         // Расшифровка события
-        $crypt = new Encrypter($this->key, config('app.cipher'));
-        $data = $this->decrypt($row->event->request_data ?? null, $crypt);
+        if (!($row->event->recrypt ?? null))
+            $crypt = new Encrypter($this->key, config('app.cipher'));
+
+        $data = $this->decrypt($row->event->request_data ?? null, $crypt ?? null);
         $row->event->request_data = $data;
 
         $recrypt = $this->encrypt($data); // Перешифровка данных
@@ -138,6 +150,7 @@ class Events extends Controller
         $incoming = IncomingCall::create([
             'phone' => $this->encrypt($row->event->request_data->phone),
             'sip' => $row->event->request_data->sip,
+            'event_id' => $row->incoming_event_id ?? null,
         ]);
 
         // Слушатель сип номеров
@@ -194,7 +207,6 @@ class Events extends Controller
      */
     public static function retryAddRequestFromCall(IncomingCall $incoming, $pin, $ip, $user_agent)
     {
-
         // Слушатель сип номеров
         $sip = IncomingCallsToSource::where([
             ['extension', $incoming->sip],
@@ -255,12 +267,15 @@ class Events extends Controller
      * Просмотр входящих событий
      * 
      * @param \Illuminate\Http\Request $request
-     * @param int $id
+     * @param int|string $id
      * @return view
      */
-    public function eventView(Request $request, int $id)
+    public function eventView(Request $request, int|string $id)
     {
-        $row = \App\Models\Incomings\IncomingEvent::find($id);
+        if ($id === "last")
+            $id = IncomingEvent::max('id');
+
+        $row = IncomingEvent::find($id);
 
         if ($row and self::checkIpForDecrypt($request->ip())) {
 
@@ -270,13 +285,38 @@ class Events extends Controller
             $row->request_data = parent::decrypt($row->request_data, $crypt ?? null);
         }
 
+        if ($request->session_id) {
+            $ids = IncomingEvent::where('session_id', $request->session_id)
+                ->get()
+                ->map(function ($row) {
+                    return $row->id;
+                })
+                ->toArray();
+
+            $list = IncomingEvent::where('session_id', $row->session_id)
+                ->get()
+                ->map(function ($row) {
+
+                    if (!$row->recrypt)
+                        $crypt = new Encrypter($this->key, config('app.cipher'));
+
+                    $row->request_data = parent::decrypt($row->request_data, $crypt ?? null);
+
+                    return $row->toArray();
+                });
+        }
+
         return view('event', [
             'row' => $row ? $row->toArray() : null,
             'next' => $id + 1,
             'back' => $id - 1,
             'id' => $id,
             'ip' => $request->ip(),
-            'max' => \App\Models\Incomings\IncomingEvent::max('id'),
+            'max' => IncomingEvent::max('id'),
+            'ids' => $ids ?? [],
+            'list' => $list ?? [],
+            'session' => $request->session_id,
+            'count' => IncomingEvent::where('session_id', $row->session_id)->count(),
         ]);
     }
 
@@ -341,13 +381,40 @@ class Events extends Controller
         $extension = $data->extension ?? null;
 
         // Поиск внутреннего адреса номера телефонии
-        if (!$internal = SipInternalExtension::where('extension', $extension)->first())
-            return null;
+        $internal = SipInternalExtension::where('extension', $extension)->first();
 
         // Обработка вторичного звонка
         // Настройка идентификатор вторичного звонка указана в таблице внутренних номеров
-        if ($internal->for_in == 1)
+        if (($internal->for_in ?? null) == 1)
             return $this->incomingSecondCallAsterisk();
+
+        if ((new Settings())->ASTERISK_INCOMING_CALL_TO_CREATE_REQUESTS) {
+
+            $call = $data->Call ?? null;
+            $direction = $data->Direction ?? null;
+
+            if ($call != "Start" and $direction != "in")
+                return null;
+
+            if (!($data->phone ?? null))
+                $data->phone = $phone;
+
+            if (!($data->sip ?? null))
+                $data->sip = $data->extension;
+
+            $recrypt = $this->encrypt($data); // Перешифровка данных
+            $event->request_data = $recrypt;
+            $event->recrypt = now();
+            $event->save();
+
+            $incoming = new IncomingCallRequest;
+            $incoming->api_type = "Asterisk";
+            $incoming->incoming_event_id = $event->id;
+            $incoming->response_code = 200;
+            $incoming->sent_at = now();
+
+            $this->callEvent($incoming);
+        }
 
         return null;
     }
@@ -402,5 +469,156 @@ class Events extends Controller
         ]);
 
         return null;
+    }
+
+    /**
+     * Запись информации о звонке
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function writeCallDetailRecord(Request $request)
+    {
+        if (!(new Settings())->CALL_DETAIL_RECORDS_SAVE)
+            return ['message' => "Запись истории отключена в настройках"];
+
+        // if (!$request->duration)
+        //     return ['mesage' => "Запись отброшена, так как длительность файла нулевая"];
+
+        $phone = $this->checkPhone($request->phone) ?: $request->phone;
+
+        $row = CallDetailRecord::create([
+            'event_id' => $request->event_id,
+            'phone' => $this->encrypt($phone),
+            'phone_hash' => AddRequest::getHashPhone($phone),
+            'extension' => $request->extension,
+            'operator' => Calls::getPinFromExtension($request->extension),
+            'path' => $request->path,
+            'call_at' => $request->call_at,
+            'type' => $request->type,
+            'duration' => $request->duration,
+        ]);
+
+        try {
+            broadcast(new CallsLogEvent($row));
+        } finally {
+        }
+
+        return $row->toArray();
+    }
+
+    /**
+     * Вывод события
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function get(Request $request)
+    {
+        $only = [];
+
+        foreach ($request->all() as $key => $value) {
+            if (Str::startsWith($key, "only_")) {
+                if ((is_string($value) and $value === "true") or $value === true)
+                    $only[] = Str::replace("only_", "", $key);
+            }
+        }
+
+        $rows = IncomingEvent::orderBy('id', 'DESC')
+            ->when($request->id and !$request->session, function ($query) use ($request) {
+                $query->where('id', $request->id);
+            })
+            ->when(!$request->id and $request->session, function ($query) use ($request) {
+                $query->where('session_id', $request->session);
+            })
+            ->when(count($only) > 0 and !$request->session, function ($query) use ($only) {
+                $query->whereIn('api_type', $only);
+            })
+            ->when(!$request->id and !$request->session, function ($query) {
+                $query->limit(1);
+            })
+            ->get()
+            ->map(function ($row) use (&$session) {
+
+                if (!$row->recrypt)
+                    $crypt = new Encrypter($this->key, config('app.cipher'));
+
+                $row->request_data = parent::decryptSetType(
+                    $row->request_data ?? null,
+                    $crypt ?? null
+                );
+
+                if ($row->session_id)
+                    $session = $row->session_id;
+
+                if (!request()->user()->can('show_events_data'))
+                    $row->request_data = $this->maskObject($row->request_data);
+
+                return $row;
+            });
+
+        if ($session ?? null)
+            $session_count = IncomingEvent::where('session_id', $session)->count();
+
+        if ($rows[0] ?? null) {
+
+            $prev = IncomingEvent::select('id')
+                ->where('id', '<', $rows[0]->id)
+                ->when(count($only) > 0, function ($query) use ($only) {
+                    $query->whereIn('api_type', $only);
+                })
+                ->orderBy('id', 'DESC')
+                ->first()->id ?? null;
+
+            $next = IncomingEvent::select('id')
+                ->where('id', '>', $rows[count($rows) - 1]->id ?? null)
+                ->when(count($only) > 0, function ($query) use ($only) {
+                    $query->whereIn('api_type', $only);
+                })
+                ->first()->id ?? null;
+        }
+
+        return response()->json([
+            'session_count' => $session_count ?? 0,
+            'session' => $session ?? null,
+            'rows' => $rows,
+            'prev' => $prev ?? null,
+            'next' => $next ?? null,
+        ]);
+    }
+
+    /**
+     * Маскирует строку
+     * 
+     * @param  mixed $data
+     * @return mixed
+     */
+    public function maskObject($data)
+    {
+        if (is_null($data))
+            return null;
+
+        if (is_bool($data))
+            return "****";
+
+        if (is_array($data) or is_object($data)) {
+
+            $response = [];
+
+            foreach ($data as $key => $value) {
+                $response[$key] = $this->maskObject($value);
+            }
+
+            settype($response, gettype($data));
+
+            return $response;
+        }
+
+        $string = (string) $data;
+        $len = mb_strlen($string);
+        $substr = $len < 4 ? 0 : 2;
+        $response = mb_substr($string, 0, $substr);
+
+        return str_pad($response, $len, "*");
     }
 }

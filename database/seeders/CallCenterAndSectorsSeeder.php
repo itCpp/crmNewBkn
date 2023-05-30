@@ -16,7 +16,7 @@ class CallCenterAndSectorsSeeder extends Seeder
     protected $callcenters = [
         ['id' => 1, 'name' => 'Москва', 'comment' => NULL, 'active' => 0],
         ['id' => 2, 'name' => 'Саратов', 'comment' => NULL, 'active' => 1],
-        ['id' => 3, 'name' => 'Набережные Челны', 'comment' => NULL, 'active' => 1],
+        ['id' => 3, 'name' => 'Набережные Челны', 'comment' => NULL, 'active' => 0],
     ];
 
     /**
@@ -27,7 +27,7 @@ class CallCenterAndSectorsSeeder extends Seeder
     protected $callcenter_sectors = [
         ['id' => 1, 'callcenter_id' => 1, 'name' => 'М', 'comment' => NULL, 'active' => 0],
         ['id' => 2, 'callcenter_id' => 2, 'name' => 'А', 'comment' => NULL, 'active' => 1],
-        ['id' => 3, 'callcenter_id' => 3, 'name' => 'CH1', 'comment' => NULL, 'active' => 1]
+        ['id' => 3, 'callcenter_id' => 3, 'name' => 'CH1', 'comment' => NULL, 'active' => 0]
     ];
 
     /**

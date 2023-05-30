@@ -40,15 +40,23 @@ class UpdateRequestRowForPin implements ShouldBroadcast
     protected $drop;
 
     /**
+     * Флаг присвоения заявки
+     * 
+     * @var bool
+     */
+    protected $own;
+
+    /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($row, $pin, $drop = false)
+    public function __construct($row, $pin, $drop = false, $own = false)
     {
         $this->row = $row;
         $this->pin = $pin;
         $this->drop = $drop;
+        $this->own = $own;
     }
 
     /**
@@ -61,6 +69,7 @@ class UpdateRequestRowForPin implements ShouldBroadcast
         return [
             'row' => $this->row->id,
             'drop' => $this->drop,
+            'own' => $this->own,
         ];
     }
 

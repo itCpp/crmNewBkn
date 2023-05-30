@@ -8,6 +8,7 @@ use App\Http\Controllers\Users\Worktime;
 use App\Models\MoscowCity;
 use App\Models\RequestsRow;
 use App\Models\RequestsStory;
+use App\Models\RequestsStoryStatus;
 use App\Models\Status;
 use Illuminate\Http\Request;
 
@@ -16,8 +17,8 @@ class RequestChange extends Controller
     /**
      * Изменение данных заявки
      * 
-     * @param \Illuminate\Http\Request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function save(Request $request)
     {
@@ -66,6 +67,7 @@ class RequestChange extends Controller
 
         $row->address = $request->address; // Адрес офиса
 
+        $status_old = $row->status_id;
         $row->status_id = $request->status_id; // Статус заявки
 
         if ($row->status_id)
@@ -74,7 +76,19 @@ class RequestChange extends Controller
         $row->save();
 
         // Логирование изменений заявки
-        RequestsStory::write($request, $row);
+        $story = RequestsStory::write($request, $row);
+
+        // Логирование изменения статуса
+        if ($status_old != $row->status_id) {
+            RequestsStoryStatus::create([
+                'story_id' => $story->id,
+                'request_id' => $row->id,
+                'status_old' => $status_old,
+                'status_new' => $row->status_id,
+                'created_pin' => $request->user()->pin,
+                'created_at' => now(),
+            ]);
+        }
 
         $row = Requests::getRequestRow($row); // Полные данные по заявке
 
@@ -93,7 +107,7 @@ class RequestChange extends Controller
     /**
      * Метод проверки московского региона
      * 
-     * @param string $city Наименование города
+     * @param  string $city Наименование города
      * @return int|null
      */
     public static function checkRegion($city = null)
@@ -110,7 +124,7 @@ class RequestChange extends Controller
     /**
      * Проверка заявки для исключения из списка текущей вкладки
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return bool
      */
     public static function checkDropOutTab(Request $request)
@@ -122,10 +136,45 @@ class RequestChange extends Controller
     }
 
     /**
+     * Скрытие заявки из поднятых со статусом
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function hideUplift(Request $request)
+    {
+        if (!$row = RequestsRow::find($request->id))
+            return response()->json(['message' => "Заявка не найдена"], 400);
+
+        if (!$row->status_id)
+            return response()->json(['message' => "Нельзя скрыть необработанную заявку"], 400);
+
+        // Поиск разрешений для заявок
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
+
+        $row->uplift = 0;
+        $row->save();
+
+        // Логирование изменений
+        RequestsStory::write($request, $row);
+
+        // Полные данные по заявке
+        $row = Requests::getRequestRow($row);
+
+        // Отправка события об изменении заявки
+        broadcast(new UpdateRequestEvent($row));
+
+        return response()->json([
+            'request' => $row,
+            'dropOutTab' => self::checkDropOutTab($request),
+        ]);
+    }
+
+    /**
      * Сохранение данных заявки из отдельной ячейки на странице
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function saveCell(Request $request)
     {
@@ -174,13 +223,13 @@ class RequestChange extends Controller
     /**
      * Созранение данных из ячейки с датой
      * 
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\RequestsRow $row
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Models\RequestsRow $row
      * @return \App\Models\RequestsRow
      */
     public static function saveCellDate(Request $request, RequestsRow $row)
     {
-        if ($request->user()->checkedPermits()->requests_addr_change)
+        if ($request->user()->can('requests_addr_change'))
             $row->address = $request->address;
 
         $row->event_at = $request->event_datetime;
@@ -193,8 +242,8 @@ class RequestChange extends Controller
     /**
      * Созранение данных из ячейки с именем и городом
      * 
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\RequestsRow $row
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Models\RequestsRow $row
      * @return \App\Models\RequestsRow
      */
     public static function saveCellClient(Request $request, RequestsRow $row)
@@ -211,8 +260,8 @@ class RequestChange extends Controller
     /**
      * Созранение данных из ячейки с темой
      * 
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\RequestsRow $row
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Models\RequestsRow $row
      * @return \App\Models\RequestsRow
      */
     public static function saveCellTheme(Request $request, RequestsRow $row)
@@ -226,13 +275,13 @@ class RequestChange extends Controller
     /**
      * Созранение данных из ячейки с комментарием секретаря
      * 
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\RequestsRow $row
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Models\RequestsRow $row
      * @return \App\Models\RequestsRow
      */
     public static function saveCellCommentFirst(Request $request, RequestsRow $row)
     {
-        if (!$request->user()->checkedPermits()->requests_addr_change)
+        if (!$request->user()->can('requests_comment_first'))
             return $row;
 
         $row->comment_first = $request->comment_first;
@@ -244,8 +293,8 @@ class RequestChange extends Controller
     /**
      * Созранение данных из ячейки с основным комментарием
      * 
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\RequestsRow $row
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Models\RequestsRow $row
      * @return \App\Models\RequestsRow
      */
     public static function saveCellComment(Request $request, RequestsRow $row)
@@ -259,8 +308,8 @@ class RequestChange extends Controller
     /**
      * Созранение данных из ячейки с комментарием для юриста
      * 
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\RequestsRow $row
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Models\RequestsRow $row
      * @return \App\Models\RequestsRow
      */
     public static function saveCellCommentUrist(Request $request, RequestsRow $row)

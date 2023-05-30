@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Callcenter;
 
 use App\Events\AppUserEvent;
+use App\Events\NewSmsAllEvent;
+use App\Events\NewSmsRequestsEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gates\GateBase64;
 use App\Models\Gate;
+use App\Models\GateSmsCount;
 use App\Models\SmsMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -89,6 +92,9 @@ class SmsSends extends Controller
             broadcast(new AppUserEvent(id: $user->id, alert: $alert));
         }
 
+        broadcast(new NewSmsAllEvent($this->sms));
+        broadcast(new NewSmsRequestsEvent($this->sms));
+
         return $this;
     }
 
@@ -112,7 +118,16 @@ class SmsSends extends Controller
 
         $message = (new GateBase64)->decode($this->sms->message);
 
-        echo $url = "http://{$address}/cgi/WebCGI?1500101=account={$login}&password={$password}&port={$this->sms->channel}&destination=%2B{$phone}&content=" . urlencode($message);
+        $url = "http://{$address}/cgi/WebCGI?1500101=account={$login}&password={$password}&port={$this->sms->channel}&destination=%2B{$phone}&content=" . urlencode($message);
+
+        $counter = GateSmsCount::firstOrNew([
+            'gate_id' => $this->sms->gate,
+            'channel_id' => $this->sms->channel,
+            'date' => now()->format("Y-m-d"),
+        ]);
+
+        $counter->count++;
+        $counter->save();
 
         $response = $this->sendGateRequest($url);
 

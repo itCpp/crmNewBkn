@@ -18,10 +18,16 @@ class IncomingQuery extends Model
         'query_data',
         'client_id',
         'request_id',
+        'ad_source',
+        'type',
+        'hash_phone',
+        'hash_phone_resource',
         'request_data',
         'response_data',
         'ip',
         'user_agent',
+        'created_at',
+        'updated_at',
     ];
 
     /**

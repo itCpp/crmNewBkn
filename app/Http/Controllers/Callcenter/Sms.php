@@ -7,11 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gates\GateBase64;
 use App\Http\Controllers\Offices\Offices;
 use App\Http\Controllers\Requests\Requests;
+use App\Http\Controllers\Sms\Sms as SmsSms;
 use App\Jobs\SendSmsJob;
 use App\Models\Gate;
 use App\Models\Office;
 use App\Models\RequestsRow;
 use App\Models\SmsMessage;
+use App\Models\UsersViewPart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -33,7 +35,13 @@ class Sms extends Controller
         $message = self::getSmsTemplate($row);
 
         if (!$message and !$request->user()->can('requests_send_sms_no_limit'))
-            return response()->json(['message' => "Шаблон сообщения не сформирован, доступ к отправке сообщений с собственным текстом ограничен"], 403);
+            $alert = "Шаблон сообщения не сформирован, доступ к отправке сообщений с собственным текстом ограничен";
+        else if (!$message)
+            $alert = "Шаблон сообщения не сформирован";
+
+        // Не возвращать, так как проверка происходит во фронтенде
+        // if ($alert ?? null)
+        //     return response()->json(['message' => $alert], 400);
 
         $request->row = $row;
 
@@ -41,12 +49,13 @@ class Sms extends Controller
             'phones' => $phones,
             'message' => $message,
             'request' => $row,
-            'messages' => self::getMessages($request),
+            'messages' => self::getMessages($row),
             'now' => date("Y-m-d H:i:s"),
             'permits' => $request->user()->getListPermits([
                 'requests_send_sms',
                 'requests_send_sms_no_limit',
             ]),
+            'alert' => $alert ?? null,
         ]);
     }
 
@@ -245,16 +254,22 @@ class Sms extends Controller
     /**
      * Вывод списка СМС
      * 
-     * @param Request $request
+     * @param RequestsRow|Request $request
      * @param array $where Массив условий запроса
      * @return array
      */
-    public static function getMessages(Request $request, $where = [])
+    public static function getMessages($request, $where = [])
     {
-        if (!$request->row)
+        if ($request instanceof RequestsRow) {
+            $row = $request;
+        } else if ($request instanceof Requests) {
+            $row = $request->row;
+        }
+
+        if (!($row ?? null))
             throw new CrmException("Отсутствует экземпляр модели заявки");
 
-        $messages = $request->row->sms()->orderBy('created_at', 'DESC');
+        $messages = $row->sms()->orderBy('created_at', 'DESC');
 
         if ($where)
             $messages = $messages->where($where);
@@ -282,6 +297,31 @@ class Sms extends Controller
         return response()->json([
             'now' => now(),
             'messages' => self::getMessages($request, $where ?? []),
+        ]);
+    }
+
+    /**
+     * Выводит номер телефона клиента из смс
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getSmsPhone(Request $request)
+    {
+        if (!$row = SmsMessage::find($request->id))
+            return response()->json(['message' => "СМС не найдено"], 400);
+
+        $sms = new SmsSms;
+        $sms->show_phone = $request->user()->can('clients_show_phone');
+        $row = $sms->getRowSms($row);
+
+        $view = $sms->getLastTime($request);
+        $view->view_at = now();
+        $view->save();
+
+        return response()->json([
+            'row' => $row,
+            'id' => $request->id,
         ]);
     }
 }

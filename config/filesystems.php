@@ -35,11 +35,21 @@ return [
             'root' => storage_path('app'),
         ],
 
+        'chat' => [
+            'driver' => 'local',
+            'root' => storage_path('app/chats'),
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
+        ],
+
+        'storage' => [
+            'driver' => 'local',
+            'root' => storage_path(),
         ],
 
         's3' => [

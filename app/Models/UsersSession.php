@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UsersSession extends Model
 {
-
     use HasFactory, SoftDeletes;
 
     /**
@@ -27,5 +26,4 @@ class UsersSession extends Model
         'user_agent',
         'updated_at',
     ];
-
 }

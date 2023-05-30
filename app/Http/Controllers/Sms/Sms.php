@@ -59,13 +59,16 @@ class Sms extends Controller
 
         $view_at = $this->view->view_at; // Время последнего просмотра раздела
 
-        $data = new SmsMessage;
-
-        if (!$request->user()->can('sms_access_system')) {
-            $data = $data->join('sms_request', 'sms_request.sms_id', '=', 'sms_messages.id');
-        }
-
-        $data = $data->orderBy('created_at', "DESC")->paginate(25);
+        $data = SmsMessage::select('sms_messages.*')
+            ->when(!$request->user()->can('sms_access_system'), function ($query) {
+                $query->join('sms_request', 'sms_request.sms_id', '=', 'sms_messages.id');
+            })
+            ->when(in_array($request->direction, ["in", "out"]), function ($query) use ($request) {
+                $query->where('direction', $request->direction);
+            })
+            ->orderBy('created_at', "DESC")
+            ->distinct()
+            ->paginate(25);
 
         $rows = $data->map(function ($row) {
             return $this->getRowSms($row);
@@ -88,7 +91,7 @@ class Sms extends Controller
     /**
      * Получение последнего времени просмотра раздела смс сообщений
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \App\Models\UsersViewPart
      */
     public function getLastTime(Request $request)
@@ -118,7 +121,7 @@ class Sms extends Controller
         $row->author = $this->findUserName($row->created_pin);
 
         $phone = $this->decrypt($row->phone);
-        $row->phone = $this->displayPhoneNumber($phone, $this->show_phone, 4);
+        $row->phone = $this->displayPhoneNumber($phone, $this->show_phone ?? false, 4);
 
         $row->requests;
 
@@ -184,22 +187,23 @@ class Sms extends Controller
      */
     public static function getCounterNewSms(Request $request)
     {
-        $counter = new SmsMessage;
-
         $view = UsersViewPart::whereUserId($request->user()->id)
             ->wherePartName('sms')
             ->first();
 
-        if ($view) {
-            $counter = $counter->where('created_at', '>', $view->view_at);
-        }
-
-        if (!$request->user()->can('sms_access_system')) {
-            $counter = $counter->join('sms_request', 'sms_request.sms_id', '=', 'sms_messages.id');
-        }
+        $count = SmsMessage::select('sms_messages.*')
+            ->when(!$request->user()->can('sms_access_system'), function ($query) {
+                $query->join('sms_request', 'sms_request.sms_id', '=', 'sms_messages.id');
+            })
+            ->when((bool) $view, function ($query) use ($view) {
+                $query->where('created_at', '>', $view->view_at);
+            })
+            ->where('direction', "in")
+            ->distinct()
+            ->count();
 
         return [
-            'count' => $counter->count(),
+            'count' => $count,
         ];
     }
 }

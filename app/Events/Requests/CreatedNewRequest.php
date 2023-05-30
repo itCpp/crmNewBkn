@@ -2,6 +2,7 @@
 
 namespace App\Events\Requests;
 
+use App\Models\CallcenterSector;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -67,6 +68,11 @@ class CreatedNewRequest implements ShouldBroadcast
     {
         // Доступ ко всем секторам и ко всем коллцентрам
         $channels[] = new PrivateChannel('App.Requests.All.0.0');
+
+        if ($sector = CallcenterSector::find($this->row->callcenter_sector ?? null)) {
+            $channels[] = new PrivateChannel("App.Requests.All.{$sector->callcenter_id}.0");
+            $channels[] = new PrivateChannel("App.Requests.All.{$sector->callcenter_id}.{$sector->id}");
+        }
 
         return $channels;
     }

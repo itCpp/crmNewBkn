@@ -3,9 +3,17 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Crm\Start;
 use App\Http\Controllers\Dates;
+use App\Http\Controllers\Infos\Cities;
+use App\Http\Controllers\Infos\Themes;
+use App\Models\CallcenterSector;
 use App\Models\Office;
 use App\Models\RequestsRow;
+use App\Models\RequestsRowsView;
+use App\Models\RequestsSource;
+use App\Models\RequestsSourcesResource;
+use App\Models\RequestsStoryPin;
 use App\Models\Status;
 use App\Models\Tab;
 use Illuminate\Http\Request;
@@ -14,14 +22,49 @@ use Illuminate\Support\Facades\Crypt;
 class Requests extends Controller
 {
     /**
+     * Список проверенных источников
+     * 
+     * @var array
+     */
+    protected static $sources = [];
+
+    /**
+     * Список проверенных ресурсов источников
+     * 
+     * @var array
+     */
+    protected static $resources = [];
+
+    /**
+     * Список проверенных адресов
+     * 
+     * @var array
+     */
+    protected static $offices = [];
+
+    /**
+     * Список проверенных секторов
+     * 
+     * @var array
+     */
+    protected static $sectors = [];
+
+    /**
+     * Список проверенных статусов заявки
+     * 
+     * @var array
+     */
+    protected static $statuses = [];
+
+    /**
      * Вывод заявок
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function get(Request $request)
     {
-        if ($request->tabId === null)
+        if ($request->tabId === null and !$request->search)
             return response()->json(['message' => "Выберите вкладку"], 400);
 
         if (!$request->tab = Tab::find($request->tabId))
@@ -34,7 +77,7 @@ class Requests extends Controller
             return response()->json(['message' => "Доступ к вкладке ограничен"], 403);
 
         // Разрешения для пользователя
-        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
+        RequestStart::$permits = $request->user()->getListPermits(Start::$permitsList);
 
         $dates = new Dates($request->period[0] ?? null, $request->period[1] ?? null);
         $request->start = $dates->start;
@@ -51,6 +94,7 @@ class Requests extends Controller
 
         return response()->json([
             'requests' => $requests,
+            'tab' => optional($request->tab)->getSettings(),
             'permits' => RequestStart::$permits,
             'total' => $data->total(), // Количество найденных строк
             'next' => $next > $pages ? null : $next,
@@ -62,8 +106,8 @@ class Requests extends Controller
     /**
      * Вывод одной строки
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getRow(Request $request)
     {
@@ -71,12 +115,12 @@ class Requests extends Controller
             return response()->json(['message' => "Заявка не найдена"], 400);
 
         // Поиск разрешений для заявок
-        RequestStart::$permits = $request->__user->getListPermits(RequestStart::$permitsList);
+        RequestStart::$permits = $request->user()->getListPermits(RequestStart::$permitsList);
 
         $row = Requests::getRequestRow($row); // Полные данные по заявке
 
         $addstatus = true; // Добавить в список недоступный статус
-        $statusList = $request->__user->getStatusesList(); // Список доступных статусов
+        $statusList = $request->user()->getStatusesList(); // Список доступных статусов
 
         // Преобразование списка для вывода
         $statuses = $statusList->map(function ($status) use (&$addstatus, $row) {
@@ -104,17 +148,52 @@ class Requests extends Controller
             ];
         }
 
+        $view = RequestsRowsView::firstOrNew([
+            'request_id' => $row->id,
+            'user_id' => $request->user()->id,
+        ]);
+
+        $view->view_at = now();
+        $view->save();
+
+        if ($request->getRow)
+            return $row;
+
+        $offices = Office::where('active', 1)->orderBy('name')->get();
+
+        if ($row->address) {
+
+            $offices_id = $offices->map(function ($row) {
+                return $row->id;
+            })->toArray();
+
+            if (!in_array($row->address, $offices_id)) {
+                if ($append = Office::find($row->address)) {
+                    $offices[] = $append;
+                } else {
+                    $offices[] = [
+                        'name' => "Неизвестно",
+                        'id' => $row->address,
+                        'active' => 0,
+                    ];
+                }
+            }
+        }
+
         $response = [
             'request' => $row,
             'permits' => RequestStart::$permits,
             'statuses' => $statuses,
-            'offices' => Office::orderBy('active', 'DESC')->orderBy('name')->get(),
-            'cities' => \App\Http\Controllers\Infos\Cities::$data, // Список городов
-            'themes' => \App\Http\Controllers\Infos\Themes::$data, // Список тем
+            'offices' => $offices,
+            'cities' => Cities::$data, // Список городов
+            'themes' => Themes::$data, // Список тематик
         ];
 
         if ($request->getComments)
             $response['comments'] = Comments::getComments($request);
+
+        if ($request->getStatistics)
+            $response['statistic'] = RequestRowStatistic::get($row);
 
         return response()->json($response);
     }
@@ -122,8 +201,8 @@ class Requests extends Controller
     /**
      * Запрос на вывод данных для добавления заявки оператору
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getRowForTab(Request $request)
     {
@@ -148,7 +227,7 @@ class Requests extends Controller
     /**
      * Формирование запроса и вывод заявок
      * 
-     * @param \App\Models\RequestsRow $data Коллекция модели
+     * @param  \App\Models\RequestsRow $data Коллекция модели
      * @return array
      */
     public static function getRequests($data)
@@ -162,13 +241,11 @@ class Requests extends Controller
     /**
      * Обработка и дополнение данными одной строки заявки
      * 
-     * @param \App\Models\RequestsRow $row
+     * @param  \App\Models\RequestsRow $row
      * @return object
      */
     public static function getRequestRow(RequestsRow $row)
     {
-        $row->permits = RequestStart::$permits; // Разрешения пользователя
-
         $row->date_create = date("d.m.Y H:i", strtotime($row->created_at));
         $row->date_uplift = $row->uplift_at ? date("d.m.Y H:i", strtotime($row->uplift_at)) : null;
         $row->date_event = $row->event_at ? date("d.m.Y H:i", strtotime($row->event_at)) : null;
@@ -182,23 +259,171 @@ class Requests extends Controller
         $row->event_datetime = $row->event_date && $row->event_time
             ? "{$row->event_date}T{$row->event_time}" : null;
 
-        // Данные по номерам телефона
-        $row->clients = self::getClientPhones($row, $row->permits->clients_show_phone ?? null);
+        /** Данные по номерам телефона */
+        $row->clients = self::getClientPhones($row, optional(request()->user())->can('clients_show_phone'));
 
-        $row->source; # Источник заявки
-        $row->status; # Вывод данных о статусе
-        $row->office; # Вывод данных по офису
-        $row->sector; # Вывод данных по сектору
+        /** Источник заявки */
+        $row->source = self::getReqoustRowSourceData($row->source_id);
+
+        /** Ресурс источника заявки */
+        $row->resource = self::getRequestRowReourceSourceData($row->sourse_resource);
+
+        /** Адрес офиса для заявки */
+        $row->office = self::getRequestRowOfficeData($row->address);
+
+        /** Вывод данных по сектору */
+        $row->sector = self::getRequestRowSectorData($row->callcenter_sector);
+
+        /** Вывод данных о статусе */
+        $row->status = self::getRequestRowStatusData($row);
+
+        /** Флаг вывода пункта меню для скрытия */
+        $row->uplift_hide_access = ($row->uplift == 1 and $row->status_id !== null and optional(request()->user())->can('requests_hide_uplift_rows'));
+
+        $row->view_at = RequestsRowsView::where([
+            'user_id' => optional(request()->user())->id,
+            'request_id' => $row->id,
+        ])->first()->view_at ?? null;
+
+        $row->updated = $row->view_at < $row->updated_at;
+
+        /** Определение флага анимации мигания новых заявок */
+        $row->status_null_flash = (!$row->status_id and !$row->pin and optional(request()->user())->can('requests_flash_null_status'));
+
+        /** Определение флага индикации подтверждения записи */
+        if ($row->event_at) {
+
+            if (now() > now()->create($row->event_at)->subHours(2)) {
+
+                $status_records = parent::envExplode('STATISTICS_OPERATORS_STATUS_RECORD_ID');
+                $status_confirmed = parent::envExplode('STATISTICS_OPERATORS_STATUS_RECORD_CHECK_ID');
+
+                $row->status_records_flash = (in_array($row->status_id, $status_records)
+                    and !in_array($row->status_id, $status_confirmed)
+                    and optional(request()->user())->can('requests_flash_records_status')
+                );
+            }
+        }
+
+        /** Проверенные разрешения пользователя */
+        $row->permits = RequestStart::$permits;
 
         return (object) $row->toArray();
     }
 
     /**
+     * Вывод данных источника заявки
+     * 
+     * @param  int $id
+     * @return null|array
+     */
+    public static function getReqoustRowSourceData($id)
+    {
+        if (!empty(self::$sources[$id]))
+            return self::$sources[$id];
+
+        if (!$source = RequestsSource::find($id))
+            return self::$sources[$id] = null;
+
+        return self::$sources[$id] = $source->only('id', 'name', 'comment');
+    }
+
+    /**
+     * Вывод данных ресурса источника заявки
+     * 
+     * @param  int $id
+     * @return null|array
+     */
+    public static function getRequestRowReourceSourceData($id)
+    {
+        if (!optional(request()->user())->can('requests_show_resource'))
+            return null;
+
+        if (!empty(self::$resources[$id]))
+            return self::$resources[$id];
+
+        if (!$resource = RequestsSourcesResource::find($id))
+            return self::$resources[$id] = null;
+
+        $resource = $resource->only('type', 'val');
+
+        if ($resource['type'] == "phone")
+            $resource['val'] = parent::checkPhone($resource['val'], 7);
+
+        return self::$resources[$id] = $resource;
+    }
+
+    /**
+     * Вывод данных об офисе
+     * 
+     * @param  null|int $id
+     * @return null|array
+     */
+    public static function getRequestRowOfficeData($id)
+    {
+        if (!$id)
+            return null;
+
+        if (!empty(self::$offices[$id]))
+            return self::$offices[$id];
+
+        if (!$office = Office::find($id))
+            return self::$offices[$id] = null;
+
+        return self::$offices[$id] = $office->only('id', 'name', 'base_id', 'active');
+    }
+
+    /**
+     * Поиск данных сектора
+     * 
+     * @param  null|int $id
+     * @return null|array
+     */
+    public static function getRequestRowSectorData($id)
+    {
+        if (!$id)
+            return null;
+
+        if (!empty(self::$sectors[$id]))
+            return self::$sectors[$id];
+
+        if (!$sector = CallcenterSector::find($id))
+            return self::$sectors[$id] = null;
+
+        return self::$sectors[$id] = $sector->only(
+            'active',
+            'callcenter_id',
+            'comment',
+            'id',
+            'name'
+        );
+    }
+
+    /**
+     * Вывод данных о статусе
+     * 
+     * @param  \App\Models\RequestsRow $row
+     * @return null|array
+     */
+    public static function getRequestRowStatusData($row)
+    {
+        $id = $row->status_id;
+
+        if (!empty(self::$statuses[$id]))
+            return self::$statuses[$id];
+
+        if (!$status = Status::find($id))
+            return self::$statuses[$id] = null;
+
+        return self::$statuses[$id] = $status->only('id', 'name', 'theme', 'comment');
+    }
+
+    /**
      * Вывод номеров телефона клиента
      * 
-     * @param \App\Models\RequestsRow $row
-     * @param null|bool $permit Флаг разрешения на вывод номера
-     * @return array
+     * @param  \App\Models\RequestsRow $row
+     * @param  null|bool $permit Флаг разрешения на вывод номера
+     * @return array<object>
      */
     public static function getClientPhones(RequestsRow $row, $permit = false)
     {
@@ -216,5 +441,97 @@ class Requests extends Controller
                 'hidden' => (bool) !$permit,
             ];
         });
+    }
+
+    /**
+     * Вывод новых заявок для личной страницы
+     * 
+     * @param  string|int $pin
+     * @return array
+     */
+    public static function getNewRequests($pin)
+    {
+        $sets = [];
+        $requests = [];
+        $requests_limit = 15;
+
+        $steps = 0;
+        $limit = 10;
+
+        while (count($sets) <= $requests_limit) {
+
+            RequestsStoryPin::distinct()
+                ->select('request_id', 'requests_story_pins.created_at')
+                ->join('requests_rows', function ($join) use ($pin) {
+                    $join->on('requests_rows.id', '=', 'requests_story_pins.request_id')
+                        ->where('requests_rows.pin', $pin)
+                        ->whereIn('requests_rows.source_id', request()->user()->getSourceList()->map(function ($row) {
+                            return $row->id;
+                        })->toArray());
+                })
+                ->where([
+                    ['new_pin', $pin],
+                    ['requests_rows.deleted_at', null],
+                ])
+                ->orderBy('requests_story_pins.created_at', 'DESC')
+                ->offset($steps * $limit)
+                ->limit($limit)
+                ->get()
+                ->each(function ($row) use (&$sets, &$requests) {
+                    $sets[$row->request_id] = $row->created_at;
+                    $requests[] = $row->request_id;
+                });
+
+            $steps++;
+
+            if ($steps * $limit > count($requests))
+                break;
+        }
+
+        return RequestsRow::whereIn('id', array_unique($requests))
+            ->get()
+            ->map(function ($row) use ($sets) {
+
+                $row->set_at = $sets[$row->id] ?? null;
+
+                return self::getRequestRow($row);
+            })
+            ->sortByDesc('set_at')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Проверяет необходимость вывода заявки в текущей вкладке, чтобы скрыть неактуальные строки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getlost(Request $request)
+    {
+        if (!$request->tab = Tab::find($request->id))
+            $request->tab = new Tab;
+
+        if ($request->tab->id and !$request->user()->canTab($request->tab->id))
+            return response()->json(['message' => "Доступ к вкладке ограничен"], 403);
+
+        /** Разрешения для пользователя */
+        RequestStart::$permits = $request->user()->getListPermits(Start::$permitsList);
+
+        /** Идентификаторы заявок для вывода во вкладке */
+        $actual = (new RequestsQuery($request))->where()
+            ->whereIn('id', $request->list)
+            ->get()
+            ->map(function ($row) {
+                return $row->id;
+            })
+            ->toArray();
+
+        foreach ($request->list as $id) {
+            if (!in_array($id, $actual))
+                $lost[] = $id;
+        }
+
+        return response()->json($lost ?? []);
     }
 }

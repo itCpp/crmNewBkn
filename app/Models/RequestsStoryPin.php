@@ -47,15 +47,12 @@ class RequestsStoryPin extends Model
      */
     public static function write($story, $old)
     {
-
         return static::create([
-            'request_id' => $story->request_data['id'] ?? null,
+            'request_id' => $story->row_data['id'] ?? null,
             'old_pin' => $old,
-            'new_pin' => $story->request_data['pin'],
+            'new_pin' => $story->row_data['pin'],
             'story_id' => $story->id,
             'created_at' => date("Y-m-d H:i:s"),
         ]);
-
     }
-
 }

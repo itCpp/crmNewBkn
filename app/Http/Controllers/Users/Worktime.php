@@ -91,37 +91,67 @@ class Worktime extends Controller
     /**
      * Запись события о смене статуса
      * 
-     * @param int $pin
-     * @param string $type
+     * @param  int $pin
+     * @param  string $type
      * @return \App\Models\UserWorkTime
      */
     public static function writeEvent($pin, $type)
     {
         $date = now();
 
+        /** Последнее событие сегодняшнего дня */
         $last = UserWorkTime::whereDate('date', $date)
             ->whereUserPin($pin)
             ->orderBy('id', 'DESC')
             ->first();
 
-        // Предотвращение записи одинакового события
-        if ($last) {
-            if ($last->event_type == $type)
-                return $last;
+        /** Предотвращение записи одинакового события */
+        if (($last->event_type ?? null) == $type) {
+            return $last;
         }
 
-        return UserWorkTime::create([
+        /** Проверка события отдыха при авторизации */
+        if ($type == "login" and !in_array(($last->event_type ?? null), self::$timeout)) {
+
+            $timeout = UserWorkTime::whereDate('date', $date)
+                ->whereUserPin($pin)
+                ->where('event_type', '!=', "logout")
+                ->orderBy('id', 'DESC')
+                ->first();
+
+            if (in_array($timeout->event_type ?? null, self::$timeout)) {
+
+                UserWorkTime::create([
+                    'user_pin' => $pin,
+                    'event_type' => $type,
+                    'date' => $date,
+                    'created_at' => $date,
+                ]);
+
+                $type = $timeout->event_type;
+            }
+
+            if ($type != "work" and $type != "free")
+                $createWork = true;
+        }
+
+        $event = UserWorkTime::create([
             'user_pin' => $pin,
             'event_type' => $type,
             'date' => $date,
             'created_at' => $date,
         ]);
+
+        if ($createWork ?? null)
+            self::checkAndWriteWork($pin);
+
+        return $event;
     }
 
     /**
      * Проверка наличия необработанных заявок и запись статуса
      * 
-     * @param null|int $pin
+     * @param  null|int $pin
      * @return \App\Models\UserWorkTime|null
      */
     public static function checkAndWriteWork($pin)
@@ -132,8 +162,7 @@ class Worktime extends Controller
         $count = RequestsRow::where([
             ['pin', $pin],
             ['status_id', null]
-        ])
-            ->count();
+        ])->count();
 
         $worktime = self::writeEvent($pin, $count ? 'work' : 'free');
         $user = $worktime->user()->first('id');
@@ -146,11 +175,11 @@ class Worktime extends Controller
     /**
      * Определение цвета по текущему статусу
      * 
-     * @param null|string $type
-     * @param null|string $timeout
+     * @param  null|string $type
+     * @param  null|string $timeout
      * @return null|string
      */
-    public static function getColorButton(null|string $type, null|string $timeout = null): null|string
+    public static function getColorButton($type, $timeout = null)
     {
         // Перив
         if (in_array($type, self::$timeout) or in_array($timeout, self::$timeout))
@@ -173,7 +202,7 @@ class Worktime extends Controller
     /**
      * Определение цвета кнопки установки перерыва
      * 
-     * @param string|null $status
+     * @param  string|null $status
      * @return string
      */
     public static function getColorButtonTimeout(string|null $status): string
@@ -188,16 +217,13 @@ class Worktime extends Controller
      * Определение активности кнопки установки перерыва
      * Также проверка возможности установить перерыв
      * 
-     * @param string|null $status Основной последний статус рабочего времени
-     * @param string|null $timeout Последний статус с перерывом
+     * @param  string|null $status Основной последний статус рабочего времени
+     * @param  string|null $timeout Последний статус с перерывом
      * @return bool
      */
-    public static function getPropDisabledButtonTimeout(string|null $status, string|null $timeout): bool
+    public static function getPropDisabledButtonTimeout($status, $timeout)
     {
-        if (in_array($timeout, self::$timeout))
-            return false;
-
-        if (in_array($status, self::$inWork))
+        if (in_array($status, self::$inWork) and !in_array($timeout, self::$timeout))
             return true;
 
         return false;
@@ -206,8 +232,8 @@ class Worktime extends Controller
     /**
      * Вывод массива данных по рабочему времени
      * 
-     * @param \App\Models\UserWorkTime $row
-     * @param bool $timeout Флаг необходимости поиска "перивного" статуса
+     * @param  \App\Models\UserWorkTime $row
+     * @param  bool $timeout Флаг необходимости поиска "перивного" статуса
      * @return array
      */
     public static function getDataForEvent(UserWorkTime $row, bool $timeout = true)
@@ -227,7 +253,7 @@ class Worktime extends Controller
     /**
      * Поиск последнего статуса с перерывом
      * 
-     * @param int|string $pin
+     * @param  int|string $pin
      * @return string|null
      */
     public static function getLastTimeoutStatus(int|string $pin): string|null
@@ -245,7 +271,7 @@ class Worktime extends Controller
     /**
      * Добавление информации о перерыве
      * 
-     * @param \App\Models\UserWorkTime $row
+     * @param  \App\Models\UserWorkTime $row
      * @return \App\Models\UserWorkTime
      */
     public static function addepdTimeoutData($row)
@@ -254,7 +280,7 @@ class Worktime extends Controller
         $row->timeout_color = self::getColorButtonTimeout($row->timeout_icon);
 
         // Определение свойства дизактивации для икноки смены перерыва
-        $row->timeout_disabled = self::getPropDisabledButtonTimeout($row->timeout_icon, $row->event_type);
+        $row->timeout_disabled = self::getPropDisabledButtonTimeout($row->event_type, $row->timeout_icon);
 
         // Определение иконки
         $row->timeout_icon = in_array($row->timeout_icon, self::$timeoutOf)
@@ -272,8 +298,8 @@ class Worktime extends Controller
     /**
      * Ручная установка статуса сотрудника
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function setWorkTime(Request $request)
     {
@@ -331,9 +357,100 @@ class Worktime extends Controller
             ]);
         }
 
+        broadcast(new ChangeUserWorkTime($row, $request->user()->id));
+
         return response()->json([
             'worktime' => self::getDataForEvent($row),
-            '$timeoutLast' => $timeoutLast,
+            'timeoutLast' => $timeoutLast,
         ]);
+    }
+
+    /**
+     * Вывод ленты рабочего времени
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function getTapeTimes(Request $request)
+    {
+        $start = now()->format("Y-m-d H:i:s"); // Время первого события
+        $stop = now()->format("Y-m-d 20:00:00"); // Окончание рабочего дня
+        $last = now()->format("Y-m-d H:i:s"); // Время последнего события
+        $login = null; // Время авторизации
+        $last_event = null; // Последний тип события
+
+        $rows = UserWorkTime::select('event_type', 'created_at')
+            ->whereUserPin($request->user()->pin)
+            ->where('date', now()->format('Y-m-d'))
+            ->whereNotIn('event_type', self::$timeoutOf)
+            ->get()
+            ->map(function ($row) use (&$start, &$stop, &$last, &$login, &$last_event) {
+
+                $row->timestamp = strtotime($row->created_at);
+
+                if ($row->event_type == "login")
+                    $login = $row->created_at;
+                else if ($row->event_type == "logout")
+                    $login = null;
+
+                $last_timeout = in_array($last_event, self::$timeout);
+                $no_timeout = in_array($row->event_type, [
+                    ...self::$timeoutOf,
+                    ...self::$disabled
+                ]);
+
+                if ($last_timeout and !$no_timeout) {
+                    $last_event = $row->event_type;
+                    $row->event_type = $last_event;
+                } else {
+                    $last_event = $row->event_type;
+                }
+
+                if ($start > $row->created_at)
+                    $start = $row->created_at;
+
+                if ($row->created_at > $stop)
+                    $stop = $row->created_at;
+
+                $last = $row->created_at;
+
+                $row->color = self::getColorButton($row->event_type);
+                $row->logined = $login !== null;
+
+                return $row;
+            });
+
+        $a = strtotime($start);
+        $b = strtotime($stop);
+        $l = time();
+        $count = count($rows) - 1;
+
+        foreach ($rows as $key => &$row) {
+
+            $row->percent = ($b - $a) > 0
+                ? ($row->timestamp - $a) * 100 / ($b - $a) : 0;
+
+            $prev = $key - 1;
+
+            if ($key > 0)
+                $rows[$prev]->width = $row->percent - $rows[$prev]->percent;
+
+            if ($key === $count) {
+
+                $width = ($b - $a) > 0
+                    ? ($l - $a) * 100 / ($b - $a) : 0;
+
+                $row->width = $width > 0 ? $width - $row->percent : 0;
+            }
+        }
+
+        return [
+            'start' => $start,
+            'stop' => $stop,
+            'startTime' => $a,
+            'stopTime' => $b,
+            'time' => $l,
+            'rows' => $rows->toArray(),
+        ];
     }
 }

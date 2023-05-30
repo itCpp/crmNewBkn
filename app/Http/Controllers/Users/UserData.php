@@ -2,15 +2,39 @@
 
 namespace App\Http\Controllers\Users;
 
-use App\Http\Controllers\Controller;
 use App\Models\CallcenterSector;
+use App\Models\RequestsSource;
 use App\Models\Role;
-use App\Models\UserWorkTime;
-use Illuminate\Http\Request;
+use App\Models\Status;
+use App\Models\Tab;
+use App\Models\User;
+use App\Models\UserSetting;
 
-class UserData extends Controller
+/**
+ * @property null|string auth_type              Тип авторизации
+ * @property null|int callcenter_id             Идентификтаор колл-центра
+ * @property null|int callcenter_sector_id      Идентификтаор сектора
+ * @property string created_at                  Дата создания "2019-05-21T21:00:00.000000Z"
+ * @property string date                        Дата создания "22.05.2019 00:00:00"
+ * @property null|string deleted_at             Дата удаления сотрудника
+ * @property int id                             Идентификатор сотрудника
+ * @property string login                       Логин сотрудника
+ * @property null|string name                   Имя сотруднкиа
+ * @property string name_fio                    ФИО сотрудника "Иванов И.И."
+ * @property string name_full                   Полное ФИО сотрудника
+ * @property string name_io                     Полное имя и отчество сотрудника
+ * @property null|string old_pin                Старый персональный номер
+ * @property null|string patronymic             Отчество сотрудника
+ * @property int pin                            Персональный номер сотрудника
+ * @property null|int position_id               Идентификатор должности
+ * @property array<string> roles                Список ролей сотрудника
+ * @property bool superadmin                    Флаг суперадмина (полный доступ)
+ * @property string surname                     Фамилия сотрудника
+ * @property null|string telegram_id            Идентификатор Телеграма
+ * @property string updated_at                  Дата и время обновления
+ */
+class UserData
 {
-
     /**
      * Настройка проверки супер-админа
      * 
@@ -54,11 +78,19 @@ class UserData extends Controller
     protected $__permissions;
 
     /**
+     * Массив идентификаторов всех секторов колл-центра сотрудника
+     * 
+     * @var array
+     */
+    protected $allSectors = [];
+
+    /**
      * Создание объекта
      * 
-     * @param \App\Models\User $user Экземпляр модели пользователя
+     * @param  \App\Models\User $user Экземпляр модели пользователя
+     * @return void
      */
-    public function __construct($user)
+    public function __construct(User $user)
     {
         $this->__permissions = new Permissions;
 
@@ -87,6 +119,8 @@ class UserData extends Controller
         // Дата регистрации
         $this->date = date("d.m.Y H:i:s", strtotime($this->created_at));
 
+        $this->roles = [];
+
         // Список ролей, пренаджежащих пользователю  
         foreach ($user->roles as $role)
             $this->roles[] = $role->role;
@@ -98,7 +132,7 @@ class UserData extends Controller
     /**
      * Магический метод для вывода несуществующего значения
      * 
-     * @param string $name
+     * @param  string $name
      * @return mixed
      */
     public function __get($name)
@@ -106,17 +140,23 @@ class UserData extends Controller
         if (isset($this->$name) === true)
             return $this->$name;
 
+        if ($name == "settings") {
+            return $this->settings = UserSetting::firstOrCreate([
+                'user_id' => $this->__user->id
+            ]);
+        }
+
         return null;
     }
 
     /**
      * Формирование имени и отчества
      * 
-     * @param string $name Имя
-     * @param string $patronymic Отчество
+     * @param  string $name Имя
+     * @param  string $patronymic Отчество
      * @return string
      */
-    public function createNameIo($name, $patronymic)
+    public static function createNameIo($name, $patronymic)
     {
         $name_io = $name ?? "";
         $name_io .= " ";
@@ -128,15 +168,15 @@ class UserData extends Controller
     /**
      * Формирование полного фио
      * 
-     * @param string $surname Фаимлия
-     * @param string $name Имя
-     * @param string $patronymic Отчество
+     * @param  string $surname Фамилия
+     * @param  string $name Имя
+     * @param  string $patronymic Отчество
      * @return string
      */
-    public function createNameFull($surname, $name, $patronymic)
+    public static function createNameFull($surname, $name, $patronymic)
     {
         $name_full = $surname ?? "";
-        $name_full .= " " . $this->createNameIo($name, $patronymic);
+        $name_full .= " " . self::createNameIo($name, $patronymic);
 
         return trim($name_full);
     }
@@ -144,22 +184,24 @@ class UserData extends Controller
     /**
      * Формирование сокращенного фио
      * 
-     * @param string $surname Фаимлия
-     * @param string $name Имя
-     * @param string $patronymic Отчество
+     * @param  string $surname Фамилия
+     * @param  string $name Имя
+     * @param  string $patronymic Отчество
      * @return string
      */
-    public function createNameFio($surname, $name, $patronymic)
+    public static function createNameFio($surname, $name, $patronymic)
     {
-        $name = $this->createNameFull($surname, $name, $patronymic);
-
-        return preg_replace('~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u', '$1 $2.$3.', $name);
+        return preg_replace(
+            '~^(\S++)\s++(\S)\S++\s++(\S)\S++$~u',
+            '$1 $2.$3.',
+            self::createNameFull($surname, $name, $patronymic)
+        );
     }
 
     /**
      * Метод записи события рабочего веремни сотрудника
      * 
-     * @param string $type
+     * @param  string $type
      * @return \App\Models\UserWorkTime
      */
     public function writeWorkTime($type)
@@ -170,7 +212,7 @@ class UserData extends Controller
     /**
      * Проверка разрешения у пользователя
      * 
-     * @param array     $permits Список разрешений к проверке
+     * @param  array $permits Список разрешений к проверке
      * @return bool
      */
     public function can(...$permits)
@@ -178,20 +220,38 @@ class UserData extends Controller
         if ($this->superadmin)
             return true;
 
-        $roles = Role::find($this->roles);
-
-        foreach ($roles as $role) {
-
-            $permissions = $role->permissions()->whereIn('roles_permissions.permission', $permits)->get();
-
-            if (count($permissions))
+        foreach ($permits as $permit) {
+            if ($this->__permissions->$permit)
                 return true;
         }
 
-        $permissions = $this->__user->permissions()->whereIn('permission', $permits)->get();
+        foreach ($this->__user->roles()->get() as $role) {
 
-        if (count($permissions))
-            return true;
+            $role->permissions()
+                ->whereIn('roles_permissions.permission', $permits)
+                ->get()
+                ->each(function ($row) use (&$checkeds) {
+                    $checkeds[] = $row->permission;
+                });
+        }
+
+        $this->__user->permissions()
+            ->whereIn('permission', $permits)
+            ->get()
+            ->each(function ($row) use (&$checkeds) {
+                $checkeds[] = $row->permission;
+            });
+
+        $checkeds = array_values(array_unique($checkeds ?? []));
+
+        foreach ($permits as $permit)
+            $appends[$permit] = in_array($permit, $checkeds);
+
+        $this->__permissions->appends($appends ?? []);
+
+        foreach ($permits as $permit)
+            if ($this->__permissions->$permit)
+                return true;
 
         return false;
     }
@@ -199,8 +259,8 @@ class UserData extends Controller
     /**
      * Вывод списка разрешений пользователя
      * 
-     * @param array     $permits Список разрешений к проверке
-     * @return Permissions
+     * @param  array $permits Список разрешений к проверке
+     * @return \App\Http\Controllers\Users\Permissions
      */
     public function getListPermits($permits = [])
     {
@@ -238,7 +298,7 @@ class UserData extends Controller
     /**
      * Вывод уже проверенных разрешений
      * 
-     * @return Permissions
+     * @return \App\Http\Controllers\Users\Permissions
      */
     public function checkedPermits()
     {
@@ -248,8 +308,8 @@ class UserData extends Controller
     /**
      * Формирование списка разрешений для супер-админа
      * 
-     * @param array     $permits Список заправшиваемых разрешений
-     * @return Permissions
+     * @param  array $permits Список заправшиваемых разрешений
+     * @return \App\Http\Controllers\Users\Permissions
      */
     protected function superAdminPermitsList($permits)
     {
@@ -299,7 +359,7 @@ class UserData extends Controller
     public function getAllTabs()
     {
         if ($this->superadmin)
-            return \App\Models\Tab::orderBy('position')->get();
+            return Tab::orderBy('position')->get();
 
         $tabs = [];
         $id = [];
@@ -326,7 +386,7 @@ class UserData extends Controller
     /**
      * Проверка разрешения на вывод данных по вкладке
      * 
-     * @param int $id Идентификатор вкладки
+     * @param  int $id Идентификатор вкладки
      * @return bool
      */
     public function canTab($id = null)
@@ -348,12 +408,12 @@ class UserData extends Controller
     /**
      * Список статусов заявки, доступных для выбора сотруднику
      * 
-     * @return collect
+     * @return \Illuminate\Support\Collection
      */
     public function getStatusesList()
     {
         if ($this->superadmin)
-            return \App\Models\Status::all();
+            return Status::all();
 
         $statuses = [];
         $id = [];
@@ -371,7 +431,7 @@ class UserData extends Controller
     /**
      * Выдача идентификтаор пользователя
      * 
-     * @return true
+     * @return int|null
      */
     public function getAuthIdentifier()
     {
@@ -396,13 +456,6 @@ class UserData extends Controller
     }
 
     /**
-     * Массив идентификаторов всех секторов колл-центра сотрудника
-     * 
-     * @var array
-     */
-    protected $allSectors = [];
-
-    /**
      * Вывод всех секторов коллцентра сотрудника
      * 
      * @return array
@@ -416,8 +469,50 @@ class UserData extends Controller
             ->get()
             ->map(function ($row) {
                 return $row->id;
-            });
+            })
+            ->toArray();
 
         return $this->allSectors;
+    }
+
+    /**
+     * Вывод наименования сектора острудника
+     * 
+     * @return null|string
+     */
+    public function getSectorName()
+    {
+        return CallcenterSector::find($this->callcenter_id)->name ?? null;
+    }
+
+    /**
+     * Выводит источники, доступные сотруднику
+     * 
+     * @return \Illuminate\Support\Collection
+     */
+    public function getSourceList()
+    {
+        if (!empty($this->source_list))
+            return $this->source_list;
+
+        if ($this->superadmin)
+            return RequestsSource::orderBy('name')->get();
+
+        $ids = [];
+        $sources = [];
+
+        foreach (($this->__user->roles ?? []) as $role) {
+
+            $role->sources->each(function ($source) use (&$sources, &$ids) {
+
+                if (in_array($source->id, $ids))
+                    return;
+
+                $ids[] = $source->id;
+                $sources[] = $source;
+            });
+        }
+
+        return $this->source_list = collect($sources)->sortBy('name')->values();
     }
 }

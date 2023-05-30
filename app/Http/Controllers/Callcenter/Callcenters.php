@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Callcenter;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Settings;
 use App\Models\Callcenter;
+use App\Models\CallcenterSectorsAutoSetSource;
 use Illuminate\Http\Request;
 
 class Callcenters extends Controller
@@ -11,27 +13,47 @@ class Callcenters extends Controller
     /**
      * Вывод списка колл-центорв
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getCallcenters(Request $request)
     {
         $rows = Callcenter::get();
 
         foreach ($rows as &$row) {
-            $row->sectorCount = $row->sectors()->count();
+            $row = self::serializeCallcenterRow($row);
         }
 
         return response()->json([
             'callcenters' => $rows,
+            'sector_default' => Sectors::getDefaultSector(),
         ]);
+    }
+
+    /**
+     * Формирует строку колл-центра для вывода
+     * 
+     * @param  \App\Models\Callcenter $row
+     * @return \App\Models\Callcenter
+     */
+    public static function serializeCallcenterRow($row)
+    {
+        $row->sectorCount = 0;
+        $row->sectorCountActive = 0;
+
+        $row->sectors->each(function ($item) use ($row) {
+            $row->sectorCount++;
+            $row->sectorCountActive += $item->active;
+        });
+
+        return $row;
     }
 
     /**
      * Вывод данных одного колл-центра
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getCallcenter(Request $request)
     {
@@ -48,8 +70,8 @@ class Callcenters extends Controller
     /**
      * Сохранение данных колл-центра
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function saveCallcenter(Request $request)
     {
@@ -65,20 +87,22 @@ class Callcenters extends Controller
 
         $row->name = $request->name;
         $row->comment = $request->comment;
-        $row->active = 1;
+        $row->active = (int) $request->active;
 
         $row->save();
 
+        parent::logData($request, $row);
+
         return response()->json([
-            'callcenter' => $row,
+            'callcenter' => self::serializeCallcenterRow($row),
         ]);
     }
 
     /**
      * Вывод списка секторов
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public static function getCallcenterSectors(Request $request)
     {
@@ -86,7 +110,13 @@ class Callcenters extends Controller
             return response()->json(['message' => "Сектор по колл-центру не найдены"], 400);
 
         return response()->json([
-            'sectors' => $row->sectors,
+            'auto_set' => (new Settings)->AUTOSET_SECTOR_NEW_REQUEST,
+            'sectors' => $row->sectors->map(function ($row) {
+
+                $row->sources = CallcenterSectorsAutoSetSource::where('sector_id', $row->id)->count();
+
+                return $row;
+            }),
         ]);
     }
 }

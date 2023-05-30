@@ -4,8 +4,7 @@ namespace App\Http\Controllers\Infos;
 
 class Themes
 {
-
-    public static $data = [
+	public static $data = [
 		'Авто',
 		'Авторское право',
 		'Административное право',
@@ -60,6 +59,15 @@ class Themes
 		'Штрафы',
 		'Иное',
 		'Неизвестно',
-    ];
+	];
 
+	/**
+	 * Возвращает коллекцию данных
+	 * 
+	 * @return \Illuminate\Support\Collection
+	 */
+	public static function collect()
+	{
+		return collect(self::$data);
+	}
 }

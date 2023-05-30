@@ -15,31 +15,76 @@ class RolesSeeder extends Seeder
     public $rolesTo = [
         'callCenterManager' => [
             'permissions' => [
-                'requests_access', 'requests_add', 'requests_addr_change',
-                'requests_all_sectors', 'requests_comment_first', 'requests_edit',
-                'requests_pin_change', 'requests_pin_for_appointment', 'requests_pin_set',
-                'requests_pin_set_offline', 'requests_sector_change', 'requests_sector_set',
-                'requests_set_null_status', 'user_auth_query', 'user_auth_query_all_sectors'
+                'rating_access',
+                'rating_show_chiefs',
+                'requests_access',
+                'requests_add',
+                'requests_addr_change',
+                'requests_all_sectors',
+                'requests_comment_first',
+                'requests_edit',
+                'requests_flash_null_status',
+                'requests_flash_records_status',
+                'requests_pin_change',
+                'requests_pin_for_appointment',
+                'requests_pin_set',
+                'requests_pin_set_offline',
+                'requests_sector_change',
+                'requests_sector_set',
+                'requests_send_sms',
+                'requests_set_null_status',
+                'user_auth_query',
+                'user_auth_query_all_sectors'
             ],
             'statuses' => [1, 2, 3, 4, 5, 6, 7, 8],
-            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            'sources' => [1, 2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20, 21, 22, 23],
         ],
         'admin' => [
             'permissions' => [
-                'requests_access', 'requests_add', 'requests_addr_change',
-                'requests_all_my_sector', 'requests_comment_first', 'requests_edit',
-                'requests_pin_change', 'requests_pin_for_appointment', 'requests_pin_set',
-                'requests_set_null_status', 'user_auth_query'
+                'rating_access',
+                'requests_access',
+                'requests_add',
+                'requests_addr_change',
+                'requests_all_my_sector',
+                'requests_comment_first',
+                'requests_edit',
+                'requests_flash_null_status',
+                'requests_flash_records_status',
+                'requests_pin_change',
+                'requests_pin_for_appointment',
+                'requests_pin_set',
+                'requests_send_sms',
+                'requests_set_null_status',
+                'user_auth_query'
             ],
             'statuses' => [1, 2, 3, 4, 5, 6, 8],
-            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            'sources' => [1, 2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20, 21, 22, 23],
         ],
         'caller' => [
             'permissions' => [
-                'requests_access', 'requests_edit', 'requests_pin_for_appointment',
+                'rating_access',
+                'requests_access',
+                'requests_edit',
+                'requests_send_sms',
+                'requests_pin_for_appointment',
             ],
             'statuses' => [1, 2, 3, 4, 5],
-            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            'tabs' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            'sources' => [1, 2, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20, 21, 22, 23],
+        ],
+        'administrative' => [
+            'permissions' => [
+                'rating_access',
+                'rating_all_callcenters',
+                'rating_show_admins',
+                'sms_access',
+                'sms_access_system',
+                'clients_agreements_access',
+                'clients_agreements_all',
+                'admin_users',
+            ],
         ],
     ];
 
@@ -70,6 +115,11 @@ class RolesSeeder extends Seeder
             // Свзяь роли со статусами заявок
             foreach ($to['statuses'] ?? [] as $status) {
                 $role->statuses()->attach($status);
+            }
+
+            // Доступ роли к источникам
+            foreach ($to['sources'] ?? [] as $source) {
+                $role->sources()->attach($source);
             }
         });
     }

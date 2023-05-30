@@ -17,6 +17,17 @@ class UsersViewPart extends Model
     public $timestamps = false;
 
     /**
+     * Атрибуты, которые назначаются массово
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'user_id',
+        'part_name',
+        'view_at',
+    ];
+
+    /**
      * Поля типа Carbon
      * 
      * @var array

@@ -9,8 +9,10 @@ use App\Events\Requests\UpdateRequestEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Settings;
 use App\Http\Controllers\Dev\Statuses;
+use App\Models\CallcenterSectorsAutoSetSource;
 use App\Models\IncomingQuery;
 use App\Models\RequestsClient;
+use App\Models\RequestsClientsQuery;
 use App\Models\RequestsComment;
 use App\Models\RequestsRow;
 use App\Models\RequestsSource;
@@ -18,6 +20,7 @@ use App\Models\RequestsSourcesResource;
 use App\Models\RequestsStory;
 use App\Models\Status;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
@@ -41,6 +44,8 @@ use Illuminate\Support\Facades\Crypt;
  */
 class AddRequest extends Controller
 {
+    use AddRequestCounterTrait;
+
     /**
      * Данные запроса
      * 
@@ -58,28 +63,28 @@ class AddRequest extends Controller
     /**
      * Данные клиента
      * 
-     * @var null|\App\Models\RequestsClient
+     * @var \App\Models\RequestsClient|null
      */
     protected $client = null;
 
     /**
      * Данные ресурса
      * 
-     * @var null|\App\Models\RequestsSourcesResource
+     * @var \App\Models\RequestsSourcesResource|null
      */
     protected $resource = null;
 
     /**
      * Данные источника
      * 
-     * @var null|\App\Models\RequestsSource
+     * @var \App\Models\RequestsSource|null
      */
     protected $source = null;
 
     /**
      * Данные обработанной заявки
      * 
-     * @var null|false|\App\Models\RequestsRow
+     * @var \App\Models\RequestsRow|null|false
      */
     protected $data = null;
 
@@ -114,8 +119,8 @@ class AddRequest extends Controller
     /**
      * Инициализация объекта
      * 
-     * @param \Illuminate\Http\Request $request
-     * @return \App\Http\Controllers\Requests\AddRequest
+     * @param  \Illuminate\Http\Request $request
+     * @return void
      */
     public function __construct(Request $request)
     {
@@ -141,18 +146,27 @@ class AddRequest extends Controller
         $this->queryLog = new IncomingQuery;
         $this->queryLog->ip = $this->request->ip();
         $this->queryLog->user_agent = $this->request->header('User-Agent');
+        $this->queryLog->ad_source = $this->request->utm_source;
+        $this->queryLog->type = $this->query_type;
+        $this->queryLog->hash_phone = parent::hashPhone($this->phone);
+
+        if ($this->query_type == "call" and $this->myPhone)
+            $this->queryLog->hash_phone_resource = parent::hashPhone($this->myPhone);
 
         $this->response = [];
 
         $this->zeroing = false; // Идентифиикатор удаленной заявки
 
-        $this->settings = new Settings('DROP_ADD_REQUEST');
+        $this->settings = new Settings(
+            'DROP_ADD_REQUEST',
+            'AUTOSET_SECTOR_NEW_REQUEST',
+        );
     }
 
     /**
      * Магический метод для вывода несуществующего значения
      * 
-     * @param string $name
+     * @param  string $name
      * @return mixed
      */
     public function __get($name)
@@ -166,7 +180,7 @@ class AddRequest extends Controller
     /**
      * Вывод результата
      * 
-     * @return array|response
+     * @return \Illuminate\Http\JsonResponse|array
      */
     public function response()
     {
@@ -185,7 +199,7 @@ class AddRequest extends Controller
     /**
      * Вывод плохого запроса
      * 
-     * @return array|response
+     * @return \Illuminate\Http\JsonResponse|array
      */
     public function badRequest()
     {
@@ -202,7 +216,7 @@ class AddRequest extends Controller
     /**
      * Добавление заявки
      * 
-     * @return response
+     * @return \Illuminate\Http\JsonResponse|array
      */
     public function add()
     {
@@ -211,7 +225,13 @@ class AddRequest extends Controller
         if (!$this->phone)
             return $this->badRequest();
 
-        // Отмена запроса при отключенной настройке
+        /** Запрет на добавление заявок до переноса ЦРМ */
+        if (env('NEW_CRM_OFF', true) and !$this->request->fromWebhoock) {
+            $this->errors[] = "Добавление заявок временно недоступно";
+            return $this->badRequest();
+        }
+
+        /** Отмена запроса при отключенной настройке */
         if ($this->settings->DROP_ADD_REQUEST) {
             $this->errors[] = "Добавление заявок отключено в настройках";
             return $this->badRequest();
@@ -230,8 +250,8 @@ class AddRequest extends Controller
             'zeroing' => $this->zeroing, // Информация об обнулении
             // 'client' => $this->client,
             'clientId' => $this->client->id ?? null, // Идентификатор клиента
-            // 'source' => $this->source,
-            // 'resource' => $this->resource,
+            'source' => $this->source->id ?? null,
+            'resource' => $this->resource->id ?? null,
             'status' => $this->status,
             // 'query' => $this->query,
             'comments' => count($this->comments),
@@ -249,7 +269,7 @@ class AddRequest extends Controller
     /**
      * Формирование хэша номера телефона
      * 
-     * @param string $phone
+     * @param  string $phone
      * @return string
      */
     public static function getHashPhone($phone)
@@ -308,11 +328,11 @@ class AddRequest extends Controller
 
         $query = RequestsSourcesResource::query();
 
-        $query->when($this->myPhone, function ($query) {
+        $query->when($this->myPhone !== null, function ($query) {
             return $query->where('val', $this->myPhone);
         });
 
-        $query->when($this->site, function ($query) {
+        $query->when($this->site !== null, function ($query) {
             return $query->where('val', $this->site);
         });
 
@@ -342,10 +362,19 @@ class AddRequest extends Controller
      */
     public function findRequest()
     {
+        if ($this->request->webhoockRow instanceof RequestsRow) {
+            $this->created = $this->request->webhoockRowCreated;
+            $this->data = $this->request->webhoockRow;
+            return $this;
+        }
+
         if (!$this->client)
             return $this;
 
-        $this->data = $this->client->requests()->where('source_id', $this->source->id ?? null)->first();
+        $this->data = $this->client
+            ->requests()
+            ->where('source_id', $this->source->id ?? null)
+            ->first();
 
         return $this;
     }
@@ -469,8 +498,20 @@ class AddRequest extends Controller
 
         $this->data->save();
 
+        /** Счетчик обращений по источникам */
+        $this->countQuerySourceResource($this->data->source_id, $this->data->sourse_resource);
+
         // Логирование изменений заявки
-        RequestsStory::write($this->request, $this->data);
+        RequestsStory::write($this->request, $this->data, true);
+
+        // Логирование обращений
+        RequestsClientsQuery::create([
+            'client_id' => $this->client->id ?? null,
+            'request_id' => $this->data->id ?? null,
+            'source_id' => $this->data->source_id ?? null,
+            'resource_id' => $this->data->sourse_resource ?? null,
+            'created_at' => now(),
+        ]);
 
         // $row = Requests::getRequestRow($this->data); // Полные данные по заявке
 
@@ -613,18 +654,28 @@ class AddRequest extends Controller
             $this->data->theme = $this->request->theme;
         }
 
+        // Установка сектора
+        if (!$this->data->callcenter_sector) {
+
+            if ($sector = $this->settings->AUTOSET_SECTOR_NEW_REQUEST) {
+                $this->data->callcenter_sector = $sector;
+            } else if ($this->source->id ?? null) {
+                $this->data->callcenter_sector = CallcenterSectorsAutoSetSource::where('source_id', $this->source->id)->first()->sector_id ?? null;
+            }
+        }
+
         return $this;
     }
 
     /**
      * Добавление комментария по заявке
      * 
-     * @param string|null $comment Текст комментария
-     * @param string $type Тип комментария
-     * - `comment` Обычный комментарий
-     * - `sb` Комментарий Службы безопасности
-     * - `client` Комментарий еклиента
-     * - `system` Системный комментарий
+     * @param  string|null $comment Текст комментария
+     * @param  string $type Тип комментария
+     *      - `comment` Обычный комментарий
+     *      - `sb` Комментарий Службы безопасности
+     *      - `client` Комментарий еклиента
+     *      - `system` Системный комментарий
      * @return $this
      */
     public function addComment($comment = null, $type = "comment")

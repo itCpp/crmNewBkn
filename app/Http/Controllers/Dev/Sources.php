@@ -3,14 +3,19 @@
 namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Developer\RequestsSourceChangeAbbrNameJob;
+use App\Models\IncomingCallsToSource;
+use App\Models\Incomings\SourceExtensionsName;
 use App\Models\RequestsSource;
 use App\Models\RequestsSourcesResource;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Str;
 
 class Sources extends Controller
 {
-
     /**
      * Список источников с ресурсами
      *
@@ -26,7 +31,9 @@ class Sources extends Controller
         }
 
         return Response::json([
-            'sources' => $sources,
+            'sources' => $sources->sortByDesc(function ($row) {
+                return count($row->resources) > 0 ? 1 : 0;
+            })->values()->all(),
         ]);
     }
 
@@ -59,17 +66,23 @@ class Sources extends Controller
         if (!$source = RequestsSource::find($request->id))
             return Response::json(['message' => "Источник не найден"], 400);
 
+        $abbr_name = $source->abbr_name;
+
         $source->actual_list = (int) $request->actual_list;
         $source->auto_done_text_queue = (int) $request->auto_done_text_queue;
         $source->show_counter = (int) $request->show_counter;
         $source->comment = $request->comment;
         $source->name = $request->name;
+        $source->abbr_name = $request->abbr_name;
 
         $source->save();
 
         $source->resources = $source->resources;
 
-        \App\Models\Log::log($request, $source);
+        parent::logData($request, $source);
+
+        if ($abbr_name != $source->abbr_name)
+            RequestsSourceChangeAbbrNameJob::dispatch($source);
 
         return Response::json([
             'source' => $source,
@@ -87,7 +100,7 @@ class Sources extends Controller
         $source = RequestsSource::create();
         $source->resources;
 
-        \App\Models\Log::log($request, $source);
+        parent::logData($request, $source);
 
         return Response::json([
             'source' => $source,
@@ -143,15 +156,11 @@ class Sources extends Controller
         }
 
         // Источник с номером телефона
-        if ($phone = self::checkPhone($request->resource)) {
-
-            $request->phone = $phone;
-
+        if ($request->phone = self::checkPhone($request->resource)) {
             return self::createResourcePhone($request);
         }
 
-        if ($site = self::checkSiteUrl($request->resource)) {
-            $request->site = $site;
+        if ($request->site = self::checkSiteUrl($request->resource)) {
             return self::createResourceSite($request);
         }
 
@@ -168,16 +177,25 @@ class Sources extends Controller
      */
     public static function checkSiteUrl($resource)
     {
-        if (filter_var($resource, FILTER_VALIDATE_URL) !== false) {
+        $parse_url = parse_url($resource);
 
-            $url = parse_url($resource);
+        if (isset($parse_url['host']))
+            $host = $parse_url['host'];
+        else if (isset($parse_url['path']))
+            $host = $parse_url['path'];
+        else
+            $host = $resource;
 
-            return $url['host'] ?? null;
-        }
+        if (filter_var($host, FILTER_VALIDATE_URL) !== false)
+            return $host;
 
+        if (filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false)
+            return $host;
 
-        if (filter_var($resource, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false)
-            return $resource;
+        $ascii = idn_to_ascii($host);
+
+        if (filter_var($ascii, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false)
+            return $host;
 
         return false;
     }
@@ -201,7 +219,7 @@ class Sources extends Controller
             'val' => $request->phone,
         ]);
 
-        \App\Models\Log::log($request, $resource);
+        parent::logData($request, $resource);
 
         return Response::json([
             'resource' => Sources::getResourceRow($resource),
@@ -232,7 +250,7 @@ class Sources extends Controller
             'val' => $request->site,
         ]);
 
-        \App\Models\Log::log($request, $resource);
+        parent::logData($request, $resource);
 
         return Response::json([
             'resource' => Sources::getResourceRow($resource),
@@ -256,9 +274,22 @@ class Sources extends Controller
         $resource->source_id = $request->set ? $source->id : null;
         $resource->save();
 
-        \App\Models\Log::log($request, $resource);
+        parent::logData($request, $resource);
 
         $source->resources = $source->resources()->get();
+
+        if ($resource->type == "phone") {
+
+            if ($call = IncomingCallsToSource::where('phone', $resource->val)->first()) {
+
+                $extension = SourceExtensionsName::firstOrNew([
+                    'extension' => $call->extension,
+                ]);
+
+                $extension->abbr_name = $request->set ? $source->abbr_name : null;
+                $extension->save();
+            }
+        }
 
         return Response::json([
             'source' => $source,
@@ -325,5 +356,124 @@ class Sources extends Controller
         }
 
         return $resources ?? [];
+    }
+
+    /**
+     * Выводит список сайтов среди ресурсов
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sites()
+    {
+        $sites = RequestsSourcesResource::whereType('site')
+            ->get()
+            ->map(function ($row) {
+                return $this->siteRow($row);
+            })
+            ->sortBy('name')
+            ->values()
+            ->all();
+
+        return response()->json([
+            'sites' => $sites,
+        ]);
+    }
+
+    /**
+     * Формирование строки сайта
+     * 
+     * @param  \App\Models\RequestsSourcesResource $row
+     * @return \App\Models\RequestsSourcesResource
+     */
+    public function siteRow(RequestsSourcesResource $row)
+    {
+        $row->domain = $row->val;
+        $row->name = idn_to_utf8($row->val);
+
+        if (strlen($row->val) != mb_strlen($row->val))
+            $row->domain = idn_to_ascii($row->val);
+
+        return $row;
+    }
+
+    /**
+     * Проверка сайта
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function site(Request $request)
+    {
+        if (!$row = RequestsSourcesResource::find($request->id))
+            return response()->json(['message' => "Ресурс с данным идентификатором не найден"], 400);
+
+        if ($row->type != "site")
+            return response()->json(['message' => "Ресурс не является сайтом"], 400);
+
+        $row = $this->siteRow($row);
+
+        $row->check = $this->checkSite($row->domain);
+
+        return response()->json([
+            'site' => $row,
+        ]);
+    }
+
+    /**
+     * Подключение к сайту
+     * 
+     * @param  string $domain
+     * @return array
+     */
+    public function checkSite($domain)
+    {
+        try {
+            $response = Http::timeout(5)
+                ->withHeaders([
+                    'User-Agent' => env("APP_USER_AGENT"),
+                    'Host' => $domain,
+                ])
+                ->withOptions([
+                    'verify' => false,
+                ])
+                ->get($domain);
+
+            $data = [
+                'body' => $response->body(),
+                'status' => $response->status(),
+            ];
+        } catch (Exception $e) {
+            $data = [
+                'error' => $e->getMessage(),
+                'body' => null,
+                'status' => 0,
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * Включение/выключение в список проверки сайтов роботом
+     * 
+     * @param  \Illumiante\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function siteCheck(Request $request)
+    {
+        if (!$row = RequestsSourcesResource::find($request->id))
+            return response()->json(['message' => "Ресурс с данным идентификатором не найден"], 400);
+
+        if ($row->type != "site")
+            return response()->json(['message' => "Ресурс не является сайтом"], 400);
+
+        $row->check_site = (bool) $request->checked;
+        $row->save();
+
+        $this->logData($request, $row);
+
+        return response()->json([
+            'row' => $this->siteRow($row),
+        ]);
     }
 }

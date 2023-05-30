@@ -14,7 +14,8 @@ class SettingsQueuesDatabasesSeeder extends Seeder
      */
     protected $databases = [
         [
-            'name' => 'ЦПП',
+            'name' => "eyJpdiI6IkY3aE1pU0RmL29mOWZVS3ZFbDQvUEE9PSIsInZhbHVlIjoid3d1RlhiRlVGYWlzcDhOcnFqbjVuUT09IiwibWFjIjoiMWRlYWI2Mzg1OGFhZTc0MWI5ZjAxZmVlZTA2MjQ1N2UyNTVlM2QwNjMwOWI4MTA5ZTY5ZjNmMDcwMDM1OWZkMiIsInRhZyI6IiJ9",
+            'domain' => "eyJpdiI6IklBcHEvUnM1YlFjckZoOU1nSDZYcWc9PSIsInZhbHVlIjoiMnN4M3dqdmptNksyTWVBNWtHUE9NekQyQUNycUwyRWVkUmVZVFNxMS8wVT0iLCJtYWMiOiI1MjIyZjA0ODIyZWM5Yjc3MjQ4NGY1ZjNlNmU4M2E1YWRkNmZlYzIzOTI4MjRmNGM0Mjg5NjU5YTc5YWMwM2ZhIiwidGFnIjoiIn0=",
             'host' => 'eyJpdiI6IjU4MmZscGtOeEQvL2JBRjZrTDBweGc9PSIsInZhbHVlIjoidGMwNS9PaCsyOXcwTk9zRW9UNklnZz09IiwibWFjIjoiMjRlNmZiNjNlZDgzYWMxMWI0OGQ5YjUyM2Q5ZGMwYjc1YTlhNDJkYmM5ZDJiMjVkYTBhODU2YTBkYjBjOTMxZSIsInRhZyI6IiJ9',
             'port' => NULL,
             'user' => 'eyJpdiI6ImpjKy9qUENFTmlJNVMwbjdXQ2JHOUE9PSIsInZhbHVlIjoiNXNjUmhXK3pGWVpaWjgyWERuTzdBQT09IiwibWFjIjoiZDA1MDM1OTFiNjRjNGJkZWFhNGViOTUyODY3ZTRiZDk2Y2I2NzNlOWIxOTE1ZTNlYWZmMzA5MzEwYTQ4YTA1ZiIsInRhZyI6IiJ9',
@@ -23,16 +24,18 @@ class SettingsQueuesDatabasesSeeder extends Seeder
             'table_name' => NULL
         ],
         [
-            'name' => 'Юрцентр',
-            'host' => 'eyJpdiI6IlpOeHF6M3REcnFmcUlmcWd3anJwRUE9PSIsInZhbHVlIjoieUwvaEV4dXNXMDkzNkdFNXZwZUlEZz09IiwibWFjIjoiYjUyYzFkY2NjZGJlMDUyZjk1ZGJjNjA3MTcwODhmYTg2NzAzZmJmYzdiZGQ1YzhiYTQwNWYyYmEyYWYyMmUyYSIsInRhZyI6IiJ9',
+            'name' => "eyJpdiI6IkRtWXFpbzV6dzc4NHlrcjhaUER5R3c9PSIsInZhbHVlIjoiSG05UjBzajlTNjBnNkZpa3JmZXlkSXFxZkxmK25IbUJEcDRLK3NMTXFqST0iLCJtYWMiOiI5MDYwYjA4NjE2NTRmMmJiZWI4ZjAwMmQ0MWNkNzI2MTVlZjkxMTgyYmY4NDM5OTBhZTQ5MWE4OTMwNWQzNDEzIiwidGFnIjoiIn0=",
+            'domain' => "eyJpdiI6ImtnY0VuL3lvMWlpRjFuWmpJRmo3cFE9PSIsInZhbHVlIjoiTDRxRnl3K2taT0NNUUFJdHBseEtLN2lKUU41aFFMRFJscEhWR25ZUUhuTT0iLCJtYWMiOiI2OGJjOTViYmVlY2YzZWVlY2RiMzVmMzNmODkwZGIxY2NjYjA5ZjBmYmM2MTM4ZGM5ZTgxMDJjNjM5YjljMjhhIiwidGFnIjoiIn0=",
+            'host' => 'eyJpdiI6ImppeXZSTytjclFuZFRvMHpUM2ZwVHc9PSIsInZhbHVlIjoiSEZLVUUrNkwvVWtzWDk2bGtVWjFkdz09IiwibWFjIjoiMTI4MTMyMTBjMDc1Y2YzYmUxMTNmNzNhN2U3MDRmOGQ5NDIxZTU5OTFlMzIwY2JmNTMxODRiMzA5ZjRiZGU3OSIsInRhZyI6IiJ9',
             'port' => NULL,
-            'user' => 'eyJpdiI6ImFSQnhWWjFaS211SDJBWEY4bUJHWEE9PSIsInZhbHVlIjoiZXVLZUdIckZjRUdHT0VBQkxsOEJ0Wm9qQTdyRURwa0NyUUxRRGd6bElMaz0iLCJtYWMiOiI2NjRkMDc2Zjc5MzlmMzg3NWQ5NjNlN2MyYjEyYzdiYjViOTY5YjEyYzgxM2I3MjRmNzBkZjQ1NWQ5YjkxMTZjIiwidGFnIjoiIn0=',
-            'password' => 'eyJpdiI6Im5GRTByMC9rc3lWemtMbDgzV2VWa2c9PSIsInZhbHVlIjoiVHVReEtuL2lXd3ovU3dJU2pRaDBya3lIbi91aExGbmFoZTZVZm14Nkhhdz0iLCJtYWMiOiJiNDQ0M2E0ODczYWFhZWIzYTgwNmExMTViOWRjZjE3NDZkMGNjZjg2MjE0YjBkNjQyYjc4MTgzMDY4YTdhMTA2IiwidGFnIjoiIn0=',
-            'database' => 'eyJpdiI6Im9wVWlRZU5La1ZkcEFGbzk0Y0kvMmc9PSIsInZhbHVlIjoieGt1djdyM1Q3cGxlWm5JUGtQVldvTEVvdlRoZWJYRzl0dXBaL1ZGUnR5WT0iLCJtYWMiOiJjMDU1ZDI0NjM0OTViMjFjYWM5MzgxZGE0YjQ0MjExZTE5ZmU2ZmU1YmE2ZTBhMjI2MTJmYzJjOTZiNWMzNzY3IiwidGFnIjoiIn0=',
+            'user' => 'eyJpdiI6Im11SHIrbFY3ZkFBSXVYaHliTkpiMHc9PSIsInZhbHVlIjoiMU9KbkxLSXdHWFppVlBXWGZBWXVCTUM3bllDUkg2Q0t4MmM2djFETE1ROD0iLCJtYWMiOiI0ZDYwODI1YjM4MWRjYWJhZTU0NjhhZmMwMTRlNjkwYTgyZWNiMWRkNWEwOGQ3ODIxMDUyZjg5M2M1NTA3MTQwIiwidGFnIjoiIn0==',
+            'password' => 'eyJpdiI6IkJuU1UwdHp0RlhFUmRJdTFuRDB6cHc9PSIsInZhbHVlIjoiZkcvUVE1eXYwOGVZNklKakRVTE9XTjh3cjhDQjljVHF6ckRPRjZnbVFBbz0iLCJtYWMiOiI2ZTRlYmE4YjI0YjBlZmIxOGEzNTA3OTQ3YjU2YjM2ODNlNzQwZGIxMzMxMTZiOGM3OTAyYjVkMjUyNGU0NGQ0IiwidGFnIjoiIn0=',
+            'database' => 'eyJpdiI6ImRIL0lWYUlrRjh3VE5nclVCK2RMc0E9PSIsInZhbHVlIjoiR3ZQOGVuSzJjdC9yVFVzUW00OEZ6Zz09IiwibWFjIjoiM2JhMTc2MGM1OWU3Mjg3YTg1MzBlODEyMDNmODc2MDA5YmVjYmQ4ZTBhNTMzN2RmYzk2YWVkMTBjNjdjNDNlYSIsInRhZyI6IiJ9=',
             'table_name' => NULL
         ],
         [
-            'name' => 'Таг',
+            'name' => "eyJpdiI6InArREFraHU0Z2Y0MTFLN1o4NjdQc1E9PSIsInZhbHVlIjoiUVprQlNTWUpwcll2VWxEKytnem5xQT09IiwibWFjIjoiNjBlY2Y1YTllYjFlNTdlNjI1NzljZmUxYzVhZWYyZWVjNTg5MzY3NjQ0NDg1ZWU5ZGJmODhlOTk4ZTAwZGIzNiIsInRhZyI6IiJ9",
+            'domain' => "eyJpdiI6IjB6YzlJSnV2NXZma01QUmI4dVUwWWc9PSIsInZhbHVlIjoiMEQ4L1l0ZnV6VWFTNDlsb0lJOXR6WjZzb0xiajBuRGdFTUFhWWRJSmJQQT0iLCJtYWMiOiJkYTRjNWNmZDc0NTI2NTFkZTg3ZDIyMjI4YmMzN2M2NDUyMmE0ZDRmODRhZGQwNmIzYjYwMjIwOTBjNDkzM2E1IiwidGFnIjoiIn0=",
             'host' => 'eyJpdiI6IlRBV2tNLzJwZ0VjY1RZK1o5OXUwaGc9PSIsInZhbHVlIjoiamlBMlplc0MrelFaUUJJcDhkUjhEZz09IiwibWFjIjoiMzUyMjVjMzhjZTgyMjFmYmYwMjkzNGVhOWRkMmRlMGQ0NDVjNDVhMWEwMzQ2NWJmY2I2M2U4ZTc4YjkwYzVhOSIsInRhZyI6IiJ9',
             'port' => NULL,
             'user' => 'eyJpdiI6Im9jekdJYnlKUUxSZU10eUNhZHVRZHc9PSIsInZhbHVlIjoiaHdIMzBiRHRXZVJCOWFHR3BIQ21iQT09IiwibWFjIjoiYmZlNWRhNTIxZTBkMmE2MzA3ZWIyOGJkNDUwYzYyOWQzZmUyMDVmNWFhNGFiNDFlYzlhY2IzNTg2OGFkMWVhMiIsInRhZyI6IiJ9',
@@ -41,7 +44,8 @@ class SettingsQueuesDatabasesSeeder extends Seeder
             'table_name' => NULL
         ],
         [
-            'name' => 'Бас',
+            'name' => "eyJpdiI6IjhFb3pGVGxxT080UW5RSDhWVkNDT1E9PSIsInZhbHVlIjoiQTV3SUVXOTE4dFhtZDJ0Z3RVK1NQQT09IiwibWFjIjoiOTJlYzhiZDE3NWM4OThiMWY0MjM1MDFjNGNiZTM4NTc1Y2UyMDc5NDQwZWJhNjBmYmFmMTk5YmY3MzU5Y2RkZiIsInRhZyI6IiJ9",
+            'domain' => "eyJpdiI6InVqWXI1eThkeWNFbDJ0cUg5Z3haL1E9PSIsInZhbHVlIjoiVzZncG9iMkxDcElhSlhiUWVBZDl0dHVnaWVDa1lpK0tmQ0NYWkQxQzByWT0iLCJtYWMiOiJhNmIwMGNjNzJhNmQ2OGY1YmMzNmY5MzgzYzEwMTNmN2YxYTQ3NzRkMGMxOGY4YmRjNTRjZTFiZjU3M2VkZmY4IiwidGFnIjoiIn0=",
             'host' => 'eyJpdiI6IlBBZ1BLSkJVOFJHM3dCMkl5OXZBOEE9PSIsInZhbHVlIjoicTQvL1NIQ1lVY2RranJtSndwazczQT09IiwibWFjIjoiMmYzYTY2OWVkODdhMjA2YTEzOTg5NWQ5ZGZkMjhhMDZhNmMzYTdhNDI2NWRmMjc0NWQ1ZTBlNDg2MTE4ZDliOSIsInRhZyI6IiJ9',
             'port' => NULL,
             'user' => 'eyJpdiI6IlMxSWp5MlB4S25KTGdUZzVwaUdQVmc9PSIsInZhbHVlIjoibVA3eWFpVW1neUxTMi8xT2dhckNqQT09IiwibWFjIjoiYTRmMjMxZDIxMTNiZTVmMDQ3ODhjZTM0MjVjNTYxMDY4NGY2ZGIxMDY0NjJjYjM5YmI4YTk1ZDYxZTQzMDhmZiIsInRhZyI6IiJ9',
@@ -50,7 +54,8 @@ class SettingsQueuesDatabasesSeeder extends Seeder
             'table_name' => NULL
         ],
         [
-            'name' => 'Эксперты права',
+            'name' => "eyJpdiI6ImFQM2cvSlZrc1ZvUlpycll2VWNESGc9PSIsInZhbHVlIjoiQU9TelFPM3NIQTYrRG9OR1FIejhRTGRwRDVjZnNTL1RCNWRvUGpKVHc5T1JqVC9zRW5TWkRwcXJUMitaRWVONSIsIm1hYyI6IjViYTQwNDcxZGEwMjA4Nzg3NWE1YTg4ODM0YWMwNjk4OTE4MjkyYTEyNmE0OGViN2I4MzAwOGM3MGYzZWU2NGMiLCJ0YWciOiIifQ==",
+            'domain' => "eyJpdiI6Im5wa1RhU0loampWQW5Ld3U3Zk9FV0E9PSIsInZhbHVlIjoiYllsd3F1K2hQUURoQmVEaE1seFdMVk41eDVzMzN5TlF1RGZ4RkNvcWNyQUExWm9KajZQTUlMWHpiTzFVNURxZyIsIm1hYyI6ImVhMDgwZWVhYjgxNjg0OGYyNjc3YzE5NjliMjAwZDEzMTI4ZGFhZGJmMzZhNWE0ZWExMzk1NjVlOWZjZDFlOTIiLCJ0YWciOiIifQ==",
             'host' => 'eyJpdiI6IlNrZXFKNlk5QlNsZlVXYTFXTXNlRmc9PSIsInZhbHVlIjoicHFxRjVxV2g3NSthKzZQS2FOaTBFZz09IiwibWFjIjoiZmU5M2UyZGM1NGMzNWM1OWViMTZhMTMzYTBmNzA4M2MyNWYwZTMwOTJjNWIxYWE2ODkzNzU2ZDQxZDY3ZDUyNCIsInRhZyI6IiJ9',
             'port' => NULL,
             'user' => 'eyJpdiI6ImtzZjQ5dmRLcTRQeWs2UWdFY2VDaUE9PSIsInZhbHVlIjoieFRMbzhlSE9qbGlHQi9rRDdsdlpkZz09IiwibWFjIjoiYjgwYzAwYTM2OTExODBmM2ZmYmU2MGJiMjg0MjlkZTkxODAzMzNjN2ZkNWJkMmUzNzBjZDM3M2U0MWEzOGMyMSIsInRhZyI6IiJ9',
@@ -59,7 +64,8 @@ class SettingsQueuesDatabasesSeeder extends Seeder
             'table_name' => NULL
         ],
         [
-            'name' => 'Юрэксперты',
+            'name' => "eyJpdiI6IlUvcXM0M215QmYyMGxUcU55L2hTc3c9PSIsInZhbHVlIjoidWtETG9RZUdlRmNad3pEZUZUVEpFTGJoTHRYWVlmSklZdFFjNjRmSjM0ND0iLCJtYWMiOiJhNjdhZGY2OTIyYzhlNTcwNzkxZjcxMjIxYzIxNGQ4MmU3ZDQxZmQwZjI5M2NmMDhhZDU4ODA4OGMzMjc0OGI0IiwidGFnIjoiIn0=",
+            'domain' => "eyJpdiI6InlWMzh3eW1wL3Uwc3JOclE4ck9kQmc9PSIsInZhbHVlIjoia1hMbi9rNDVYZGJHcnZWY2RGZGQyUFFDeUsraHhSTHBiUWlIOGRSRE9LWT0iLCJtYWMiOiIzOTdhZjhjNTJlYjBkMGNjOGE2Y2VlY2IxNjBlYjZhODExMzEwODQwYzZjNjA5MDA2ZTg3MWU1OTU4OTJiNjk2IiwidGFnIjoiIn0=",
             'host' => 'eyJpdiI6Iko5UXNxb2Z2Qkx3TytPZS9JMThwM1E9PSIsInZhbHVlIjoiRHNDdmQyRXE4Wmw4d0Riek5OZURpZz09IiwibWFjIjoiMGE4YjEwYTlhMjAzZjM4OTk5MDAzNzg4ZmIyZDk0YjgwNjAyMmVkZGQyNGFhNmU1M2NmMWRmZTY2ODkxZWYyZiIsInRhZyI6IiJ9',
             'port' => NULL,
             'user' => 'eyJpdiI6IlFHVS84OTBxdVJ3Tzl3Vlpxa2hZdEE9PSIsInZhbHVlIjoiT3VkRnZIN2xNUmMzOHUwRE1MVkNXdz09IiwibWFjIjoiOWEwOWUwYmEyNGNkMWViMGE0NjVjMWIxMGVjNGRjZTAwZmQ2MmE3OWVkMWM5MjRhZTQ2YjBjZTRhN2MxNjY2OCIsInRhZyI6IiJ9',
@@ -68,7 +74,8 @@ class SettingsQueuesDatabasesSeeder extends Seeder
             'table_name' => NULL
         ],
         [
-            'name' => 'Росюристы',
+            'name' => "eyJpdiI6IkVtbWh0ZnJnRDVBVmlrWWdDdytnQkE9PSIsInZhbHVlIjoiL2w5dDlPeEk3SnU5ME5PREN1V0lnY2IvbDFzMXpBTVFKZXhsOWFSem1KYz0iLCJtYWMiOiI0ZGUzZTQ1YzJhNmUxMWJmNDc4M2I4NDk1YzhhNDY0OWE0Mjc1ZGNmZDRjYTBjYzBlOGExMDJlNmU5ZGI4N2JiIiwidGFnIjoiIn0=",
+            'domain' => "eyJpdiI6InBZQkFZelMyT2d4VUQyR1dzd0c0cVE9PSIsInZhbHVlIjoic1BZQzdjSDJhKzZrVHcwUjFXNUtMTXFuRHVKMUpJQ2wzSTBPRVlXQVpIcz0iLCJtYWMiOiJlZTE2Y2NiNjY1YzBlZjZhZDE5ODRmYjdhMDQ1YTdhNDBmOWIwOGY3ZGU5ZDgwYmZhYjZjMjRjNDFhNDNiZmJhIiwidGFnIjoiIn0=",
             'host' => 'eyJpdiI6IndxZEtYZ29xVGxOQzg1amozKzdPdEE9PSIsInZhbHVlIjoicm52VFJYd0o0Mmg3M1NQcE5mTTZLZz09IiwibWFjIjoiMWZjOGMwYjA5ZTM4ZWI4NjBmZGE1YjU5NDc3M2MwNThlNDI4YjA3YmVjNDExM2U1MGY3NThmODRmMGFhNGFiZCIsInRhZyI6IiJ9',
             'port' => NULL,
             'user' => 'eyJpdiI6IlhLLzFwcDdyNE9HbXJqbnFMR2cwZmc9PSIsInZhbHVlIjoiSmNETGk1MUtpL1JkZWw2QVFZUFVMZz09IiwibWFjIjoiNzg4MjE2ZWY0YTJmZDZjZjlmYzE3MjVkMGRmZThlNjllY2I5YWQ4NWZiMGQyZjNkMDQ1MmE1NjE1MzUzM2NiMyIsInRhZyI6IiJ9',
@@ -77,13 +84,36 @@ class SettingsQueuesDatabasesSeeder extends Seeder
             'table_name' => NULL
         ],
         [
-            'name' => 'Желтый сайт',
-            'host' => 'eyJpdiI6InVKL0xEc0x3SlVtcVY5eGpqYjVONmc9PSIsInZhbHVlIjoiNXkyS3dtMlNwdDRLMllBdStrbGtuZz09IiwibWFjIjoiMWY5ZDI3Y2FlNGI3ZTM2N2M2ZmQ2YWI1Y2U3YTJhN2JlMDhhMDNlMWUwMThlY2RhODE2NTc2YzBmM2VkMTJhMiIsInRhZyI6IiJ9',
+            'name' => "eyJpdiI6IlpSSmVqVHM3ZXZieldQSGtzak9pQ0E9PSIsInZhbHVlIjoiTE1Sd0xGR0trZkNacmR5NkdmejA3bkZhaXhuSHN2RWJQYzJ4bVd5blplbz0iLCJtYWMiOiJkMzcxY2ZkZDQ1Y2YxYmZlMzllMGRmYjVmNmZiN2QwZjgzZWRiM2EzNTU4OWZjYzRiNDRjMTY3NDZiZjA0MTFhIiwidGFnIjoiIn0=",
+            'domain' => "eyJpdiI6IlFIUlppeVVPTWNYZzNKUXRVYWxXRGc9PSIsInZhbHVlIjoiVk5LaXR5ZGxzencweXFPNmMyL2dCc1MzUENkb2NPREF2NkJZL0R5ejJKND0iLCJtYWMiOiI4OWYxMGUxZmNlYjUzYWE2YTFiOWIwNWI5YjY2MmRmY2EyNTc0MjE3MmVmMzMyNmQ4MGM5NGQwMzE3YmFkMjg4IiwidGFnIjoiIn0=",
+            'host' => 'eyJpdiI6IkduYnVGdXNkU25xUVEyNFQ1Mm9NNUE9PSIsInZhbHVlIjoiSlcwcWZtSk55Y2JQZy8ybnB2eEpYQT09IiwibWFjIjoiMzRiM2E1ZTU1NzcxNDUwZGE0YTYyOGYxYmE2MzJlZWRmN2EwYzFiMzdmZWU2ZTk2ZGM2MTJmYzI0MTEzN2MyNCIsInRhZyI6IiJ9',
             'port' => NULL,
-            'user' => 'eyJpdiI6InBCZzgwa09QcTB5Y01SYWtkbzZvYnc9PSIsInZhbHVlIjoiWE1IQTdYUnluZmpTL05acmR6WEpUdz09IiwibWFjIjoiNzYyNjI5MmM3MDZjYTljMTQyZDAyNDZmZGZiMzhhNzI0NzcxYjUzMjAxZGY5MmQ5NTEwZTI2MzYwZGFmNjQ4MCIsInRhZyI6IiJ9',
-            'password' => 'eyJpdiI6IkhtTmh1OWZrSFhBSEhmbXR5QzB1dXc9PSIsInZhbHVlIjoib0Q4cm5abFNYUTBJbytHQURlZFlodG5WYnZFWEpyMGErd0ozYmJhVndsYz0iLCJtYWMiOiJjZTYxYzhlMTgzZDMxMmQ3ZTM2MzUxYjM5NjRlNDQ2OTQyMGFiNjBmYjAyOTE3ZjllN2RiYTgzZTc4ZTI5ODUxIiwidGFnIjoiIn0=',
-            'database' => 'eyJpdiI6IjI3My9hdzZpaFdmNnhFN0k4di84Y2c9PSIsInZhbHVlIjoiRHFhYkd3QTdTRW53SU5jbGhTUTB0Zz09IiwibWFjIjoiNTE4YjhiNjQ1MjVmMzI0MDMxMzNhYmExNDNhZmU5NTFhMzc2NWNmYjAyMjI1N2YwYzZiMTRjNzk2NWI4MTk1MiIsInRhZyI6IiJ9',
+            'user' => 'eyJpdiI6IlhyZFVQUktoSHhMaHJFSzdDZmxjOUE9PSIsInZhbHVlIjoiRXdONlVWeXpjajlwdE05bmdxdGk1am5lYnVlcW9wbXk4NUlBRFBSUThuND0iLCJtYWMiOiJjY2Y5Yzg5MDFiMGNmNGJlMTA5ZGI5MDI5MmRlMTE4Y2ZmNGM1ZWFiNzFlMTZkMzY4MTFkNTMyNzY0YTM1NjQ0IiwidGFnIjoiIn0=',
+            'password' => 'eyJpdiI6IkRCL0RpZExMWHgwYnhsTHZhbWpEZVE9PSIsInZhbHVlIjoiUk1uZUJYRWdhcGVXVlRYTEhud21XZz09IiwibWFjIjoiZDkwNDkzMWM5NTExZjU5YzBlYTc0YjA4ZDU1ZTM4ZDBlNDhlNTQ5MWU2MTYzYTVmOGI5MjljMDNkM2IzMmU3NyIsInRhZyI6IiJ9',
+            'database' => 'eyJpdiI6InRYTkR5b0hUSTY2aUk1QzRGZFZ1Q2c9PSIsInZhbHVlIjoiYmJHOTNISXd5akpCWGNrWVYyQyt1dz09IiwibWFjIjoiZTljMTk5ZGRkODA3N2Y1NjBiYjI2Nzk2MmNmZjhhYTNjM2YwMmMzZmI0NTYxMmVjMjk4YTQyMjAxOTY2NmVmNCIsInRhZyI6IiJ9',
             'table_name' => NULL
+        ],
+        [
+            'name' => "eyJpdiI6ImVRWVhHUVFSVWVFRm1pMU9KbkNkalE9PSIsInZhbHVlIjoid0FremdmV2hMbTI0bnU0dFpXbzYrZz09IiwibWFjIjoiNDQwMmQyYjZkNTcxMzIwMDM1MjM1NGY1MjY2MGE4ZjdmNGI3NmMwMTAxMmQ2N2RkMjRlNmI4MDU3OTYzYmViNCIsInRhZyI6IiJ9",
+            'domain' => 'eyJpdiI6IjRRblN6WkF0MmpBdnM4bjhGTEhFRUE9PSIsInZhbHVlIjoiQ2h1MlVMYlFpOE1RZ29FejZWdzJpV1ZTcVpiMGNad3ZuNnliU0QycU96MD0iLCJtYWMiOiI0YWYyMjk4ZDdhZWE2ZTlhMDZhOTA0NTliNzQ4MDhhZTI0MTMyODA2NzRmNTM2ZWNhMGE3YWJmZjY5YmYyOTA1IiwidGFnIjoiIn0=',
+            'host' => 'eyJpdiI6Ikd0Z0syOVdxcllOOWMvRk5waERsakE9PSIsInZhbHVlIjoici9Za0dTVGZkZGg1ZUxncldqazBuUT09IiwibWFjIjoiMjEwMjRmMzJjOTNmOTI1Y2ZhMGQ4ZmE1YjkzMzdkZGE2ZTJlYjY4NGZkZTlhMTljNzkyNGVmOTZlODQxMTIzYiIsInRhZyI6IiJ9',
+            'port' => NULL,
+            'user' => 'eyJpdiI6ImxLZDVCeFFBS2hJaEluSWtya0dtQkE9PSIsInZhbHVlIjoiSWwzVmJTcW1MSDI1bzZubGRNYjlRdz09IiwibWFjIjoiZDA1OWZiYjVkMTJkM2Q3OGUzOTAzODdmZDBiYzY5MmUxNTJhOWY2MGJkZGZmY2Y4YjgyMDI5NjRiMmI2ZjRhOSIsInRhZyI6IiJ9',
+            'password' => 'eyJpdiI6IlZydnFFYitqdTN2cURDczVlNE1id0E9PSIsInZhbHVlIjoicUFjWCtUbXlDL2JQSit0c2w5YWJBUT09IiwibWFjIjoiNDlkYzM1NjU1Njg0NjBlZTIxOTc2NzA4ZGU4YjViNWJjMGM5NmU3YmYyYjJiMDE4MzkyMTE1MTJjMjZjY2MxMiIsInRhZyI6IiJ9',
+            'database' => 'eyJpdiI6InBvdkZiaGZETXNRdHpKU3VqZXc3dUE9PSIsInZhbHVlIjoiSnlwdlYvWEVxNTJvVzU0c2hwczBpdz09IiwibWFjIjoiNWFlMmU2MTRiNTE1ZWY5ODU3NDNmYTczNzQwMzdiNWVmNjZhMTQ4NGFmZGI3NmNjMTE2NGY1ODY5ZjkwNzU0NiIsInRhZyI6IiJ9',
+            'table_name' => NULL,
+            'created_at' => '2022-05-26 15:36:30',
+        ],
+        [
+            'name' => "eyJpdiI6Ii82bUNQclFDVE1nR1NiWW9XMHdtSGc9PSIsInZhbHVlIjoidlArb3NrcjZMRjJmQndwU2dKb3BBdFhrMVRpK2FuUU1XdkZ2TEt4ZTRIRT0iLCJtYWMiOiJlMTQxNjgwZGNhNDZkNTUzZWZjNTA1YzJiMGI4ZTQ0ZTIwOGUwZWE3YTQ0M2Y1ZmQwMTUyZjU2MjM0NGI5N2ViIiwidGFnIjoiIn0=",
+            'domain' => "eyJpdiI6IkZ5ZW9YZk83cEFOS3FiVkRBRFBDWGc9PSIsInZhbHVlIjoiRmE2RkI3M3puSEZDVGd4RHprR1hnVkYyaUY4VDRsL015cHlwc0s3S0QreWhpb1NDUXltSEdVT3pPaW5LSGF3aUN4clV1MStBZGIvalJ6V2xGM2RNblE9PSIsIm1hYyI6ImNiZjM0MWJiNzJjYjU0NDlkMTUwNWQ3ZmUxN2FiMTI0ZTc4MjZlMzAzMGE0YWQ2NzQwZTUyMWFiMTliOGJjYmQiLCJ0YWciOiIifQ==",
+            'host' => "eyJpdiI6IkZ5ZW9YZk83cEFOS3FiVkRBRFBDWGc9PSIsInZhbHVlIjoiRmE2RkI3M3puSEZDVGd4RHprR1hnVkYyaUY4VDRsL015cHlwc0s3S0QreWhpb1NDUXltSEdVT3pPaW5LSGF3aUN4clV1MStBZGIvalJ6V2xGM2RNblE9PSIsIm1hYyI6ImNiZjM0MWJiNzJjYjU0NDlkMTUwNWQ3ZmUxN2FiMTI0ZTc4MjZlMzAzMGE0YWQ2NzQwZTUyMWFiMTliOGJjYmQiLCJ0YWciOiIifQ==",
+            'port' => NULL,
+            'user' => "eyJpdiI6IlpycFNiZDFqMzFmRU1ER1YyQXFBRFE9PSIsInZhbHVlIjoiRTdKd0hvdGQxMDRkQWU3SHlzNE55MDRYNmJZQ0tMRTdKZjhqSWRlbTVRZz0iLCJtYWMiOiJlY2IyNWE1Y2IwMDZkYjkzOTgzZmUxZTBjZWFiNTA0ZGE5NDVlZWVkYjM3ODljY2M5N2Q2NzNkZjkzYTZhNmM2IiwidGFnIjoiIn0=",
+            'password' => 'eyJpdiI6Ing2SlUvcUNpUnh1cWNSSEs4UFMvZVE9PSIsInZhbHVlIjoiaEN4ejEzd3E0QmpzNmFFZzRMZjdmUT09IiwibWFjIjoiNTg5NDY4YTY5MzgxODhkZjFmMGMzYzczZjM2ZDIxMmZlMTg2NTdjMDJlOGIwZjBlYTYwNGQ2YmM3MzNjNzdmYSIsInRhZyI6IiJ9',
+            'database' => 'eyJpdiI6IlF1bVV4R3FpNG5PdmlYTkNma1ZjeUE9PSIsInZhbHVlIjoiWTVLQlJ5YTZCUk55NXE4VkYxWjdTdz09IiwibWFjIjoiNTk0MTliMTU2MGIwN2M1MDg5ZWRjY2FmNzZmZGQ2ZGYwNjc5YmZmNTM1YmJlNzhhMTRhNThhODc2OTE1YWY3YyIsInRhZyI6IiJ9',
+            'table_name' => NULL,
+            'created_at' => '2022-06-21 17:33:24',
         ]
     ];
 
@@ -95,6 +125,13 @@ class SettingsQueuesDatabasesSeeder extends Seeder
     public function run()
     {
         foreach ($this->databases as $db) {
+
+            if (isset($db['domain']))
+                $db['domain'] = decrypt($db['domain']);
+
+            if (isset($db['name']))
+                $db['name'] = decrypt($db['name']);
+
             SettingsQueuesDatabase::create($db);
         }
     }

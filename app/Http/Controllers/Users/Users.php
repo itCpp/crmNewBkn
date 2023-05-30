@@ -7,10 +7,22 @@ use App\Http\Controllers\Users\UserData;
 use App\Models\User;
 use App\Models\UsersSession;
 use App\Models\UserWorkTime;
+use App\Models\CrmMka\CrmUser;
+use App\Models\UserAutomaticAuth;
+use App\Models\UserSetting;
 use Illuminate\Http\Request;
 
 class Users extends Controller
 {
+    /**
+     * Стандартные настройки сотрудника
+     * 
+     * @var array
+     */
+    const USER_SETTINGS = [
+        'short_menu' => false,
+    ];
+
     /**
      * Проверка токена
      * 
@@ -19,10 +31,12 @@ class Users extends Controller
      */
     public static function checkToken($token)
     {
-        $sessions = UsersSession::where([
-            ['token', $token]
-        ])
-            ->whereDate('created_at', now())
+        /** Проверка JWT токена */
+        if ($jwt = (new Jwt)->verifyToken($token))
+            $token = $jwt;
+
+        $sessions = UsersSession::whereToken($token)
+            ->where('created_at', '>', now()->startOfDay())
             ->get();
 
         if (count($sessions) != 1)
@@ -59,6 +73,9 @@ class Users extends Controller
         // Количество запросов на авторизацию
         $authQueries = $permits->user_auth_query ? Auth::countAuthQueries($request) : 0;
 
+        $settings = UserSetting::firstOrCreate(['user_id' => $request->user()->id])->toArray();
+        $request->user()->settings = array_merge(self::USER_SETTINGS, $settings);
+
         $response = [
             'user' => $request->user(),
             'permits' => $permits,
@@ -82,7 +99,9 @@ class Users extends Controller
     {
         $permits = [
             'admin_access', # Доступ к админ-панели
+            'requests_access',
             'user_auth_query', # Может обработать запрос авторизации пользователя
+            'user_create', # Может создавать новго сотрудника
         ];
 
         return $request->user()->getListPermits($permits);
@@ -92,28 +111,36 @@ class Users extends Controller
      * Формирование данных для администратора
      * 
      * @param \Illuminate\Http\Request $request
-     * @return response
+     * @param bool $get_array
+     * @return \Illuminate\Http\JsonResponse|array
      */
-    public static function adminCheck(Request $request)
+    public static function adminCheck(Request $request, $get_array = false)
     {
         $response = [
             'permits' => $request->user()->getListPermits([
-                'block_dev', # Блок разработчика
-                'dev_roles', # Настройка и создание ролей
-                'dev_permits', # Создание и изменение прав
-                'admin_users', # Доступ к сотрудникам
+                'admin_access', # Доступ к админпанели
                 'admin_callcenters', # Доступ к настройкам колл-центров
+                'admin_callsqueue', # Доступ к настройкам распределения звонков
                 'admin_sources', # Доступ к настройкам источников
+                'admin_stats', # Доступ к статистики
+                'admin_stats_expenses', # Доступ к статистики по расходам
+                'admin_users', # Доступ к сотрудникам
+                'admin_users_rss', # Может создавать рассылки сотрудникам
+                'block_dev', # Блок разработчика
+                'dev_block', # Доступ к блокировкам
+                'dev_calls', # Доступ к журналу звонков и настройки их источников
+                'dev_offices', # Доступ к настройкам офиса
+                'dev_permits', # Создание и изменение прав
+                'dev_roles', # Настройка и создание ролей
                 'admin_mailer', # Доступ к настройкам раассылки заявок
                 'dev_statuses', # Доступ к настройки статусов
                 'dev_tabs', # Настройки вкладок
                 'god_mode', # Может использовать ЦРМ от другого пользователя
-                'dev_calls', # Доступ к журналу звонков и настройки их источников
-                'admin_callsqueue', # Доступ к настройкам распределения звонков
-                'dev_offices', # Доступ к настройкам офиса
-                'dev_block', # Доступ к блокировкам
             ]),
         ];
+
+        if ($get_array)
+            return $response;
 
         return response()->json($response);
     }
@@ -148,5 +175,76 @@ class Users extends Controller
             return null;
 
         return new UserData($user);
+    }
+
+    /**
+     * Поиск данных сотрудника из старой бд
+     * 
+     * @param int|string $pin
+     * @return
+     */
+    public static function findUserOldPin($pin)
+    {
+        if (!$user = CrmUser::wherePin($pin)->first())
+            return null;
+
+        return new UderOldCrm((object) $user->toArray());
+    }
+
+    /**
+     * Проверка автоматической авторизации пользователя
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \App\Models\UserAutomaticAuth|null
+     */
+    public static function checkAutomaticAuthToken(Request $request)
+    {
+        return UserAutomaticAuth::whereToken($request->header('X-Automatic-Auth'))
+            ->whereDate('created_at', now())
+            ->first();
+    }
+
+    /**
+     * Автоматическая авторизация
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\UserAutomaticAuth $token
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function automaticUserAuth(Request $request, UserAutomaticAuth $token)
+    {
+        if ($token->auth_at)
+            return response()->json(['message' => "Токен авторизации недействительный"], 401);
+
+        if ((time() - 60) > strtotime($token->created_at))
+            return response()->json(['message' => "Токен авторизации просрочен"], 401);
+
+        if (!$user = User::where('old_pin', $token->pin)->first())
+            return response()->json(['message' => "Ошибка авторизации"], 401);
+
+        $token->auth_at = now();
+        $token->save();
+
+        $request->__user = new UserData($user);
+
+        $request->setUserResolver(function () use ($request) {
+            return $request->__user;
+        });
+
+        return Auth::createSession($request);
+    }
+
+    /**
+     * Поиск идентификатор сотрудника по пину
+     * 
+     * @param int|string $pin
+     * @return null|int
+     */
+    public static function findUserId($pin)
+    {
+        if (!$user = User::where('pin', $pin)->first())
+            return null;
+
+        return $user->id;
     }
 }

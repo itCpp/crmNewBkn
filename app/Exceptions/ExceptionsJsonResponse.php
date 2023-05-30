@@ -14,10 +14,15 @@ class ExceptionsJsonResponse extends Exception
      */
     public function render($request)
     {
-        return response()->json([
-            'message' => $this->getMessage(),
-            'request' => $request->all(),
-            'trace' => $this->getTrace(),
-        ], $this->getCode() ?: 400);
+        $response['message'] = $this->getMessage();
+
+        if (env('APP_DEBUG', false)) {
+            $response = array_merge($response, [
+                'request' => $request->all(),
+                'trace' => $this->getTrace(),
+            ]);
+        }
+
+        return response()->json($response, $this->getCode() ?: 400);
     }
 }
