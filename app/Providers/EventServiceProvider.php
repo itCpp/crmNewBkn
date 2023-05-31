@@ -6,6 +6,8 @@ use App\Events\Requests\AddRequestEvent;
 use App\Events\Requests\UpdateRequestEvent;
 use App\Listeners\Requests\AddRequestsListen;
 use App\Listeners\Requests\UpdateRequestsListen;
+use App\Models\RequestsRow;
+use App\Observers\RequestsRowObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -37,6 +39,6 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        RequestsRow::observe(RequestsRowObserver::class);
     }
 }

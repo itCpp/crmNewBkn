@@ -1,0 +1,29 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [ master ]
+
+defaults:
+  run:
+    working-directory: /var/www/www-root/data/www/bkn.crm24ka.ru
+
+jobs:
+  deploy:
+    runs-on: 
+      - self-hosted
+      - crm-bkn-host
+    env:
+      APP_ENV: 'production'
+    steps:
+      - name: Deployment
+        run: |
+          git checkout master
+          git pull origin master
+      - name: Composer Install
+        if: "contains(github.event.head_commit.message, 'composer')"
+        run: /opt/php80/bin/php composer.phar install -q --no-ansi --no-interaction --no-suggest --no-progress --prefer-dist
+      - name: Migrates
+        run: /opt/php80/bin/php artisan migrate --force
+      - name: Queue & WSS
+        run: supervisorctl restart all
