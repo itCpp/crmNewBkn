@@ -31,4 +31,24 @@ class Mailler extends Model
         'is_active' => "boolean",
         'config' => "array",
     ];
+
+    /**
+     * Отработанные действия
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function jobs()
+    {
+        return $this->hasMany(MaillerLog::class);
+    }
+
+    /**
+     * Счетчик успешных отработок
+     * 
+     * @return int
+     */
+    public function getCounterAttribute()
+    {
+        return $this->jobs()->where('is_send', true)->count();
+    }
 }

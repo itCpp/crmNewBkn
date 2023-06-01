@@ -97,7 +97,7 @@ class MaillerHandleJob implements ShouldQueue
 
         $this->maillerLog->update([
             'response_data' => $this->response,
-            'sent_at' => !$is_failed ? now() : null,
+            'send_at' => !$is_failed ? now() : null,
             'is_send' => !$is_failed,
             'failed_at' => $is_failed ? now() : null,
             'is_failed' => $is_failed,
@@ -212,17 +212,7 @@ class MaillerHandleJob implements ShouldQueue
      */
     public function variables($append = [])
     {
-        return array_merge([
-            'comment' => $this->requestsRow->comment,
-            'comment_first' => $this->requestsRow->comment_first,
-            'pin' => $this->requestsRow->pin,
-            'client_name' => $this->requestsRow->client_name,
-            'theme' => $this->requestsRow->theme,
-            'region' => $this->requestsRow->region,
-            'event_at' => $this->requestsRow->event_at instanceof Carbon
-                ? $this->requestsRow->event_at->format("d.m.Y H:i")
-                : $this->requestsRow->event_at,
-        ], $append);
+        return array_merge($this->requestsRow->variable_list, $append);
     }
 
     /**

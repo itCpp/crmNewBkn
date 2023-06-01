@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Admin\MailerController;
+use App\Http\Controllers\Admin\MaillerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -283,9 +283,13 @@ Route::group(['middleware' => 'user.token'], function () {
             Route::post('setSectorDistribution', 'Admin\DistributionCalls@setSectorDistribution')->name('api.admin.setSectorDistribution');
         });
 
-        Route::group(['middleware' => 'user.can:admin_mailer', 'prefix' => "mailer"], function () {
+        Route::group(['middleware' => 'user.can:admin_mailer', 'prefix' => "mailler"], function () {
 
-            Route::get('/', [MailerController::class, "index"]);
+            Route::get('/', [MaillerController::class, "index"]);
+            Route::get('create', [MaillerController::class, "create"]);
+            Route::post('create', [MaillerController::class, "store"]);
+            Route::get('{mailler}/edit', [MaillerController::class, "edit"]);
+            Route::put('{mailler}/update', [MaillerController::class, "update"]);
         });
     });
 

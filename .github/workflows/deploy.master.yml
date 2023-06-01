@@ -26,4 +26,4 @@ jobs:
       - name: Migrates
         run: /opt/php80/bin/php artisan migrate --force
       - name: Queue & WSS
-        run: supervisorctl restart all
+        run: supervisorctl restart api-queue:*

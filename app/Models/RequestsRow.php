@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -262,5 +263,25 @@ class RequestsRow extends Model
         }
 
         return $model;
+    }
+
+    /**
+     * Переменные для обработчиков
+     * 
+     * @return array
+     */
+    public function getVariableListAttribute()
+    {
+        return [
+            'comment' => $this->comment,
+            'comment_first' => $this->comment_first,
+            'pin' => $this->pin,
+            'client_name' => $this->client_name,
+            'theme' => $this->theme,
+            'region' => $this->region,
+            'event_at' => $this->event_at instanceof Carbon
+                ? $this->event_at->format("d.m.Y H:i")
+                : $this->event_at,
+        ];
     }
 }
