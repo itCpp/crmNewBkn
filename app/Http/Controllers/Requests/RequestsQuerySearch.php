@@ -227,4 +227,19 @@ trait RequestsQuerySearch
 
         return $this;
     }
+
+    /**
+     * Поиск по офису
+     * 
+     * @return $this
+     */
+    public function setSearchOffice()
+    {
+        if (!$this->search->office)
+            return $this;
+
+        $this->model = $this->model->where('address', $this->search->office);
+
+        return $this;
+    }
 }

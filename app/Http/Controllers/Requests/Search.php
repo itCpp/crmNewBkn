@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Requests;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Infos\Cities;
 use App\Http\Controllers\Infos\Themes;
+use App\Models\Office;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class Search extends Controller
 {
@@ -44,6 +46,7 @@ class Search extends Controller
             'sources' => $sources,
             'statuses' => $statuses,
             'themes' => Themes::collect()->sort()->values()->all(),
+            'offices' => Office::where('active', 1)->orderBy('name')->get(),
         ]);
     }
 }
