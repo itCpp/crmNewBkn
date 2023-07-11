@@ -16,7 +16,9 @@ class RequestsExport extends Command
      */
     protected $signature = 'requests:export
                             {--start= : Дата начала периода}
-                            {--stop= : Дата окончания периода}';
+                            {--stop= : Дата окончания периода}
+                            {--city=Москва : Город}
+                            {--theme= : Тематика}';
 
     /**
      * The console command description.
@@ -46,18 +48,28 @@ class RequestsExport extends Command
         $stop = $this->option('stop');
 
         if (!$start || !$stop) {
-            $this->error('    Необходимо указать даты начала и окончания периода    ');
+            $this->error('Необходимо указать даты начала и окончания периода (флаг --stop= и --start=)');
             return 1;
         }
 
         $requests = RequestsRow::query()
             ->whereBetween('created_at', [
-                now()->create($start)->startOfDay(),
-                now()->create($stop)->endOfDay(),
+                now()->create($start)->startOfDay()->format("Y-m-d H:i:s"),
+                now()->create($stop)->endOfDay()->format("Y-m-d H:i:s"),
             ])
-            ->where(function ($query) {
+            ->when($this->option('city') == "Москва", function ($query) {
                 $query->where('check_moscow', 1)
                     ->orWhere('check_moscow', null);
+            })
+            ->when(!empty($this->option('city')) && $this->option('city') != "Москва", function ($query) {
+                $query->whereIn('region', collect(explode(",", $this->option('city')))
+                    ->map(fn ($item) => trim($item))
+                    ->toArray());
+            })
+            ->when(!empty($this->option('theme')), function ($query) {
+                $query->whereIn('theme', collect(explode(",", $this->option('theme')))
+                    ->map(fn ($item) => trim($item))
+                    ->toArray());
             })
             ->where('status_id', '!=', 7)
             ->get()
@@ -76,6 +88,7 @@ class RequestsExport extends Command
                     'region' => $item->region,
                     'theme' => $item->theme,
                     'address' => $item->office->name ?? null,
+                    'comment' => $item->comment,
                 ];
             });
 
