@@ -33,5 +33,5 @@ Route::middleware('user.token')
 
 Route::get('/event/{id}', 'Requests\Events@eventView')->name('event.id');
 
-Route::get('requiests/export', [ExportController::class, "export"])
+Route::get('requiests/export', [ExportController::class, "index"])
     ->middleware(ExportTokenMiddleware::class);

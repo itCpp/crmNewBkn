@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Requests;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Infos\Cities;
+use App\Http\Controllers\Infos\Themes;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -10,6 +12,33 @@ use Illuminate\Support\Facades\Storage;
 
 class ExportController extends Controller
 {
+    /**
+     * Форма экспорта
+     */
+    public function index(Request $request)
+    {
+        if (is_string($request->city)) {
+            $request->merge([
+                'city' => collect(explode(",", $request->city))
+                    ->map(fn ($item) => trim($item))
+                    ->toArray(),
+            ]);
+        }
+
+        if (is_string($request->theme)) {
+            $request->merge([
+                'theme' => collect(explode(",", $request->theme))
+                    ->map(fn ($item) => trim($item))
+                    ->toArray(),
+            ]);
+        }
+
+        return view('requests.export', [
+            'cities' => Cities::collect()->toArray(),
+            'themes' => Themes::collect()->toArray(),
+        ]);
+    }
+
     /**
      * Экспорт заявок
      * 
@@ -46,8 +75,10 @@ class ExportController extends Controller
                 $$key = is_array($request->$key)
                     ? collect($request->$key)->implode(",")
                     : $request->$key;
-    
-                $param['--' . $key] = $$key;
+
+                if (!empty($$key)) {
+                    $param['--' . $key] = $$key;
+                }
             }
         }
 
@@ -59,6 +90,6 @@ class ExportController extends Controller
             abort(400, "Сгенерироваанный файл не найден");
         }
 
-        return response()->file($storage->path($path));
+        return response()->download($storage->path($path));
     }
 }

@@ -17,7 +17,7 @@ class ExportTokenMiddleware
     public function handle(Request $request, Closure $next)
     {
         if ($request->token != env("EXPORT_TOKEN")) {
-            abort(403);
+            abort(401, "Недействительный токен");
         }
 
         return $next($request);

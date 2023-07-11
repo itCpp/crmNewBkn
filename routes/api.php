@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\MaillerController;
+use App\Http\Controllers\Requests\ExportController;
+use App\Http\Middleware\ExportTokenMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -201,7 +203,7 @@ Route::group(['middleware' => 'user.token'], function () {
 
         /** Отмечает все уведомления пользователя как прочитанные */
         Route::post('notifications/read/all', 'Users\Notifications@readAll')->name('api.users.notifications.read.all');
-    
+
         /** Применение настройки сотрудника */
         Route::post('setting/set', 'Users\Settings@set')->name('api.users.setting.set');
 
@@ -367,3 +369,6 @@ Route::group(['middleware' => 'user.token'], function () {
         Route::post('get', 'Crm\Calls@getLogRow');
     });
 });
+
+Route::post('requiests/export', [ExportController::class, "export"])
+    ->middleware(ExportTokenMiddleware::class);

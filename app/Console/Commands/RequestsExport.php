@@ -59,17 +59,37 @@ class RequestsExport extends Command
                 now()->create($stop)->endOfDay()->format("Y-m-d H:i:s"),
             ])
             ->when($this->option('city') == "Москва", function ($query) {
-                $query->where('check_moscow', 1)
-                    ->orWhere('check_moscow', null);
+                $query->where(function ($query) {
+                    $query->where('check_moscow', 1)
+                        ->orWhere('check_moscow', null);
+                });
             })
             ->when(!empty($this->option('city')) && $this->option('city') != "Москва", function ($query) {
-                $query->whereIn('region', collect(explode(",", $this->option('city')))
-                    ->map(fn ($item) => trim($item))
-                    ->toArray());
+
+                $query->where(function ($query) {
+
+                    collect(explode(",", $this->option('city')))
+                        ->map(fn ($item) => trim($item))
+                        ->filter(fn ($item) => !empty($item))
+                        ->values()
+                        ->each(function ($item) use ($query) {
+
+                            if ($item == "Москва") {
+                                $query->orWhere(function ($query) {
+                                    $query->where('check_moscow', 1)
+                                        ->orWhere('check_moscow', null);
+                                });
+                            } else {
+                                $query->orWhere('region', $item);
+                            }
+                        });
+                });
             })
             ->when(!empty($this->option('theme')), function ($query) {
                 $query->whereIn('theme', collect(explode(",", $this->option('theme')))
                     ->map(fn ($item) => trim($item))
+                    ->filter(fn ($item) => !empty($item))
+                    ->values()
                     ->toArray());
             })
             ->where('status_id', '!=', 7)
@@ -92,6 +112,8 @@ class RequestsExport extends Command
                     'comment' => $item->comment,
                 ];
             });
+
+        \Log::info("params", $this->options());
 
         $path = $this->option('filename') ?: "requests/export/"
             . now()->format("YmdHis")
