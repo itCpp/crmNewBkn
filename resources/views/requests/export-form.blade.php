@@ -89,6 +89,9 @@
 			        'responseType': 'blob'
 		        },
                 success: function(data, status, xhr) {
+
+                    $('#message').addClass('d-none');
+
 			        var blob = new Blob([data], {type: xhr.getResponseHeader('Content-Type')});
 			        var link = document.createElement('a');
 			        link.href = window.URL.createObjectURL(blob);

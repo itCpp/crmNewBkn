@@ -53,18 +53,53 @@ class RequestsExport extends Command
             return 1;
         }
 
-        $requests = RequestsRow::query()
+        $requests = $this->exportData($start, $stop, $this->option('city'), $this->option('theme'));
+
+        $path = $this->option('filename') ?: "requests/export/"
+            . now()->format("YmdHis")
+            . "-exportleads-"
+            . now()->create($start)->format("Ymd")
+            . "-"
+            . now()->create($stop)->format("Ymd")
+            . ".txt";
+
+        $string = ($first = $requests->first())
+            ? collect(array_keys($first))->implode("|") . "\n"
+            : "";
+        $string .= $requests->map(fn ($item) => collect($item)->implode("|"))->implode("\n");
+
+        $storage = Storage::disk('local');
+        $storage->put($path, $string);
+
+        $this->info("Найдено заявок: " . count($requests));
+        $this->info("Сохранено в файл " . $storage->path($path));
+
+        return 0;
+    }
+
+    /**
+     * Формирование массива с данными
+     * 
+     * @param  string  $start
+     * @param  string  $stop
+     * @param  string|null  $city
+     * @param  string|null  $theme
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function exportData($start, $stop, $city, $theme)
+    {
+        return RequestsRow::query()
             ->whereBetween('created_at', [
                 now()->create($start)->startOfDay()->format("Y-m-d H:i:s"),
                 now()->create($stop)->endOfDay()->format("Y-m-d H:i:s"),
             ])
-            ->when($this->option('city') == "Москва", function ($query) {
+            ->when($city == "Москва" || empty($city), function ($query) {
                 $query->where(function ($query) {
                     $query->where('check_moscow', 1)
                         ->orWhere('check_moscow', null);
                 });
             })
-            ->when(!empty($this->option('city')) && $this->option('city') != "Москва", function ($query) {
+            ->when(!empty($city) && $city != "Москва", function ($query) {
 
                 $query->where(function ($query) {
 
@@ -85,8 +120,8 @@ class RequestsExport extends Command
                         });
                 });
             })
-            ->when(!empty($this->option('theme')), function ($query) {
-                $query->whereIn('theme', collect(explode(",", $this->option('theme')))
+            ->when(!empty($theme), function ($query) use ($theme) {
+                $query->whereIn('theme', collect(explode(",", $theme))
                     ->map(fn ($item) => trim($item))
                     ->filter(fn ($item) => !empty($item))
                     ->values()
@@ -112,28 +147,5 @@ class RequestsExport extends Command
                     'comment' => $item->comment,
                 ];
             });
-
-        \Log::info("params", $this->options());
-
-        $path = $this->option('filename') ?: "requests/export/"
-            . now()->format("YmdHis")
-            . "-exportleads-"
-            . now()->create($start)->format("Ymd")
-            . "-"
-            . now()->create($stop)->format("Ymd")
-            . ".txt";
-
-        $string = ($first = $requests->first())
-            ? collect(array_keys($first))->implode("|") . "\n"
-            : "";
-        $string .= $requests->map(fn ($item) => collect($item)->implode("|"))->implode("\n");
-
-        $storage = Storage::disk('local');
-        $storage->put($path, $string);
-
-        $this->info("Найдено заявок: " . count($requests));
-        $this->info("Сохранено в файл " . $storage->path($path));
-
-        return 0;
     }
 }

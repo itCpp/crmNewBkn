@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Requests;
 
+use App\Exports\RequestsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Infos\Cities;
 use App\Http\Controllers\Infos\Themes;
@@ -9,6 +10,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExportController extends Controller
 {
@@ -33,7 +35,7 @@ class ExportController extends Controller
             ]);
         }
 
-        return view('requests.export', [
+        return view('requests.export-form', [
             'cities' => Cities::collect()->toArray(),
             'themes' => Themes::collect()->toArray(),
         ]);
@@ -54,13 +56,13 @@ class ExportController extends Controller
         $start = now()->parse($request->start)->format("Y-m-d");
         $stop = now()->parse($request->stop)->format("Y-m-d");
 
-        $path = "requests/export/"
-            . now()->format("YmdHis")
+        $filename = now()->format("YmdHis")
             . "-exportleads-"
             . now()->create($start)->format("Ymd")
             . "-"
-            . now()->create($stop)->format("Ymd")
-            . ".txt";
+            . now()->create($stop)->format("Ymd");
+
+        $path = "requests/export/" . $filename . ".txt";
 
         $param = [
             '--start' => $start,
@@ -82,14 +84,23 @@ class ExportController extends Controller
             }
         }
 
-        Artisan::call('requests:export', $param);
+        $data = new RequestsExport(
+            $param['--start'],
+            $param['--stop'],
+            $param['--city'] ?? null,
+            $param['--theme'] ?? null,
+        );
 
-        $storage = Storage::disk('local');
+        return Excel::download($data, $filename . '.xlsx');
 
-        if (!$storage->exists($path)) {
-            abort(400, "Сгенерироваанный файл не найден");
-        }
+        // Artisan::call('requests:export', $param);
 
-        return response()->download($storage->path($path));
+        // $storage = Storage::disk('local');
+
+        // if (!$storage->exists($path)) {
+        //     abort(400, "Сгенерироваанный файл не найден");
+        // }
+
+        // return response()->download($storage->path($path));
     }
 }

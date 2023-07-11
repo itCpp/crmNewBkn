@@ -372,3 +372,5 @@ Route::group(['middleware' => 'user.token'], function () {
 
 Route::post('requiests/export', [ExportController::class, "export"])
     ->middleware(ExportTokenMiddleware::class);
+    Route::get('requiests/export', [ExportController::class, "export"])
+    ->middleware(ExportTokenMiddleware::class);

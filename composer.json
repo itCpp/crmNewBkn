@@ -13,8 +13,10 @@
         "laravel/framework": "^8.54",
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
+        "maatwebsite/excel": "*",
         "php-ffmpeg/php-ffmpeg": "^0.18.0",
         "phpmailer/phpmailer": "*",
+        "phpoffice/phpspreadsheet": "*",
         "predis/predis": "^1.1"
     },
     "require-dev": {
