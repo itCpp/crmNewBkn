@@ -33,21 +33,23 @@
                 <div class="mb-3">
                     <label for="city" class="form-label"><b>Город</b></label>
                     <select class="form-select" name="city[]" multiple>
-                        <option {{ empty(request('city')) ? "selected" : "" }} value="">Выберите город</option>
+                        {{-- <option {{ empty(request('city')) ? "selected" : "" }} value="">Выберите город</option> --}}
                         @foreach($cities as $city)
                         <option value="{{ $city }}" {{ in_array($city, request('city') ?? []) ? "selected" : "" }}>{{ $city }}</option>
                         @endforeach
                     </select>
+                    <div id="city-help" class="form-text">Можно отфильтровать заявки по городу (по умолчаанию выбрана Москва)</div>
                 </div>
 
                 <div class="mb-3">
                     <label for="theme" class="form-label"><b>Тематика</b></label>
                     <select class="form-select" name="theme[]" multiple>
-                        <option {{ empty(request('theme')) ? "selected" : "" }} value="">Выберите тематику</option>
+                        {{-- <option {{ empty(request('theme')) ? "selected" : "" }} value="">Выберите тематику</option> --}}
                         @foreach($themes as $theme)
                         <option value="{{ $theme }}" {{ in_array($theme, request('theme') ?? []) ? "selected" : "" }}>{{ $theme }}</option>
                         @endforeach
                     </select>
+                    <div id="theme-help" class="form-text">Можно отфильтровать заявки по теме (по умолчанию будут выбраны все темы)</div>
                 </div>
 
                 <div class="position-absolute d-none justify-content-center align-items-center" id="loader" style="top: 0; left: 0; right: 0; bottom: 0; background-color: #ffffffc4;">
@@ -107,6 +109,7 @@
 			        link.click();
 		        },
                 error: function (e) {
+                    console.log(e);
                     $('#message').html(e?.responseJSON?.message || e.statusText).removeClass('d-none');
                 },
                 complete: () => {

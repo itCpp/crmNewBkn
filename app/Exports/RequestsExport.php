@@ -12,9 +12,9 @@ class RequestsExport implements FromView, WithColumnWidths
     /**
      * Данные по заявкам
      * 
-     * @var array
+     * @var \Illuminate\Database\Eloquent\Collection
      */
-    private $data = [];
+    public $data;
 
     /**
      * Инициализация объекта
@@ -31,7 +31,7 @@ class RequestsExport implements FromView, WithColumnWidths
     }
 
     /**
-     * @return View
+     * @return \Illuminate\Contracts\View\View
      */
     public function view(): View
     {
