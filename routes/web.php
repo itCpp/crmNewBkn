@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Requests\ExportController;
+use App\Http\Middleware\ExportTokenMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -30,3 +32,6 @@ Route::middleware('user.token')
     })->name('broadcasting.auth');
 
 Route::get('/event/{id}', 'Requests\Events@eventView')->name('event.id');
+
+Route::get('requiests/export', [ExportController::class, "export"])
+    ->middleware(ExportTokenMiddleware::class);

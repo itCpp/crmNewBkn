@@ -18,7 +18,8 @@ class RequestsExport extends Command
                             {--start= : Дата начала периода}
                             {--stop= : Дата окончания периода}
                             {--city=Москва : Город}
-                            {--theme= : Тематика}';
+                            {--theme= : Тематика}
+                            {--filename= : Имя файла вывода}';
 
     /**
      * The console command description.
@@ -92,7 +93,7 @@ class RequestsExport extends Command
                 ];
             });
 
-        $path = "requests/export/"
+        $path = $this->option('filename') ?: "requests/export/"
             . now()->format("YmdHis")
             . "-exportleads-"
             . now()->create($start)->format("Ymd")
