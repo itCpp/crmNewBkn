@@ -99,11 +99,11 @@ class RequestsExport extends Command
                         ->orWhere('check_moscow', null);
                 });
             })
-            ->when(!empty($city) && $city != "Москва", function ($query) {
+            ->when(!empty($city) && $city != "Москва", function ($query) use ($city) {
 
-                $query->where(function ($query) {
+                $query->where(function ($query) use ($city) {
 
-                    collect(explode(",", $this->option('city')))
+                    collect(explode(",", $city))
                         ->map(fn ($item) => trim($item))
                         ->filter(fn ($item) => !empty($item))
                         ->values()
